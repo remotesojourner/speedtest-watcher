@@ -429,3 +429,4 @@ FodyWeavers.xsd
 *.msp
 
 /src/SpeedtestWatcher.Web/data/
+/data/

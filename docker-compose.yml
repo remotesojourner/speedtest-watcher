@@ -7,8 +7,9 @@ services:
     container_name: speedtest-watcher
     restart: unless-stopped
     ports:
-      - "5216:5216"
+      - "${PORT:-2003}:${PORT:-2003}"
     volumes:
       - ./data:/app/data
+      - ./bin:/app/bin
     environment:
-      - PORT=5216
+      - PORT=${PORT:-2003}
