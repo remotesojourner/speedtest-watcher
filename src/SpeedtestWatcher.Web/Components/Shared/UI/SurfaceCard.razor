@@ -1,0 +1,44 @@
+<MudCard Elevation="1" Class="@CardClass()">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="d-flex align-center gap-2 @(string.IsNullOrEmpty(Description) ? "mb-3" : "mb-1")">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <MudIcon Icon="@Icon" Class="sw-muted" Size="Size.Small" />
+            }
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold" Color="@(Danger ? Color.Error : Color.Default)">@Title</MudText>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <MudText Typo="Typo.caption" Class="sw-muted mb-3 d-block">@Description</MudText>
+    }
+
+    @ChildContent
+
+    @if (Actions != null)
+    {
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            @Actions
+        </div>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public bool Danger { get; set; }
+    [Parameter] public bool FullHeight { get; set; } = true;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private string CardClass()
+    {
+        var parts = new List<string> { Danger ? "sw-card-danger" : "sw-card", "pa-5" };
+        if (FullHeight) parts.Add("sw-fill");
+        if (!string.IsNullOrEmpty(Class)) parts.Add(Class);
+        return string.Join(" ", parts);
+    }
+}

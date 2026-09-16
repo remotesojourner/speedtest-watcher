@@ -1,0 +1,33 @@
+@if (Loading)
+{
+    <div class="text-center @(Compact ? "pa-4" : "pa-12")">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="@(Compact ? Size.Small : Size.Large)" />
+    </div>
+}
+else if (Empty)
+{
+    <MudAlert Severity="@Severity" Variant="Variant.Outlined">
+        @if (EmptyContent != null)
+        {
+            @EmptyContent
+        }
+        else
+        {
+            @EmptyMessage
+        }
+    </MudAlert>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Empty { get; set; }
+    [Parameter] public string EmptyMessage { get; set; } = "Nothing to show yet.";
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
+    [Parameter] public Severity Severity { get; set; } = Severity.Info;
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,129 @@
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject SpeedtestStateService SpeedtestService
+@inject ISnackbar Snackbar
+@inject PreferencesService PreferencesService
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@(IsSkipped ? Icons.Material.Filled.RemoveCircleOutline : IsFailed ? Icons.Material.Filled.ErrorOutline : Icons.Material.Filled.Speed)"
+                     Color="@(IsSkipped ? Color.Default : IsFailed ? Color.Error : Color.Primary)" />
+            <MudText Typo="Typo.h6">@(IsSkipped ? "Test Skipped" : IsFailed ? "Test Failed" : "Test Result")</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (Test != null)
+        {
+            @if (IsSkipped)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">This test was skipped before it ran.</MudText>
+                    <MudText Typo="Typo.caption" Class="d-block mt-1">@Test.Error</MudText>
+                </MudAlert>
+            }
+            else if (IsFailed)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">@SpeedtestErrors.Describe(Test.Error)</MudText>
+                    <MudText Typo="Typo.caption" Class="d-block mt-1">Please check whether this happens often.</MudText>
+                </MudAlert>
+                <DataRow Label="Error details">
+                    <MudText Typo="Typo.caption" Class="sw-muted text-end" Style="max-width:70%;word-break:break-word;">@Test.Error</MudText>
+                </DataRow>
+            }
+            else
+            {
+                <div class="d-flex flex-wrap align-end justify-space-between gap-6 mb-5">
+                    <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, ConfigService.CurrentConfig.Download)"
+                                   Value="@($"{PreferencesService.ConvertSpeed(Test.Download):F1}")"
+                                   Unit="@PreferencesService.SpeedUnit"
+                                   Label="Download speed" />
+
+                    <div class="d-flex flex-wrap gap-5">
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, ConfigService.CurrentConfig.Upload)" Icon="@Icons.Material.Filled.Upload"
+                                       Value="@($"{PreferencesService.ConvertSpeed(Test.Upload):F1}")"
+                                       Label="@($"{PreferencesService.SpeedUnit} upload")" />
+
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, ConfigService.CurrentConfig.Ping)" Icon="@Icons.Material.Filled.NetworkPing"
+                                       Value="@($"{Test.Ping}")"
+                                       Label="@($"ms ping{(Test.Jitter.HasValue ? $" (±{Test.Jitter:F1})" : "")}")" />
+
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Icon="@Icons.Material.Filled.Timer"
+                                       Value="@($"{Test.Time}")"
+                                       Label="sec duration" />
+                    </div>
+                </div>
+                <MudDivider Class="mb-3" />
+            }
+
+            <DataRow Label="Time" Value="@PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(Test.Created))" />
+            <DataRow Label="Started">
+                <MudChip T="string" Size="Size.Small" Color="@(IsManual ? Color.Info : Color.Default)">
+                    @(IsManual ? "Manually, by you" : "Automatically")
+                </MudChip>
+            </DataRow>
+            @if (!string.IsNullOrEmpty(Test.ServerName))
+            {
+                <DataRow Label="Server" Value="@Test.ServerName" />
+            }
+            @if (!string.IsNullOrEmpty(Test.ResultId))
+            {
+                <DataRow Label="Result">
+                    <MudLink Href="@($"https://www.speedtest.net/result/c/{Test.ResultId}")" Target="_blank">View on Speedtest.net</MudLink>
+                </DataRow>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (Test != null && !ConfigService.CurrentConfig.ViewMode)
+        {
+            <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Delete"
+                       Disabled="_deleting" OnClick="DeleteTestAsync">
+                Delete Test
+            </MudButton>
+        }
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => MudDialog.Close())">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public SpeedtestDto? Test { get; set; }
+
+    private bool _deleting;
+
+    // The scheduler stores tests started from the UI with type "custom".
+    private bool IsManual => Test?.Type == "custom";
+
+    private bool IsSkipped => Test?.Status == "skipped";
+
+    // A skipped test also carries text in Error, so the status has to be ruled out first.
+    private bool IsFailed => !IsSkipped && !string.IsNullOrEmpty(Test?.Error);
+
+    private async Task DeleteTestAsync()
+    {
+        if (Test == null) return;
+
+        _deleting = true;
+        try
+        {
+            var response = await Http.DeleteAsync($"/api/speedtests/{Test.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                SpeedtestService.RemoveTest(Test.Id);
+                Snackbar.Add("The test has been deleted", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+                return;
+            }
+        }
+        catch { }
+        finally
+        {
+            _deleting = false;
+        }
+
+        Snackbar.Add("Could not delete the test", Severity.Error);
+    }
+}

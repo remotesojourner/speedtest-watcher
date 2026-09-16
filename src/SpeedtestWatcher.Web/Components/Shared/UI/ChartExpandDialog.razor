@@ -1,0 +1,22 @@
+<MudDialog>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(ValueText))
+        {
+            <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">@ValueText</MudText>
+        }
+        <div class="@Class">
+            <MudChart ChartType="@ChartType" ChartSeries="@ChartSeries" ChartLabels="@ChartLabels"
+                      Width="100%" Height="480px" MatchBoundsToSize="true" ChartOptions="@ChartOptions" />
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string? ValueText { get; set; }
+    [Parameter] public ChartType ChartType { get; set; }
+    [Parameter] public List<ChartSeries<double>> ChartSeries { get; set; } = [];
+    [Parameter] public string[] ChartLabels { get; set; } = [];
+    [Parameter] public MudBlazor.Charts.IChartOptions? ChartOptions { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

@@ -1,0 +1,350 @@
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+
+@if (ConfigService.CurrentConfig.AuthDisabledByEnvironment)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
+        <MudText Typo="Typo.body2" Class="font-weight-bold">Sign-in is switched off by DISABLE_AUTH</MudText>
+        <MudText Typo="Typo.body2">
+            Anyone who can reach this instance has full access, whatever is saved below.
+            Correct the settings, then remove the variable and restart Speedtest Watcher.
+        </MudText>
+    </MudAlert>
+}
+
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="7">
+        <SurfaceCard Icon="@Icons.Material.Filled.Login" Title="Sign-in"
+                     Description="Require people to sign in with an OpenID Connect provider, such as Authentik, Authelia, Keycloak or Pocket ID.">
+            @if (_signedInAs != null)
+            {
+                <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-4">
+                    <MudText Typo="Typo.body2">Signed in as <strong>@_signedInAs</strong></MudText>
+                    <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Logout" OnClick="SignOut">Sign out</MudButton>
+                </div>
+            }
+
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div>
+                    <MudText Typo="Typo.body2">Require sign-in</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">The provider is checked before this is switched on</MudText>
+                </div>
+                <MudSwitch @bind-Value="_enabled" Color="Color.Primary" aria-label="Require sign-in" />
+            </div>
+
+            <MudTextField @bind-Value="_authority" Label="Provider URL" Placeholder="https://auth.example.com/application/o/speedtest-watcher/"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          Error="@(!AuthorityValid)" ErrorText="Enter a full http(s) URL"
+                          HelperText="The issuer URL your provider gives for this app" Class="mb-3" />
+
+            <MudTextField @bind-Value="_clientId" Label="Client ID" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" Class="mb-3" />
+
+            <MudTextField @bind-Value="_clientSecret" Label="Client secret" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          InputType="@(_showSecret ? InputType.Text : InputType.Password)"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showSecret ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                          AdornmentAriaLabel="Show or hide the client secret"
+                          OnAdornmentClick="@(() => _showSecret = !_showSecret)"
+                          Placeholder="@(SecretSaved ? "Saved" : "")"
+                          HelperText="@SecretHelp" Class="mb-1" />
+            @if (SecretSaved)
+            {
+                <MudCheckBox T="bool" @bind-Value="_clearSecret" Dense="true" Color="Color.Primary" Label="Remove the saved secret" Class="mb-2" />
+            }
+
+            <MudTextField @bind-Value="_scopes" Label="Scopes" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          HelperText="Space separated. openid is always included." Class="mb-3 mt-2" />
+
+            <MudTextField T="string" Value="@RedirectUri" Label="Redirect URI" Variant="Variant.Outlined" Margin="Margin.Dense" ReadOnly="true"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                          AdornmentAriaLabel="Copy the redirect URI" OnAdornmentClick="@(() => CopyAsync(RedirectUri))"
+                          HelperText="Register this with your provider" Class="mb-3" />
+
+            @if (PlainHttp)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Text" Dense="true" Class="mb-3">
+                    This page is on plain http. Many providers only accept https redirect addresses.
+                </MudAlert>
+            }
+
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">People who aren't signed in</MudText>
+            <div class="sw-option-list mb-4">
+                <OptionCard Title="No access" Description="They're sent to sign in before they see anything" Icon="@Icons.Material.Filled.Lock"
+                            Active="@(_visitorAccess == "none")" OnClick="@(() => _visitorAccess = "none")" />
+                <OptionCard Title="Read-only" Description="They can see results, but can't run tests or change settings" Icon="@Icons.Material.Filled.Visibility"
+                            Active="@(_visitorAccess == "read")" OnClick="@(() => _visitorAccess = "read")" />
+            </div>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSave)" OnClick="SaveAsync">
+                @(_saving ? "Checking the provider..." : "Save")
+            </MudButton>
+        </SurfaceCard>
+    </MudItem>
+
+    <MudItem xs="12" md="5">
+        <SurfaceCard Icon="@Icons.Material.Filled.Key" Title="API Token"
+                     Description="For Prometheus and scripts, which can't sign in through a browser. Send it as a bearer token.">
+            @if (_newToken != null)
+            {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">Copy this token now. It won't be shown again.</MudText>
+                    <div class="d-flex align-center gap-1 mt-2">
+                        <code class="sw-token">@_newToken</code>
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyAsync(_newToken))"
+                                       aria-label="Copy the API token" />
+                    </div>
+                </MudAlert>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Class="mb-3">
+                    @(ConfigService.CurrentConfig.ApiTokenSet ? "A token is set." : "No token has been created.")
+                </MudText>
+            }
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Key"
+                           Disabled="_tokenBusy" OnClick="CreateTokenAsync">
+                    @(ConfigService.CurrentConfig.ApiTokenSet ? "Replace token" : "Create token")
+                </MudButton>
+                @if (ConfigService.CurrentConfig.ApiTokenSet)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="_tokenBusy" OnClick="RevokeTokenAsync">Revoke</MudButton>
+                }
+            </div>
+
+            <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">
+                Needed while sign-in is on, unless people who aren't signed in have read-only access. For Prometheus:
+            </MudText>
+            <pre class="sw-code">@PrometheusExample</pre>
+        </SurfaceCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _enabled;
+    private string _visitorAccess = "none";
+    private string _authority = "";
+    private string _clientId = "";
+    private string _clientSecret = "";
+    private bool _clearSecret;
+    private bool _showSecret;
+    private string _scopes = "openid profile email";
+    private bool _saving;
+
+    private string? _newToken;
+    private bool _tokenBusy;
+    private string? _signedInAs;
+
+    private ConfigDto Config => ConfigService.CurrentConfig;
+
+    private bool SecretSaved => Config.OidcClientSecretSet;
+
+    private string SecretHelp => SecretSaved
+        ? "A secret is saved. Leave this empty to keep it."
+        : "Leave empty if your provider set this app up as a public client.";
+
+    private string RedirectUri => $"{Navigation.BaseUri}signin-oidc";
+
+    private bool PlainHttp =>
+        Uri.TryCreate(Navigation.BaseUri, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttp && !uri.IsLoopback;
+
+    private bool AuthorityValid =>
+        string.IsNullOrWhiteSpace(_authority)
+        || (Uri.TryCreate(_authority.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
+
+    private bool Complete => !string.IsNullOrWhiteSpace(_authority) && !string.IsNullOrWhiteSpace(_clientId);
+
+    private bool Dirty =>
+        _enabled != (Config.AuthEnabled == "true")
+        || _visitorAccess != (Config.VisitorAccess == "read" ? "read" : "none")
+        || _authority.Trim() != Saved(Config.OidcAuthority)
+        || _clientId.Trim() != Saved(Config.OidcClientId)
+        || NormalisedScopes != Saved(Config.OidcScopes)
+        || !string.IsNullOrWhiteSpace(_clientSecret)
+        || _clearSecret;
+
+    private bool CanSave => !_saving && Dirty && AuthorityValid && (!_enabled || Complete);
+
+    private string NormalisedScopes => string.Join(' ', AuthSettings.ParseScopes(_scopes));
+
+    private string PrometheusExample =>
+        $"""
+        - job_name: speedtest-watcher
+          metrics_path: /api/prometheus/metrics
+          authorization:
+            credentials: YOUR_TOKEN
+          static_configs:
+            - targets: ["{(Uri.TryCreate(Navigation.BaseUri, UriKind.Absolute, out var uri) ? uri.Authority : "host:5216")}"]
+        """;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _enabled = Config.AuthEnabled == "true";
+        _visitorAccess = Config.VisitorAccess == "read" ? "read" : "none";
+        _authority = Saved(Config.OidcAuthority);
+        _clientId = Saved(Config.OidcClientId);
+        _scopes = string.IsNullOrWhiteSpace(Saved(Config.OidcScopes)) ? "openid profile email" : Saved(Config.OidcScopes);
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true) _signedInAs = SignedInUser.DisplayName(state.User);
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var request = new AuthSettingsRequest
+            {
+                Enabled = _enabled,
+                VisitorAccess = _visitorAccess,
+                Authority = _authority.Trim(),
+                ClientId = _clientId.Trim(),
+                ClientSecret = string.IsNullOrWhiteSpace(_clientSecret) ? null : _clientSecret.Trim(),
+                ClearClientSecret = _clearSecret,
+                Scopes = _scopes
+            };
+
+            var response = await Http.PutAsJsonAsync("/api/auth/settings", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(await ErrorMessageAsync(response), Severity.Error);
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<SaveResult>();
+            Config["authEnabled"] = _enabled ? "true" : "false";
+            Config["visitorAccess"] = _visitorAccess;
+            Config["oidcAuthority"] = string.IsNullOrWhiteSpace(_authority) ? "none" : _authority.Trim();
+            Config["oidcClientId"] = string.IsNullOrWhiteSpace(_clientId) ? "none" : _clientId.Trim();
+            Config["oidcScopes"] = NormalisedScopes;
+            Config["oidcClientSecretSet"] = !_clearSecret && (SecretSaved || !string.IsNullOrWhiteSpace(_clientSecret));
+            Config["authActive"] = result?.Active == true;
+            _clientSecret = "";
+            _clearSecret = false;
+            _scopes = NormalisedScopes;
+
+            if (result?.Active == true && _signedInAs == null)
+            {
+                // Sign-in now applies to this page as well, so go through it to keep changing settings.
+                Snackbar.Add("Sign-in is on. Taking you to your provider...", Severity.Success);
+                Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/settings/security")}", forceLoad: true);
+                return;
+            }
+
+            Snackbar.Add("Sign-in settings saved", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Could not save the sign-in settings", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task CreateTokenAsync()
+    {
+        if (Config.ApiTokenSet)
+        {
+            bool? confirmed = await DialogService.ShowMessageBoxAsync(
+                "Replace the API token",
+                "The current token stops working straight away. Anything using it will need the new one.",
+                yesText: "Replace", cancelText: "Cancel");
+            if (confirmed != true) return;
+        }
+
+        _tokenBusy = true;
+        try
+        {
+            var response = await Http.PostAsync("/api/auth/token", null);
+            var created = response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<ApiTokenResponse>() : null;
+            if (created == null)
+            {
+                Snackbar.Add("Could not create a token", Severity.Error);
+                return;
+            }
+
+            _newToken = created.Token;
+            Config["apiTokenSet"] = true;
+        }
+        catch
+        {
+            Snackbar.Add("Could not create a token", Severity.Error);
+        }
+        finally
+        {
+            _tokenBusy = false;
+        }
+    }
+
+    private async Task RevokeTokenAsync()
+    {
+        bool? confirmed = await DialogService.ShowMessageBoxAsync(
+            "Revoke the API token",
+            "Anything using the token, such as Prometheus, loses access straight away.",
+            yesText: "Revoke", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        _tokenBusy = true;
+        try
+        {
+            var response = await Http.DeleteAsync("/api/auth/token");
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Could not revoke the token", Severity.Error);
+                return;
+            }
+
+            _newToken = null;
+            Config["apiTokenSet"] = false;
+            Snackbar.Add("The API token has been revoked", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Could not revoke the token", Severity.Error);
+        }
+        finally
+        {
+            _tokenBusy = false;
+        }
+    }
+
+    private async Task CopyAsync(string text)
+    {
+        try
+        {
+            if (await JS.InvokeAsync<bool>("speedtestWatcherInterop.copyText", text))
+            {
+                Snackbar.Add("Copied", Severity.Success);
+                return;
+            }
+        }
+        catch { }
+        Snackbar.Add("Couldn't copy. Select the text and copy it instead.", Severity.Warning);
+    }
+
+    private void SignOut() => Navigation.NavigateTo("/auth/logout", forceLoad: true);
+
+    private static string Saved(string? value) => string.IsNullOrWhiteSpace(value) || value == "none" ? "" : value;
+
+    private static async Task<string> ErrorMessageAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            if (body != null && body.TryGetValue("message", out var message)) return message;
+        }
+        catch { }
+        return "Your changes were not applied. Check your input.";
+    }
+
+    private sealed record SaveResult(string Message, bool Active);
+}

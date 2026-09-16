@@ -1,0 +1,168 @@
+@page "/welcome"
+@using System.Globalization
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Speedtest Watcher - Welcome</PageTitle>
+
+<div class="d-flex justify-center mt-6">
+    <SurfaceCard FullHeight="false" Class="sw-welcome-card">
+        <MudProgressLinear Color="Color.Primary" Value="@ProgressValue" Rounded="true" Class="mb-2" />
+        <MudText Typo="Typo.caption" Class="sw-muted d-block mb-5">Step @(_step + 1) of @Steps.Count</MudText>
+
+        @switch (CurrentStep)
+        {
+            case WelcomeStep.Greeting:
+                <img src="img/logo.svg" alt="" class="sw-welcome-logo mb-4" />
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Welcome to Speedtest Watcher!</MudText>
+                <MudText Typo="Typo.body1" Class="sw-muted">Let's set up Speedtest Watcher for the first time. It won't take long.</MudText>
+                break;
+
+            case WelcomeStep.Provider:
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Choose a provider</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">This provider runs your speedtests. You can change it later in Settings.</MudText>
+                <div class="sw-option-grid">
+                    @foreach (var provider in Providers)
+                    {
+                        <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
+                                    Active="@(_provider == provider.Id)" OnClick="@(() => _provider = provider.Id)" />
+                    }
+                </div>
+                break;
+
+            case WelcomeStep.OptimalValues:
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Set your optimal values</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">Enter the speeds from your internet contract. Results are colour-coded against them.</MudText>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="double" @bind-Value="_ping" Label="Ping (ms)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="double" @bind-Value="_download" Label="Download (Mbps)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="double" @bind-Value="_upload" Label="Upload (Mbps)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case WelcomeStep.License:
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Accept Ookla's terms</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">Ookla requires you to accept its terms before Speedtest Watcher can run tests with it.</MudText>
+                <div class="sw-option-list mb-4">
+                    @foreach (var document in LicenseDocuments)
+                    {
+                        <MudLink Href="@document.Url" Target="_blank" Class="sw-option" Underline="Underline.None">
+                            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="sw-option-icon" />
+                            <span class="sw-option-text">@document.Title</span>
+                            <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" Class="sw-option-icon" />
+                        </MudLink>
+                    }
+                </div>
+                <MudCheckBox T="bool" @bind-Value="_acceptedTerms" Color="Color.Primary" Label="I have read and accept these terms" />
+                break;
+        }
+
+        <div class="d-flex justify-space-between align-center mt-6">
+            <MudButton Variant="Variant.Text" Disabled="@(_step == 0 || _saving)" OnClick="@(() => _step--)">Back</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanContinue)" OnClick="ContinueAsync">
+                @(IsLastStep ? (_saving ? "Saving..." : "Done") : "Continue")
+            </MudButton>
+        </div>
+    </SurfaceCard>
+</div>
+
+@code {
+    private enum WelcomeStep { Greeting, Provider, OptimalValues, License }
+
+    private static readonly (string Id, string Title, string Description, string Image)[] Providers =
+    [
+        ("ookla", "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
+        ("libre", "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
+        ("cloudflare", "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
+    ];
+
+    private static readonly (string Title, string Url)[] LicenseDocuments =
+    [
+        ("Ookla Terms of Service", "https://www.speedtest.net/about/terms"),
+        ("Ookla End User License Agreement", "https://www.speedtest.net/about/eula"),
+        ("Ookla Privacy Policy", "https://www.speedtest.net/about/privacy")
+    ];
+
+    private int _step;
+    private string _provider = "ookla";
+    private double _ping;
+    private double _download;
+    private double _upload;
+    private bool _acceptedTerms;
+    private bool _saving;
+
+    private List<WelcomeStep> Steps => _provider == "ookla"
+        ? [WelcomeStep.Greeting, WelcomeStep.Provider, WelcomeStep.OptimalValues, WelcomeStep.License]
+        : [WelcomeStep.Greeting, WelcomeStep.Provider, WelcomeStep.OptimalValues];
+
+    private WelcomeStep CurrentStep => Steps[Math.Min(_step, Steps.Count - 1)];
+
+    private bool IsLastStep => _step >= Steps.Count - 1;
+
+    private double ProgressValue => (_step + 1) * 100.0 / Steps.Count;
+
+    private bool CanContinue => !_saving && (CurrentStep != WelcomeStep.License || _acceptedTerms);
+
+    protected override void OnInitialized()
+    {
+        var cfg = ConfigService.CurrentConfig;
+        if (cfg.Provider is "ookla" or "libre" or "cloudflare") _provider = cfg.Provider;
+        _ping = ParseNumber(cfg.Ping);
+        _download = ParseNumber(cfg.Download);
+        _upload = ParseNumber(cfg.Upload);
+    }
+
+    private async Task ContinueAsync()
+    {
+        if (!IsLastStep)
+        {
+            _step++;
+            return;
+        }
+
+        _saving = true;
+        var saved = await PatchConfigAsync("provider", _provider)
+                    && await PatchConfigAsync("ping", FormatNumber(_ping))
+                    && await PatchConfigAsync("download", FormatNumber(_download))
+                    && await PatchConfigAsync("upload", FormatNumber(_upload));
+        _saving = false;
+
+        if (!saved)
+        {
+            Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+            return;
+        }
+
+        Snackbar.Add("Speedtest Watcher is set up. Tests will run on the default hourly schedule.", Severity.Success);
+        Navigation.NavigateTo("/");
+    }
+
+    private async Task<bool> PatchConfigAsync(string key, string value)
+    {
+        try
+        {
+            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
+            if (!response.IsSuccessStatusCode) return false;
+
+            ConfigService.CurrentConfig[key] = value;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static double ParseNumber(string? raw) =>
+        double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
+
+    private static string FormatNumber(double value) => value.ToString(CultureInfo.InvariantCulture);
+}

@@ -1,0 +1,363 @@
+/* Speedtest Watcher Chart Color Tokens - mirrored in C# as MetricStatus.ChartDownload/Upload/Ping/Jitter
+   so MudChart's ChartOptions.ChartPalette actually renders these colors (CSS custom properties
+   alone are not read by MudBlazor's chart engine). */
+:root {
+    --chart-download: #06b6d4;
+    --chart-upload: #a855f7;
+    --chart-ping: #f59e0b;
+    --chart-jitter: #ec4899;
+    --chart-grid: rgba(148, 163, 184, 0.15);
+}
+
+/* Muted secondary text - use instead of MudBlazor's Color.Secondary (which renders as the
+   bright cyan accent color, not a dimmed text tone) for captions/labels. */
+.sw-muted {
+    color: var(--mud-palette-text-secondary);
+}
+
+/* Tabular numbers for metric values */
+.sw-hero-value {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+/* Standard outlined card used across the app instead of repeating inline border styles */
+.sw-card {
+    border: 1px solid var(--mud-palette-lines-default);
+}
+
+/* MudGrid wraps its items, so a percentage height on a card never resolves. Items holding a
+   full-height card become flex columns and the card grows to fill the row instead. */
+.mud-grid-item:has(> .sw-fill) {
+    display: flex;
+    flex-direction: column;
+}
+
+.sw-fill {
+    flex: 1 1 auto;
+}
+
+.sw-surface {
+    background-color: var(--mud-palette-surface);
+}
+
+/* MudTabs lays panels out as a flex row, which shrinks a lone card to its content width */
+.sw-settings-panels {
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Run Test and its menu arrow drawn as one button. Left to size themselves, the icon-only half
+   comes out 22px tall beside a 33px label, so both halves get the same height explicitly. */
+.sw-split-button {
+    display: inline-flex;
+    align-items: center;
+}
+
+.sw-split-button .mud-menu {
+    display: flex;
+}
+
+.sw-split-button .sw-split-main,
+.sw-split-button .sw-split-toggle {
+    height: 32px;
+}
+
+.sw-split-button .sw-split-main {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sw-split-button .sw-split-toggle {
+    min-width: 0;
+    padding: 0 4px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / 35%);
+}
+
+/* Toggle items are tighter than buttons; without this, "30 days" runs into its dividers.
+   MudBlazor sets that 3px padding with a three-class selector, so this needs as many to win. */
+.sw-range-toggle .mud-toggle-item.mud-toggle-item-size-small {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+/* The chosen dashboard period is filled, so it stands out from the other choices */
+.sw-range-toggle .sw-range-selected {
+    background-color: var(--mud-palette-primary);
+    color: var(--mud-palette-primary-text);
+}
+
+/* Custom range: one compact field, the same height as the range buttons beside it (33px) */
+.mud-picker.sw-range-picker {
+    width: 300px;
+    flex: 0 0 auto;
+}
+
+.mud-picker.sw-range-picker .mud-input-control {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.mud-picker.sw-range-picker .mud-input.mud-input-outlined {
+    height: 33px;
+}
+
+.mud-picker.sw-range-picker .mud-input-slot {
+    height: 100%;
+    padding: 0 8px 0 12px;
+    font-size: 0.875rem;
+}
+
+/* Vertical tabs centre each icon and label, so labels of different lengths started at different points */
+.sw-settings-tabs .mud-tab {
+    justify-content: flex-start;
+}
+
+/* The flat average line is the last series in its chart, dashed so it reads as a reference, not a reading */
+.sw-chart-average .mud-charts-line-series path.mud-chart-line:last-of-type {
+    stroke-dasharray: 6 4;
+}
+
+/* Hour-by-hour averages: a fixed grid of 24 equal columns, each at least wide enough for a five-digit
+   value, so filling a cell never shifts the others. Where that doesn't fit, it scrolls with the row names pinned. */
+.sw-hourly-scroll {
+    overflow-x: auto;
+}
+
+.sw-hourly-table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    width: 100%;
+    /* Tabular digits measure 0.66em each in Inter (ch undersizes them: it measures the proportional 0), so each
+       column gets 3.5em for five of them. At this size the whole grid is 1264px and fits the 1400px page cap. */
+    min-width: calc(7rem + 24 * (3.5em + 6px));
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.sw-hourly-table .sw-hourly-name-col {
+    width: 7rem;
+}
+
+.sw-hourly-table th,
+.sw-hourly-table td {
+    padding: 6px 3px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.sw-hourly-table thead th {
+    color: var(--mud-palette-text-secondary);
+    font-weight: 600;
+}
+
+.sw-hourly-table .sw-hourly-name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    text-align: start;
+    font-weight: 600;
+    padding-right: 12px;
+    background: var(--mud-palette-surface);
+}
+
+.sw-hourly-table tbody tr:last-child > * {
+    border-bottom: none;
+}
+
+/* A new API token, and the Prometheus example beside it */
+.sw-token {
+    font-size: 0.8125rem;
+    word-break: break-all;
+}
+
+.sw-code {
+    margin: 0;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    border-radius: 8px;
+    border: 1px solid var(--mud-palette-lines-default);
+    background: var(--mud-palette-background);
+}
+
+.sw-range-table th,
+.sw-range-table td {
+    white-space: nowrap;
+}
+
+/* MudSimpleTable's 16px side padding pushes the Max column off a phone screen */
+.sw-range-table.mud-simple-table.mud-table-dense tr > td,
+.sw-range-table.mud-simple-table.mud-table-dense tr > th {
+    padding: 6px 10px;
+}
+
+.sw-card-danger {
+    border: 1px solid var(--mud-palette-error);
+    background: color-mix(in srgb, var(--mud-palette-error) 6%, transparent);
+}
+
+.sw-card-clickable {
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sw-card-clickable:hover {
+    border-color: var(--mud-palette-primary);
+}
+
+.sw-card-active {
+    border: 2px solid var(--mud-palette-primary) !important;
+}
+
+/* Soft pulsing glow applied to stat cards while a speedtest is running */
+@keyframes sw-pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--mud-palette-primary) 35%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 0 6px color-mix(in srgb, var(--mud-palette-primary) 0%, transparent);
+    }
+}
+
+.sw-running {
+    border-color: var(--mud-palette-primary) !important;
+    animation: sw-pulse-glow 1.8s ease-in-out infinite;
+}
+
+/* Selectable option cards (presets, access levels, providers) */
+.sw-option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sw-option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.sw-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: var(--mud-default-borderradius);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.sw-option:hover {
+    border-color: var(--mud-palette-primary);
+}
+
+.sw-option:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}
+
+.sw-option-active {
+    border-color: var(--mud-palette-primary);
+    background: color-mix(in srgb, var(--mud-palette-primary) 8%, transparent);
+}
+
+.sw-option-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sw-option-disabled:hover {
+    border-color: var(--mud-palette-lines-default);
+}
+
+.sw-option-icon {
+    color: var(--mud-palette-text-secondary);
+}
+
+.sw-option-active .sw-option-icon {
+    color: var(--mud-palette-primary);
+}
+
+.sw-option-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.sw-option-image {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+/* History toolbar selects, so the labels aren't clipped */
+.sw-filter {
+    min-width: 160px;
+}
+
+.sw-narrow-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+/* Day headers in the test list stay visible while scrolling that day's tests */
+.sw-list-subheader {
+    position: sticky;
+    top: var(--mud-appbar-height);
+    z-index: 1;
+    background: var(--mud-palette-surface);
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-weight: 600;
+    color: var(--mud-palette-text-secondary);
+}
+
+/* First-run welcome flow */
+.sw-welcome-card {
+    width: 100%;
+    max-width: 640px;
+}
+
+.sw-welcome-logo {
+    display: block;
+    width: 72px;
+    height: 72px;
+}
+
+/* On phones the app name and Run Test don't fit side by side; the name hides and the logo stays */
+@media (max-width: 599.98px) {
+    .mud-appbar .mud-typography-h6 {
+        display: none;
+    }
+}
+
+.mud-appbar .mud-button-root {
+    white-space: nowrap;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.45);
+}

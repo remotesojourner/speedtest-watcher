@@ -1,0 +1,47 @@
+<div class="@CssClass" role="button" tabindex="@(Disabled ? -1 : 0)" aria-pressed="@(Active ? "true" : "false")"
+     @onclick="HandleClickAsync" @onkeydown="HandleKeyDownAsync">
+    @if (!string.IsNullOrEmpty(Image))
+    {
+        <img src="@Image" alt="" class="sw-option-image" />
+    }
+    else if (!string.IsNullOrEmpty(Icon))
+    {
+        <MudIcon Icon="@Icon" Size="Size.Small" Class="sw-option-icon" />
+    }
+    <div class="sw-option-text">
+        <MudText Typo="Typo.body2" Class="font-weight-bold">@Title</MudText>
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <MudText Typo="Typo.caption" Class="sw-muted d-block">@Description</MudText>
+        }
+    </div>
+    @if (Active)
+    {
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Image { get; set; }
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private string CssClass => string.Join(" ",
+        new[] { "sw-option", Active ? "sw-option-active" : null, Disabled ? "sw-option-disabled" : null, Class }
+            .Where(c => !string.IsNullOrEmpty(c)));
+
+    private async Task HandleClickAsync()
+    {
+        if (!Disabled) await OnClick.InvokeAsync();
+    }
+
+    private async Task HandleKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ") await HandleClickAsync();
+    }
+}

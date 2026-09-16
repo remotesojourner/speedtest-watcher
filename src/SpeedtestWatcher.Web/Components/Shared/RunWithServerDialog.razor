@@ -1,0 +1,102 @@
+@using System.Text.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="sw-muted mb-3">
+            Runs one test against the server you pick here. Your saved server settings aren't changed.
+        </MudText>
+
+        <MudSelect T="string" @bind-Value="_serverId" Label="Server" Variant="Variant.Outlined" Margin="Margin.Dense"
+                   Disabled="_loading" HelperText="@(_loading ? "Loading servers..." : "Nearest servers are listed first")">
+            @foreach (var server in _servers)
+            {
+                <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField T="string" @bind-Value="_serverId" Label="Server ID" Placeholder="e.g. 12345"
+                      Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" Class="mt-3"
+                      Error="@(!ServerIdValid)" ErrorText="Server IDs are numbers"
+                      HelperText="Or type an ID that isn't listed" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanRun)" OnClick="RunAsync">Run test</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>ookla or libre; Cloudflare has no server choice.</summary>
+    [Parameter] public string Provider { get; set; } = "ookla";
+
+    private sealed record ServerOption(string Id, string Label);
+
+    private List<ServerOption> _servers = [];
+    private string _serverId = "";
+    private bool _loading = true;
+    private bool _running;
+
+    private bool ServerIdValid => string.IsNullOrWhiteSpace(_serverId) || _serverId.Trim().All(char.IsDigit);
+
+    private bool CanRun => !_running && !string.IsNullOrWhiteSpace(_serverId) && ServerIdValid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var json = await Http.GetFromJsonAsync<JsonElement>($"/api/info/server/{Provider}");
+            if (json.ValueKind == JsonValueKind.Object)
+            {
+                _servers = json.EnumerateObject()
+                    .Select(property => new ServerOption(property.Name, Label(property.Name, property.Value)))
+                    .ToList();
+            }
+        }
+        catch { }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Label(string id, JsonElement entry)
+    {
+        if (entry.ValueKind == JsonValueKind.String) return entry.GetString() ?? id;
+        if (entry.ValueKind != JsonValueKind.Object) return id;
+
+        var parts = new[] { "sponsor", "name", "country" }
+            .Select(name => entry.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null)
+            .Where(part => !string.IsNullOrEmpty(part));
+
+        var label = string.Join(" - ", parts);
+        return string.IsNullOrEmpty(label) ? id : label;
+    }
+
+    private async Task RunAsync()
+    {
+        _running = true;
+        try
+        {
+            var response = await Http.PostAsync($"/api/speedtests/run?serverId={_serverId.Trim()}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Speedtest started", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+                return;
+            }
+        }
+        catch { }
+        finally
+        {
+            _running = false;
+        }
+
+        Snackbar.Add("Could not start the speedtest", Severity.Error);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

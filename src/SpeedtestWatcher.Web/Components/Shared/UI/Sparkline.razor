@@ -1,0 +1,38 @@
+@if (_points != null)
+{
+    <svg viewBox="@($"0 0 300 {Height}")" preserveAspectRatio="none" class="@Class" style="@($"width:100%;height:{Height}px;display:block;")">
+        <polyline points="@_points" fill="none" stroke="@MetricStatus.CssVar(Color)" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<double> Values { get; set; } = [];
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+    [Parameter] public int Height { get; set; } = 48;
+    [Parameter] public string? Class { get; set; }
+
+    private string? _points;
+
+    protected override void OnParametersSet() => _points = Build();
+
+    private string? Build()
+    {
+        if (Values.Count < 2) return null;
+
+        var min = Values.Min();
+        var max = Values.Max();
+        var range = max - min;
+        var stepX = 300.0 / (Values.Count - 1);
+        var topPad = 4.0;
+        var usableHeight = Height - 8.0;
+
+        return string.Join(" ", Values.Select((v, i) =>
+        {
+            var x = i * stepX;
+            var normalized = range > 0 ? (v - min) / range : 0.5;
+            var y = (Height - topPad) - normalized * usableHeight;
+            return $"{x:F1},{y:F1}";
+        }));
+    }
+}

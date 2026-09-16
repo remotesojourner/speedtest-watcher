@@ -1,0 +1,172 @@
+@using System.Globalization
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject ISnackbar Snackbar
+
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.TrendingUp" Title="Optimal Values"
+                     Description="Your contracted speeds. Results are colour-coded against these, marked healthy or not, and integrations can alert you when a test misses them.">
+            <MudNumericField T="double" @bind-Value="_optPing" Label="Ping (ms)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Ping, "ms")" Class="mb-3" />
+            <MudNumericField T="double" @bind-Value="_optDownload" Label="Download (Mbps)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Download, "Mbps")" Class="mb-3" />
+            <MudNumericField T="double" @bind-Value="_optUpload" Label="Upload (Mbps)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Upload, "Mbps")" Class="mb-4" />
+
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!OptimalDirty)" OnClick="SaveOptimalValuesAsync">
+                    Save Values
+                </MudButton>
+                @if (_recommendation != null)
+                {
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AutoFixHigh" OnClick="UseRecommended">
+                        Use recommended
+                    </MudButton>
+                }
+            </div>
+            @if (_recommendation == null)
+            {
+                <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">Recommendations appear after at least 10 tests.</MudText>
+            }
+        </SurfaceCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.NetworkCheck" Title="Before Each Test"
+                     Description="Checks that run before a speedtest starts. A test that doesn't run is recorded as skipped.">
+            <div class="d-flex align-center justify-space-between mb-3">
+                <div>
+                    <MudText Typo="Typo.body2">Check the connection first</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Skips the test instead of recording a failure when the line is down</MudText>
+                </div>
+                <MudSwitch @bind-Value="_internetCheck" Color="Color.Primary" />
+            </div>
+
+            <MudTextField @bind-Value="_internetCheckUrl" Label="Check URL" Placeholder="https://icanhazip.com"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          Error="@(!CheckUrlValid)" ErrorText="Enter a full http(s) URL"
+                          HelperText="Must return your public IP address, which the skip list below is compared against" Class="mb-3" />
+
+            <MudTextField @bind-Value="_skipIps" Label="Skip tests when the public IP is" Placeholder="203.0.113.10, 198.51.100.4"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          HelperText="Comma separated. Useful while a VPN or backup line is up. Leave empty to always test." Class="mb-4" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!ChecksDirty || !CheckUrlValid)" OnClick="SaveChecksAsync">
+                Save Checks
+            </MudButton>
+        </SurfaceCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private double _optPing;
+    private double _optDownload;
+    private double _optUpload;
+    private Recommendation? _recommendation;
+
+    private bool _internetCheck = true;
+    private string _internetCheckUrl = "https://icanhazip.com";
+    private string _skipIps = "";
+
+    private bool OptimalDirty =>
+        _optPing != ParseConfigNumber(ConfigService.CurrentConfig.Ping)
+        || _optDownload != ParseConfigNumber(ConfigService.CurrentConfig.Download)
+        || _optUpload != ParseConfigNumber(ConfigService.CurrentConfig.Upload);
+
+    private bool CheckUrlValid =>
+        Uri.TryCreate(_internetCheckUrl.Trim(), UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+    private bool ChecksDirty =>
+        _internetCheck != (ConfigService.CurrentConfig.InternetCheckEnabled != "false")
+        || _internetCheckUrl.Trim() != ConfiguredCheckUrl
+        || SkipIpsValue != ConfiguredSkipIps;
+
+    private string ConfiguredCheckUrl =>
+        string.IsNullOrWhiteSpace(ConfigService.CurrentConfig.InternetCheckUrl) || ConfigService.CurrentConfig.InternetCheckUrl == "none"
+            ? "https://icanhazip.com"
+            : ConfigService.CurrentConfig.InternetCheckUrl!;
+
+    private string ConfiguredSkipIps =>
+        string.IsNullOrWhiteSpace(ConfigService.CurrentConfig.SkipIps) ? "none" : ConfigService.CurrentConfig.SkipIps!;
+
+    private string SkipIpsValue => string.IsNullOrWhiteSpace(_skipIps) ? "none" : _skipIps.Trim();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cfg = ConfigService.CurrentConfig;
+        _optPing = ParseConfigNumber(cfg.Ping);
+        _optDownload = ParseConfigNumber(cfg.Download);
+        _optUpload = ParseConfigNumber(cfg.Upload);
+        _internetCheck = cfg.InternetCheckEnabled != "false";
+        _internetCheckUrl = ConfiguredCheckUrl;
+        _skipIps = ConfiguredSkipIps == "none" ? "" : ConfiguredSkipIps;
+
+        try
+        {
+            var response = await Http.GetAsync("/api/recommendations");
+            if (response.IsSuccessStatusCode)
+            {
+                _recommendation = await response.Content.ReadFromJsonAsync<Recommendation>();
+            }
+        }
+        catch { }
+    }
+
+    private void UseRecommended()
+    {
+        if (_recommendation == null) return;
+        _optPing = _recommendation.Ping;
+        _optDownload = _recommendation.Download;
+        _optUpload = _recommendation.Upload;
+    }
+
+    private async Task SaveOptimalValuesAsync()
+    {
+        var cfg = ConfigService.CurrentConfig;
+        var saved = true;
+        if (_optPing != ParseConfigNumber(cfg.Ping)) saved &= await PatchConfigAsync("ping", FormatNumber(_optPing));
+        if (_optDownload != ParseConfigNumber(cfg.Download)) saved &= await PatchConfigAsync("download", FormatNumber(_optDownload));
+        if (_optUpload != ParseConfigNumber(cfg.Upload)) saved &= await PatchConfigAsync("upload", FormatNumber(_optUpload));
+        ShowSaveResult(saved, "Optimal values saved");
+    }
+
+    private async Task SaveChecksAsync()
+    {
+        var saved = await PatchConfigAsync("internetCheckEnabled", _internetCheck ? "true" : "false")
+                    && await PatchConfigAsync("internetCheckUrl", _internetCheckUrl.Trim())
+                    && await PatchConfigAsync("skipIps", SkipIpsValue);
+        ShowSaveResult(saved, "Pre-test checks saved");
+    }
+
+    private async Task<bool> PatchConfigAsync(string key, string value)
+    {
+        try
+        {
+            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
+            if (!response.IsSuccessStatusCode) return false;
+
+            ConfigService.CurrentConfig[key] = value;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void ShowSaveResult(bool saved, string successMessage)
+    {
+        if (saved) Snackbar.Add(successMessage, Severity.Success);
+        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+    }
+
+    private static string? RecommendedHint(double? value, string unit) =>
+        value.HasValue ? $"Recommended: {value.Value.ToString(CultureInfo.InvariantCulture)} {unit}" : null;
+
+    private static double ParseConfigNumber(string? raw) =>
+        double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
+
+    private static string FormatNumber(double value) => value.ToString(CultureInfo.InvariantCulture);
+}

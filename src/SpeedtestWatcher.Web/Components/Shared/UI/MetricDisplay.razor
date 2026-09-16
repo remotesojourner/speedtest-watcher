@@ -1,0 +1,44 @@
+@if (Size == MetricSize.Hero)
+{
+    <div>
+        <div class="d-flex align-baseline gap-2">
+            <MudText Typo="@(Dense ? Typo.h3 : Typo.h2)" Class="sw-hero-value font-weight-bold" Color="@Color">@Value</MudText>
+            @if (!string.IsNullOrEmpty(Unit))
+            {
+                <MudText Typo="@(Dense ? Typo.h6 : Typo.h5)" Class="sw-muted">@Unit</MudText>
+            }
+        </div>
+        <MudText Typo="Typo.body2" Class="sw-muted mt-1">@Label</MudText>
+    </div>
+}
+else
+{
+    <div class="text-center">
+        <div class="d-flex align-center justify-center gap-1">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <MudIcon Icon="@Icon" Size="MudBlazor.Size.Small" Color="@Color" />
+            }
+            <MudText Typo="@(ValueTypo())" Class="sw-hero-value font-weight-bold" Color="@Color">@Value</MudText>
+        </div>
+        <MudText Typo="Typo.caption" Class="sw-muted">@Label</MudText>
+    </div>
+}
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string? Unit { get; set; }
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public Color Color { get; set; } = Color.Default;
+    [Parameter] public MetricSize Size { get; set; } = MetricSize.Large;
+
+    /// <summary>Steps the whole display down one typographic rank - used inside dialogs, per the design tokens.</summary>
+    [Parameter] public bool Dense { get; set; }
+
+    private Typo ValueTypo() => Size switch
+    {
+        MetricSize.Large => Dense ? Typo.h6 : Typo.h5,
+        _ => Typo.body1
+    };
+}

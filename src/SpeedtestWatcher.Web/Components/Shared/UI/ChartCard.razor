@@ -1,0 +1,59 @@
+@inject IDialogService DialogService
+
+<MudCard Elevation="1" Class="@($"sw-card pa-4 sw-fill {Class}".TrimEnd())">
+    <div class="d-flex align-center justify-space-between gap-2 mb-2">
+        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@Title</MudText>
+        <div class="d-flex align-center gap-1">
+            @if (!string.IsNullOrEmpty(ValueText))
+            {
+                <MudText Typo="Typo.caption" Class="sw-muted">@ValueText</MudText>
+            }
+            @if (Expandable)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Size="Size.Small" OnClick="ExpandAsync"
+                               aria-label="@($"Expand {Title}")" />
+            }
+        </div>
+    </div>
+    <MudChart ChartType="@ChartType" ChartSeries="@ChartSeries" ChartLabels="@_displayLabels"
+              Width="100%" Height="@Height" MatchBoundsToSize="true" ChartOptions="@ChartOptions" />
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? ValueText { get; set; }
+    [Parameter] public ChartType ChartType { get; set; } = ChartType.Line;
+    [Parameter] public List<ChartSeries<double>> ChartSeries { get; set; } = [];
+    [Parameter] public string[] ChartLabels { get; set; } = [];
+    // LineChartOptions/BarChartOptions/ChartOptions share no common base class - the type
+    // MudChart itself actually binds against is this shared interface.
+    [Parameter] public MudBlazor.Charts.IChartOptions? ChartOptions { get; set; }
+    [Parameter] public string Height { get; set; } = "240px";
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Most x-axis labels drawn in the card (the expanded view shows more). 0 draws them all.</summary>
+    [Parameter] public int MaxLabels { get; set; }
+
+    /// <summary>Shows the expand button. Pass false where the card already spans the screen.</summary>
+    [Parameter] public bool Expandable { get; set; } = true;
+
+    private const int ExpandedMaxLabels = 8;
+    private string[] _displayLabels = [];
+
+    protected override void OnParametersSet() => _displayLabels = ChartAxisHelper.ThinLabels(ChartLabels, MaxLabels);
+
+    private async Task ExpandAsync()
+    {
+        var parameters = new DialogParameters<ChartExpandDialog>
+        {
+            { x => x.ValueText, ValueText },
+            { x => x.ChartType, ChartType },
+            { x => x.ChartSeries, ChartSeries },
+            { x => x.ChartLabels, MaxLabels > 0 ? ChartAxisHelper.ThinLabels(ChartLabels, ExpandedMaxLabels) : ChartLabels },
+            { x => x.ChartOptions, ChartOptions },
+            { x => x.Class, Class }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<ChartExpandDialog>(Title, parameters, options);
+    }
+}

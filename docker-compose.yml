@@ -1,0 +1,14 @@
+services:
+  speedtest-watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: speedtest-watcher:latest
+    container_name: speedtest-watcher
+    restart: unless-stopped
+    ports:
+      - "5216:5216"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5216

@@ -1,0 +1,494 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.SignalR.Client
+@inject PreferencesService PreferencesService
+@inject AuthenticationStateProvider AuthState
+@inject InternalAccessToken InternalToken
+@inject ConfigStateService ConfigService
+@inject StatusStateService StatusService
+@inject SpeedtestStateService SpeedtestService
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@inject IConfiguration Configuration
+@implements IAsyncDisposable
+
+<MudThemeProvider Theme="_theme" @bind-IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider FullWidth="true" MaxWidth="MaxWidth.Small" />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true" Class="px-3">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" aria-label="Toggle navigation" />
+        <a href="" class="d-flex align-center" style="color:inherit;text-decoration:none;">
+            <img src="img/logo.svg" style="width:28px;height:28px;object-fit:contain;margin-left:8px;" alt="" />
+            <MudText Typo="Typo.h6" Class="ml-2 font-weight-bold" Style="letter-spacing:-0.5px;">Speedtest Watcher</MudText>
+        </a>
+        @if (ConfigService.CurrentConfig.PreviewMode)
+        {
+            <MudTooltip Text="@DemoTooltip" Placement="Placement.Bottom">
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Class="ml-2">DEMO</MudChip>
+            </MudTooltip>
+        }
+
+        <MudSpacer />
+
+        <div class="d-flex align-center gap-1">
+            @if (_updateVersion != null)
+            {
+                <MudTooltip Text="@($"Update available: v{_updateVersion}")" Placement="Placement.Bottom">
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleUp" Color="Color.Warning"
+                                   Href="@($"{ProjectInfo.RepositoryUrl(Configuration)}/releases/latest")" Target="_blank"
+                                   aria-label="Update available" />
+                </MudTooltip>
+            }
+            @if (StatusService.Paused)
+            {
+                <MudChip T="string" Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
+            }
+            @if (_state == AppState.Ready && ConfigService.CurrentConfig.ViewMode)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
+                    Sign in
+                </MudButton>
+            }
+            else if (_state == AppState.Ready)
+            {
+                @* The other ways to start a test hang off the Run Test button itself, so they read as part of it.
+                   Both halves are the same filled button, stretched to one height; see .sw-split-button. *@
+                <div class="@(ConfigService.CurrentConfig.Provider is "ookla" or "libre" ? "sw-split-button sw-run-test" : "sw-run-test")">
+                    <MudTooltip Text="@RunTestTooltip" Placement="Placement.Bottom">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
+                                   StartIcon="@Icons.Material.Filled.Speed" Class="sw-split-main"
+                                   Disabled="@(StatusService.Running || StatusService.Paused)"
+                                   OnClick="RunSpeedtestAsync">
+                            @(StatusService.Running ? "Running..." : "Run Test")
+                        </MudButton>
+                    </MudTooltip>
+                    @if (ConfigService.CurrentConfig.Provider is "ookla" or "libre")
+                    {
+                        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                                 Disabled="@(StatusService.Running || StatusService.Paused)">
+                            <ActivatorContent>
+                                @* A custom activator doesn't open the menu by itself; it has to call the context the menu gives it. *@
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
+                                           Class="sw-split-toggle" Disabled="@(StatusService.Running || StatusService.Paused)"
+                                           OnClick="@(args => context.ToggleAsync(args))" aria-label="More ways to run a test">
+                                    <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" />
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Dns" OnClick="RunOnServerAsync">Run on a specific server...</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                    }
+                </div>
+            }
+
+            @if (_state == AppState.Ready && _signedInAs != null)
+            {
+                <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight"
+                         TransformOrigin="Origin.TopRight" aria-label="Account">
+                    <MudText Typo="Typo.caption" Class="sw-muted d-block px-4 pt-2 pb-1">Signed in as</MudText>
+                    <MudText Typo="Typo.body2" Class="font-weight-bold d-block px-4 pb-2">@_signedInAs</MudText>
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="SignOut">Sign out</MudMenuItem>
+                </MudMenu>
+            }
+
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit"
+                           OnClick="ToggleThemeAsync"
+                           aria-label="Toggle theme" />
+        </div>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="DrawerVariant.Responsive">
+        <MudNavMenu Class="pa-2">
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="history" Icon="@Icons.Material.Filled.History">History</MudNavLink>
+            <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Settings</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent Class="px-4 px-lg-6 pb-4 pb-lg-6 pt-16">
+        <div style="max-width:1400px;margin:0 auto;width:100%;">
+            @switch (_state)
+            {
+                case AppState.Loading:
+                    <StateView Loading="true" />
+                    break;
+                case AppState.SignInRequired:
+                    <div class="d-flex justify-center mt-12">
+                        <SurfaceCard Icon="@Icons.Material.Filled.Lock" Title="Sign in required" FullHeight="false" Class="sw-narrow-card"
+                                     Description="This Speedtest Watcher instance is protected. Sign in to continue.">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
+                                Sign in
+                            </MudButton>
+                        </SurfaceCard>
+                    </div>
+                    break;
+                case AppState.ApiError:
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
+                        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">API not reachable</MudText>
+                        <MudText Typo="Typo.body2">Speedtest Watcher could not reach the API of this instance. Please try again later.</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="mt-3" OnClick="InitializeAsync">Try again</MudButton>
+                    </MudAlert>
+                    break;
+                default:
+                    @Body
+                    break;
+            }
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private enum AppState { Loading, SignInRequired, ApiError, Ready }
+
+    private HubConnection? _hubConnection;
+    private AppState _state = AppState.Loading;
+    private string? _signedInAs;
+    private string? _updateVersion;
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = true;
+    private bool _disposed;
+
+    private string RunTestTooltip => StatusService.Paused
+        ? "Speedtests are paused. Resume them in Settings."
+        : StatusService.Running ? "Speedtest running" : "Start speedtest";
+
+    private string DemoTooltip
+    {
+        get
+        {
+            const string description = "Demo mode: some features are disabled and settings can't be changed.";
+            var message = ConfigService.CurrentConfig.PreviewMessage;
+            return string.IsNullOrWhiteSpace(message) ? description : $"{description} {message}";
+        }
+    }
+
+    private MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            AppbarBackground = "#0f1419",
+            AppbarText = "#e2e8f0",
+            DrawerBackground = "#0f1419",
+            Background = "#0b0f14",
+            BackgroundGray = "#151b23",
+            Surface = "#151b23",
+            LinesInputs = "#263238",
+            LinesDefault = "#263238",
+            ActionDefault = "#94a3b8",
+            Primary = "#10b981",
+            Secondary = "#06b6d4",
+            Success = "#10b981",
+            Warning = "#f59e0b",
+            Error = "#ef4444",
+            Info = "#3b82f6",
+            TextPrimary = "#e2e8f0",
+            TextSecondary = "#94a3b8"
+        },
+        PaletteLight = new PaletteLight()
+        {
+            AppbarBackground = "#ffffff",
+            AppbarText = "#1e293b",
+            DrawerBackground = "#f8fafc",
+            Background = "#f1f5f9",
+            Surface = "#ffffff",
+            LinesInputs = "#e2e8f0",
+            LinesDefault = "#e2e8f0",
+            ActionDefault = "#64748b",
+            Primary = "#10b981",
+            Secondary = "#06b6d4",
+            Success = "#10b981",
+            Warning = "#f59e0b",
+            Error = "#ef4444",
+            Info = "#3b82f6",
+            TextPrimary = "#1e293b",
+            TextSecondary = "#64748b"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "10px",
+            AppbarHeight = "56px"
+        },
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = new[] { "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif" }
+            },
+            H4 = new H4Typography { FontWeight = "700" },
+            H5 = new H5Typography { FontWeight = "600" },
+            H6 = new H6Typography { FontWeight = "600" },
+            Subtitle1 = new Subtitle1Typography { FontWeight = "600" },
+            Subtitle2 = new Subtitle2Typography { FontWeight = "600" }
+        }
+    };
+
+    // Pause, resume and run state change from pages too (Settings, the paused banner on the Dashboard); the app bar has to follow.
+    protected override void OnInitialized() => StatusService.OnChange += OnStatusChanged;
+
+    private void OnStatusChanged()
+    {
+        if (!_disposed) InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _disposed) return;
+
+        try
+        {
+            var savedTheme = await JS.InvokeAsync<string?>("speedtestWatcherInterop.getLocalStorage", "theme");
+            _isDarkMode = savedTheme != "light";
+        }
+        catch { }
+
+        await PreferencesService.InitializeAsync();
+
+        if (await InternalAuthHandler.IsSignedInAsync(AuthState))
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _signedInAs = SignedInUser.DisplayName(state.User);
+        }
+
+        await InitializeAsync();
+        await SetupSignalRAsync();
+    }
+
+    // Pages only render once this reaches Ready, so their first API calls already see loaded configuration.
+    private async Task InitializeAsync()
+    {
+        _state = AppState.Loading;
+        StateHasChanged();
+
+        _state = await LoadConfigAsync();
+        if (_state == AppState.Ready)
+        {
+            await LoadStatusAndTestsAsync();
+            _ = CheckForUpdateAsync();
+        }
+
+        if (!_disposed) StateHasChanged();
+    }
+
+    private async Task<AppState> LoadConfigAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("/api/config");
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) return AppState.SignInRequired;
+            if (!response.IsSuccessStatusCode) return AppState.ApiError;
+
+            var cfg = await response.Content.ReadFromJsonAsync<ConfigDto>();
+            if (cfg == null) return AppState.ApiError;
+
+            ConfigService.SetConfig(cfg);
+            if (cfg.Provider == "none" && !cfg.PreviewMode && !cfg.ViewMode)
+            {
+                Navigation.NavigateTo("/welcome");
+            }
+            return AppState.Ready;
+        }
+        catch
+        {
+            return AppState.ApiError;
+        }
+    }
+
+    private async Task LoadStatusAndTestsAsync()
+    {
+        try
+        {
+            var status = await Http.GetFromJsonAsync<StatusDto>("/api/speedtests/status");
+            if (status != null) StatusService.UpdateStatus(status.Running, status.Paused);
+        }
+        catch { }
+
+        try
+        {
+            SpeedtestService.SetLoading(true);
+            var tests = await Http.GetFromJsonAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
+            if (tests != null) SpeedtestService.SetTests(tests, tests.Count >= 30);
+        }
+        catch { }
+        finally
+        {
+            SpeedtestService.SetLoading(false);
+        }
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        if (ConfigService.CurrentConfig.ViewMode) return;
+
+        try
+        {
+            var version = await Http.GetFromJsonAsync<VersionInfoDto>("/api/info/version");
+            if (version != null
+                && Version.TryParse(version.Remote, out var remote)
+                && Version.TryParse(version.Local, out var local)
+                && remote > local)
+            {
+                _updateVersion = version.Remote;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch { }
+    }
+
+    private async Task RunOnServerAsync()
+    {
+        var parameters = new DialogParameters<RunWithServerDialog>
+        {
+            { x => x.Provider, ConfigService.CurrentConfig.Provider ?? "ookla" }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        await DialogService.ShowAsync<RunWithServerDialog>("Run a test on a specific server", parameters, options);
+    }
+
+    // Sign-in happens outside Blazor (a redirect to the provider and back), so both need a full page load.
+    private void SignIn()
+    {
+        var returnUrl = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+    }
+
+    private void SignOut() => Navigation.NavigateTo("/auth/logout", forceLoad: true);
+
+    private async Task ToggleThemeAsync()
+    {
+        _isDarkMode = !_isDarkMode;
+        try
+        {
+            await JS.InvokeVoidAsync("speedtestWatcherInterop.setLocalStorage", "theme", _isDarkMode ? "dark" : "light");
+        }
+        catch { }
+    }
+
+    private async Task RunSpeedtestAsync()
+    {
+        try
+        {
+            var res = await Http.PostAsync("/api/speedtests/run", null);
+            if (res.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Speedtest started", Severity.Success);
+            }
+            else if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                Snackbar.Add("Speedtest is already running", Severity.Warning);
+            }
+            else if ((int)res.StatusCode == 410)
+            {
+                Snackbar.Add("Tests are paused or no provider selected", Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add("Could not start speedtest", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task SetupSignalRAsync()
+    {
+        try
+        {
+            // Over loopback, like the API calls: the internal token must never travel through a proxy.
+            var signedIn = _signedInAs != null;
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(new Uri(Http.BaseAddress!, SpeedtestWatcher.Web.Hubs.SpeedtestHub.HubUrl), options =>
+                {
+                    if (signedIn) options.Headers[InternalAccessToken.HeaderName] = InternalToken.Value;
+                })
+                .WithAutomaticReconnect()
+                .Build();
+
+            _hubConnection.On<SpeedtestDto>("NewTestResult", test =>
+            {
+                if (_disposed) return;
+                InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    SpeedtestService.PrependTest(test);
+                    StatusService.UpdateStatus(false, StatusService.Paused);
+                    if (test.Status == "skipped")
+                        Snackbar.Add($"Speedtest skipped: {test.Error}", Severity.Info);
+                    else
+                        Snackbar.Add($"Speedtest complete: ↓ {test.Download:F1} Mbps  ↑ {test.Upload:F1} Mbps", Severity.Success);
+                    StateHasChanged();
+                });
+            });
+
+            _hubConnection.On<SpeedtestDto>("TestFailed", test =>
+            {
+                if (_disposed) return;
+                InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    SpeedtestService.PrependTest(test);
+                    StatusService.UpdateStatus(false, StatusService.Paused);
+                    Snackbar.Add(SpeedtestErrors.Describe(test.Error), Severity.Error);
+                    StateHasChanged();
+                });
+            });
+
+            _hubConnection.On("TestStarted", () =>
+            {
+                if (_disposed) return;
+                InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    StatusService.UpdateStatus(true, StatusService.Paused);
+                    StateHasChanged();
+                });
+            });
+
+            _hubConnection.On<bool, bool>("StatusChanged", (running, paused) =>
+            {
+                if (_disposed) return;
+                InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    StatusService.UpdateStatus(running, paused);
+                    StateHasChanged();
+                });
+            });
+
+            _hubConnection.On<string, string>("ConfigChanged", (key, value) =>
+            {
+                if (_disposed) return;
+                InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    ConfigService.CurrentConfig[key] = value;
+                    StateHasChanged();
+                });
+            });
+
+            await _hubConnection.StartAsync();
+        }
+        catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        StatusService.OnChange -= OnStatusChanged;
+        if (_hubConnection != null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+}

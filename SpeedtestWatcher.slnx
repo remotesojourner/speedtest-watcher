@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpeedtestWatcher.Core/SpeedtestWatcher.Core.csproj" />
+    <Project Path="src/SpeedtestWatcher.Infrastructure/SpeedtestWatcher.Infrastructure.csproj" />
+    <Project Path="src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpeedtestWatcher.Tests/SpeedtestWatcher.Tests.csproj" />
+  </Folder>
+</Solution>

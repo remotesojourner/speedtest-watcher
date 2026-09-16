@@ -1,0 +1,474 @@
+@page "/history"
+@using System.Globalization
+@inject SpeedtestStateService SpeedtestService
+@inject StatusStateService StatusService
+@inject ConfigStateService ConfigService
+@inject PreferencesService PreferencesService
+@inject HttpClient Http
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Speedtest Watcher - History</PageTitle>
+
+<MudPaper Elevation="1" Class="@($"{HeroClass()} pa-6 mb-6")">
+    <div class="d-flex flex-wrap align-end justify-space-between gap-6">
+        <MudTooltip Text="Download speed affects your browsing experience. The more you get, the faster your computer can receive data."
+                    Placement="Placement.Top">
+            <MetricDisplay Size="MetricSize.Hero" Color="@DownloadColor"
+                           Value="@(LatestReading != null ? $"{PreferencesService.ConvertSpeed(LatestReading.Download):F1}" : "—")"
+                           Unit="@PreferencesService.SpeedUnit"
+                           Label="@DownloadLabel()" />
+        </MudTooltip>
+
+        <div class="d-flex flex-wrap gap-6">
+            <MudTooltip Text="Upload speed affects your browsing experience. The more you get, the faster your computer can send data."
+                        Placement="Placement.Top">
+                <MetricDisplay Size="MetricSize.Large" Color="@UploadColor" Icon="@Icons.Material.Filled.Upload"
+                               Value="@(LatestReading != null ? $"{PreferencesService.ConvertSpeed(LatestReading.Upload):F1}" : "—")"
+                               Label="@($"{PreferencesService.SpeedUnit} upload")" />
+            </MudTooltip>
+
+            <MudTooltip Text="Ping shows how fast the provider responds — shorter is better. Jitter is how much it varies; lower means a more stable connection."
+                        Placement="Placement.Top">
+                <MetricDisplay Size="MetricSize.Large" Color="@PingColor" Icon="@Icons.Material.Filled.NetworkPing"
+                               Value="@(LatestReading != null ? $"{LatestReading.Ping}" : "—")"
+                               Label="@($"ms ping{(LatestReading?.Jitter != null ? $" (±{LatestReading.Jitter:F1})" : "")}")" />
+            </MudTooltip>
+        </div>
+    </div>
+
+    <Sparkline Values="@_downloadHistory" Color="@DownloadColor" Class="mt-4" />
+</MudPaper>
+
+<div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
+    <MudText Typo="Typo.h6" Class="font-weight-bold">Recent Tests</MudText>
+
+    <div class="d-flex flex-wrap align-center gap-2">
+        <MudSelect T="string" Value="_status" ValueChanged="SetStatusAsync" Label="Status" Variant="Variant.Outlined"
+                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            <MudSelectItem T="string" Value="@AllFilter">All results</MudSelectItem>
+            <MudSelectItem T="string" Value="@("completed")">Completed</MudSelectItem>
+            <MudSelectItem T="string" Value="@("failed")">Failed</MudSelectItem>
+            <MudSelectItem T="string" Value="@("skipped")">Skipped</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="string" Value="_type" ValueChanged="SetTypeAsync" Label="Started by" Variant="Variant.Outlined"
+                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            <MudSelectItem T="string" Value="@AllFilter">Anything</MudSelectItem>
+            <MudSelectItem T="string" Value="@("auto")">Schedule</MudSelectItem>
+            <MudSelectItem T="string" Value="@("custom")">By hand</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="string" Value="_healthy" ValueChanged="SetHealthAsync" Label="Targets" Variant="Variant.Outlined"
+                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            <MudSelectItem T="string" Value="@AllFilter">Any result</MudSelectItem>
+            <MudSelectItem T="string" Value="@("true")">Met targets</MudSelectItem>
+            <MudSelectItem T="string" Value="@("false")">Missed targets</MudSelectItem>
+        </MudSelect>
+
+        <MudTooltip Text="@(_selecting ? "Stop selecting" : "Select results")" Placement="Placement.Bottom">
+            <MudIconButton Icon="@Icons.Material.Filled.Checklist" Color="@(_selecting ? Color.Primary : Color.Default)"
+                           OnClick="ToggleSelecting" aria-label="Select results" />
+        </MudTooltip>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="OpenExportAsync">Export</MudButton>
+    </div>
+</div>
+
+@if (_selecting)
+{
+    <div class="d-flex flex-wrap align-center gap-3 mb-3">
+        <MudText Typo="Typo.body2" Class="sw-muted">@_selected.Count selected</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="SelectAllVisible">Select all shown</MudButton>
+        <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="@(_selected.Count == 0)" OnClick="ClearSelection">Clear</MudButton>
+    </div>
+}
+
+<StateView Loading="@(Loading && Rows.Count == 0)" Empty="@(Rows.Count == 0 && !Loading)">
+    <EmptyContent>
+        @if (FiltersActive)
+        {
+            <span>No results match these filters.</span>
+        }
+        else
+        {
+            <span>There are currently no tests. Click <strong>Run Test</strong> above to run your first one.</span>
+        }
+    </EmptyContent>
+    <ChildContent>
+        <MudList T="SpeedtestDto" Class="sw-card sw-surface mud-elevation-1 rounded-lg pa-1">
+            @foreach (var group in TestGroups)
+            {
+                <MudListSubheader Class="sw-list-subheader">@group.Label</MudListSubheader>
+                @foreach (var test in group.Tests)
+                {
+                    <MudListItem T="SpeedtestDto" OnClick="@(() => RowClicked(test))" Class="rounded-lg">
+                        <MudGrid Spacing="2" Class="align-center">
+                            <MudItem xs="6" sm="3">
+                                <div class="d-flex align-center gap-2">
+                                    @if (_selecting)
+                                    {
+                                        <MudCheckBox T="bool" Value="@_selected.Contains(test.Id)" Dense="true" Color="Color.Primary"
+                                                     ValueChanged="@(value => ToggleSelected(test.Id, value))" />
+                                    }
+                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="sw-muted" />
+                                    <MudText Typo="Typo.body2">@PreferencesService.FormatTime(FormatHelper.ParseTimestamp(test.Created))</MudText>
+                                    @if (test.Healthy == false)
+                                    {
+                                        <MudTooltip Text="@TargetsTooltip(test)" Placement="Placement.Top">
+                                            <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Color="Color.Warning" />
+                                        </MudTooltip>
+                                    }
+                                </div>
+                            </MudItem>
+
+                            @if (test.Status == "skipped")
+                            {
+                                <MudItem xs="12" sm="9">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Skipped</MudChip>
+                                        <MudText Typo="Typo.caption" Class="sw-muted">@test.Error</MudText>
+                                    </div>
+                                </MudItem>
+                            }
+                            else if (!string.IsNullOrEmpty(test.Error))
+                            {
+                                <MudItem xs="12" sm="9">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudChip T="string" Color="Color.Error" Size="Size.Small">Failed</MudChip>
+                                        <MudText Typo="Typo.caption" Color="Color.Error">@SpeedtestErrors.Describe(test.Error)</MudText>
+                                    </div>
+                                </MudItem>
+                            }
+                            else
+                            {
+                                <MudItem xs="6" sm="3">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.NetworkPing" Size="Size.Small" Color="@MetricStatus.Ping(test.Ping, ConfigService.CurrentConfig.Ping)" />
+                                        <MudText Typo="Typo.body2" Class="font-weight-medium">
+                                            @test.Ping ms
+                                            @if (test.Jitter is { } jitter)
+                                            {
+                                                <span class="sw-muted font-weight-regular" title="Jitter">±@($"{jitter:F1}")</span>
+                                            }
+                                        </MudText>
+                                    </div>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="@MetricStatus.Download(test.Download, ConfigService.CurrentConfig.Download)" />
+                                        <MudText Typo="Typo.body2" Class="font-weight-medium">
+                                            @($"{PreferencesService.ConvertSpeed(test.Download):F1}") @PreferencesService.SpeedUnit
+                                        </MudText>
+                                    </div>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Upload" Size="Size.Small" Color="@MetricStatus.Upload(test.Upload, ConfigService.CurrentConfig.Upload)" />
+                                        <MudText Typo="Typo.body2" Class="font-weight-medium">
+                                            @($"{PreferencesService.ConvertSpeed(test.Upload):F1}") @PreferencesService.SpeedUnit
+                                        </MudText>
+                                    </div>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudListItem>
+                }
+            }
+        </MudList>
+
+        @if (Loading)
+        {
+            <div class="text-center pa-4">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+            </div>
+        }
+        else if (HasMore)
+        {
+            <div id="scroll-sentinel" class="pa-2"></div>
+        }
+        else
+        {
+            <MudText Typo="Typo.caption" Class="sw-muted text-center d-block pa-4">No more tests to load</MudText>
+        }
+
+        <MudScrollToTop TopOffset="400">
+            <MudFab Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ArrowUpward" aria-label="Back to top" />
+        </MudScrollToTop>
+    </ChildContent>
+</StateView>
+
+@code {
+    private const string AllFilter = "all";
+    private const int PageSize = 30;
+
+    private sealed record TestGroup(string Label, List<SpeedtestDto> Tests);
+
+    // The hero reports measurements, so it follows the last test that produced any. A skipped
+    // or failed attempt stores -1 for its readings, which would otherwise show as "-1.0 mbps".
+    private SpeedtestDto? LatestReading =>
+        SpeedtestService.LatestTest is { Status: "completed" } latest
+            ? latest
+            : SpeedtestService.Tests.FirstOrDefault(t => t.Status == "completed");
+    private Timer? _timer;
+    private DotNetObjectReference<History>? _dotNetRef;
+    private List<double> _downloadHistory = [];
+
+    private string _status = AllFilter;
+    private string _type = AllFilter;
+    private string _healthy = AllFilter;
+
+    // Filtered results are fetched separately so the shared list (and the dashboard's latest result) stays intact.
+    private List<SpeedtestDto> _filtered = [];
+    private bool _filteredHasMore = true;
+    private bool _filteredLoading;
+
+    private bool _selecting;
+    private readonly HashSet<int> _selected = [];
+
+    private bool FiltersActive => _status != AllFilter || _type != AllFilter || _healthy != AllFilter;
+
+    private List<SpeedtestDto> Rows => FiltersActive ? _filtered : SpeedtestService.Tests;
+
+    private bool Loading => FiltersActive ? _filteredLoading : SpeedtestService.Loading;
+
+    private bool HasMore => FiltersActive ? _filteredHasMore : SpeedtestService.HasMore;
+
+    private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, ConfigService.CurrentConfig.Ping);
+    private Color DownloadColor => MetricStatus.Download(LatestReading?.Download, ConfigService.CurrentConfig.Download);
+    private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, ConfigService.CurrentConfig.Upload);
+
+    private List<TestGroup> TestGroups => Rows
+        .GroupBy(t => FormatHelper.ParseTimestamp(t.Created).Date)
+        .Select(g => new TestGroup(DayLabel(g.Key), g.ToList()))
+        .ToList();
+
+    protected override void OnInitialized()
+    {
+        SpeedtestService.OnChange += OnStateChanged;
+        StatusService.OnChange += OnStateChanged;
+        _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 0, 10000);
+        BuildDownloadHistory();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("speedtestWatcherInterop.observeIntersection", _dotNetRef, "scroll-sentinel", 0);
+        }
+    }
+
+    private void OnStateChanged()
+    {
+        BuildDownloadHistory();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void BuildDownloadHistory()
+    {
+        _downloadHistory = SpeedtestService.Tests
+            .Where(t => t.Status == "completed")
+            .Take(20)
+            .Reverse()
+            .Select(t => t.Download)
+            .ToList();
+    }
+
+    private Task SetStatusAsync(string value)
+    {
+        _status = value;
+        return ReloadFilteredAsync();
+    }
+
+    private Task SetTypeAsync(string value)
+    {
+        _type = value;
+        return ReloadFilteredAsync();
+    }
+
+    private Task SetHealthAsync(string value)
+    {
+        _healthy = value;
+        return ReloadFilteredAsync();
+    }
+
+    private async Task ReloadFilteredAsync()
+    {
+        _selected.Clear();
+        if (!FiltersActive)
+        {
+            _filtered = [];
+            _filteredHasMore = true;
+            return;
+        }
+
+        _filteredLoading = true;
+        StateHasChanged();
+        try
+        {
+            var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(FilterQuery(null)) ?? [];
+            _filtered = more;
+            _filteredHasMore = more.Count >= PageSize;
+        }
+        catch
+        {
+            _filtered = [];
+            _filteredHasMore = false;
+        }
+        finally
+        {
+            _filteredLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string FilterQuery(int? afterId)
+    {
+        var query = new List<string> { $"limit={PageSize}" };
+        if (afterId is { } id) query.Add($"afterId={id}");
+        if (_status != AllFilter) query.Add($"status={_status}");
+        if (_type != AllFilter) query.Add($"type={_type}");
+        if (_healthy != AllFilter) query.Add($"healthy={_healthy}");
+        return $"/api/speedtests?{string.Join("&", query)}";
+    }
+
+    private void ToggleSelecting()
+    {
+        _selecting = !_selecting;
+        if (!_selecting) _selected.Clear();
+    }
+
+    private void ToggleSelected(int id, bool selected)
+    {
+        if (selected) _selected.Add(id);
+        else _selected.Remove(id);
+    }
+
+    private void SelectAllVisible()
+    {
+        foreach (var test in Rows) _selected.Add(test.Id);
+    }
+
+    private void ClearSelection() => _selected.Clear();
+
+    private async Task RowClicked(SpeedtestDto test)
+    {
+        if (_selecting)
+        {
+            ToggleSelected(test.Id, !_selected.Contains(test.Id));
+            return;
+        }
+
+        await ShowTestDetail(test);
+    }
+
+    private async Task OpenExportAsync()
+    {
+        var parameters = new DialogParameters<ExportDialog>
+        {
+            { x => x.Status, _status == AllFilter ? null : _status },
+            { x => x.Type, _type == AllFilter ? null : _type },
+            { x => x.Healthy, _healthy == AllFilter ? null : _healthy == "true" },
+            { x => x.SelectedIds, _selected.ToList() }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        await DialogService.ShowAsync<ExportDialog>("Export results", parameters, options);
+    }
+
+    private string TargetsTooltip(SpeedtestDto test)
+    {
+        var parts = new List<string>();
+        if (test.ThresholdPing is { } ping) parts.Add($"ping {ping} ms");
+        if (test.ThresholdDownload is { } download) parts.Add($"download {PreferencesService.ConvertSpeed(download):F1} {PreferencesService.SpeedUnit}");
+        if (test.ThresholdUpload is { } upload) parts.Add($"upload {PreferencesService.ConvertSpeed(upload):F1} {PreferencesService.SpeedUnit}");
+        return parts.Count > 0 ? $"Missed your targets: {string.Join(", ", parts)}" : "Missed your targets";
+    }
+
+    private string DownloadLabel() =>
+        LatestReading != null
+            ? $"Download speed · last test {FormatHelper.ToRelativeTime(FormatHelper.ParseTimestamp(LatestReading.Created))}"
+            : "Download speed";
+
+    private static string DayLabel(DateTime day)
+    {
+        var today = DateTime.Now.Date;
+        if (day == today) return "Today";
+        if (day == today.AddDays(-1)) return "Yesterday";
+        return day.ToString(day.Year == today.Year ? "dddd, d MMMM" : "dddd, d MMMM yyyy", CultureInfo.CurrentCulture);
+    }
+
+    [JSInvokable]
+    public async Task OnIntersect()
+    {
+        if (!HasMore || Loading) return;
+
+        if (FiltersActive)
+        {
+            _filteredLoading = true;
+            try
+            {
+                var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(FilterQuery(_filtered.LastOrDefault()?.Id)) ?? [];
+                _filtered.AddRange(more);
+                _filteredHasMore = more.Count >= PageSize;
+            }
+            catch { }
+            finally
+            {
+                _filteredLoading = false;
+            }
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        SpeedtestService.SetLoading(true);
+        try
+        {
+            var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(
+                $"/api/speedtests?limit={PageSize}&afterId={SpeedtestService.LastId}");
+            if (more != null && more.Count > 0)
+            {
+                var all = SpeedtestService.Tests.Concat(more).ToList();
+                SpeedtestService.SetTests(all, more.Count >= PageSize);
+            }
+            else
+            {
+                SpeedtestService.SetTests(SpeedtestService.Tests, false);
+            }
+        }
+        catch { }
+        finally
+        {
+            SpeedtestService.SetLoading(false);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShowTestDetail(SpeedtestDto test)
+    {
+        var parameters = new DialogParameters<TestDetailDialog> { { x => x.Test, test } };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<TestDetailDialog>("Test Details", parameters, options);
+        var result = await dialog.Result;
+
+        // A deleted test disappears from the shared list; the filtered view has to drop it too.
+        if (result is { Canceled: false } && FiltersActive)
+        {
+            _filtered.RemoveAll(t => t.Id == test.Id);
+            _selected.Remove(test.Id);
+        }
+    }
+
+    private string HeroClass() => StatusService.Running ? "sw-card sw-running" : "sw-card";
+
+    public async ValueTask DisposeAsync()
+    {
+        SpeedtestService.OnChange -= OnStateChanged;
+        StatusService.OnChange -= OnStateChanged;
+        _timer?.Dispose();
+        _dotNetRef?.Dispose();
+        await Task.CompletedTask;
+    }
+}

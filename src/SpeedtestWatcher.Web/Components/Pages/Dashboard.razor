@@ -1,0 +1,553 @@
+@page "/"
+@using System.Globalization
+@inject HttpClient Http
+@inject PreferencesService PreferencesService
+@inject ConfigStateService ConfigService
+@inject SpeedtestStateService SpeedtestService
+@inject StatusStateService StatusService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<PageTitle>Speedtest Watcher - Dashboard</PageTitle>
+
+<PageHeader Title="Dashboard" Subtitle="@RangeSubtitle">
+    <Actions>
+        @if (_range == CustomRange)
+        {
+            @* One field for both ends, sized to the range buttons; see .sw-range-picker. *@
+            <MudDateRangePicker DateRange="@(new DateRange(_from, _to))" DateRangeChanged="SetCustomRangeAsync"
+                                PlaceholderStart="From" PlaceholderEnd="To" AutoClose="true"
+                                DateFormat="@FormatHelper.DatePattern(ConfigService.CurrentConfig.DateFormat)"
+                                Variant="Variant.Outlined" Margin="Margin.Dense" Class="sw-range-picker" />
+        }
+        <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync" SelectionMode="SelectionMode.SingleSelection"
+                        Color="Color.Primary" Size="Size.Small" Outlined="true" Delimiters="true" CheckMark="false"
+                        SelectedClass="sw-range-selected" Class="sw-range-toggle">
+            @foreach (var option in RangeOptions)
+            {
+                <MudToggleItem Value="@option.Id" Text="@option.Title" />
+            }
+        </MudToggleGroup>
+    </Actions>
+</PageHeader>
+
+@if (StatusService.Paused)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
+        <div class="d-flex flex-wrap align-center justify-space-between gap-3">
+            <span>Speedtests are currently paused.</span>
+            @if (!ConfigService.CurrentConfig.ViewMode)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeAsync">
+                    Resume
+                </MudButton>
+            }
+        </div>
+    </MudAlert>
+}
+
+<StateView Loading="_loading" Empty="@(_stats == null || _stats.Tests.Total == 0)"
+           EmptyMessage="There are no tests in the selected period.">
+    <ChildContent>
+        @if (_stats != null)
+        {
+            <MudGrid Spacing="4" Class="mb-4">
+                <MudItem xs="12" md="8">
+                    <SurfaceCard Icon="@Icons.Material.Filled.Insights" Title="Overview">
+                        <div class="d-flex flex-wrap justify-space-around gap-6 mb-4">
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Download"
+                                           Color="@MetricStatus.Download(_stats.Download?.Avg, ConfigService.CurrentConfig.Download)"
+                                           Value="@(_stats.Download != null ? $"{PreferencesService.ConvertSpeed(_stats.Download.Avg):F1}" : "—")"
+                                           Label="@($"{PreferencesService.SpeedUnit} avg download")" />
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Upload"
+                                           Color="@MetricStatus.Upload(_stats.Upload?.Avg, ConfigService.CurrentConfig.Upload)"
+                                           Value="@(_stats.Upload != null ? $"{PreferencesService.ConvertSpeed(_stats.Upload.Avg):F1}" : "—")"
+                                           Label="@($"{PreferencesService.SpeedUnit} avg upload")" />
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
+                                           Color="@MetricStatus.Ping(_stats.Ping?.Avg, ConfigService.CurrentConfig.Ping)"
+                                           Value="@(_stats.Ping != null ? $"{_stats.Ping.Avg}" : "—")"
+                                           Label="ms avg ping" />
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.GraphicEq"
+                                           Value="@(_stats.Jitter != null ? $"{_stats.Jitter.Avg:F1}" : "—")"
+                                           Label="ms avg jitter" />
+                        </div>
+                        <MudDivider Class="mb-3" />
+                        <div class="d-flex flex-wrap justify-space-around gap-4">
+                            <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Speed"
+                                           Value="@_stats.Tests.Total.ToString(CultureInfo.CurrentCulture)"
+                                           Label="@(_stats.Tests.Total == 1 ? "test run" : "tests run")" />
+                            <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.ErrorOutline"
+                                           Color="@(_stats.Tests.Failed > 0 ? Color.Error : Color.Default)"
+                                           Value="@_stats.Tests.Failed.ToString(CultureInfo.CurrentCulture)" Label="failed" />
+                            <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Timer"
+                                           Value="@(_stats.Time != null ? $"{_stats.Time.Avg}s" : "—")" Label="average duration" />
+                        </div>
+                    </SurfaceCard>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="Latest Test"
+                                 Class="@(StatusService.Running ? "sw-running" : null)" Description="@LatestDescription">
+                        @if (Latest == null)
+                        {
+                            <MudText Typo="Typo.body2" Class="sw-muted">No tests yet.</MudText>
+                        }
+                        else if (Latest.Status == "skipped")
+                        {
+                            @* A skip is a decision, not a failure, and the reason is already written in plain words. *@
+                            @* The reason can hold an IPv6 address, which has no natural break points. *@
+                            <MudText Typo="Typo.body2" Class="sw-muted" Style="overflow-wrap:anywhere;">Skipped — @Latest.Error</MudText>
+                        }
+                        else if (!string.IsNullOrEmpty(Latest.Error))
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Error">@SpeedtestErrors.Describe(Latest.Error)</MudText>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap justify-space-around gap-4">
+                                <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Download"
+                                               Color="@MetricStatus.Download(Latest.Download, ConfigService.CurrentConfig.Download)"
+                                               Value="@($"{PreferencesService.ConvertSpeed(Latest.Download):F1}")" Label="@PreferencesService.SpeedUnit" />
+                                <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Upload"
+                                               Color="@MetricStatus.Upload(Latest.Upload, ConfigService.CurrentConfig.Upload)"
+                                               Value="@($"{PreferencesService.ConvertSpeed(Latest.Upload):F1}")" Label="@PreferencesService.SpeedUnit" />
+                                <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.NetworkPing"
+                                               Color="@MetricStatus.Ping(Latest.Ping, ConfigService.CurrentConfig.Ping)"
+                                               Value="@($"{Latest.Ping}")"
+                                               Label="@(Latest.Jitter is { } jitter ? $"ms ping (±{jitter:F1})" : "ms ping")" />
+                            </div>
+
+                            @if (Latest.Healthy is { } healthy)
+                            {
+                                <MudChip T="string" Size="Size.Small" Class="mt-3"
+                                         Color="@(healthy ? Color.Success : Color.Warning)"
+                                         Icon="@(healthy ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.TrendingDown)">
+                                    @(healthy ? "Met your targets" : "Missed your targets")
+                                </MudChip>
+                            }
+                        }
+                    </SurfaceCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="Connection Stability"
+                                 Description="How consistent results were across the period.">
+                        <div class="d-flex flex-wrap justify-space-around gap-6">
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Download"
+                                           Color="@ConsistencyColor(_stats.Consistency.Download.Consistency)"
+                                           Value="@($"{_stats.Consistency.Download.Consistency:F0}%")"
+                                           Label="@($"download ±{Speed(_stats.Consistency.Download.StdDev)}")" />
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Upload"
+                                           Color="@ConsistencyColor(_stats.Consistency.Upload.Consistency)"
+                                           Value="@($"{_stats.Consistency.Upload.Consistency:F0}%")"
+                                           Label="@($"upload ±{Speed(_stats.Consistency.Upload.StdDev)}")" />
+                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
+                                           Value="@($"±{_stats.Consistency.Ping.StdDev:F1}")" Label="ms ping variance" />
+                        </div>
+                        <MudText Typo="Typo.caption" Class="sw-muted d-block text-center mt-3">Overall: @StabilityVerdict</MudText>
+                    </SurfaceCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <SurfaceCard Icon="@Icons.Material.Filled.StackedLineChart" Title="Value Ranges">
+                        @* Units sit beside the row label so the numbers stay short enough for phone widths. *@
+                        <MudSimpleTable Dense="true" Class="sw-range-table" Style="background:transparent;">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th class="text-end">Min</th>
+                                    <th class="text-end">Average</th>
+                                    <th class="text-end">Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (_stats.Download != null)
+                                {
+                                    <tr>
+                                        <td>Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Min):F1}")</td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Avg):F1}")</td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Max):F1}")</td>
+                                    </tr>
+                                }
+                                @if (_stats.Upload != null)
+                                {
+                                    <tr>
+                                        <td>Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Min):F1}")</td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Avg):F1}")</td>
+                                        <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Max):F1}")</td>
+                                    </tr>
+                                }
+                                @if (_stats.Ping != null)
+                                {
+                                    <tr>
+                                        <td>Ping <span class="sw-muted">ms</span></td>
+                                        <td class="text-end">@_stats.Ping.Min</td>
+                                        <td class="text-end">@_stats.Ping.Avg</td>
+                                        <td class="text-end">@_stats.Ping.Max</td>
+                                    </tr>
+                                }
+                                @if (_stats.Jitter != null)
+                                {
+                                    <tr>
+                                        <td>Jitter <span class="sw-muted">ms</span></td>
+                                        <td class="text-end">@($"{_stats.Jitter.Min:F1}")</td>
+                                        <td class="text-end">@($"{_stats.Jitter.Avg:F1}")</td>
+                                        <td class="text-end">@($"{_stats.Jitter.Max:F1}")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </SurfaceCard>
+                </MudItem>
+            </MudGrid>
+
+            @* Below the md breakpoint the cards already span the screen: fewer axis labels and nothing to expand. *@
+            <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
+                @if (_labels.Length > 0)
+                {
+                    <MudGrid Class="mb-4">
+                        <MudItem xs="12" md="6" lg="4">
+                            <ChartCard Title="Download Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
+                                       ChartType="ChartType.Line" ChartSeries="@_downloadSeries" ChartLabels="@_labels" ChartOptions="@_downloadOptions"
+                                       MaxLabels="2" Expandable="@(!_compact)" />
+                        </MudItem>
+                        <MudItem xs="12" md="6" lg="4">
+                            <ChartCard Title="Upload Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
+                                       ChartType="ChartType.Line" ChartSeries="@_uploadSeries" ChartLabels="@_labels" ChartOptions="@_uploadOptions"
+                                       MaxLabels="2" Expandable="@(!_compact)" />
+                        </MudItem>
+                        <MudItem xs="12" md="12" lg="4">
+                            <ChartCard Title="Ping &amp; Jitter" ValueText="ms" Class="sw-chart-average"
+                                       ChartType="ChartType.Line" ChartSeries="@_pingSeries" ChartLabels="@_labels" ChartOptions="@_pingOptions"
+                                       MaxLabels="2" Expandable="@(!_compact)" />
+                        </MudItem>
+                    </MudGrid>
+                }
+
+                @if (_stats.HourlyAverages.Any(h => h.Count > 0))
+                {
+                    <SurfaceCard Icon="@Icons.Material.Filled.AccessTime" Title="By Time of Day" FullHeight="false" Class="mb-4"
+                                 Description="Averages for each hour of the day across the selected period.">
+                        @* 24 columns don't fit a phone, so the table scrolls sideways with the row names pinned. *@
+                        <div class="sw-hourly-scroll">
+                            <table class="sw-hourly-table">
+                                @* Fixed layout with equal columns, so a filled hour never widens its column. *@
+                                <colgroup>
+                                    <col class="sw-hourly-name-col" />
+                                    @for (var hour = 0; hour < 24; hour++)
+                                    {
+                                        <col />
+                                    }
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th class="sw-hourly-name"></th>
+                                        @foreach (var hour in _stats.HourlyAverages)
+                                        {
+                                            <th scope="col" title="@TestCount(hour.Count)">@HourHeader(hour.Hour)</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row" class="sw-hourly-name">Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
+                                        @foreach (var hour in _stats.HourlyAverages)
+                                        {
+                                            <td style="@CellColor(MetricStatus.Download(hour.Download, ConfigService.CurrentConfig.Download))">@SpeedCell(hour.Download)</td>
+                                        }
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="sw-hourly-name">Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
+                                        @foreach (var hour in _stats.HourlyAverages)
+                                        {
+                                            <td style="@CellColor(MetricStatus.Upload(hour.Upload, ConfigService.CurrentConfig.Upload))">@SpeedCell(hour.Upload)</td>
+                                        }
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="sw-hourly-name">Ping <span class="sw-muted">ms</span></th>
+                                        @foreach (var hour in _stats.HourlyAverages)
+                                        {
+                                            <td style="@CellColor(MetricStatus.Ping(hour.Ping, ConfigService.CurrentConfig.Ping))">@(hour.Ping?.ToString(CultureInfo.CurrentCulture) ?? "—")</td>
+                                        }
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </SurfaceCard>
+                }
+            </MudBreakpointProvider>
+
+            @if (_failures.Count > 0)
+            {
+                <SurfaceCard Icon="@Icons.Material.Filled.ErrorOutline" Title="Failed Tests" FullHeight="false"
+                             Description="@($"{_failures.Count} failed in this period")">
+                    @foreach (var failure in _failures)
+                    {
+                        <DataRow Label="@failure.Time">
+                            <MudText Typo="Typo.body2" Color="Color.Error" Class="text-end">@failure.Message</MudText>
+                        </DataRow>
+                    }
+                </SurfaceCard>
+            }
+        }
+    </ChildContent>
+</StateView>
+
+@code {
+    private sealed record FailureRow(string Time, string Message);
+
+    private const string CustomRange = "custom";
+
+    private static readonly (string Id, string Title)[] RangeOptions =
+    [
+        ("24h", "24h"),
+        ("7d", "7 days"),
+        ("30d", "30 days"),
+        (CustomRange, "Custom")
+    ];
+
+    private string _range = "7d";
+    private DateTime? _from = DateTime.Today.AddDays(-7);
+    private DateTime? _to = DateTime.Today;
+    private StatisticsDto? _stats;
+    private bool _loading;
+
+    private List<ChartSeries<double>> _downloadSeries = [];
+    private List<ChartSeries<double>> _uploadSeries = [];
+    private List<ChartSeries<double>> _pingSeries = [];
+    private string[] _labels = [];
+    private List<FailureRow> _failures = [];
+    private bool _compact;
+
+    // Each chart gets its own ChartOptions because MudChart indexes ChartPalette by that
+    // chart's own series order - a shared instance would make every single-series chart
+    // render in the same color regardless of metric.
+    private readonly LineChartOptions _downloadOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartDownload, MetricStatus.ChartAverage] };
+    private readonly LineChartOptions _uploadOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartUpload, MetricStatus.ChartAverage] };
+    private readonly LineChartOptions _pingOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartPing, MetricStatus.ChartJitter, MetricStatus.ChartAverage] };
+
+    private SpeedtestDto? Latest => SpeedtestService.LatestTest;
+
+    private string RangeSubtitle =>
+        $"{(_from ?? DateTime.Today.AddDays(-7)).ToString("d MMM", CultureInfo.CurrentCulture)} – {(_to ?? DateTime.Today).ToString("d MMM yyyy", CultureInfo.CurrentCulture)}";
+
+    private string? LatestDescription => Latest == null
+        ? null
+        : PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(Latest.Created));
+
+    private string StabilityVerdict
+    {
+        get
+        {
+            if (_stats == null) return "";
+            var worst = Math.Min(_stats.Consistency.Download.Consistency, _stats.Consistency.Upload.Consistency);
+            return worst switch
+            {
+                >= 90 => "Excellent",
+                >= 70 => "Good",
+                >= 50 => "Fair",
+                _ => "Poor"
+            };
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        SpeedtestService.OnChange += OnStateChanged;
+        StatusService.OnChange += OnStateChanged;
+
+        var configured = ConfigService.CurrentConfig.ChartRange;
+        _range = RangeOptions.Any(option => option.Id == configured) ? configured! : "7d";
+        ApplyRange();
+
+        await LoadStatisticsAsync();
+    }
+
+    private async Task SelectRangeAsync(string range)
+    {
+        _range = range;
+        ApplyRange();
+        await LoadStatisticsAsync();
+    }
+
+    private async Task SetCustomRangeAsync(DateRange? range)
+    {
+        if (range?.Start == null || range.End == null) return;
+
+        _from = range.Start;
+        _to = range.End;
+        await LoadStatisticsAsync();
+    }
+
+    private void ApplyRange()
+    {
+        var now = DateTime.Now;
+        switch (_range)
+        {
+            case "24h":
+                _from = now.AddDays(-1);
+                _to = now;
+                break;
+            case "30d":
+                _from = now.AddDays(-30);
+                _to = now;
+                break;
+            case "7d":
+                _from = now.AddDays(-7);
+                _to = now;
+                break;
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task LoadStatisticsAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            // Whole days for a custom range; exact timestamps for the quick ranges.
+            var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
+            var from = (_from ?? DateTime.Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
+            var to = (_to ?? DateTime.Today).ToString(pattern, CultureInfo.InvariantCulture);
+            _stats = await Http.GetFromJsonAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}");
+            if (_stats != null) BuildCharts(_stats);
+        }
+        catch { }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void BuildCharts(StatisticsDto stats)
+    {
+        // Failed tests are listed separately instead of being plotted as a drop to zero.
+        var points = stats.Labels
+            .Select((label, index) => (label, index))
+            .Where(p => !IsFailed(stats, p.index) && stats.Data.Download.ElementAtOrDefault(p.index) != null)
+            .ToList();
+
+        var download = points.Select(p => PreferencesService.ConvertSpeed(stats.Data.Download[p.index])).ToArray();
+        var upload = points.Select(p => PreferencesService.ConvertSpeed(stats.Data.Upload.ElementAtOrDefault(p.index))).ToArray();
+        var ping = points.Select(p => (double)(stats.Data.Ping.ElementAtOrDefault(p.index) ?? 0)).ToArray();
+        var jitter = points.Select(p => stats.Data.Jitter.ElementAtOrDefault(p.index) ?? 0).ToArray();
+
+        _labels = points.Select(p => ChartLabel(p.label)).ToArray();
+        // Each chart ends with a flat line at the average of what it plots, as the original app's charts did.
+        // It stays last so its palette entry, and the dashed style in CSS, always land on it.
+        _downloadSeries =
+        [
+            new ChartSeries<double> { Name = "Download", Data = download },
+            AverageSeries(download)
+        ];
+        _uploadSeries =
+        [
+            new ChartSeries<double> { Name = "Upload", Data = upload },
+            AverageSeries(upload)
+        ];
+        _pingSeries =
+        [
+            new ChartSeries<double> { Name = "Ping", Data = ping },
+            new ChartSeries<double> { Name = "Jitter", Data = jitter },
+            AverageSeries(ping)
+        ];
+
+        _downloadOptions.YAxisTicks = ChartAxisHelper.TickStep(download);
+        _uploadOptions.YAxisTicks = ChartAxisHelper.TickStep(upload);
+        _pingOptions.YAxisTicks = ChartAxisHelper.TickStep(ping.Concat(jitter));
+
+        bool beginAtZero = ConfigService.CurrentConfig.ChartBeginAtZero == "true";
+        _downloadOptions.YAxisRequireZeroPoint = beginAtZero;
+        _uploadOptions.YAxisRequireZeroPoint = beginAtZero;
+        _pingOptions.YAxisRequireZeroPoint = beginAtZero;
+
+        _failures = stats.Labels
+            .Select((label, index) => (label, index))
+            .Where(p => IsFailed(stats, p.index))
+            .Select(p => new FailureRow(FormatLabelDateTime(p.label), SpeedtestErrors.Describe(stats.Errors.ElementAtOrDefault(p.index))))
+            .Reverse()
+            .ToList();
+    }
+
+    private static bool IsFailed(StatisticsDto stats, int index) => index < stats.Failed.Count && stats.Failed[index];
+
+    private string ChartLabel(string raw)
+    {
+        try
+        {
+            var local = FormatHelper.ParseTimestamp(raw);
+            // Compact times (no leading zero in 12h) keep labels short enough for small chart cards.
+            var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
+            return $"{local.ToString("dd/MM", CultureInfo.InvariantCulture)} {time}";
+        }
+        catch
+        {
+            return raw;
+        }
+    }
+
+    private string FormatLabelDateTime(string raw)
+    {
+        try
+        {
+            return PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(raw));
+        }
+        catch
+        {
+            return raw;
+        }
+    }
+
+    private static ChartSeries<double> AverageSeries(double[] values) => new()
+    {
+        Name = "Average",
+        Data = values.Length == 0 ? [] : Enumerable.Repeat(Math.Round(values.Average(), 2), values.Length).ToArray()
+    };
+
+    // Short enough that 24 columns stay narrow: 00-23, or 12a-11p.
+    private string HourHeader(int hour) => PreferencesService.TimeFormat == "12h"
+        ? $"{(hour % 12 == 0 ? 12 : hour % 12)}{(hour < 12 ? "a" : "p")}"
+        : $"{hour:D2}";
+
+    private static string TestCount(int count) => count == 1 ? "1 test" : $"{count} tests";
+
+    // Whole numbers: the table is for spotting patterns across the day, and it keeps every column the same width.
+    private string SpeedCell(double? mbps) => mbps is { } value ? $"{PreferencesService.ConvertSpeed(value):F0}" : "—";
+
+    private static string CellColor(Color color) => color == Color.Default ? "" : $"color: {MetricStatus.CssVar(color)}";
+
+    private void OnBreakpointChanged(Breakpoint breakpoint) => _compact = breakpoint is Breakpoint.Xs or Breakpoint.Sm;
+
+    private string Speed(double mbps) => $"{PreferencesService.ConvertSpeed(mbps):F1} {PreferencesService.SpeedUnit}";
+
+    private static Color ConsistencyColor(double pct) =>
+        pct >= 90 ? Color.Success : pct >= 70 ? Color.Warning : Color.Error;
+
+    private async Task ResumeAsync()
+    {
+        try
+        {
+            var response = await Http.PostAsync("/api/speedtests/continue", null);
+            if (response.IsSuccessStatusCode)
+            {
+                StatusService.UpdateStatus(StatusService.Running, false);
+                Snackbar.Add("Speedtests resumed", Severity.Success);
+                return;
+            }
+        }
+        catch { }
+        Snackbar.Add("Could not resume speedtests", Severity.Error);
+    }
+
+    public void Dispose()
+    {
+        SpeedtestService.OnChange -= OnStateChanged;
+        StatusService.OnChange -= OnStateChanged;
+    }
+}

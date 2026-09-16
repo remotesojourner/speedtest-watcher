@@ -1,0 +1,83 @@
+using SpeedtestWatcher.Core.Interfaces;
+
+namespace SpeedtestWatcher.Web.Background;
+
+public class PauseStateService : IPauseStateService
+{
+    private readonly object _lock = new();
+    private bool _isRunning;
+    private DateTime? _resumesAt;
+    private Timer? _timer;
+
+    public bool IsPaused
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (_resumesAt == null) return false;
+                if (_resumesAt == DateTime.MaxValue) return true;
+                return DateTime.UtcNow < _resumesAt.Value;
+            }
+        }
+    }
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_lock) return _isRunning;
+        }
+    }
+
+    public DateTime? ResumesAt
+    {
+        get
+        {
+            lock (_lock) return _resumesAt;
+        }
+    }
+
+    public event Action? OnStatusChanged;
+
+    public void SetRunning(bool running)
+    {
+        lock (_lock)
+        {
+            _isRunning = running;
+        }
+        OnStatusChanged?.Invoke();
+    }
+
+    public void Pause(double? hours)
+    {
+        lock (_lock)
+        {
+            _timer?.Dispose();
+            _timer = null;
+
+            if (hours == null || hours < 0)
+            {
+                _resumesAt = DateTime.MaxValue; // Indefinitely
+            }
+            else
+            {
+                _resumesAt = DateTime.UtcNow.AddHours(hours.Value);
+                var dueTime = TimeSpan.FromHours(hours.Value);
+                _timer = new Timer(_ => Resume(), null, dueTime, Timeout.InfiniteTimeSpan);
+            }
+        }
+        OnStatusChanged?.Invoke();
+    }
+
+    public void Resume()
+    {
+        lock (_lock)
+        {
+            _timer?.Dispose();
+            _timer = null;
+            _resumesAt = null;
+        }
+        OnStatusChanged?.Invoke();
+    }
+}

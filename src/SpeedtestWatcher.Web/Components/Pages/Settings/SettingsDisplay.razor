@@ -1,0 +1,114 @@
+@inject PreferencesService PreferencesService
+@inject ConfigStateService ConfigService
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="Display Preferences" FullHeight="false"
+             Description="Time format and speed unit are saved in this browser; the rest apply to everyone using this instance.">
+    <MudGrid Spacing="4">
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Time format</MudText>
+            <div class="sw-option-list">
+                <OptionCard Title="24-hour" Description="Display times like 14:30" Icon="@Icons.Material.Filled.Schedule"
+                            Active="@(PreferencesService.TimeFormat == "24h")"
+                            OnClick="@(() => SavePreferencesAsync("24h", PreferencesService.SpeedUnit))" />
+                <OptionCard Title="12-hour" Description="Display times like 2:30 PM" Icon="@Icons.Material.Filled.Schedule"
+                            Active="@(PreferencesService.TimeFormat == "12h")"
+                            OnClick="@(() => SavePreferencesAsync("12h", PreferencesService.SpeedUnit))" />
+            </div>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Speed unit</MudText>
+            <div class="sw-option-list">
+                <OptionCard Title="Mbps" Description="Megabits per second — the standard speedtest unit" Icon="@Icons.Material.Filled.Speed"
+                            Active="@(PreferencesService.SpeedUnit == "mbps")"
+                            OnClick="@(() => SavePreferencesAsync(PreferencesService.TimeFormat, "mbps"))" />
+                <OptionCard Title="MB/s" Description="Megabytes per second — as shown by browsers and download managers" Icon="@Icons.Material.Filled.Speed"
+                            Active="@(PreferencesService.SpeedUnit == "mbytes")"
+                            OnClick="@(() => SavePreferencesAsync(PreferencesService.TimeFormat, "mbytes"))" />
+            </div>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Date format</MudText>
+            <div class="sw-option-list">
+                @foreach (var option in DateFormats)
+                {
+                    <OptionCard Title="@option.Title" Description="@Example(option.Id)" Icon="@Icons.Material.Filled.CalendarMonth"
+                                Active="@(DateFormat == option.Id)" OnClick="@(() => SaveSettingAsync("dateFormat", option.Id))" />
+                }
+            </div>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Dashboard charts</MudText>
+            <div class="sw-option-list mb-3">
+                @foreach (var option in ChartRanges)
+                {
+                    <OptionCard Title="@option.Title" Description="@option.Description" Icon="@Icons.Material.Filled.DateRange"
+                                Active="@(ChartRange == option.Id)" OnClick="@(() => SaveSettingAsync("chartRange", option.Id))" />
+                }
+            </div>
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.body2">Start charts at zero</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Off zooms in on the range your results actually cover</MudText>
+                </div>
+                <MudSwitch T="bool" Value="@BeginAtZero" ValueChanged="@(value => SaveSettingAsync("chartBeginAtZero", value ? "true" : "false"))"
+                           Color="Color.Primary" />
+            </div>
+        </MudItem>
+    </MudGrid>
+</SurfaceCard>
+
+@code {
+    private static readonly (string Id, string Title)[] DateFormats =
+    [
+        ("dmy", "Day first"),
+        ("mdy", "Month first"),
+        ("ymd", "Year first")
+    ];
+
+    private static readonly (string Id, string Title, string Description)[] ChartRanges =
+    [
+        ("24h", "Last 24 hours", "Opens the dashboard on today's results"),
+        ("7d", "Last 7 days", "A week of results"),
+        ("30d", "Last 30 days", "A month of results")
+    ];
+
+    private string DateFormat => ConfigService.CurrentConfig.DateFormat ?? "dmy";
+
+    private string ChartRange => ConfigService.CurrentConfig.ChartRange ?? "7d";
+
+    private bool BeginAtZero => ConfigService.CurrentConfig.ChartBeginAtZero == "true";
+
+    private static string Example(string dateFormat) =>
+        FormatHelper.FormatDate(new DateTime(2026, 9, 16), dateFormat);
+
+    private async Task SavePreferencesAsync(string timeFormat, string speedUnit)
+    {
+        if (timeFormat == PreferencesService.TimeFormat && speedUnit == PreferencesService.SpeedUnit) return;
+
+        await PreferencesService.SetPreferencesAsync(timeFormat, speedUnit);
+        Snackbar.Add("Preferences saved", Severity.Success);
+    }
+
+    private async Task SaveSettingAsync(string key, string value)
+    {
+        if (ConfigService.CurrentConfig[key]?.ToString() == value) return;
+
+        try
+        {
+            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
+            if (response.IsSuccessStatusCode)
+            {
+                ConfigService.CurrentConfig[key] = value;
+                Snackbar.Add("Display settings saved", Severity.Success);
+                return;
+            }
+        }
+        catch { }
+
+        Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+    }
+}

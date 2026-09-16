@@ -1,0 +1,426 @@
+@using System.Globalization
+@using System.Text.Json
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject ISnackbar Snackbar
+
+<SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Provider" FullHeight="false"
+             Description="Choose who runs your tests and how they connect.">
+    <div class="sw-option-grid mb-5">
+        @foreach (var provider in Providers)
+        {
+            <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
+                        Active="@(_provider == provider.Id)" OnClick="@(() => SelectProviderAsync(provider.Id))" />
+        }
+    </div>
+
+    <MudGrid Spacing="3" Class="mb-2">
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_interface" Label="Network interface" Variant="Variant.Outlined" Margin="Margin.Dense"
+                       HelperText="The local address tests are sent from">
+                <MudSelectItem T="string" Value="@("none")">Default route</MudSelectItem>
+                @foreach (var option in _interfaceOptions)
+                {
+                    <MudSelectItem T="string" Value="@option.Value">@option.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        @if (_provider == "libre")
+        {
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Value="_libreUrl" ValueChanged="SetLibreUrl" Label="Custom LibreSpeed server URL"
+                              Placeholder="https://speed.test/backend/" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                              Error="@(!LibreUrlValid)" ErrorText="Enter a full http(s) URL"
+                              HelperText="Replaces the server selection" />
+            </MudItem>
+        }
+    </MudGrid>
+
+    @if (SupportsServerChoice)
+    {
+        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Which server to test against</MudText>
+        <div class="sw-option-list mb-4">
+            <OptionCard Title="Automatically" Description="@($"{ProviderTitle} picks the best server for each test")" Icon="@Icons.Material.Filled.AutoAwesome"
+                        Active="@(_serverMode == "auto")" OnClick="@(() => _serverMode = "auto")" />
+            <OptionCard Title="Random" Description="A different server each test, chosen from your list" Icon="@Icons.Material.Filled.Shuffle"
+                        Active="@(_serverMode == "random")" OnClick="@(() => _serverMode = "random")" />
+            <OptionCard Title="Single" Description="Always test against the same server" Icon="@Icons.Material.Filled.PushPin"
+                        Active="@(_serverMode == "single")" OnClick="@(() => _serverMode = "single")" />
+        </div>
+
+        @if (_serverMode == "single")
+        {
+            <MudGrid Spacing="3" Class="mb-2">
+                <MudItem xs="12" md="6">
+                    @* Single mode means one fixed server, so there's no "automatic" choice here and a server is required. *@
+                    <MudSelect T="string" Value="@(_serverId == "none" ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="Choose a server"
+                               Disabled="_serversLoading" HelperText="@(_serversLoading ? "Loading servers..." : "Nearest servers are listed first")">
+                        @foreach (var server in CurrentServers)
+                        {
+                            <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Value="@(_serverId == "none" ? "" : _serverId)" ValueChanged="SetServerId"
+                                  Label="Server ID" Placeholder="e.g. 12345" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  Required="true" RequiredError="Enter or choose a server"
+                                  Error="@(!ServerIdValid)" ErrorText="Server IDs are numbers"
+                                  HelperText="Use a specific server that isn't listed" />
+                </MudItem>
+            </MudGrid>
+        }
+        else if (_serverMode == "random")
+        {
+            <div class="sw-option-list mb-3">
+                <OptionCard Title="Only these servers" Description="Each test picks randomly from the list below" Icon="@Icons.Material.Filled.PlaylistAddCheck"
+                            Active="@(_listMode == "allow")" OnClick="@(() => _listMode = "allow")" />
+                <OptionCard Title="Any server except these" Description="Each test picks randomly from the nearby servers, skipping the list below" Icon="@Icons.Material.Filled.Block"
+                            Active="@(_listMode == "deny")" OnClick="@(() => _listMode = "deny")" />
+            </div>
+
+            <MudGrid Spacing="3" Class="mb-2">
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Servers" MultiSelection="true" SelectedValues="SelectedIds" SelectedValuesChanged="SetSelectedIds"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="_serversLoading"
+                               MultiSelectionTextFunc="@(selected => $"{selected.Count} selected")"
+                               HelperText="@(_serversLoading ? "Loading servers..." : "Nearest servers are listed first")">
+                        @foreach (var server in CurrentServers)
+                        {
+                            <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" @bind-Value="_customId" Label="Add a server ID" Placeholder="e.g. 12345"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  Error="@(!CustomIdValid)" ErrorText="Server IDs are numbers"
+                                  HelperText="For servers that aren't in the list"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
+                                  AdornmentAriaLabel="Add server ID" OnAdornmentClick="AddCustomId"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") AddCustomId(); })" />
+                </MudItem>
+            </MudGrid>
+
+            @if (SelectedIdList.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var id in SelectedIdList)
+                    {
+                        <MudChip T="string" Size="Size.Small" OnClose="@(() => RemoveId(id))" CloseIcon="@Icons.Material.Filled.Close">
+                            @ServerLabel(id)
+                        </MudChip>
+                    }
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">
+                    @(_listMode == "deny"
+                        ? "Nothing excluded yet, so any nearby server can be used."
+                        : "No servers chosen yet, so the provider picks for each test.")
+                </MudText>
+            }
+        }
+    }
+
+    @if (_provider == "ookla")
+    {
+        <div class="d-flex align-center mt-4">
+            <MudCheckBox T="bool" @bind-Value="_acceptedOokla" Color="Color.Primary" Dense="true" />
+            <MudText Typo="Typo.body2">
+                I have read and accept Ookla's
+                <MudLink Href="https://www.speedtest.net/about/eula" Target="_blank">EULA</MudLink>,
+                <MudLink Href="https://www.speedtest.net/about/privacy" Target="_blank">privacy policy</MudLink> and
+                <MudLink Href="https://www.speedtest.net/about/terms" Target="_blank">terms of service</MudLink>.
+            </MudText>
+        </div>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Disabled="@(!CanSave)" OnClick="SaveAsync">
+        @(_saving ? "Saving..." : "Save")
+    </MudButton>
+</SurfaceCard>
+
+@code {
+    private static readonly (string Id, string Title, string Description, string Image)[] Providers =
+    [
+        ("ookla", "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
+        ("libre", "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
+        ("cloudflare", "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
+    ];
+
+    private sealed record ServerOption(string Id, string Label, double Distance);
+    private sealed record InterfaceOption(string Value, string Label);
+
+    private string _provider = "ookla";
+    private string _interface = "none";
+    private string _serverMode = "auto";
+    private string _listMode = "allow";
+    private string _serverId = "none";
+    private string _customId = "";
+    private string _libreUrl = "";
+    private bool _acceptedOokla;
+    private bool _serversLoading;
+    private bool _saving;
+    private List<InterfaceOption> _interfaceOptions = [];
+    private readonly Dictionary<string, List<ServerOption>> _servers = new();
+    private readonly Dictionary<string, List<string>> _serverIds = new();
+
+    private IReadOnlyList<ServerOption> CurrentServers => _servers.TryGetValue(_provider, out var list) ? list : [];
+
+    private List<string> SelectedIdList => _serverIds.TryGetValue(_provider, out var ids) ? ids : [];
+
+    private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
+
+    private string ProviderTitle => Providers.First(p => p.Id == _provider).Title;
+
+    // Cloudflare tests its own edge network, and a custom LibreSpeed URL replaces the server list.
+    private bool SupportsServerChoice => _provider != "cloudflare" && !UsingCustomUrl;
+
+    private bool UsingCustomUrl => _provider == "libre" && !string.IsNullOrWhiteSpace(_libreUrl);
+
+    private bool ServerIdValid => _serverId == "none" || _serverId.All(char.IsDigit);
+
+    private bool CustomIdValid => string.IsNullOrWhiteSpace(_customId) || _customId.Trim().All(char.IsDigit);
+
+    private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl)
+        || (Uri.TryCreate(_libreUrl.Trim(), UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
+
+    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == "single") || _serverId != "none";
+
+    private bool CanSave => !_saving && ServerIdValid && SingleServerChosen && CustomIdValid && LibreUrlValid && (_provider != "ookla" || _acceptedOokla);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cfg = ConfigService.CurrentConfig;
+        _provider = cfg.Provider is "ookla" or "libre" or "cloudflare" ? cfg.Provider : "ookla";
+        _acceptedOokla = cfg.Provider == "ookla";
+        _interface = string.IsNullOrEmpty(cfg.Interface) ? "none" : cfg.Interface;
+        _libreUrl = cfg.LibreUrl is null or "none" ? "" : cfg.LibreUrl;
+        _serverMode = cfg.ServerMode is "auto" or "random" or "single" ? cfg.ServerMode : "auto";
+        _listMode = cfg.ServerListMode == "deny" ? "deny" : "allow";
+        _serverId = ConfiguredServerId(_provider);
+        _serverIds["ookla"] = ParseIds(cfg.OoklaServerIds);
+        _serverIds["libre"] = ParseIds(cfg.LibreServerIds);
+
+        await Task.WhenAll(LoadInterfacesAsync(), LoadServersAsync(_provider));
+    }
+
+    private string ConfiguredServerId(string provider)
+    {
+        var value = provider == "libre" ? ConfigService.CurrentConfig.LibreId : ConfigService.CurrentConfig.OoklaId;
+        return string.IsNullOrEmpty(value) ? "none" : value;
+    }
+
+    private string ConfiguredServerIds(string provider)
+    {
+        var value = provider == "libre" ? ConfigService.CurrentConfig.LibreServerIds : ConfigService.CurrentConfig.OoklaServerIds;
+        return string.IsNullOrEmpty(value) ? "none" : value;
+    }
+
+    private static List<string> ParseIds(string? raw) =>
+        string.IsNullOrWhiteSpace(raw) || raw == "none"
+            ? []
+            : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private async Task SelectProviderAsync(string provider)
+    {
+        if (_provider == provider) return;
+        _provider = provider;
+        _serverId = ConfiguredServerId(provider);
+        await LoadServersAsync(provider);
+    }
+
+    private void SetServerId(string? value)
+    {
+        _serverId = string.IsNullOrWhiteSpace(value) ? "none" : value.Trim();
+        if (_serverId != "none") _libreUrl = "";
+    }
+
+    // MudSelect hands back a nullable collection of nullable values.
+    private void SetSelectedIds(IReadOnlyCollection<string?>? values)
+    {
+        _serverIds[_provider] = values?
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
+            .ToList() ?? [];
+    }
+
+    private void AddCustomId()
+    {
+        var id = _customId.Trim();
+        if (string.IsNullOrEmpty(id) || !CustomIdValid) return;
+
+        var ids = _serverIds.TryGetValue(_provider, out var list) ? list : _serverIds[_provider] = [];
+        if (!ids.Contains(id)) ids.Add(id);
+        _customId = "";
+    }
+
+    private void RemoveId(string id)
+    {
+        if (_serverIds.TryGetValue(_provider, out var ids)) ids.Remove(id);
+    }
+
+    private string ServerLabel(string id) =>
+        CurrentServers.FirstOrDefault(s => s.Id == id)?.Label ?? $"Server {id}";
+
+    private void SetLibreUrl(string? value)
+    {
+        _libreUrl = value ?? "";
+        if (!string.IsNullOrWhiteSpace(_libreUrl)) _serverId = "none";
+    }
+
+    private async Task LoadInterfacesAsync()
+    {
+        try
+        {
+            var data = await Http.GetFromJsonAsync<Dictionary<string, List<string>>>("/api/info/interfaces") ?? [];
+
+            // The runner hands this value to the CLI as a source address, so each option is an IP, not an interface name.
+            _interfaceOptions = data
+                .SelectMany(entry => entry.Value.Select(ip => new InterfaceOption(ip, $"{entry.Key} — {ip}")))
+                .ToList();
+
+            if (_interface != "none" && _interfaceOptions.All(o => o.Value != _interface))
+            {
+                _interfaceOptions.Insert(0, new InterfaceOption(_interface, $"{_interface} (currently saved)"));
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadServersAsync(string provider)
+    {
+        if (provider == "cloudflare" || _servers.ContainsKey(provider)) return;
+
+        _serversLoading = true;
+        StateHasChanged();
+        try
+        {
+            var json = await Http.GetFromJsonAsync<JsonElement>($"/api/info/server/{provider}");
+            _servers[provider] = ParseServers(json);
+        }
+        catch
+        {
+            _servers[provider] = [];
+        }
+        finally
+        {
+            _serversLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var cfg = ConfigService.CurrentConfig;
+
+        var saved = await PatchIfChangedAsync("provider", _provider, cfg.Provider);
+        if (saved)
+        {
+            saved = await PatchIfChangedAsync("serverMode", _serverMode, cfg.ServerMode ?? "auto");
+        }
+        if (saved && _serverMode == "random")
+        {
+            saved = await PatchIfChangedAsync("serverListMode", _listMode, cfg.ServerListMode ?? "allow");
+        }
+        if (saved && SupportsServerChoice && _serverMode == "single")
+        {
+            saved = await PatchIfChangedAsync(_provider == "libre" ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
+        }
+        if (saved && SupportsServerChoice && _serverMode == "random")
+        {
+            var ids = SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : "none";
+            saved = await PatchIfChangedAsync(_provider == "libre" ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
+        }
+        if (saved && _provider == "libre")
+        {
+            var url = string.IsNullOrWhiteSpace(_libreUrl) ? "none" : _libreUrl.Trim();
+            saved = await PatchIfChangedAsync("libreUrl", url, cfg.LibreUrl ?? "none");
+        }
+        if (saved)
+        {
+            saved = await PatchIfChangedAsync("interface", _interface, cfg.Interface ?? "none");
+        }
+
+        _saving = false;
+        if (saved) Snackbar.Add("The provider settings have been saved", Severity.Success);
+        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+    }
+
+    private async Task<bool> PatchIfChangedAsync(string key, string value, string? current)
+    {
+        if (value == current) return true;
+
+        try
+        {
+            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
+            if (!response.IsSuccessStatusCode) return false;
+
+            ConfigService.CurrentConfig[key] = value;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static List<ServerOption> ParseServers(JsonElement json)
+    {
+        IEnumerable<(string Id, JsonElement Entry)> entries = json.ValueKind switch
+        {
+            JsonValueKind.Object => json.EnumerateObject().Select(p => (p.Name, p.Value)),
+            JsonValueKind.Array => json.EnumerateArray().Select(e => (ReadString(e, "id") ?? "", e)),
+            _ => []
+        };
+
+        return entries
+            .Where(e => !string.IsNullOrEmpty(e.Id))
+            .Select(e => new ServerOption(e.Id, FormatServerLabel(e.Id, e.Entry), ReadDouble(e.Entry, "distance") ?? double.MaxValue))
+            .OrderBy(s => s.Distance)
+            .ToList();
+    }
+
+    private static string FormatServerLabel(string id, JsonElement entry)
+    {
+        if (entry.ValueKind == JsonValueKind.String) return entry.GetString() ?? id;
+        if (entry.ValueKind != JsonValueKind.Object) return id;
+
+        var location = string.Join(", ", new[] { ReadString(entry, "name"), ReadString(entry, "country") }
+            .Where(part => !string.IsNullOrEmpty(part)));
+        var sponsor = ReadString(entry, "sponsor");
+
+        string head;
+        if (!string.IsNullOrEmpty(sponsor)) head = string.IsNullOrEmpty(location) ? sponsor : $"{sponsor} - {location}";
+        else if (!string.IsNullOrEmpty(location)) head = location;
+        else head = ReadString(entry, "host") ?? id;
+
+        var distance = ReadDouble(entry, "distance");
+        return distance.HasValue ? $"{head} ({distance.Value.ToString(CultureInfo.InvariantCulture)} km)" : head;
+    }
+
+    private static string? ReadString(JsonElement element, string name)
+    {
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(name, out var value)) return null;
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => value.GetRawText(),
+            _ => null
+        };
+    }
+
+    private static double? ReadDouble(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number
+        && value.TryGetDouble(out var number)
+            ? number
+            : null;
+}

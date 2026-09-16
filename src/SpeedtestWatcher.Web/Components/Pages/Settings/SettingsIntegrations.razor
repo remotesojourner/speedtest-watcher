@@ -1,0 +1,345 @@
+@using System.Globalization
+@using System.Text.Json
+@using System.Text.RegularExpressions
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<SurfaceCard Icon="@Icons.Material.Filled.Hub" Title="Integrations" FullHeight="false"
+             Description="Send results and alerts to other services.">
+    @if (PreviewMode)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Integrations are disabled during demo mode.</MudAlert>
+    }
+
+    <StateView Loading="_loading" Compact="true" Empty="@(_instances.Count == 0)"
+               EmptyMessage="No integrations yet. Add one to send test results or alerts to another service.">
+        <MudExpansionPanels Elevation="0" MultiExpansion="true" Class="sw-card rounded-lg">
+            @foreach (var instance in _instances)
+            {
+                <MudExpansionPanel @key="instance.Key" Expanded="instance.Expanded" ExpandedChanged="@(expanded => instance.Expanded = expanded)">
+                    <TitleContent>
+                        <div class="d-flex align-center gap-3">
+                            <MudIcon Icon="@StatusIcon(instance)" Color="@StatusColor(instance)" Size="Size.Small" />
+                            <div>
+                                <MudText Typo="Typo.body2" Class="font-weight-bold">@DisplayTitle(instance)</MudText>
+                                <MudText Typo="Typo.caption" Class="sw-muted">@instance.Schema.Title · @StatusText(instance)</MudText>
+                            </div>
+                        </div>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudGrid Spacing="3" Class="mb-3">
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" Value="@instance.DisplayName" ValueChanged="@(value => instance.DisplayName = value ?? "")"
+                                              Label="Integration name" Placeholder="@instance.Schema.Title"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" />
+                            </MudItem>
+                            @foreach (var field in instance.Schema.Fields)
+                            {
+                                @* Errors go through Validation: MudBlazor's required check clears a bound Error flag for good. *@
+                                <MudItem xs="12" sm="@(field.Type == "textarea" ? 12 : 6)">
+                                    @switch (field.Type)
+                                    {
+                                        case "boolean":
+                                            <MudSwitch T="bool" Value="@instance.GetBool(field.Name)" ValueChanged="@(value => instance.Values[field.Name] = value)"
+                                                       Label="@IntegrationText.Label(instance.Name, field.Name)" Color="Color.Primary" />
+                                            break;
+                                        case "number":
+                                            <MudNumericField T="int?" Value="@instance.GetInt(field.Name)" ValueChanged="@(value => instance.Values[field.Name] = value)"
+                                                             Label="@IntegrationText.Label(instance.Name, field.Name)"
+                                                             Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                                             Validation="@(new Func<int?, string?>(value => ValidateNumber(field, value)))" />
+                                            break;
+                                        default:
+                                            <MudTextField T="string" Value="@instance.GetString(field.Name)" ValueChanged="@(value => instance.Values[field.Name] = value ?? "")"
+                                                          Label="@IntegrationText.Label(instance.Name, field.Name)"
+                                                          Placeholder="@IntegrationText.Placeholder(instance.Name, field.Name, field.Placeholder)"
+                                                          Lines="@(field.Type == "textarea" ? 3 : 1)" Required="field.Required"
+                                                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                                          Validation="@(new Func<string, string?>(value => ValidateText(field, value)))" />
+                                            break;
+                                    }
+                                </MudItem>
+                            }
+                        </MudGrid>
+                        <div class="d-flex flex-wrap gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@(!CanSave(instance))"
+                                       OnClick="@(() => SaveAsync(instance))">
+                                @(instance.Saving ? "Saving..." : "Save")
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete"
+                                       Disabled="PreviewMode" OnClick="@(() => DeleteAsync(instance))">
+                                Delete
+                            </MudButton>
+                        </div>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    </StateView>
+
+    <MudMenu Label="Add integration" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary"
+             Class="mt-4" Disabled="@(PreviewMode || _loading)">
+        @foreach (var schema in _schemas)
+        {
+            <MudMenuItem OnClick="@(() => Add(schema.Key, schema.Value))">@schema.Value.Title</MudMenuItem>
+        }
+    </MudMenu>
+</SurfaceCard>
+
+@code {
+    private sealed class IntegrationInstance
+    {
+        public required string Key { get; init; }
+        public required string Name { get; init; }
+        public required IntegrationTypeSchemaDto Schema { get; init; }
+        public string Id { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public Dictionary<string, object?> Values { get; } = new();
+        public DateTime? LastActivity { get; init; }
+        public bool ActivityFailed { get; init; }
+        public bool Expanded { get; set; }
+        public bool Saving { get; set; }
+        public string SavedSnapshot { get; set; } = "";
+
+        public string Snapshot => JsonSerializer.Serialize(new { DisplayName, Values });
+        public bool Dirty => Snapshot != SavedSnapshot;
+
+        public bool GetBool(string name) => Values.TryGetValue(name, out var value) && value is true;
+        public int? GetInt(string name) => Values.TryGetValue(name, out var value) && value is int number ? number : null;
+        public string GetString(string name) => Values.TryGetValue(name, out var value) ? value as string ?? "" : "";
+    }
+
+    private bool _loading = true;
+    private Dictionary<string, IntegrationTypeSchemaDto> _schemas = [];
+    private List<IntegrationInstance> _instances = [];
+
+    private bool PreviewMode => ConfigService.CurrentConfig.PreviewMode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _schemas = await Http.GetFromJsonAsync<Dictionary<string, IntegrationTypeSchemaDto>>("/api/integrations") ?? [];
+            var active = await Http.GetFromJsonAsync<List<ActiveIntegrationDto>>("/api/integrations/active") ?? [];
+            _instances = active
+                .Where(a => _schemas.ContainsKey(a.Name))
+                .Select(a => CreateInstance(a.Name, _schemas[a.Name], a.Id, a.DisplayName, a.Data, a.LastActivity, a.ActivityFailed, isNew: false))
+                .ToList();
+        }
+        catch
+        {
+            Snackbar.Add("Could not load integrations", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Add(string name, IntegrationTypeSchemaDto schema)
+    {
+        _instances.Add(CreateInstance(name, schema, "", schema.Title, new Dictionary<string, object?>(), null, false, isNew: true));
+    }
+
+    private static IntegrationInstance CreateInstance(string name, IntegrationTypeSchemaDto schema, string id, string displayName,
+        IReadOnlyDictionary<string, object?> data, DateTime? lastActivity, bool activityFailed, bool isNew)
+    {
+        var instance = new IntegrationInstance
+        {
+            Key = Guid.NewGuid().ToString("N"),
+            Name = name,
+            Schema = schema,
+            Id = id,
+            DisplayName = displayName,
+            LastActivity = lastActivity,
+            ActivityFailed = activityFailed,
+            Expanded = isNew
+        };
+
+        foreach (var field in schema.Fields)
+        {
+            instance.Values[field.Name] = Normalize(field.Type, data.TryGetValue(field.Name, out var stored) ? stored : field.Default);
+        }
+
+        instance.SavedSnapshot = isNew ? "" : instance.Snapshot;
+        return instance;
+    }
+
+    // Stored data and schema defaults arrive as JsonElement; the editors need real bools, ints and strings.
+    private static object? Normalize(string type, object? raw)
+    {
+        if (raw is JsonElement element)
+        {
+            raw = element.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Number => element.TryGetInt32(out var whole) ? whole : element.GetDouble(),
+                JsonValueKind.String => element.GetString(),
+                _ => null
+            };
+        }
+
+        return type switch
+        {
+            "boolean" => raw switch
+            {
+                bool flag => flag,
+                string text => string.Equals(text, "true", StringComparison.OrdinalIgnoreCase),
+                _ => false
+            },
+            "number" => raw switch
+            {
+                int whole => whole,
+                long wide => (int)wide,
+                double fraction => (int)fraction,
+                string text when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
+                _ => null
+            },
+            _ => raw switch
+            {
+                null => "",
+                string text => text,
+                _ => Convert.ToString(raw, CultureInfo.InvariantCulture) ?? ""
+            }
+        };
+    }
+
+    private static string? ValidationError(IntegrationFieldSchemaDto field, IntegrationInstance instance) => field.Type switch
+    {
+        "boolean" => null,
+        "number" => ValidateNumber(field, instance.GetInt(field.Name)),
+        _ => ValidateText(field, instance.GetString(field.Name))
+    };
+
+    private static string? ValidateNumber(IntegrationFieldSchemaDto field, int? value) =>
+        field.Required && value == null ? "Required" : null;
+
+    private static string? ValidateText(IntegrationFieldSchemaDto field, string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return field.Required ? "Required" : null;
+
+        var maxLength = field.Type == "textarea" ? 2000 : 255;
+        if (value.Length > maxLength) return $"At most {maxLength} characters";
+
+        if (string.IsNullOrEmpty(field.Regex)) return null;
+        try
+        {
+            return Regex.IsMatch(value, field.Regex, RegexOptions.None, TimeSpan.FromMilliseconds(200)) ? null : "Invalid format";
+        }
+        catch (Exception ex) when (ex is ArgumentException or RegexMatchTimeoutException)
+        {
+            return null;
+        }
+    }
+
+    private bool CanSave(IntegrationInstance instance) =>
+        !PreviewMode && !instance.Saving && instance.Dirty && instance.Schema.Fields.All(f => ValidationError(f, instance) == null);
+
+    private async Task SaveAsync(IntegrationInstance instance)
+    {
+        instance.Saving = true;
+
+        var payload = new Dictionary<string, object?> { ["integration_name"] = DisplayTitle(instance) };
+        foreach (var field in instance.Schema.Fields)
+        {
+            var value = instance.Values.GetValueOrDefault(field.Name);
+            if (field.Type == "number" && value == null) continue;
+            payload[field.Name] = value;
+        }
+
+        try
+        {
+            HttpResponseMessage response;
+            if (string.IsNullOrEmpty(instance.Id))
+            {
+                response = await Http.PutAsJsonAsync($"/api/integrations/{instance.Name}", payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    if (created.TryGetProperty("id", out var id)) instance.Id = id.GetString() ?? "";
+                }
+            }
+            else
+            {
+                response = await Http.PatchAsJsonAsync($"/api/integrations/{instance.Id}", payload);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                instance.SavedSnapshot = instance.Snapshot;
+                Snackbar.Add($"{DisplayTitle(instance)} saved", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Could not save the integration. Check the highlighted fields.", Severity.Error);
+            }
+        }
+        catch
+        {
+            Snackbar.Add("Could not save the integration", Severity.Error);
+        }
+        finally
+        {
+            instance.Saving = false;
+        }
+    }
+
+    private async Task DeleteAsync(IntegrationInstance instance)
+    {
+        if (!string.IsNullOrEmpty(instance.Id))
+        {
+            bool? confirmed = await DialogService.ShowMessageBoxAsync(
+                "Delete integration",
+                $"Delete \"{DisplayTitle(instance)}\"? It will stop sending notifications.",
+                yesText: "Delete", cancelText: "Cancel");
+            if (confirmed != true) return;
+
+            try
+            {
+                var response = await Http.DeleteAsync($"/api/integrations/{instance.Id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Could not delete the integration", Severity.Error);
+                    return;
+                }
+            }
+            catch
+            {
+                Snackbar.Add("Could not delete the integration", Severity.Error);
+                return;
+            }
+        }
+
+        _instances.Remove(instance);
+        Snackbar.Add("Integration removed", Severity.Success);
+    }
+
+    private static string DisplayTitle(IntegrationInstance instance) =>
+        string.IsNullOrWhiteSpace(instance.DisplayName) ? instance.Schema.Title : instance.DisplayName.Trim();
+
+    private static string StatusText(IntegrationInstance instance)
+    {
+        if (string.IsNullOrEmpty(instance.Id)) return "Not saved yet";
+        if (instance.ActivityFailed) return "Last run failed";
+        return instance.LastActivity.HasValue
+            ? $"Last run {FormatHelper.ToRelativeTime(FormatHelper.StoredToLocal(instance.LastActivity.Value))}"
+            : "Never executed";
+    }
+
+    private static string StatusIcon(IntegrationInstance instance)
+    {
+        if (string.IsNullOrEmpty(instance.Id)) return Icons.Material.Filled.RadioButtonUnchecked;
+        if (instance.ActivityFailed) return Icons.Material.Filled.Error;
+        return instance.LastActivity.HasValue ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.RadioButtonUnchecked;
+    }
+
+    private static Color StatusColor(IntegrationInstance instance)
+    {
+        if (string.IsNullOrEmpty(instance.Id)) return Color.Default;
+        if (instance.ActivityFailed) return Color.Error;
+        return instance.LastActivity.HasValue ? Color.Success : Color.Default;
+    }
+}

@@ -1,0 +1,220 @@
+@using Cronos
+@inject HttpClient Http
+@inject ConfigStateService ConfigService
+@inject StatusStateService StatusService
+@inject PreferencesService PreferencesService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="Test Schedule"
+                     Description="How often Speedtest Watcher runs a speedtest automatically.">
+            <div class="sw-option-list mb-3">
+                @foreach (var preset in CronPresets)
+                {
+                    <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
+                                Active="@(_cronMode == preset.Cron)" OnClick="@(() => SelectCron(preset.Cron))" />
+                }
+                <OptionCard Title="Custom" Description="Your own cron expression" Icon="@Icons.Material.Filled.Code"
+                            Active="@(_cronMode == CustomMode)" OnClick="@(() => SelectCron(CustomMode))" />
+            </div>
+
+            @if (_cronMode == CustomMode)
+            {
+                <MudTextField @bind-Value="_customCron" Label="Cron expression" Placeholder="0 * * * *"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                              Error="@(NextRun == null)" ErrorText="Not a valid cron expression" Class="mb-2" />
+            }
+
+            <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
+                <MudText Typo="Typo.caption" Class="sw-muted">
+                    @(NextRun != null ? $"Next test: {PreferencesService.FormatDateTime(NextRun.Value)}" : "")
+                </MudText>
+                <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">Cron syntax help</MudLink>
+            </div>
+
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div>
+                    <MudText Typo="Typo.body2">Offset schedule</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Adds a small delay so tests don't start at exact times</MudText>
+                </div>
+                <MudSwitch @bind-Value="_scheduleOffset" Color="Color.Primary" />
+            </div>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       Disabled="@(!ScheduleDirty || NextRun == null)" OnClick="SaveScheduleAsync">
+                Save Schedule
+            </MudButton>
+        </SurfaceCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.PauseCircle" Title="Pause Speedtests"
+                     Description="Temporarily stop automatic tests.">
+            @if (StatusService.Paused)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Speedtests are currently paused.</MudAlert>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeTestsAsync">
+                    Resume Tests
+                </MudButton>
+            }
+            else
+            {
+                <div class="sw-option-list mb-3">
+                    @foreach (var preset in PausePresets)
+                    {
+                        <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
+                                    Active="@(_pauseMode == preset.Id)" OnClick="@(() => _pauseMode = preset.Id)" />
+                    }
+                    <OptionCard Title="Custom duration" Description="Pause for a number of hours" Icon="@Icons.Material.Filled.Tune"
+                                Active="@(_pauseMode == CustomMode)" OnClick="@(() => _pauseMode = CustomMode)" />
+                </div>
+
+                @if (_pauseMode == CustomMode)
+                {
+                    <MudNumericField T="double?" @bind-Value="_customPauseHours" Label="Hours" Variant="Variant.Outlined"
+                                     Margin="Margin.Dense" Min="0.1" Step="0.5" Immediate="true"
+                                     Error="@(!CustomPauseValid)" ErrorText="Enter a number of hours greater than 0" Class="mb-3" />
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Pause"
+                           Disabled="@(_pauseMode == CustomMode && !CustomPauseValid)" OnClick="PauseTestsAsync">
+                    Pause Tests
+                </MudButton>
+            }
+        </SurfaceCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private const string CustomMode = "custom";
+
+    private static readonly (string Cron, string Title, string Description, string Icon)[] CronPresets =
+    [
+        ("* * * * *", "Continuous", "Every minute — high resource usage", Icons.Material.Filled.Bolt),
+        ("0,30 * * * *", "Very often", "Every 30 minutes", Icons.Material.Filled.Speed),
+        ("0 * * * *", "Default", "Every hour — recommended", Icons.Material.Filled.Schedule),
+        ("0 0,3,6,9,12,15,18,21 * * *", "Rarely", "Every 3 hours", Icons.Material.Filled.Timer),
+        ("0 0,6,12,18 * * *", "Very rarely", "Every 6 hours", Icons.Material.Filled.Spa)
+    ];
+
+    private static readonly (string Id, double? Hours, string Title, string Description, string Icon)[] PausePresets =
+    [
+        ("manual", null, "Pause indefinitely", "Until you resume manually", Icons.Material.Filled.AllInclusive),
+        ("short", 1, "Short break", "Pause for 1 hour", Icons.Material.Filled.Coffee),
+        ("medium", 6, "Medium break", "Pause for 6 hours", Icons.Material.Filled.Schedule),
+        ("long", 12, "Long break", "Pause for 12 hours", Icons.Material.Filled.Bedtime)
+    ];
+
+    private string _cronMode = "0 * * * *";
+    private string _customCron = "0 * * * *";
+    private bool _scheduleOffset;
+
+    private string _pauseMode = "manual";
+    private double? _customPauseHours;
+
+    private string EffectiveCron => (_cronMode == CustomMode ? _customCron : _cronMode).Trim();
+
+    private DateTime? NextRun
+    {
+        get
+        {
+            try
+            {
+                // Must match SpeedtestSchedulerService, which evaluates the expression in UTC.
+                var next = CronExpression.Parse(EffectiveCron, CronFormat.Standard)
+                    .GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
+                return next?.ToLocalTime();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    private bool ScheduleDirty =>
+        EffectiveCron != (ConfigService.CurrentConfig.Cron ?? "")
+        || _scheduleOffset != (ConfigService.CurrentConfig.ScheduleOffset == "true");
+
+    private bool CustomPauseValid => _customPauseHours is > 0;
+
+    protected override void OnInitialized()
+    {
+        StatusService.OnChange += OnStatusChanged;
+
+        var cfg = ConfigService.CurrentConfig;
+        var cron = cfg.Cron ?? "0 * * * *";
+        _cronMode = CronPresets.Any(p => p.Cron == cron) ? cron : CustomMode;
+        _customCron = cron;
+        _scheduleOffset = cfg.ScheduleOffset == "true";
+    }
+
+    private void SelectCron(string mode)
+    {
+        _cronMode = mode;
+        if (mode != CustomMode) _customCron = mode;
+    }
+
+    private async Task SaveScheduleAsync()
+    {
+        var saved = await PatchConfigAsync("cron", EffectiveCron)
+                    && await PatchConfigAsync("scheduleOffset", _scheduleOffset ? "true" : "false");
+        if (saved) Snackbar.Add("Schedule saved", Severity.Success);
+        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+    }
+
+    private async Task PauseTestsAsync()
+    {
+        var hours = _pauseMode == CustomMode ? _customPauseHours : PausePresets.First(p => p.Id == _pauseMode).Hours;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = hours });
+            if (response.IsSuccessStatusCode)
+            {
+                StatusService.UpdateStatus(StatusService.Running, true);
+                Snackbar.Add("Speedtests paused", Severity.Warning);
+                return;
+            }
+        }
+        catch { }
+        Snackbar.Add("Could not pause speedtests", Severity.Error);
+    }
+
+    private async Task ResumeTestsAsync()
+    {
+        try
+        {
+            var response = await Http.PostAsync("/api/speedtests/continue", null);
+            if (response.IsSuccessStatusCode)
+            {
+                StatusService.UpdateStatus(StatusService.Running, false);
+                Snackbar.Add("Speedtests resumed", Severity.Success);
+                return;
+            }
+        }
+        catch { }
+        Snackbar.Add("Could not resume speedtests", Severity.Error);
+    }
+
+    private async Task<bool> PatchConfigAsync(string key, string value)
+    {
+        try
+        {
+            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
+            if (!response.IsSuccessStatusCode) return false;
+
+            ConfigService.CurrentConfig[key] = value;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void OnStatusChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => StatusService.OnChange -= OnStatusChanged;
+}
