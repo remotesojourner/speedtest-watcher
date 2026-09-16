@@ -14,7 +14,6 @@
     <Actions>
         @if (_range == CustomRange)
         {
-            @* One field for both ends, sized to the range buttons; see .sw-range-picker. *@
             <MudDateRangePicker DateRange="@(new DateRange(_from, _to))" DateRangeChanged="SetCustomRangeAsync"
                                 PlaceholderStart="From" PlaceholderEnd="To" AutoClose="true"
                                 DateFormat="@FormatHelper.DatePattern(ConfigService.CurrentConfig.DateFormat)"
@@ -95,8 +94,6 @@
                         }
                         else if (Latest.Status == "skipped")
                         {
-                            @* A skip is a decision, not a failure, and the reason is already written in plain words. *@
-                            @* The reason can hold an IPv6 address, which has no natural break points. *@
                             <MudText Typo="Typo.body2" Class="sw-muted" Style="overflow-wrap:anywhere;">Skipped — @Latest.Error</MudText>
                         }
                         else if (!string.IsNullOrEmpty(Latest.Error))
@@ -151,7 +148,6 @@
 
                 <MudItem xs="12" md="6">
                     <SurfaceCard Icon="@Icons.Material.Filled.StackedLineChart" Title="Value Ranges">
-                        @* Units sit beside the row label so the numbers stay short enough for phone widths. *@
                         <MudSimpleTable Dense="true" Class="sw-range-table" Style="background:transparent;">
                             <thead>
                                 <tr>
@@ -204,7 +200,6 @@
                 </MudItem>
             </MudGrid>
 
-            @* Below the md breakpoint the cards already span the screen: fewer axis labels and nothing to expand. *@
             <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
                 @if (_labels.Length > 0)
                 {
@@ -231,10 +226,8 @@
                 {
                     <SurfaceCard Icon="@Icons.Material.Filled.AccessTime" Title="By Time of Day" FullHeight="false" Class="mb-4"
                                  Description="Averages for each hour of the day across the selected period.">
-                        @* 24 columns don't fit a phone, so the table scrolls sideways with the row names pinned. *@
                         <div class="sw-hourly-scroll">
                             <table class="sw-hourly-table">
-                                @* Fixed layout with equal columns, so a filled hour never widens its column. *@
                                 <colgroup>
                                     <col class="sw-hourly-name-col" />
                                     @for (var hour = 0; hour < 24; hour++)
@@ -322,9 +315,6 @@
     private List<FailureRow> _failures = [];
     private bool _compact;
 
-    // Each chart gets its own ChartOptions because MudChart indexes ChartPalette by that
-    // chart's own series order - a shared instance would make every single-series chart
-    // render in the same color regardless of metric.
     private readonly LineChartOptions _downloadOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartDownload, MetricStatus.ChartAverage] };
     private readonly LineChartOptions _uploadOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartUpload, MetricStatus.ChartAverage] };
     private readonly LineChartOptions _pingOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartPing, MetricStatus.ChartJitter, MetricStatus.ChartAverage] };
@@ -410,7 +400,6 @@
         StateHasChanged();
         try
         {
-            // Whole days for a custom range; exact timestamps for the quick ranges.
             var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
             var from = (_from ?? DateTime.Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
             var to = (_to ?? DateTime.Today).ToString(pattern, CultureInfo.InvariantCulture);
@@ -427,7 +416,6 @@
 
     private void BuildCharts(StatisticsDto stats)
     {
-        // Failed tests are listed separately instead of being plotted as a drop to zero.
         var points = stats.Labels
             .Select((label, index) => (label, index))
             .Where(p => !IsFailed(stats, p.index) && stats.Data.Download.ElementAtOrDefault(p.index) != null)
@@ -439,8 +427,6 @@
         var jitter = points.Select(p => stats.Data.Jitter.ElementAtOrDefault(p.index) ?? 0).ToArray();
 
         _labels = points.Select(p => ChartLabel(p.label)).ToArray();
-        // Each chart ends with a flat line at the average of what it plots, as the original app's charts did.
-        // It stays last so its palette entry, and the dashed style in CSS, always land on it.
         _downloadSeries =
         [
             new ChartSeries<double> { Name = "Download", Data = download },
@@ -462,7 +448,7 @@
         _uploadOptions.YAxisTicks = ChartAxisHelper.TickStep(upload);
         _pingOptions.YAxisTicks = ChartAxisHelper.TickStep(ping.Concat(jitter));
 
-        bool beginAtZero = ConfigService.CurrentConfig.ChartBeginAtZero == "true";
+        var beginAtZero = ConfigService.CurrentConfig.ChartBeginAtZero == "true";
         _downloadOptions.YAxisRequireZeroPoint = beginAtZero;
         _uploadOptions.YAxisRequireZeroPoint = beginAtZero;
         _pingOptions.YAxisRequireZeroPoint = beginAtZero;
@@ -482,7 +468,6 @@
         try
         {
             var local = FormatHelper.ParseTimestamp(raw);
-            // Compact times (no leading zero in 12h) keep labels short enough for small chart cards.
             var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
             return $"{local.ToString("dd/MM", CultureInfo.InvariantCulture)} {time}";
         }
@@ -510,14 +495,12 @@
         Data = values.Length == 0 ? [] : Enumerable.Repeat(Math.Round(values.Average(), 2), values.Length).ToArray()
     };
 
-    // Short enough that 24 columns stay narrow: 00-23, or 12a-11p.
     private string HourHeader(int hour) => PreferencesService.TimeFormat == "12h"
         ? $"{(hour % 12 == 0 ? 12 : hour % 12)}{(hour < 12 ? "a" : "p")}"
         : $"{hour:D2}";
 
     private static string TestCount(int count) => count == 1 ? "1 test" : $"{count} tests";
 
-    // Whole numbers: the table is for spotting patterns across the day, and it keeps every column the same width.
     private string SpeedCell(double? mbps) => mbps is { } value ? $"{PreferencesService.ConvertSpeed(value):F0}" : "—";
 
     private static string CellColor(Color color) => color == Color.Default ? "" : $"color: {MetricStatus.CssVar(color)}";

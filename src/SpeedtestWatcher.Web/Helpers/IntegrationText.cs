@@ -1,7 +1,5 @@
 namespace SpeedtestWatcher.Web.Helpers;
 
-// Field labels and placeholders for integration schemas. The schemas only carry field names,
-// so the English copy is ported from the original client's locale file.
 public static class IntegrationText
 {
     private static readonly Dictionary<string, string> CommonLabels = new()

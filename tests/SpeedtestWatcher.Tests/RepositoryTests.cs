@@ -34,7 +34,6 @@ public class RepositoryTests : IDisposable
         Assert.NotEmpty(all);
         Assert.Equal("0 * * * *", await repo.GetValueAsync("cron"));
 
-        // Validation tests
         Assert.NotNull(await repo.ValidateInputAsync("ping", "abc"));
         Assert.Null(await repo.ValidateInputAsync("ping", "25"));
         Assert.Null(await repo.ValidateInputAsync("cron", "0 * * * *"));
@@ -42,7 +41,6 @@ public class RepositoryTests : IDisposable
         Assert.Null(await repo.ValidateInputAsync("provider", "ookla"));
         Assert.NotNull(await repo.ValidateInputAsync("provider", "unknown"));
 
-        // The settings pages constrain these, but the REST API is open, so the rules live here.
         Assert.Null(await repo.ValidateInputAsync("serverMode", "random"));
         Assert.NotNull(await repo.ValidateInputAsync("serverMode", "sideways"));
         Assert.Null(await repo.ValidateInputAsync("serverListMode", "deny"));
@@ -57,7 +55,6 @@ public class RepositoryTests : IDisposable
         Assert.Null(await repo.ValidateInputAsync("internetCheckUrl", "https://icanhazip.com"));
         Assert.NotNull(await repo.ValidateInputAsync("internetCheckUrl", "icanhazip"));
 
-        // Both address families, because the check URL can return either.
         Assert.Null(await repo.ValidateInputAsync("skipIps", "none"));
         Assert.Null(await repo.ValidateInputAsync("skipIps", "203.0.113.9, 2a00:23c8:870c:bf00::1"));
         Assert.NotNull(await repo.ValidateInputAsync("skipIps", "my-router"));
@@ -76,7 +73,6 @@ public class RepositoryTests : IDisposable
     [Fact]
     public async Task ConfigRepository_Defaults_HaveSignInOff_AndDropThePasswordSettings()
     {
-        // An older database still holding the password settings that no longer exist.
         _db.Configs.Add(new ConfigEntry { Key = "password", Value = "$2a$11$hash" });
         _db.Configs.Add(new ConfigEntry { Key = "passwordLevel", Value = "read" });
         await _db.SaveChangesAsync();
@@ -95,7 +91,7 @@ public class RepositoryTests : IDisposable
     {
         var repo = new SpeedtestRepository(_db);
 
-        for (int i = 1; i <= 25; i++)
+        for (var i = 1; i <= 25; i++)
         {
             await repo.CreateAsync(new Speedtest
             {
@@ -138,7 +134,7 @@ public class RepositoryTests : IDisposable
             Created = today.AddHours(4)
         });
 
-        string dateStr = today.ToString("yyyy-MM-dd");
+        var dateStr = today.ToString("yyyy-MM-dd");
         var stats = await repo.GetStatisticsAsync(dateStr, dateStr);
 
         Assert.Equal(2, stats.Tests.Total);
@@ -154,7 +150,7 @@ public class RepositoryTests : IDisposable
         var speedtestRepo = new SpeedtestRepository(_db);
         var recRepo = new RecommendationRepository(_db);
 
-        for (int i = 1; i <= 10; i++)
+        for (var i = 1; i <= 10; i++)
         {
             await speedtestRepo.CreateAsync(new Speedtest
             {
@@ -166,9 +162,9 @@ public class RepositoryTests : IDisposable
         }
 
         var rec = await recRepo.UpdateOrCalculateAsync();
-        Assert.Equal(11, rec.Ping); // Minimum ping
-        Assert.Equal(200.0, rec.Download); // Maximum download
-        Assert.Equal(100.0, rec.Upload); // Maximum upload
+        Assert.Equal(11, rec.Ping);
+        Assert.Equal(200.0, rec.Download);
+        Assert.Equal(100.0, rec.Upload);
     }
 
     public void Dispose()

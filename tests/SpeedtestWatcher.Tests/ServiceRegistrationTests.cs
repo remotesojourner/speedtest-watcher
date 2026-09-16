@@ -25,7 +25,7 @@ public class ServiceRegistrationTests
 
     private class TestNavigationManager : NavigationManager
     {
-        public TestNavigationManager() => Initialize("http://localhost:5216/", "http://localhost:5216/");
+        public TestNavigationManager() => Initialize("http://localhost:2003/", "http://localhost:2003/");
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class ServiceRegistrationTests
         services.AddScoped<StatusStateService>();
         services.AddScoped<SpeedtestStateService>();
         services.AddScoped<ConfigStateService>();
-        services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5216/") });
+        services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:2003/") });
 
         var sp = services.BuildServiceProvider(new ServiceProviderOptions
         {

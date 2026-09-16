@@ -4,10 +4,6 @@ using System.Text;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 
-/// <summary>
-/// A secret that exists only inside this process. The UI calls the app's own API over loopback, where the
-/// browser's sign-in cookie isn't available, so a signed-in session sends this instead.
-/// </summary>
 public sealed class InternalAccessToken
 {
     public const string HeaderName = "X-Speedtest-Watcher-Internal";
@@ -20,7 +16,6 @@ public sealed class InternalAccessToken
         CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(a), Encoding.UTF8.GetBytes(b));
 }
 
-/// <summary>The token Prometheus and scripts send as a bearer token. Only its hash is stored.</summary>
 public static class ApiToken
 {
     public static string Generate() => "swt_" + Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
@@ -32,7 +27,6 @@ public static class ApiToken
         && !string.IsNullOrEmpty(storedHash)
         && InternalAccessToken.FixedTimeEquals(Hash(candidate), storedHash);
 
-    /// <summary>The token from an <c>Authorization: Bearer ...</c> header, if there is one.</summary>
     public static string? FromRequest(HttpRequest request)
     {
         var header = request.Headers.Authorization.ToString();

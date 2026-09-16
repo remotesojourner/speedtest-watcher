@@ -41,7 +41,6 @@ namespace SpeedtestWatcher.Infrastructure.Data.Migrations
                 type: "REAL",
                 nullable: true);
 
-            // Rows written before this column existed: anything that recorded an error was a failure.
             migrationBuilder.Sql("UPDATE speedtests SET status = 'failed' WHERE error IS NOT NULL AND error <> ''");
         }
 

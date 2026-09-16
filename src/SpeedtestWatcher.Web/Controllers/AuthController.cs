@@ -25,8 +25,6 @@ public class AuthController : ControllerBase
 
     private bool IsViewMode => HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
 
-    private static bool PreviewMode => Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true";
-
     [HttpGet("/auth/login")]
     public IActionResult Login([FromQuery] string? returnUrl)
     {
@@ -41,7 +39,6 @@ public class AuthController : ControllerBase
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-        // Going straight back to "/" would sign in again at once through the provider's own session.
         return _auth.Current.IsActive ? LocalRedirect("/auth/signed-out") : LocalRedirect("/");
     }
 
@@ -65,7 +62,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> SaveSettings([FromBody] AuthSettingsRequest request, CancellationToken cancellationToken)
     {
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-        if (PreviewMode) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Cannot change sign-in settings in preview mode" });
 
         if (request.VisitorAccess is not ("none" or "read"))
             return BadRequest(new { message = "Visitor access must be none or read" });
@@ -83,7 +79,6 @@ public class AuthController : ControllerBase
             if (authority == null || clientId == null)
                 return BadRequest(new { message = "Sign-in needs the provider URL and a client ID" });
 
-            // Catch a mistyped provider URL now, not after sign-in is enforced and nobody can get in.
             var problem = await CheckDiscoveryAsync(authority, cancellationToken);
             if (problem != null) return BadRequest(new { message = problem });
         }
@@ -110,13 +105,11 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> CreateToken(CancellationToken cancellationToken)
     {
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-        if (PreviewMode) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Cannot create tokens in preview mode" });
 
         var token = ApiToken.Generate();
         await _config.UpdateValueAsync("apiTokenHash", ApiToken.Hash(token), cancellationToken);
         await _auth.ReloadAsync(cancellationToken);
 
-        // Only the hash is kept, so this response is the one time the token can be seen.
         return Ok(new ApiTokenResponse { Token = token });
     }
 
@@ -124,7 +117,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken)
     {
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-        if (PreviewMode) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Cannot revoke tokens in preview mode" });
 
         await _config.UpdateValueAsync("apiTokenHash", "none", cancellationToken);
         await _auth.ReloadAsync(cancellationToken);
@@ -162,7 +154,6 @@ public class AuthController : ControllerBase
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) || value.Trim() == "none" ? null : value.Trim();
 
-    // These pages are shown to people who aren't signed in, when the Blazor app itself can't load for them.
     private static ContentResult MessagePage(string title, string message, string? note, string actionHref, string actionText)
     {
         var encoder = HtmlEncoder.Default;

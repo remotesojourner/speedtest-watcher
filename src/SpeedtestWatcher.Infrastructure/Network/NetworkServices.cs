@@ -92,18 +92,17 @@ public class ServerListProvider
     public async Task<object?> GetServersAsync(string provider, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(_serversDir);
-        string filePath = Path.Combine(_serversDir, $"{provider}.json");
+        var filePath = Path.Combine(_serversDir, $"{provider}.json");
 
         if (File.Exists(filePath))
         {
             try
             {
-                string json = await File.ReadAllTextAsync(filePath, cancellationToken);
+                var json = await File.ReadAllTextAsync(filePath, cancellationToken);
                 return JsonSerializer.Deserialize<object>(json);
             }
             catch
             {
-                // Fall through to fetch
             }
         }
 
@@ -111,7 +110,7 @@ public class ServerListProvider
 
         if (File.Exists(filePath))
         {
-            string json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
             return JsonSerializer.Deserialize<object>(json);
         }
 
@@ -126,7 +125,7 @@ public class ServerListProvider
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(15);
 
-            string url = provider == "ookla"
+            var url = provider == "ookla"
                 ? "https://www.speedtest.net/api/js/servers?limit=20"
                 : "https://librespeed.org/backend-servers/servers.php";
 
@@ -143,7 +142,7 @@ public class ServerListProvider
                 {
                     if (row.TryGetProperty("id", out var idElem))
                     {
-                        string id = idElem.ToString();
+                        var id = idElem.ToString();
                         if (provider == "ookla")
                         {
                             dict[id] = new
@@ -164,7 +163,7 @@ public class ServerListProvider
                 }
             }
 
-            string filePath = Path.Combine(_serversDir, $"{provider}.json");
+            var filePath = Path.Combine(_serversDir, $"{provider}.json");
             await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
         }
         catch (Exception ex)

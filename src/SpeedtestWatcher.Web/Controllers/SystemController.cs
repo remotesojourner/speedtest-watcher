@@ -31,13 +31,12 @@ public class SystemController : ControllerBase
     [HttpGet("version")]
     public async Task<IActionResult> GetVersion()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        string localVersion = ProjectInfo.Version;
-        // There is nothing to compare against until a repository is configured (Project:Repository in appsettings.json).
-        string? repository = ProjectInfo.Repository(_configuration);
-        if (repository == null || Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true")
+        var localVersion = ProjectInfo.Version;
+        var repository = ProjectInfo.Repository(_configuration);
+        if (repository == null)
             return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });
 
         try
@@ -53,7 +52,7 @@ public class SystemController : ControllerBase
                 using var doc = await JsonDocument.ParseAsync(stream);
                 if (doc.RootElement.TryGetProperty("tag_name", out var tag))
                 {
-                    string tagStr = tag.GetString()?.Replace("v", "") ?? "0";
+                    var tagStr = tag.GetString()?.Replace("v", "") ?? "0";
                     return Ok(new VersionInfoDto { Local = localVersion, Remote = tagStr });
                 }
             }
@@ -66,7 +65,7 @@ public class SystemController : ControllerBase
     [HttpGet("server/{provider}")]
     public async Task<IActionResult> GetServers(string provider)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         if (provider != "ookla" && provider != "libre")
@@ -79,7 +78,7 @@ public class SystemController : ControllerBase
     [HttpGet("interfaces")]
     public async Task<IActionResult> GetInterfaces()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var ifaces = await _interfaceDetector.GetInterfacesAsync();

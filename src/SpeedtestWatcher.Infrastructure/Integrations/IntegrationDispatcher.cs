@@ -194,7 +194,7 @@ public class IntegrationDispatcher : IIntegrationDispatcher
             try
             {
                 var config = ParseConfig(integration.Data);
-                bool success = await DispatchToProviderAsync(integration.Name, eventType, config, eventData, cancellationToken);
+                var success = await DispatchToProviderAsync(integration.Name, eventType, config, eventData, cancellationToken);
                 await _repository.UpdateActivityAsync(integration.Id, !success, cancellationToken);
             }
             catch (Exception ex)
@@ -210,7 +210,7 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         if (eventType != IntegrationEvent.MinutePassed) return false;
 
         var config = ParseConfig(integration.Data);
-        int interval = 1;
+        var interval = 1;
         if (config.TryGetValue("interval", out var intObj))
         {
             if (intObj is JsonElement je && je.TryGetInt32(out var i)) interval = Math.Max(1, i);
@@ -219,8 +219,8 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
         if (interval <= 1) return false;
 
-        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (_lastPings.TryGetValue(integration.Id, out long lastPing))
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        if (_lastPings.TryGetValue(integration.Id, out var lastPing))
         {
             long threshold = interval * 60 * 1000 - 30 * 1000;
             if (now - lastPing < threshold)
@@ -332,10 +332,10 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchDiscordAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, Dictionary<string, string> vars, CancellationToken ct)
     {
-        string url = GetString(config, "url");
+        var url = GetString(config, "url");
         if (string.IsNullOrEmpty(url)) return false;
 
-        string username = GetString(config, "display_name", "Speedtest Watcher");
+        var username = GetString(config, "display_name", "Speedtest Watcher");
 
         string description;
         int color;
@@ -383,11 +383,11 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchTelegramAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, Dictionary<string, string> vars, CancellationToken ct)
     {
-        string token = GetString(config, "token");
-        string chatId = GetString(config, "chat_id");
+        var token = GetString(config, "token");
+        var chatId = GetString(config, "chat_id");
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(chatId)) return false;
 
-        string text = "";
+        var text = "";
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
         {
             const string defMsg = "✨ *A speedtest is finished*\n🏓 `Ping`: %ping% ms (±%jitter% ms)\n🔼 `Upload`: %upload% Mbps\n🔽 `Download`: %download% Mbps";
@@ -420,12 +420,12 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchGotifyAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, Dictionary<string, string> vars, CancellationToken ct)
     {
-        string url = GetString(config, "url").TrimEnd('/');
-        string key = GetString(config, "key");
+        var url = GetString(config, "url").TrimEnd('/');
+        var key = GetString(config, "key");
         if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(key)) return false;
 
-        string message = "";
-        int priority = int.TryParse(GetString(config, "priority", "5"), out var p) ? p : 5;
+        var message = "";
+        var priority = int.TryParse(GetString(config, "priority", "5"), out var p) ? p : 5;
 
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
         {
@@ -466,12 +466,12 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchNtfyAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, Dictionary<string, string> vars, CancellationToken ct)
     {
-        string url = GetString(config, "url", "https://ntfy.sh").TrimEnd('/');
-        string topic = GetString(config, "topic");
+        var url = GetString(config, "url", "https://ntfy.sh").TrimEnd('/');
+        var topic = GetString(config, "topic");
         if (string.IsNullOrEmpty(topic)) return false;
 
-        string message = "";
-        string priority = GetString(config, "priority", "3");
+        var message = "";
+        var priority = GetString(config, "priority", "3");
 
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
         {
@@ -506,11 +506,11 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         };
 
         request.Headers.Add("Priority", priority);
-        string title = GetString(config, "title");
+        var title = GetString(config, "title");
         if (!string.IsNullOrEmpty(title)) request.Headers.Add("Title", title);
-        string tags = GetString(config, "tags");
+        var tags = GetString(config, "tags");
         if (!string.IsNullOrEmpty(tags)) request.Headers.Add("Tags", tags);
-        string token = GetString(config, "token");
+        var token = GetString(config, "token");
         if (!string.IsNullOrEmpty(token)) request.Headers.Add("Authorization", $"Bearer {token}");
 
         var res = await client.SendAsync(request, ct);
@@ -519,11 +519,11 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchPushoverAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, Dictionary<string, string> vars, CancellationToken ct)
     {
-        string token = GetString(config, "token");
-        string userKey = GetString(config, "user_key");
+        var token = GetString(config, "token");
+        var userKey = GetString(config, "user_key");
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userKey)) return false;
 
-        string message = "";
+        var message = "";
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
         {
             const string defMsg = "A speedtest is finished:\nPing: %ping% ms (±%jitter% ms)\nUpload: %upload% Mbps\nDownload: %download% Mbps";
@@ -556,10 +556,10 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchWebhookAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, object? eventData, CancellationToken ct)
     {
-        string url = GetString(config, "url");
+        var url = GetString(config, "url");
         if (string.IsNullOrEmpty(url)) return false;
 
-        string? typeStr = eventType switch
+        var typeStr = eventType switch
         {
             IntegrationEvent.TestStarted when GetBool(config, "send_started") => "TEST_STARTED",
             IntegrationEvent.MinutePassed when GetBool(config, "send_alive") => "KEEP_ALIVE",
@@ -586,14 +586,13 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
     private async Task<bool> DispatchHealthChecksAsync(HttpClient client, IntegrationEvent eventType, Dictionary<string, object?> config, object? eventData, CancellationToken ct)
     {
-        string url = GetString(config, "url").TrimEnd('/');
+        var url = GetString(config, "url").TrimEnd('/');
         if (string.IsNullOrEmpty(url)) return false;
 
-        string path = eventType switch
+        var path = eventType switch
         {
             IntegrationEvent.TestStarted => $"{url}/start",
             IntegrationEvent.TestFailed => $"{url}/fail",
-            // A skip goes to the check's event log without marking it up or down.
             IntegrationEvent.TestSkipped => $"{url}/log",
             _ => url
         };
@@ -613,11 +612,11 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         if (eventType != IntegrationEvent.TestFinished) return true;
         if (eventData is not Speedtest && eventData is not SpeedtestExecutionResult) return true;
 
-        string url = GetString(config, "url").TrimEnd('/');
-        string org = GetString(config, "org");
-        string bucket = GetString(config, "bucket");
-        string token = GetString(config, "token");
-        string measurement = GetString(config, "measurement", "speedtests");
+        var url = GetString(config, "url").TrimEnd('/');
+        var org = GetString(config, "org");
+        var bucket = GetString(config, "bucket");
+        var token = GetString(config, "token");
+        var measurement = GetString(config, "measurement", "speedtests");
 
         if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(org) || string.IsNullOrEmpty(bucket)) return false;
 
@@ -637,9 +636,9 @@ public class IntegrationDispatcher : IIntegrationDispatcher
             jitter = res.Jitter ?? 0;
         }
 
-        string host = GetString(config, "host", Environment.MachineName);
-        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        string line = $"{measurement},host={host} download={down:F2},upload={up:F2},ping={ping:F0},jitter={jitter:F2} {timestamp}";
+        var host = GetString(config, "host", Environment.MachineName);
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var line = $"{measurement},host={host} download={down:F2},upload={up:F2},ping={ping:F0},jitter={jitter:F2} {timestamp}";
 
         var writeUrl = $"{url}/api/v2/write?org={Uri.EscapeDataString(org)}&bucket={Uri.EscapeDataString(bucket)}&precision=s";
         var request = new HttpRequestMessage(HttpMethod.Post, writeUrl)

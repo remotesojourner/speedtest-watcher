@@ -5,7 +5,6 @@ using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Core.Helpers;
 
-/// <summary>Turns results into the CSV and JSON files the History page downloads.</summary>
 public static class SpeedtestExport
 {
     public const string CsvHeader =
@@ -13,7 +12,6 @@ public static class SpeedtestExport
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    /// <summary>The same shape the Storage page imports, so an export can be loaded back in.</summary>
     public static string ToJson(IEnumerable<Speedtest> tests) => JsonSerializer.Serialize(tests, JsonOptions);
 
     public static string ToCsv(IEnumerable<Speedtest> tests)
@@ -50,8 +48,6 @@ public static class SpeedtestExport
 
     private static string Number(double? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "";
 
-    // Text comes from provider output, so it is quoted whenever it could break a column, and a leading
-    // = + - @ is defused so a spreadsheet opening the file doesn't run it as a formula.
     private static string Text(string? value)
     {
         if (string.IsNullOrEmpty(value)) return "";

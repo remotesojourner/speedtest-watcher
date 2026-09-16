@@ -44,7 +44,6 @@ public class SpeedtestExportTests : IDisposable
         Assert.Equal(SpeedtestExport.CsvHeader, lines[0]);
         Assert.StartsWith("7,2026-09-16T08:05:00Z,completed,,auto,13,1.4,941.2,109.8,", lines[1]);
         Assert.Contains(",\"Acme, Inc\",", lines[1]);
-        // The formula keeps its text but gains a leading quote, and its own quotes are doubled.
         Assert.EndsWith(",\"'=HYPERLINK(\"\"http://example.com\"\")\"", lines[1]);
     }
 
@@ -63,8 +62,8 @@ public class SpeedtestExportTests : IDisposable
     {
         var repo = new SpeedtestRepository(_db);
         var now = DateTime.UtcNow;
-        int completed = await repo.CreateAsync(new Speedtest { Download = 100, Created = now.AddMinutes(-3) });
-        int missed = await repo.CreateAsync(new Speedtest { Download = 5, Healthy = false, Type = "custom", Created = now.AddMinutes(-2) });
+        var completed = await repo.CreateAsync(new Speedtest { Download = 100, Created = now.AddMinutes(-3) });
+        var missed = await repo.CreateAsync(new Speedtest { Download = 5, Healthy = false, Type = "custom", Created = now.AddMinutes(-2) });
         await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "on the skip list", Created = now.AddMinutes(-1) });
 
         Assert.Equal(3, await repo.CountMatchingAsync(null, null, null));

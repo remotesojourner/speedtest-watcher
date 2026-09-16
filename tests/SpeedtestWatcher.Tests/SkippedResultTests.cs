@@ -6,11 +6,6 @@ using SpeedtestWatcher.Infrastructure.Repositories;
 
 namespace SpeedtestWatcher.Tests;
 
-/// <summary>
-/// A skipped test records why it was skipped in Error, but it never ran, so it has no readings.
-/// These pin down that it is not reported as a failure anywhere, because the dashboard, the
-/// failure list and the Prometheus metrics all read their answers from here.
-/// </summary>
 public class SkippedResultTests : IDisposable
 {
     private readonly SqliteConnection _connection;
@@ -39,18 +34,16 @@ public class SkippedResultTests : IDisposable
         await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) });
         await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = today.AddHours(3) });
 
-        string dateStr = today.ToString("yyyy-MM-dd");
+        var dateStr = today.ToString("yyyy-MM-dd");
         var stats = await repo.GetStatisticsAsync(dateStr, dateStr);
 
         Assert.Equal(3, stats.Tests.Total);
         Assert.Equal(1, stats.Tests.Failed);
 
-        // The two empty rows must not drag the averages towards zero.
         Assert.Equal(10, stats.Ping?.Avg);
         Assert.Equal(100.0, stats.Download?.Avg);
         Assert.Equal(50.0, stats.Upload?.Avg);
 
-        // Only the genuine failure is offered to the dashboard's failure list.
         Assert.Equal(1, stats.Failed.Count(failed => failed));
         Assert.Equal(["Network unreachable"], stats.Errors.Where(e => !string.IsNullOrEmpty(e)));
     }
@@ -65,7 +58,6 @@ public class SkippedResultTests : IDisposable
         await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = now.AddMinutes(-5) });
         await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now });
 
-        // The newest attempt is the skip, but the readings still come from the last real test.
         Assert.Equal("skipped", (await repo.GetLatestAsync())?.Status);
 
         var completed = await repo.GetLatestCompletedAsync();

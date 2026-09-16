@@ -2,7 +2,6 @@ namespace SpeedtestWatcher.Web.Helpers;
 
 public static class SpeedtestErrors
 {
-    // Raw provider CLI messages mapped to plain-language explanations (ported from the original client).
     private static readonly (string Match, string Message)[] Known =
     [
         ("Network unreachable", "Internet connection was unstable during the time of the test"),

@@ -2,7 +2,6 @@ using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Middleware;
 
-/// <summary>Applies <see cref="AccessPolicy"/> to every request that isn't a static file.</summary>
 public class AccessMiddleware
 {
     private readonly RequestDelegate _next;
@@ -48,7 +47,6 @@ public class AccessMiddleware
             return;
         }
 
-        // Controllers refuse changes from read-only visitors by checking this.
         context.Items["ViewMode"] = access == Access.ReadOnly;
         await _next(context);
     }

@@ -36,7 +36,6 @@ public class SpeedtestSchedulerService : BackgroundService
     {
         _logger.LogInformation("Speedtest scheduler service started");
 
-        // Check if RUN_TEST_ON_STARTUP is set
         if (Environment.GetEnvironmentVariable("RUN_TEST_ON_STARTUP") == "true")
         {
             _ = Task.Run(async () =>
@@ -54,7 +53,7 @@ public class SpeedtestSchedulerService : BackgroundService
             {
                 using var scope = _serviceProvider.CreateScope();
                 var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-                string cronStr = await configRepo.GetValueAsync("cron", stoppingToken) ?? "0 * * * *";
+                var cronStr = await configRepo.GetValueAsync("cron", stoppingToken) ?? "0 * * * *";
                 _currentCron = cronStr;
 
                 CronExpression cron;
@@ -80,12 +79,10 @@ public class SpeedtestSchedulerService : BackgroundService
                     await Task.Delay(delay, stoppingToken);
                 }
 
-                // Check schedule offset
-                string scheduleOffset = await configRepo.GetValueAsync("scheduleOffset", stoppingToken) ?? "true";
+                var scheduleOffset = await configRepo.GetValueAsync("scheduleOffset", stoppingToken) ?? "true";
                 if (scheduleOffset == "true")
                 {
-                    // Randomized offset between 30s and 300s
-                    int randomOffsetSeconds = Random.Shared.Next(30, 300);
+                    var randomOffsetSeconds = Random.Shared.Next(30, 300);
                     _logger.LogInformation("Applying random schedule offset of {Seconds}s", randomOffsetSeconds);
                     await Task.Delay(TimeSpan.FromSeconds(randomOffsetSeconds), stoppingToken);
                 }
@@ -145,7 +142,7 @@ public class SpeedtestSchedulerService : BackgroundService
 
         try
         {
-            string providerStr = await configRepo.GetValueAsync("provider", cancellationToken) ?? "none";
+            var providerStr = await configRepo.GetValueAsync("provider", cancellationToken) ?? "none";
             if (!Enum.TryParse<SpeedtestProvider>(providerStr, true, out var provider) || provider == SpeedtestProvider.None)
             {
                 _pauseState.SetRunning(false);
@@ -153,20 +150,19 @@ public class SpeedtestSchedulerService : BackgroundService
                 return new SpeedtestExecutionResult { Success = false, Error = "No provider selected" };
             }
 
-            string? libreUrl = provider == SpeedtestProvider.Libre ? await configRepo.GetValueAsync("libreUrl", cancellationToken) : null;
-            string? networkInterface = await configRepo.GetValueAsync("interface", cancellationToken);
+            var libreUrl = provider == SpeedtestProvider.Libre ? await configRepo.GetValueAsync("libreUrl", cancellationToken) : null;
+            var networkInterface = await configRepo.GetValueAsync("interface", cancellationToken);
             if (libreUrl == "none") libreUrl = null;
 
-            // A skipped run is recorded so the schedule's history stays complete, and it never retries.
             var check = await connectivity.CheckAsync(cancellationToken);
             if (!check.Proceed)
             {
-                string reason = check.SkipReason ?? "Skipped";
+                var reason = check.SkipReason ?? "Skipped";
                 await RecordSkippedAsync(speedtestRepo, dispatcher, type, reason, cancellationToken);
                 return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
             }
 
-            string? serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
+            var serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
 
             await dispatcher.TriggerEventAsync(IntegrationEvent.TestStarted, new { provider = providerStr, type }, cancellationToken);
 
@@ -202,7 +198,7 @@ public class SpeedtestSchedulerService : BackgroundService
                 Created = DateTime.UtcNow
             };
 
-            int testId = await speedtestRepo.CreateAsync(testEntity, cancellationToken);
+            var testId = await speedtestRepo.CreateAsync(testEntity, cancellationToken);
             testEntity.Id = testId;
 
             var dto = SpeedtestDto.From(testEntity);
@@ -261,10 +257,8 @@ public class SpeedtestSchedulerService : BackgroundService
         await _hubContext.Clients.All.SendAsync("NewTestResult", SpeedtestDto.From(skipped), cancellationToken);
     }
 
-    /// <summary>The targets a result is judged against, read when the test runs and stored with it.</summary>
     private sealed record Thresholds(int? Ping, double? Download, double? Upload)
     {
-        /// <summary>Null when no targets are set, so a result isn't called healthy without a bar to clear.</summary>
         public bool? Evaluate(int ping, double download, double upload)
         {
             if (Ping == null && Download == null && Upload == null) return null;

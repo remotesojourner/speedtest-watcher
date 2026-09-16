@@ -15,7 +15,7 @@ public static class OutputParser
     {
         if (latencyMeasurements == null || latencyMeasurements.Count < 2) return null;
         double totalDiff = 0;
-        for (int i = 1; i < latencyMeasurements.Count; i++)
+        for (var i = 1; i < latencyMeasurements.Count; i++)
         {
             totalDiff += Math.Abs(latencyMeasurements[i] - latencyMeasurements[i - 1]);
         }
@@ -130,7 +130,7 @@ public static class OutputParser
 
             foreach (var item in smElem.EnumerateArray())
             {
-                string? type = item.TryGetProperty("test_type", out var tt) ? tt.GetString() : null;
+                var type = item.TryGetProperty("test_type", out var tt) ? tt.GetString() : null;
                 double speed = 0;
                 if (item.TryGetProperty("max", out var mx)) speed = mx.GetDouble();
                 else if (item.TryGetProperty("median", out var med)) speed = med.GetDouble();

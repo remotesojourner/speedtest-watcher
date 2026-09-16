@@ -7,7 +7,6 @@ public class SpeedtestExecutionResult
 {
     public bool Success { get; set; }
 
-    /// <summary>The test never ran: no internet, or the public IP was on the skip list.</summary>
     public bool Skipped { get; set; }
     public int Ping { get; set; }
     public double? Jitter { get; set; }

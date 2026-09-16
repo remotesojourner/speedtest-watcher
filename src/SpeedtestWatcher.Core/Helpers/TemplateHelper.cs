@@ -22,7 +22,7 @@ public static class TemplateHelper
             dict[k] = v;
         }
 
-        string result = template;
+        var result = template;
         foreach (var (k, v) in dict)
         {
             result = result.Replace($"%{k}%", v);

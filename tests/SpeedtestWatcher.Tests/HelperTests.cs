@@ -14,8 +14,8 @@ public class HelperTests
     [InlineData(-1, 100, true, SpeedQuality.Error)]
     [InlineData(25, 25, false, SpeedQuality.Green)]
     [InlineData(30, 25, false, SpeedQuality.Green)]
-    [InlineData(33, 25, false, SpeedQuality.Orange)] // 132%
-    [InlineData(45, 25, false, SpeedQuality.Red)] // 180%
+    [InlineData(33, 25, false, SpeedQuality.Orange)]
+    [InlineData(45, 25, false, SpeedQuality.Red)]
     public void SpeedQualityHelper_CalculatesCorrectQuality(double current, double optimal, bool higherIsBetter, SpeedQuality expected)
     {
         var quality = SpeedQualityHelper.GetQuality(current, optimal, higherIsBetter);
@@ -51,8 +51,8 @@ public class HelperTests
             ["error"] = "Connection refused"
         };
 
-        string template = "Ping: %ping% ms, Down: %download% Mbps, Up: %upload% Mbps, Error: %error%";
-        string result = TemplateHelper.ReplaceVariables(template, vars);
+        var template = "Ping: %ping% ms, Down: %download% Mbps, Up: %upload% Mbps, Error: %error%";
+        var result = TemplateHelper.ReplaceVariables(template, vars);
 
         Assert.Equal("Ping: 15 ms, Down: 250.50 Mbps, Up: 50.25 Mbps, Error: Connection refused", result);
     }

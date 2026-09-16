@@ -33,7 +33,6 @@ else
     [Parameter] public Color Color { get; set; } = Color.Default;
     [Parameter] public MetricSize Size { get; set; } = MetricSize.Large;
 
-    /// <summary>Steps the whole display down one typographic rank - used inside dialogs, per the design tokens.</summary>
     [Parameter] public bool Dense { get; set; }
 
     private Typo ValueTypo() => Size switch

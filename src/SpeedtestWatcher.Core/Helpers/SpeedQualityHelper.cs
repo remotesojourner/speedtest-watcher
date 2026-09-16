@@ -9,7 +9,7 @@ public static class SpeedQualityHelper
         if (current < 0) return SpeedQuality.Error;
         if (optimal <= 0) return SpeedQuality.Green;
 
-        double speedPercent = Math.Floor((current / optimal) * 100);
+        var speedPercent = Math.Floor((current / optimal) * 100);
 
         if (higherIsBetter)
         {

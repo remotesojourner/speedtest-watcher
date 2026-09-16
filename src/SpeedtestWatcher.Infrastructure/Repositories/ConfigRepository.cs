@@ -26,24 +26,19 @@ public class ConfigRepository : IConfigRepository
         ["interface"] = "none",
         ["retentionDays"] = "365",
 
-        // Server choice: auto (provider picks), random (from the list below) or single (ooklaId/libreId).
         ["serverMode"] = "auto",
-        // How the per-provider list is used in random mode: allow (pick from it) or deny (pick from anything else).
         ["serverListMode"] = "allow",
         ["ooklaServerIds"] = "none",
         ["libreServerIds"] = "none",
 
-        // Pre-test checks. The check URL returns the public IP, which is also what skipIps is compared against.
         ["internetCheckEnabled"] = "true",
         ["internetCheckUrl"] = "https://icanhazip.com",
         ["skipIps"] = "none",
 
-        // Display
         ["chartRange"] = "7d",
         ["chartBeginAtZero"] = "false",
         ["dateFormat"] = "dmy",
 
-        // Sign-in. These change only through /api/auth, which checks them together before saving.
         ["authEnabled"] = "false",
         ["visitorAccess"] = "none",
         ["oidcAuthority"] = "none",
@@ -53,7 +48,6 @@ public class ConfigRepository : IConfigRepository
         ["apiTokenHash"] = "none"
     };
 
-    // Settings of features that no longer exist, removed so they don't linger in older databases.
     private static readonly string[] ObsoleteKeys = ["password", "passwordLevel"];
 
     public ConfigRepository(SpeedtestWatcherDbContext db)
@@ -108,7 +102,7 @@ public class ConfigRepository : IConfigRepository
 
     public Task<string?> ValidateInputAsync(string key, object? value, CancellationToken cancellationToken = default)
     {
-        string? valStr = value?.ToString();
+        var valStr = value?.ToString();
         if (string.IsNullOrWhiteSpace(valStr))
             return Task.FromResult<string?>("You need to provide the new value");
 
@@ -147,7 +141,7 @@ public class ConfigRepository : IConfigRepository
 
         if (key == "retentionDays")
         {
-            if (!int.TryParse(valStr, out int r) || r < 0 || r > 10000)
+            if (!int.TryParse(valStr, out var r) || r < 0 || r > 10000)
                 return Task.FromResult<string?>("You need to provide a number between 0 and 10000 in order to change this");
         }
 
@@ -157,7 +151,6 @@ public class ConfigRepository : IConfigRepository
         if (key == "serverListMode" && !new[] { "allow", "deny" }.Contains(valStr))
             return Task.FromResult<string?>("You need to provide a valid server list mode");
 
-        // Stored as a comma separated list of ids, or "none" for an empty one.
         if ((key == "ooklaServerIds" || key == "libreServerIds") && valStr != "none"
             && !Regex.IsMatch(valStr, @"^[0-9]+(,[0-9]+)*$"))
             return Task.FromResult<string?>("Server IDs need to be numbers separated by commas");

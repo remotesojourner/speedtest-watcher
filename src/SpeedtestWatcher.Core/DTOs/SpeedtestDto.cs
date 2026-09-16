@@ -59,7 +59,6 @@ public class SpeedtestDto
     [JsonPropertyName("created")]
     public string Created { get; set; } = string.Empty;
 
-    /// <summary>One place to build the API shape, so a new column can't be missed by one caller.</summary>
     public static SpeedtestDto From(Speedtest test) => new()
     {
         Id = test.Id,

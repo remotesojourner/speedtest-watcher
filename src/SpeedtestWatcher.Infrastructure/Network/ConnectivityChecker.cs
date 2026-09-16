@@ -9,16 +9,11 @@ using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
-/// <summary>The outcome of the checks that run before a speedtest.</summary>
 public record PreTestCheck(bool Proceed, string? SkipReason)
 {
     public static readonly PreTestCheck Ok = new(true, null);
 }
 
-/// <summary>
-/// Confirms the connection works before a test runs, and skips the test when the public IP is on the skip list
-/// (for example while a VPN or backup line is up). Both use the single request to the check URL.
-/// </summary>
 public class ConnectivityChecker
 {
     private readonly IConfigRepository _configRepo;
@@ -34,13 +29,12 @@ public class ConnectivityChecker
 
     public async Task<PreTestCheck> CheckAsync(CancellationToken cancellationToken = default)
     {
-        bool checkEnabled = (await _configRepo.GetValueAsync("internetCheckEnabled", cancellationToken) ?? "true") == "true";
+        var checkEnabled = (await _configRepo.GetValueAsync("internetCheckEnabled", cancellationToken) ?? "true") == "true";
         var skipIps = ParseList(await _configRepo.GetValueAsync("skipIps", cancellationToken));
 
-        // Nothing to check, so nothing reaches the check URL either.
         if (!checkEnabled && skipIps.Count == 0) return PreTestCheck.Ok;
 
-        string url = Value(await _configRepo.GetValueAsync("internetCheckUrl", cancellationToken)) ?? "https://icanhazip.com";
+        var url = Value(await _configRepo.GetValueAsync("internetCheckUrl", cancellationToken)) ?? "https://icanhazip.com";
         string publicIp;
         try
         {

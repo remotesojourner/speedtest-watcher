@@ -5,7 +5,6 @@ using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 
-/// <summary>The sign-in settings as saved, and what they add up to.</summary>
 public sealed record AuthSnapshot(
     bool Enabled,
     string VisitorAccess,
@@ -14,26 +13,19 @@ public sealed record AuthSnapshot(
     string? ClientSecret,
     IReadOnlyList<string> Scopes,
     string? ApiTokenHash,
-    bool DisabledByEnvironment,
-    bool PreviewMode)
+    bool DisabledByEnvironment)
 {
-    public static readonly AuthSnapshot Default = new(false, "none", null, null, null, ["openid", "profile", "email"], null, false, false);
+    public static readonly AuthSnapshot Default = new(false, "none", null, null, null, ["openid", "profile", "email"], null, false);
 
     public bool Configured => !string.IsNullOrEmpty(Authority) && !string.IsNullOrEmpty(ClientId);
 
-    /// <summary>Sign-in is enforced: switched on and configured, and neither DISABLE_AUTH nor demo mode overrides it.</summary>
-    public bool IsActive => Enabled && Configured && !DisabledByEnvironment && !PreviewMode;
+    public bool IsActive => Enabled && Configured && !DisabledByEnvironment;
 }
 
-/// <summary>
-/// The sign-in settings every request is checked against. They're read from the database at startup and
-/// again whenever they change, rather than on each request, and a change takes effect without a restart.
-/// </summary>
 public sealed class AuthSettings
 {
     public const string OidcScheme = OpenIdConnectDefaults.AuthenticationScheme;
 
-    /// <summary>Config keys owned by the Security tab, which saves them together; the generic config endpoint refuses them.</summary>
     public static readonly IReadOnlySet<string> Keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "authEnabled", "visitorAccess", "oidcAuthority", "oidcClientId", "oidcClientSecret", "oidcScopes", "apiTokenHash"
@@ -56,7 +48,6 @@ public sealed class AuthSettings
 
     public AuthSnapshot Current { get; private set; } = AuthSnapshot.Default;
 
-    /// <summary>DISABLE_AUTH turns sign-in off whatever is saved, so a broken provider can't lock anyone out.</summary>
     public static bool DisabledByEnvironment =>
         Environment.GetEnvironmentVariable("DISABLE_AUTH")?.Trim().ToLowerInvariant() is "true" or "1" or "yes";
 
@@ -82,17 +73,13 @@ public sealed class AuthSettings
                 ClientSecret: await ReadAsync("oidcClientSecret"),
                 Scopes: ParseScopes(await ReadAsync("oidcScopes")),
                 ApiTokenHash: await ReadAsync("apiTokenHash"),
-                DisabledByEnvironment: DisabledByEnvironment,
-                PreviewMode: Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true");
+                DisabledByEnvironment: DisabledByEnvironment);
 
             Current = snapshot;
 
-            // Handler options are built once and cached; dropping them makes the next sign-in use the new values.
             _oidcOptions.TryRemove(OidcScheme);
 
-            // The OpenID Connect handler refuses to start without a provider and client ID, and the authentication
-            // middleware starts it on every request while its scheme exists. So the scheme only exists while in use.
-            bool registered = await _schemes.GetSchemeAsync(OidcScheme) != null;
+            var registered = await _schemes.GetSchemeAsync(OidcScheme) != null;
             if (snapshot.IsActive && !registered)
                 _schemes.TryAddScheme(new AuthenticationScheme(OidcScheme, "OpenID Connect", typeof(OpenIdConnectHandler)));
             else if (!snapshot.IsActive && registered)
@@ -111,7 +98,6 @@ public sealed class AuthSettings
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
-        // openid is what makes this OpenID Connect rather than plain OAuth, so it's always requested.
         if (!scopes.Contains("openid")) scopes.Insert(0, "openid");
         return scopes;
     }

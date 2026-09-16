@@ -2,17 +2,11 @@
 @using System.Text.Json
 @using System.Text.RegularExpressions
 @inject HttpClient Http
-@inject ConfigStateService ConfigService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Hub" Title="Integrations" FullHeight="false"
              Description="Send results and alerts to other services.">
-    @if (PreviewMode)
-    {
-        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Integrations are disabled during demo mode.</MudAlert>
-    }
-
     <StateView Loading="_loading" Compact="true" Empty="@(_instances.Count == 0)"
                EmptyMessage="No integrations yet. Add one to send test results or alerts to another service.">
         <MudExpansionPanels Elevation="0" MultiExpansion="true" Class="sw-card rounded-lg">
@@ -37,7 +31,6 @@
                             </MudItem>
                             @foreach (var field in instance.Schema.Fields)
                             {
-                                @* Errors go through Validation: MudBlazor's required check clears a bound Error flag for good. *@
                                 <MudItem xs="12" sm="@(field.Type == "textarea" ? 12 : 6)">
                                     @switch (field.Type)
                                     {
@@ -69,7 +62,7 @@
                                 @(instance.Saving ? "Saving..." : "Save")
                             </MudButton>
                             <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete"
-                                       Disabled="PreviewMode" OnClick="@(() => DeleteAsync(instance))">
+                                       OnClick="@(() => DeleteAsync(instance))">
                                 Delete
                             </MudButton>
                         </div>
@@ -80,7 +73,7 @@
     </StateView>
 
     <MudMenu Label="Add integration" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary"
-             Class="mt-4" Disabled="@(PreviewMode || _loading)">
+             Class="mt-4" Disabled="_loading">
         @foreach (var schema in _schemas)
         {
             <MudMenuItem OnClick="@(() => Add(schema.Key, schema.Value))">@schema.Value.Title</MudMenuItem>
@@ -114,8 +107,6 @@
     private bool _loading = true;
     private Dictionary<string, IntegrationTypeSchemaDto> _schemas = [];
     private List<IntegrationInstance> _instances = [];
-
-    private bool PreviewMode => ConfigService.CurrentConfig.PreviewMode;
 
     protected override async Task OnInitializedAsync()
     {
@@ -167,7 +158,6 @@
         return instance;
     }
 
-    // Stored data and schema defaults arrive as JsonElement; the editors need real bools, ints and strings.
     private static object? Normalize(string type, object? raw)
     {
         if (raw is JsonElement element)
@@ -236,7 +226,7 @@
     }
 
     private bool CanSave(IntegrationInstance instance) =>
-        !PreviewMode && !instance.Saving && instance.Dirty && instance.Schema.Fields.All(f => ValidationError(f, instance) == null);
+        !instance.Saving && instance.Dirty && instance.Schema.Fields.All(f => ValidationError(f, instance) == null);
 
     private async Task SaveAsync(IntegrationInstance instance)
     {
@@ -291,7 +281,7 @@
     {
         if (!string.IsNullOrEmpty(instance.Id))
         {
-            bool? confirmed = await DialogService.ShowMessageBoxAsync(
+            var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Delete integration",
                 $"Delete \"{DisplayTitle(instance)}\"? It will stop sending notifications.",
                 yesText: "Delete", cancelText: "Cancel");

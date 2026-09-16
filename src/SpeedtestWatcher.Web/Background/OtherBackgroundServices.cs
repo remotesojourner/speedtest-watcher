@@ -24,10 +24,10 @@ public class RetentionCleanupService : BackgroundService
                 var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
                 var speedtestRepo = scope.ServiceProvider.GetRequiredService<ISpeedtestRepository>();
 
-                string? daysStr = await configRepo.GetValueAsync("retentionDays", stoppingToken);
-                if (int.TryParse(daysStr, out int days) && days > 0)
+                var daysStr = await configRepo.GetValueAsync("retentionDays", stoppingToken);
+                if (int.TryParse(daysStr, out var days) && days > 0)
                 {
-                    int deleted = await speedtestRepo.RemoveOldTestsAsync(days, stoppingToken);
+                    var deleted = await speedtestRepo.RemoveOldTestsAsync(days, stoppingToken);
                     if (deleted > 0)
                     {
                         _logger.LogInformation("Pruned {Count} speedtests older than {Days} days", deleted, days);
@@ -140,12 +140,6 @@ public class CliDownloadService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true")
-        {
-            _logger.LogInformation("Skipping CLI binary download in preview mode");
-            return;
-        }
-
         try
         {
             using var scope = _serviceProvider.CreateScope();

@@ -31,9 +31,9 @@ public class RecommendationRepository : IRecommendationRepository
 
         if (recentTests.Count >= 10)
         {
-            int minPing = recentTests.Min(t => t.Ping);
-            double maxDown = Math.Round(recentTests.Max(t => t.Download), 2);
-            double maxUp = Math.Round(recentTests.Max(t => t.Upload), 2);
+            var minPing = recentTests.Min(t => t.Ping);
+            var maxDown = Math.Round(recentTests.Max(t => t.Download), 2);
+            var maxUp = Math.Round(recentTests.Max(t => t.Upload), 2);
 
             if (existing == null)
             {

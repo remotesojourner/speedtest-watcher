@@ -20,15 +20,12 @@ public class PrometheusController : ControllerBase
     [HttpGet("metrics")]
     public async Task<IActionResult> GetMetrics()
     {
-        // Readings come from the last test that produced any, so a failed or skipped attempt
-        // doesn't blank out the graphs. The latest attempt of any kind is reported separately,
-        // which is what tells you whether tests are still running at all.
         var latest = await _repository.GetLatestAsync();
         var completed = await _repository.GetLatestCompletedAsync();
-        int total = await _repository.CountAsync();
+        var total = await _repository.CountAsync();
 
-        string completedLabels = Labels(completed);
-        string latestLabels = Labels(latest);
+        var completedLabels = Labels(completed);
+        var latestLabels = Labels(latest);
         var sb = new StringBuilder();
 
         Gauge(sb, "ping", "Ping of the latest completed test in ms", completed?.Ping, completedLabels, "F0");
@@ -37,20 +34,16 @@ public class PrometheusController : ControllerBase
         Gauge(sb, "upload", "Upload speed of the latest completed test in Mbps", completed?.Upload, completedLabels, "F2");
         Gauge(sb, "time", "Duration of the latest completed test in seconds", completed?.Time, completedLabels, "F0");
 
-        // Health of that test against the targets that were in force when it ran.
         Gauge(sb, "healthy", "Whether the latest completed test met its targets (1 healthy, 0 not)",
             completed?.Healthy is { } healthy ? (healthy ? 1 : 0) : null, completedLabels, "F0");
         Gauge(sb, "threshold_ping", "Ping target the latest completed test was judged against, in ms", completed?.ThresholdPing, completedLabels, "F0");
         Gauge(sb, "threshold_download", "Download target the latest completed test was judged against, in Mbps", completed?.ThresholdDownload, completedLabels, "F2");
         Gauge(sb, "threshold_upload", "Upload target the latest completed test was judged against, in Mbps", completed?.ThresholdUpload, completedLabels, "F2");
 
-        // Two clocks: the last attempt (is the schedule alive?) and the last usable result
-        // (is the data still fresh?). They differ whenever tests are failing or being skipped.
         Gauge(sb, "last_test_timestamp_seconds", "When the latest test ran, in Unix seconds", UnixSeconds(latest), latestLabels, "F0");
         Gauge(sb, "last_completed_test_timestamp_seconds", "When the latest completed test ran, in Unix seconds", UnixSeconds(completed), completedLabels, "F0");
         Gauge(sb, "tests_total", "Number of results stored", total, "", "F0");
 
-        // Kept for existing dashboards; describes the test the readings above came from.
         Gauge(sb, "server", "Server id of the latest completed test", completed?.ServerId ?? 0, "", "F0");
         Gauge(sb, "server_info", "Static info about the latest completed test (always 1).", 1, completedLabels, "F0");
 
@@ -66,7 +59,6 @@ public class PrometheusController : ControllerBase
             $"server_name=\"{Escape(test?.ServerName)}\"",
             $"server_host=\"{Escape(test?.ServerHost)}\"",
             $"status=\"{Escape(test?.Status ?? "none")}\"",
-            // "custom" is a test someone started by hand; "auto" came from the schedule.
             $"scheduled=\"{(test?.Type == "custom" ? "false" : "true")}\"");
 
     private static void Gauge(StringBuilder sb, string name, string help, double? value, string labels, string format)
@@ -75,7 +67,7 @@ public class PrometheusController : ControllerBase
 
         sb.AppendLine($"# HELP speedtest_watcher_{name} {help}");
         sb.AppendLine($"# TYPE speedtest_watcher_{name} gauge");
-        string labelPart = string.IsNullOrEmpty(labels) ? "" : $"{{{labels}}}";
+        var labelPart = string.IsNullOrEmpty(labels) ? "" : $"{{{labels}}}";
         sb.AppendLine($"speedtest_watcher_{name}{labelPart} {number.ToString(format, CultureInfo.InvariantCulture)}");
     }
 

@@ -17,7 +17,7 @@ public class RecommendationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var rec = await _repository.GetAsync();

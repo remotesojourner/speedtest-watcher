@@ -53,7 +53,6 @@
         {
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
-                    @* Single mode means one fixed server, so there's no "automatic" choice here and a server is required. *@
                     <MudSelect T="string" Value="@(_serverId == "none" ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="Choose a server"
                                Disabled="_serversLoading" HelperText="@(_serversLoading ? "Loading servers..." : "Nearest servers are listed first")">
@@ -177,7 +176,6 @@
 
     private string ProviderTitle => Providers.First(p => p.Id == _provider).Title;
 
-    // Cloudflare tests its own edge network, and a custom LibreSpeed URL replaces the server list.
     private bool SupportsServerChoice => _provider != "cloudflare" && !UsingCustomUrl;
 
     private bool UsingCustomUrl => _provider == "libre" && !string.IsNullOrWhiteSpace(_libreUrl);
@@ -241,7 +239,6 @@
         if (_serverId != "none") _libreUrl = "";
     }
 
-    // MudSelect hands back a nullable collection of nullable values.
     private void SetSelectedIds(IReadOnlyCollection<string?>? values)
     {
         _serverIds[_provider] = values?
@@ -280,7 +277,6 @@
         {
             var data = await Http.GetFromJsonAsync<Dictionary<string, List<string>>>("/api/info/interfaces") ?? [];
 
-            // The runner hands this value to the CLI as a source address, so each option is an IP, not an interface name.
             _interfaceOptions = data
                 .SelectMany(entry => entry.Value.Select(ip => new InterfaceOption(ip, $"{entry.Key} — {ip}")))
                 .ToList();

@@ -11,10 +11,6 @@ using SpeedtestWatcher.Infrastructure.Network;
 
 namespace SpeedtestWatcher.Infrastructure.SpeedTest;
 
-/// <summary>
-/// Picks the server for a run: automatic (the provider decides), random from the configured list,
-/// or a single fixed server.
-/// </summary>
 public class ServerSelector
 {
     private readonly IConfigRepository _configRepo;
@@ -28,14 +24,12 @@ public class ServerSelector
         _logger = logger;
     }
 
-    /// <summary>The server id to test against, or null to let the provider choose.</summary>
     public async Task<string?> SelectAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
     {
-        // Cloudflare always picks its own edge location.
         if (provider != SpeedtestProvider.Ookla && provider != SpeedtestProvider.Libre) return null;
 
-        string providerKey = provider == SpeedtestProvider.Ookla ? "ookla" : "libre";
-        string mode = Value(await _configRepo.GetValueAsync("serverMode", cancellationToken)) ?? "auto";
+        var providerKey = provider == SpeedtestProvider.Ookla ? "ookla" : "libre";
+        var mode = Value(await _configRepo.GetValueAsync("serverMode", cancellationToken)) ?? "auto";
 
         if (mode == "single")
             return Value(await _configRepo.GetValueAsync($"{providerKey}Id", cancellationToken));
@@ -43,7 +37,7 @@ public class ServerSelector
         if (mode != "random") return null;
 
         var listed = ParseIds(await _configRepo.GetValueAsync($"{providerKey}ServerIds", cancellationToken));
-        bool deny = Value(await _configRepo.GetValueAsync("serverListMode", cancellationToken)) == "deny";
+        var deny = Value(await _configRepo.GetValueAsync("serverListMode", cancellationToken)) == "deny";
 
         var candidates = deny
             ? (await NearbyServerIdsAsync(providerKey, cancellationToken)).Where(id => !listed.Contains(id)).ToList()
@@ -62,7 +56,6 @@ public class ServerSelector
     {
         try
         {
-            // The cached list is an object keyed by server id.
             if (await _serverList.GetServersAsync(providerKey, cancellationToken) is JsonElement { ValueKind: JsonValueKind.Object } element)
                 return element.EnumerateObject().Select(property => property.Name).ToList();
         }

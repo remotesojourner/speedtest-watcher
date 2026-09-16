@@ -13,17 +13,14 @@ public class BackgroundServiceShutdownTests
     [InlineData(typeof(InterfaceRefreshService))]
     public async Task StoppingTheHost_EndsTheLoopWithoutThrowing(Type serviceType)
     {
-        // No repositories are registered, so the first tick fails and logs a warning right before the loop's delay.
         var warnings = new WarningSignal();
         var provider = new ServiceCollection().AddLogging(logging => logging.AddProvider(warnings)).BuildServiceProvider();
         var service = (BackgroundService)ActivatorUtilities.CreateInstance(provider, serviceType);
 
         await service.StartAsync(CancellationToken.None);
-        // ExecuteAsync starts in the background; stopping before the first tick would skip the delay and pass for the wrong reason.
         await warnings.FirstWarning.WaitAsync(TimeSpan.FromSeconds(5));
         await service.StopAsync(CancellationToken.None);
 
-        // A cancellation that escapes ExecuteAsync leaves the task Canceled, and the debugger reports it as user-unhandled.
         Assert.Equal(TaskStatus.RanToCompletion, service.ExecuteTask!.Status);
     }
 

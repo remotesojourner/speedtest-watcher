@@ -204,8 +204,6 @@
 
     private sealed record TestGroup(string Label, List<SpeedtestDto> Tests);
 
-    // The hero reports measurements, so it follows the last test that produced any. A skipped
-    // or failed attempt stores -1 for its readings, which would otherwise show as "-1.0 mbps".
     private SpeedtestDto? LatestReading =>
         SpeedtestService.LatestTest is { Status: "completed" } latest
             ? latest
@@ -218,7 +216,6 @@
     private string _type = AllFilter;
     private string _healthy = AllFilter;
 
-    // Filtered results are fetched separately so the shared list (and the dashboard's latest result) stays intact.
     private List<SpeedtestDto> _filtered = [];
     private bool _filteredHasMore = true;
     private bool _filteredLoading;
@@ -453,7 +450,6 @@
         var dialog = await DialogService.ShowAsync<TestDetailDialog>("Test Details", parameters, options);
         var result = await dialog.Result;
 
-        // A deleted test disappears from the shared list; the filtered view has to drop it too.
         if (result is { Canceled: false } && FiltersActive)
         {
             _filtered.RemoveAll(t => t.Id == test.Id);

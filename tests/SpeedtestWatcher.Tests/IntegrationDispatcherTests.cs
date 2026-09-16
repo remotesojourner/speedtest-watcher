@@ -7,10 +7,6 @@ using SpeedtestWatcher.Infrastructure.Integrations;
 
 namespace SpeedtestWatcher.Tests;
 
-/// <summary>
-/// Drives the dispatcher through a handler that records requests instead of sending them,
-/// so these check what each service would receive without reaching any of them.
-/// </summary>
 public class IntegrationDispatcherTests
 {
     private static readonly Speedtest SkippedTest = new()
@@ -19,7 +15,6 @@ public class IntegrationDispatcherTests
         Error = "Public IP 203.0.113.9 is on the skip list"
     };
 
-    // Only the required fields, so every alert toggle is left at its default.
     private static readonly Dictionary<string, string> MinimalConfigs = new()
     {
         ["discord"] = """{"url":"https://localhost/discord.com/api/webhooks/1/x"}""",
@@ -44,7 +39,6 @@ public class IntegrationDispatcherTests
         await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest);
 
         var request = Assert.Single(handler.Requests);
-        // The webhook carries the event name and raw data; the others carry a readable message with the reason.
         Assert.Contains(name == "webhook" ? "TEST_SKIPPED" : "skip list", request.Body);
     }
 
@@ -78,7 +72,6 @@ public class IntegrationDispatcherTests
         Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
     }
 
-    // Discord now sends from one place for every event; its existing alerts must come out as before.
     [Theory]
     [InlineData(IntegrationEvent.TestFinished, "A speedtest is finished", 4572762)]
     [InlineData(IntegrationEvent.TestFailed, "A speedtest has failed", 12993861)]
@@ -107,7 +100,7 @@ public class IntegrationDispatcherTests
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            string body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(cancellationToken);
+            var body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(cancellationToken);
             Requests.Add((request.RequestUri!.ToString(), body));
             return new HttpResponseMessage(HttpStatusCode.OK);
         }

@@ -32,13 +32,19 @@ Built with .NET 10, Blazor Interactive Server, MudBlazor and SQLite (Entity Fram
 docker compose up -d --build
 ```
 
-Open http://localhost:5216. Results are stored in `./data` and the downloaded speedtest tools in `./bin`.
+Open http://localhost:2003. Results are stored in `./data` and the downloaded speedtest tools in `./bin`.
+
+To run on another port, set `PORT`, either inline or in a `.env` file next to `docker-compose.yml`. The app listens on that port inside the container and Compose publishes the same one:
+
+```bash
+PORT=8080 docker compose up -d --build
+```
 
 Without Compose:
 
 ```bash
 docker build -t speedtest-watcher .
-docker run -d --name speedtest-watcher -p 5216:5216 \
+docker run -d --name speedtest-watcher -e PORT=8080 -p 8080:8080 \
   -v "$(pwd)/data:/app/data" -v "$(pwd)/bin:/app/bin" \
   --restart unless-stopped speedtest-watcher
 ```
@@ -51,16 +57,14 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 dotnet run --project src/SpeedtestWatcher.Web
 ```
 
-Open http://localhost:5216. The database is created on first start from the EF Core migrations.
+Open http://localhost:2003, or set `PORT` to use another port. The database is created on first start from the EF Core migrations.
 
 ## Configuration
 
 | Setting | Where | Purpose |
 | --- | --- | --- |
-| `PORT` | Environment variable | HTTP port (default `5216`) |
-| `PREVIEW_MODE=true` | Environment variable | Demo mode: uses a separate database and blocks changes |
+| `PORT` | Environment variable | Port the app listens on, in Docker too (default `2003`) |
 | `DISABLE_AUTH=true` | Environment variable | Turns sign-in off whatever is saved. For recovering from a broken sign-in setup; see below. |
-| `Project:Repository` | `appsettings.json` | GitHub `owner/repo` used for the update check and the About page links. Both stay hidden while it's empty. |
 
 ## Sign-in
 
@@ -92,7 +96,7 @@ Prometheus and scripts can't sign in through a browser. Create a token under **S
   authorization:
     credentials: YOUR_TOKEN
   static_configs:
-    - targets: ["speedtest-watcher:5216"]
+    - targets: ["speedtest-watcher:2003"]
 ```
 
 The token isn't needed while sign-in is off, or for reading metrics when people who aren't signed in have read-only access.

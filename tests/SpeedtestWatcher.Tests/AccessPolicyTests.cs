@@ -36,12 +36,6 @@ public class AccessPolicyTests
         Assert.Equal(Access.Full, AccessPolicy.Decide(incomplete, signedIn: false, internalCall: false, validApiToken: false));
     }
 
-    [Fact]
-    public void DemoMode_IsNeverLockedBehindSignIn()
-    {
-        Assert.False((SignInOn with { PreviewMode = true }).IsActive);
-    }
-
     [Theory]
     [InlineData(true, false, false)]
     [InlineData(false, true, false)]

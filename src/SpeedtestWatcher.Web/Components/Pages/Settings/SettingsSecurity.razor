@@ -180,7 +180,7 @@
           authorization:
             credentials: YOUR_TOKEN
           static_configs:
-            - targets: ["{(Uri.TryCreate(Navigation.BaseUri, UriKind.Absolute, out var uri) ? uri.Authority : "host:5216")}"]
+            - targets: ["{(Uri.TryCreate(Navigation.BaseUri, UriKind.Absolute, out var uri) ? uri.Authority : "host:2003")}"]
         """;
 
     protected override async Task OnInitializedAsync()
@@ -232,7 +232,6 @@
 
             if (result?.Active == true && _signedInAs == null)
             {
-                // Sign-in now applies to this page as well, so go through it to keep changing settings.
                 Snackbar.Add("Sign-in is on. Taking you to your provider...", Severity.Success);
                 Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/settings/security")}", forceLoad: true);
                 return;
@@ -254,7 +253,7 @@
     {
         if (Config.ApiTokenSet)
         {
-            bool? confirmed = await DialogService.ShowMessageBoxAsync(
+            var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Replace the API token",
                 "The current token stops working straight away. Anything using it will need the new one.",
                 yesText: "Replace", cancelText: "Cancel");
@@ -287,7 +286,7 @@
 
     private async Task RevokeTokenAsync()
     {
-        bool? confirmed = await DialogService.ShowMessageBoxAsync(
+        var confirmed = await DialogService.ShowMessageBoxAsync(
             "Revoke the API token",
             "Anything using the token, such as Prometheus, loses access straight away.",
             yesText: "Revoke", cancelText: "Cancel");

@@ -16,7 +16,6 @@ window.speedtestWatcherInterop = {
         document.body.removeChild(link);
     },
 
-    // Streamed from .NET into a Blob, because a base64 data: URL is too large for a long history.
     downloadFileFromStream: async function (filename, streamReference) {
         const buffer = await streamReference.arrayBuffer();
         const url = URL.createObjectURL(new Blob([buffer]));
@@ -30,7 +29,6 @@ window.speedtestWatcherInterop = {
     },
 
     copyText: async function (text) {
-        // The Clipboard API only exists on https and localhost; plain-http instances fall back to a hidden textarea.
         if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
             return true;

@@ -30,9 +30,6 @@ public class SpeedtestsController : ControllerBase
         _configRepo = configRepo;
     }
 
-    /// <param name="status">completed, failed or skipped.</param>
-    /// <param name="type">auto for scheduled tests, custom for ones started by hand.</param>
-    /// <param name="healthy">Whether the result met the targets stored with it.</param>
     [HttpGet]
     public async Task<IActionResult> ListTests(
         [FromQuery] int? afterId,
@@ -48,24 +45,19 @@ public class SpeedtestsController : ControllerBase
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics([FromQuery] string? from, [FromQuery] string? to)
     {
-        string fromDate = from ?? DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
-        string toDate = to ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var fromDate = from ?? DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
+        var toDate = to ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         var stats = await _repository.GetStatisticsAsync(fromDate, toDate);
         return Ok(stats);
     }
 
-    /// <summary>How many results match the History filters.</summary>
     [HttpGet("count")]
     public async Task<IActionResult> CountTests([FromQuery] string? status = null, [FromQuery] string? type = null, [FromQuery] bool? healthy = null)
     {
         return Ok(new { count = await _repository.CountMatchingAsync(status, type, healthy) });
     }
 
-    /// <summary>
-    /// Exports the results matching the given filters, or only the given IDs. A POST, because a selection
-    /// can hold more IDs than fit in a URL. Anyone who can see the results may export them.
-    /// </summary>
     [HttpPost("export")]
     public async Task<IActionResult> ExportTests([FromBody] ExportRequest request)
     {
@@ -86,18 +78,17 @@ public class SpeedtestsController : ControllerBase
         });
     }
 
-    /// <param name="serverId">Runs this one test against a specific server, whatever the configured server mode.</param>
     [HttpPost("run")]
     public async Task<IActionResult> RunTest([FromQuery] int? serverId)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)
             return Unauthorized(new { message = "Authentication required" });
 
         if (_pauseState.IsRunning)
             return Conflict(new { message = "Speedtest is already running" });
 
-        string? provider = await _configRepo.GetValueAsync("provider");
+        var provider = await _configRepo.GetValueAsync("provider");
         if (provider == null || provider == "none")
             return StatusCode(StatusCodes.Status410Gone, new { message = "No speedtest provider selected" });
 
@@ -112,7 +103,7 @@ public class SpeedtestsController : ControllerBase
     [HttpPost("pause")]
     public IActionResult Pause([FromBody] PauseRequest request)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)
             return Unauthorized(new { message = "Authentication required" });
 
@@ -123,7 +114,7 @@ public class SpeedtestsController : ControllerBase
     [HttpPost("continue")]
     public IActionResult Continue()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)
             return Unauthorized(new { message = "Authentication required" });
 
@@ -144,11 +135,11 @@ public class SpeedtestsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)
             return Unauthorized(new { message = "Authentication required" });
 
-        bool deleted = await _repository.DeleteByIdAsync(id);
+        var deleted = await _repository.DeleteByIdAsync(id);
         if (!deleted)
             return NotFound(new { message = "Speedtest not found" });
 

@@ -58,7 +58,7 @@ public class PauseStateService : IPauseStateService
 
             if (hours == null || hours < 0)
             {
-                _resumesAt = DateTime.MaxValue; // Indefinitely
+                _resumesAt = DateTime.MaxValue;
             }
             else
             {

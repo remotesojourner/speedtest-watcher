@@ -122,7 +122,6 @@
         {
             try
             {
-                // Must match SpeedtestSchedulerService, which evaluates the expression in UTC.
                 var next = CronExpression.Parse(EffectiveCron, CronFormat.Standard)
                     .GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
                 return next?.ToLocalTime();

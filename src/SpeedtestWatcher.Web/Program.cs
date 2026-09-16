@@ -22,25 +22,20 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Port configuration
-string portStr = Environment.GetEnvironmentVariable("PORT") ?? "5216";
-int port = int.TryParse(portStr, out int p) ? p : 5216;
+var portStr = Environment.GetEnvironmentVariable("PORT");
+var port = int.TryParse(portStr, out var p) ? p : 2003;
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-// Data Directory & SQLite Setup
-string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
 Directory.CreateDirectory(dataDir);
 Directory.CreateDirectory(Path.Combine(dataDir, "servers"));
 
-string dbFileName = Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true" ? "storage_preview.db" : "storage.db";
-string dbPath = Path.Combine(dataDir, dbFileName);
+var dbPath = Path.Combine(dataDir, "storage.db");
 
-// Sign-in cookies are encrypted with these keys. Keeping them with the data means a restart doesn't sign everyone out.
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(dataDir, "keys")))
     .SetApplicationName("SpeedtestWatcher");
 
-// Behind a reverse proxy, sign-in has to build its callback URL from the address people actually use.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
@@ -53,13 +48,11 @@ builder.Services.AddDbContext<SpeedtestWatcherDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath};Cache=Shared");
 });
 
-// Repositories
 builder.Services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
 builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
 builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
 
-// Network & CLI Services
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ICliManager, CliManager>();
 builder.Services.AddScoped<ISpeedtestRunner, SpeedtestRunner>();
@@ -69,10 +62,9 @@ builder.Services.AddSingleton<ServerListProvider>();
 builder.Services.AddScoped<ServerSelector>();
 builder.Services.AddScoped<ConnectivityChecker>();
 
-// Background and Coordination Services
 var pauseStateService = new PauseStateService();
 builder.Services.AddSingleton<IPauseStateService>(pauseStateService);
-builder.Services.AddSingleton<PauseStateService>(pauseStateService);
+builder.Services.AddSingleton(pauseStateService);
 
 builder.Services.AddSingleton<SpeedtestSchedulerService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<SpeedtestSchedulerService>());
@@ -82,15 +74,12 @@ builder.Services.AddHostedService<IntegrationTickerService>();
 builder.Services.AddHostedService<InterfaceRefreshService>();
 builder.Services.AddHostedService<CliDownloadService>();
 
-// Blazor UI & State Services
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 
-// Sign-in with an OpenID Connect provider. AuthSettings loads the saved settings, and adds or removes the
-// OpenID Connect scheme to match, so switching sign-in on or off needs no restart.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -108,16 +97,13 @@ builder.Services.AddSingleton<AuthSettings>();
 builder.Services.AddSingleton<InternalAccessToken>();
 builder.Services.AddCascadingAuthenticationState();
 
-// MudBlazor Services
 builder.Services.AddMudServices();
 
-// Client App State Services
 builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<StatusStateService>();
 builder.Services.AddScoped<SpeedtestStateService>();
 builder.Services.AddScoped<ConfigStateService>();
 
-// The UI's calls to the app's own API. They stay on loopback, and carry the internal token while the person is signed in.
 builder.Services.AddScoped(sp => new HttpClient(new InternalAuthHandler(
     sp.GetRequiredService<AuthenticationStateProvider>(),
     sp.GetRequiredService<InternalAccessToken>()))
@@ -127,7 +113,6 @@ builder.Services.AddScoped(sp => new HttpClient(new InternalAuthHandler(
 
 var app = builder.Build();
 
-// Database initialization
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SpeedtestWatcherDbContext>();
@@ -142,9 +127,7 @@ app.Services.GetRequiredService<AuthSettings>().ReloadAsync().GetAwaiter().GetRe
 
 app.UseForwardedHeaders();
 
-// Unknown page URLs show the app's not-found page.
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-// API clients keep plain status codes instead of that HTML page.
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/api") && context.Features.Get<IStatusCodePagesFeature>() is { } statusCodePages)
@@ -152,10 +135,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Middleware pipeline
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Static files carry nothing private and must load for the sign-in pages, so they're served before any access check.
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseMiddleware<AccessMiddleware>();

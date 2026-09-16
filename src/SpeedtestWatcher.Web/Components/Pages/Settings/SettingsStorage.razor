@@ -293,7 +293,7 @@
 
     private async Task ClearHistoryAsync()
     {
-        bool? confirmed = await DialogService.ShowMessageBoxAsync(
+        var confirmed = await DialogService.ShowMessageBoxAsync(
             "Clear history",
             "Delete all stored speedtest results? This cannot be undone.",
             yesText: "Delete all", cancelText: "Cancel");
@@ -317,7 +317,7 @@
 
     private async Task FactoryResetAsync()
     {
-        bool? confirmed = await DialogService.ShowMessageBoxAsync(
+        var confirmed = await DialogService.ShowMessageBoxAsync(
             "Factory reset",
             "Reset all settings (including the password) and remove every integration? Your speedtest results are kept.",
             yesText: "Reset", cancelText: "Cancel");

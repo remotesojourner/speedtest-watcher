@@ -35,7 +35,7 @@ public class SpeedtestRunner : ISpeedtestRunner
             };
         }
 
-        string binaryPath = _cliManager.GetBinaryPath(provider);
+        var binaryPath = _cliManager.GetBinaryPath(provider);
         if (!File.Exists(binaryPath))
         {
             await _cliManager.EnsureBinariesAsync(cancellationToken);
@@ -169,8 +169,8 @@ public class SpeedtestRunner : ISpeedtestRunner
                 };
             }
 
-            string stdout = stdoutBuilder.ToString().Trim();
-            string stderr = stderrBuilder.ToString().Trim();
+            var stdout = stdoutBuilder.ToString().Trim();
+            var stderr = stderrBuilder.ToString().Trim();
 
             if (!string.IsNullOrEmpty(stderr) && stderr.Contains("Too many requests", StringComparison.OrdinalIgnoreCase))
             {
@@ -190,55 +190,10 @@ public class SpeedtestRunner : ISpeedtestRunner
                 };
             }
 
-            // Find JSON line
-            var lines = stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            JsonDocument? matchedDoc = null;
-
-            for (int i = lines.Length - 1; i >= 0; i--)
+            using var resultDocument = FindResultDocument(stdout, provider);
+            if (resultDocument != null)
             {
-                string line = lines[i].Trim();
-                if (!line.StartsWith("{") && !line.StartsWith("[")) continue;
-
-                try
-                {
-                    var doc = JsonDocument.Parse(line);
-                    var root = doc.RootElement;
-                    if (root.ValueKind == JsonValueKind.Array && provider != SpeedtestProvider.Cloudflare)
-                    {
-                        if (root.GetArrayLength() > 0)
-                            root = root[0];
-                    }
-
-                    if (provider == SpeedtestProvider.Ookla)
-                    {
-                        if (root.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "result")
-                        {
-                            matchedDoc = doc;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        matchedDoc = doc;
-                        break;
-                    }
-                }
-                catch
-                {
-                    // Ignore non-JSON line
-                }
-            }
-
-            if (matchedDoc != null)
-            {
-                using (matchedDoc)
-                {
-                    var root = matchedDoc.RootElement;
-                    if (root.ValueKind == JsonValueKind.Array && provider != SpeedtestProvider.Cloudflare)
-                        root = root[0];
-
-                    return OutputParser.Parse(provider, root);
-                }
+                return OutputParser.Parse(provider, ResultElement(resultDocument, provider));
             }
 
             return new SpeedtestExecutionResult
@@ -264,4 +219,48 @@ public class SpeedtestRunner : ISpeedtestRunner
             }
         }
     }
+
+    private static JsonDocument? FindResultDocument(string stdout, SpeedtestProvider provider)
+    {
+        var lines = stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => line.Trim()).Reverse();
+        foreach (var line in lines)
+        {
+            if (!line.StartsWith('{') && !line.StartsWith('[')) continue;
+
+            var document = TryParseJson(line);
+            if (document == null) continue;
+
+            if (provider != SpeedtestProvider.Ookla || IsOoklaResult(ResultElement(document, provider)))
+                return document;
+
+            document.Dispose();
+        }
+
+        return null;
+    }
+
+    private static JsonDocument? TryParseJson(string line)
+    {
+        try
+        {
+            return JsonDocument.Parse(line);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static JsonElement ResultElement(JsonDocument document, SpeedtestProvider provider)
+    {
+        var root = document.RootElement;
+        var isWrappedInArray = root.ValueKind == JsonValueKind.Array && provider != SpeedtestProvider.Cloudflare && root.GetArrayLength() > 0;
+        return isWrappedInArray ? root[0] : root;
+    }
+
+    private static bool IsOoklaResult(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty("type", out var type)
+        && type.ValueKind == JsonValueKind.String
+        && type.GetString() == "result";
 }

@@ -94,12 +94,10 @@
 
     private bool _deleting;
 
-    // The scheduler stores tests started from the UI with type "custom".
     private bool IsManual => Test?.Type == "custom";
 
     private bool IsSkipped => Test?.Status == "skipped";
 
-    // A skipped test also carries text in Error, so the status has to be ruled out first.
     private bool IsFailed => !IsSkipped && !string.IsNullOrEmpty(Test?.Error);
 
     private async Task DeleteTestAsync()

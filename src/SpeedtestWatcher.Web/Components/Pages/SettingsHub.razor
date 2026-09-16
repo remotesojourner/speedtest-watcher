@@ -26,13 +26,6 @@ else
 {
     <PageHeader Title="Settings" Subtitle="Schedule, provider, display, integrations, security, storage and app info." />
 
-    @if (ConfigService.CurrentConfig.PreviewMode)
-    {
-        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
-            Demo mode — settings can't be changed on this instance.
-        </MudAlert>
-    }
-
     <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
         <MudTabs Position="@_tabPosition" Rounded="true" ApplyEffectsToContainer="true"
                  Class="sw-settings-tabs" TabPanelsClass="sw-settings-panels"
@@ -79,7 +72,6 @@ else
         _activeIndex = index >= 0 ? index : 0;
     }
 
-    // Side tabs leave too little room for the settings cards on phones.
     private void OnBreakpointChanged(Breakpoint breakpoint) =>
         _tabPosition = breakpoint is Breakpoint.Xs or Breakpoint.Sm ? Position.Top : Position.Left;
 

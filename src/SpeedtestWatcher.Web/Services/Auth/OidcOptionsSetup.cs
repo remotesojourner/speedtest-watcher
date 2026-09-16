@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 
-/// <summary>Builds the OpenID Connect handler's options from the saved settings each time they're rebuilt.</summary>
 public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptions>
 {
     private readonly AuthSettings _settings;
@@ -25,7 +24,6 @@ public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptio
         options.Authority = current.Authority;
         options.ClientId = current.ClientId;
         options.ClientSecret = current.ClientSecret;
-        // A provider on plain http inside a home network is a deliberate choice, not a mistake to refuse.
         options.RequireHttpsMetadata = current.Authority?.StartsWith("https://", StringComparison.OrdinalIgnoreCase) == true;
 
         options.Scope.Clear();
@@ -35,8 +33,6 @@ public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptio
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.UsePkce = true;
 
-        // The provider sends the user back with a plain GET, so the correlation cookies can be SameSite=Lax.
-        // form_post would need SameSite=None, which browsers only accept over https, and this app often runs on http.
         options.ResponseMode = OpenIdConnectResponseMode.Query;
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;

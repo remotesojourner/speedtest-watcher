@@ -14,7 +14,6 @@ public class PreferencesService
     public string SpeedUnit { get; private set; } = "mbps";
     public event Action? OnChange;
 
-    /// <summary>The date layout is an instance setting, unlike the two above which are per browser.</summary>
     public string DateFormat => _config.CurrentConfig.DateFormat ?? "dmy";
 
     public PreferencesService(IJSRuntime js, ConfigStateService config)

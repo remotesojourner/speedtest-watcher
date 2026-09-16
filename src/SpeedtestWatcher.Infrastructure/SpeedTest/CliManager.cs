@@ -21,8 +21,8 @@ public class CliManager : ICliManager
 
     public string GetBinaryPath(SpeedtestProvider provider)
     {
-        string exeSuffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
-        string name = provider switch
+        var exeSuffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
+        var name = provider switch
         {
             SpeedtestProvider.Ookla => $"speedtest{exeSuffix}",
             SpeedtestProvider.Libre => $"librespeed-cli{exeSuffix}",
@@ -68,14 +68,14 @@ public class CliManager : ICliManager
 
     private async Task DownloadBinaryAsync(SpeedtestProvider provider, CancellationToken cancellationToken)
     {
-        string? url = GetDownloadUrl(provider);
+        var url = GetDownloadUrl(provider);
         if (string.IsNullOrEmpty(url))
         {
             _logger.LogWarning("No compatible binary URL found for {Provider} on this platform", provider);
             return;
         }
 
-        string tempFile = Path.Combine(Path.GetTempPath(), $"speedtest_watcher_{Guid.NewGuid()}_{Path.GetFileName(url)}");
+        var tempFile = Path.Combine(Path.GetTempPath(), $"speedtest_watcher_{Guid.NewGuid()}_{Path.GetFileName(url)}");
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -101,10 +101,10 @@ public class CliManager : ICliManager
 
     private string? GetDownloadUrl(SpeedtestProvider provider)
     {
-        string os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win32" :
+        var os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win32" :
                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "darwin" : "linux";
 
-        string arch = RuntimeInformation.ProcessArchitecture switch
+        var arch = RuntimeInformation.ProcessArchitecture switch
         {
             Architecture.X64 => "x64",
             Architecture.Arm64 => "arm64",
@@ -160,8 +160,8 @@ public class CliManager : ICliManager
 
     private void ExtractBinary(string archivePath, SpeedtestProvider provider)
     {
-        string targetPath = GetBinaryPath(provider);
-        string targetFileName = Path.GetFileName(targetPath);
+        var targetPath = GetBinaryPath(provider);
+        var targetFileName = Path.GetFileName(targetPath);
 
         if (archivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
@@ -186,7 +186,7 @@ public class CliManager : ICliManager
             {
                 if (entry.EntryType is System.Formats.Tar.TarEntryType.RegularFile or System.Formats.Tar.TarEntryType.V7RegularFile)
                 {
-                    string entryName = Path.GetFileName(entry.Name);
+                    var entryName = Path.GetFileName(entry.Name);
                     if (entryName.Equals(targetFileName, StringComparison.OrdinalIgnoreCase) ||
                         entryName.Equals(Path.GetFileNameWithoutExtension(targetFileName), StringComparison.OrdinalIgnoreCase))
                     {

@@ -4,7 +4,6 @@ namespace SpeedtestWatcher.Core.Helpers;
 
 public static class FormatHelper
 {
-    // The database stores UTC wall-clock times without a zone marker, so a value without a Kind is UTC.
     public static DateTime StoredToLocal(DateTime value) => value.Kind switch
     {
         DateTimeKind.Local => value,
@@ -27,11 +26,10 @@ public static class FormatHelper
 
     public static string FormatTime(DateTime dateTime, string timeFormat)
     {
-        bool use12h = timeFormat == "12h";
+        var use12h = timeFormat == "12h";
         return use12h ? dateTime.ToString("hh:mm tt") : dateTime.ToString("HH:mm");
     }
 
-    /// <summary>Date layout for the "dmy", "mdy" and "ymd" presets.</summary>
     public static string DatePattern(string? dateFormat) => dateFormat switch
     {
         "mdy" => "MM/dd/yyyy",
@@ -53,15 +51,15 @@ public static class FormatHelper
             return "Just now";
         if (span.TotalMinutes < 60)
         {
-            int mins = Math.Max(1, (int)span.TotalMinutes);
+            var mins = Math.Max(1, (int)span.TotalMinutes);
             return mins == 1 ? "1 minute ago" : $"{mins} minutes ago";
         }
         if (span.TotalHours < 24)
         {
-            int hours = (int)span.TotalHours;
+            var hours = (int)span.TotalHours;
             return hours == 1 ? "1 hour ago" : $"{hours} hours ago";
         }
-        int days = (int)span.TotalDays;
+        var days = (int)span.TotalDays;
         return days == 1 ? "1 day ago" : $"{days} days ago";
     }
 }

@@ -21,7 +21,7 @@ public class IntegrationsController : ControllerBase
     [HttpGet]
     public IActionResult GetSchemas()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         return Ok(_dispatcher.GetRegisteredIntegrationSchemas());
@@ -30,7 +30,7 @@ public class IntegrationsController : ControllerBase
     [HttpGet("active")]
     public async Task<IActionResult> GetActive()
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var list = await _repository.ListAllAsync();
@@ -63,36 +63,30 @@ public class IntegrationsController : ControllerBase
     [HttpPut("{name}")]
     public async Task<IActionResult> Create(string name, [FromBody] Dictionary<string, object?> body)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        if (Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true")
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "For security reasons, you can't create integrations in preview mode" });
 
         var schemas = _dispatcher.GetRegisteredIntegrationSchemas();
         if (!schemas.ContainsKey(name))
             return NotFound(new { message = "Integration not found" });
 
-        string displayName = "Untitled";
+        var displayName = "Untitled";
         if (body.TryGetValue("integration_name", out var dn) && dn != null)
         {
             displayName = dn.ToString()!;
             body.Remove("integration_name");
         }
 
-        string json = JsonSerializer.Serialize(body);
-        string id = await _repository.CreateAsync(name, displayName, json);
+        var json = JsonSerializer.Serialize(body);
+        var id = await _repository.CreateAsync(name, displayName, json);
         return Ok(new { message = "Integration created", id });
     }
 
     [HttpPatch("{id}")]
     public async Task<IActionResult> Patch(string id, [FromBody] Dictionary<string, object?> body)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        if (Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true")
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "For security reasons, you can't update integrations in preview mode" });
 
         var existing = await _repository.GetByIdAsync(id);
         if (existing == null) return NotFound(new { message = "Integration not found" });
@@ -124,13 +118,10 @@ public class IntegrationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        bool isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        if (Environment.GetEnvironmentVariable("PREVIEW_MODE") == "true")
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "For security reasons, you can't delete integrations in preview mode" });
-
-        bool deleted = await _repository.DeleteAsync(id);
+        var deleted = await _repository.DeleteAsync(id);
         if (!deleted) return NotFound(new { message = "Integration not found" });
 
         return Ok(new { message = "Integration deleted" });

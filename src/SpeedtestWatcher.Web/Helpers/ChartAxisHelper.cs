@@ -1,12 +1,7 @@
 namespace SpeedtestWatcher.Web.Helpers;
 
-/// <summary>Keeps MudChart axes readable for any number of data points.</summary>
 public static class ChartAxisHelper
 {
-    /// <summary>
-    /// Keeps at most <paramref name="max"/> evenly spaced labels, always including the first and last,
-    /// and blanks the rest so long date labels don't overlap. A max of 0 keeps every label.
-    /// </summary>
     public static string[] ThinLabels(string[] labels, int max)
     {
         if (max <= 0 || labels.Length <= max) return labels;
@@ -18,10 +13,6 @@ public static class ChartAxisHelper
         return labels.Select((label, index) => kept.Contains(index) ? label : "").ToArray();
     }
 
-    /// <summary>
-    /// A 1-2-5 tick spacing that splits the data range into roughly <paramref name="targetTicks"/> steps.
-    /// MudChart's fixed default of 20 flattens lines whose values only vary by a few units.
-    /// </summary>
     public static int TickStep(IEnumerable<double> values, int targetTicks = 4)
     {
         var list = values.ToList();

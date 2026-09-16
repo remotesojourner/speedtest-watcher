@@ -25,16 +25,12 @@
     [Parameter] public ChartType ChartType { get; set; } = ChartType.Line;
     [Parameter] public List<ChartSeries<double>> ChartSeries { get; set; } = [];
     [Parameter] public string[] ChartLabels { get; set; } = [];
-    // LineChartOptions/BarChartOptions/ChartOptions share no common base class - the type
-    // MudChart itself actually binds against is this shared interface.
     [Parameter] public MudBlazor.Charts.IChartOptions? ChartOptions { get; set; }
     [Parameter] public string Height { get; set; } = "240px";
     [Parameter] public string? Class { get; set; }
 
-    /// <summary>Most x-axis labels drawn in the card (the expanded view shows more). 0 draws them all.</summary>
     [Parameter] public int MaxLabels { get; set; }
 
-    /// <summary>Shows the expand button. Pass false where the card already spans the screen.</summary>
     [Parameter] public bool Expandable { get; set; } = true;
 
     private const int ExpandedMaxLabels = 8;

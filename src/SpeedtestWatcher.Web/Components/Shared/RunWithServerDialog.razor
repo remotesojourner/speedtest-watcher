@@ -30,7 +30,6 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    /// <summary>ookla or libre; Cloudflare has no server choice.</summary>
     [Parameter] public string Provider { get; set; } = "ookla";
 
     private sealed record ServerOption(string Id, string Label);
