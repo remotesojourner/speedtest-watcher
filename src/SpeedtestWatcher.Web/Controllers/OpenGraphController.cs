@@ -37,8 +37,13 @@ public class OpenGraphController : ControllerBase
         var canvas = surface.Canvas;
         canvas.Clear(SKColor.Parse("#0f1419"));
 
-        using var cardFill = new SKPaint { Color = SKColor.Parse("#1a2029"), Style = SKPaintStyle.Fill };
-        using var cardBorder = new SKPaint { Color = SKColor.Parse("#2a3441"), Style = SKPaintStyle.Stroke, StrokeWidth = 2 };
+        using var cardFill = new SKPaint();
+        cardFill.Color = SKColor.Parse("#1a2029");
+        cardFill.Style = SKPaintStyle.Fill;
+        using var cardBorder = new SKPaint();
+        cardBorder.Color = SKColor.Parse("#2a3441");
+        cardBorder.Style = SKPaintStyle.Stroke;
+        cardBorder.StrokeWidth = 2;
         using var headerFont = new SKFont(SKTypeface.FromFamilyName("sans-serif", SKFontStyle.Bold), 44);
         using var labelFont = new SKFont(SKTypeface.FromFamilyName("sans-serif", SKFontStyle.Normal), 22);
         using var valueFont = new SKFont(SKTypeface.FromFamilyName("sans-serif", SKFontStyle.Bold), 56);

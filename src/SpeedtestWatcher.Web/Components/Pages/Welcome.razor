@@ -1,6 +1,5 @@
 @page "/welcome"
 @using System.Globalization
-@inject HttpClient Http
 @inject ConfigStateService ConfigService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -129,36 +128,21 @@
         }
 
         _saving = true;
-        var saved = await PatchConfigAsync("provider", _provider)
-                    && await PatchConfigAsync("ping", FormatNumber(_ping))
-                    && await PatchConfigAsync("download", FormatNumber(_download))
-                    && await PatchConfigAsync("upload", FormatNumber(_upload));
+        var result = await ConfigService.SaveAsync(
+            ("provider", _provider),
+            ("ping", FormatNumber(_ping)),
+            ("download", FormatNumber(_download)),
+            ("upload", FormatNumber(_upload)));
         _saving = false;
 
-        if (!saved)
+        if (!result.Succeeded)
         {
-            Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+            Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
             return;
         }
 
         Snackbar.Add("Speedtest Watcher is set up. Tests will run on the default hourly schedule.", Severity.Success);
         Navigation.NavigateTo("/");
-    }
-
-    private async Task<bool> PatchConfigAsync(string key, string value)
-    {
-        try
-        {
-            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (!response.IsSuccessStatusCode) return false;
-
-            ConfigService.CurrentConfig[key] = value;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private static double ParseNumber(string? raw) =>

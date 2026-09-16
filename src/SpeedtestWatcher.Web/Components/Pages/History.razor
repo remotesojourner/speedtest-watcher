@@ -4,9 +4,9 @@
 @inject StatusStateService StatusService
 @inject ConfigStateService ConfigService
 @inject PreferencesService PreferencesService
-@inject HttpClient Http
+@inject ApiClient Api
 @inject IDialogService DialogService
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @implements IAsyncDisposable
 
 <PageTitle>Speedtest Watcher - History</PageTitle>
@@ -45,7 +45,7 @@
     <MudText Typo="Typo.h6" Class="font-weight-bold">Recent Tests</MudText>
 
     <div class="d-flex flex-wrap align-center gap-2">
-        <MudSelect T="string" Value="_status" ValueChanged="SetStatusAsync" Label="Status" Variant="Variant.Outlined"
+        <MudSelect T="string" Value="_status" ValueChanged="SetStatusAsync!" Label="Status" Variant="Variant.Outlined"
                    Margin="Margin.Dense" Dense="true" Class="sw-filter">
             <MudSelectItem T="string" Value="@AllFilter">All results</MudSelectItem>
             <MudSelectItem T="string" Value="@("completed")">Completed</MudSelectItem>
@@ -53,14 +53,14 @@
             <MudSelectItem T="string" Value="@("skipped")">Skipped</MudSelectItem>
         </MudSelect>
 
-        <MudSelect T="string" Value="_type" ValueChanged="SetTypeAsync" Label="Started by" Variant="Variant.Outlined"
+        <MudSelect T="string" Value="_type" ValueChanged="SetTypeAsync!" Label="Started by" Variant="Variant.Outlined"
                    Margin="Margin.Dense" Dense="true" Class="sw-filter">
             <MudSelectItem T="string" Value="@AllFilter">Anything</MudSelectItem>
             <MudSelectItem T="string" Value="@("auto")">Schedule</MudSelectItem>
             <MudSelectItem T="string" Value="@("custom")">By hand</MudSelectItem>
         </MudSelect>
 
-        <MudSelect T="string" Value="_healthy" ValueChanged="SetHealthAsync" Label="Targets" Variant="Variant.Outlined"
+        <MudSelect T="string" Value="_healthy" ValueChanged="SetHealthAsync!" Label="Targets" Variant="Variant.Outlined"
                    Margin="Margin.Dense" Dense="true" Class="sw-filter">
             <MudSelectItem T="string" Value="@AllFilter">Any result</MudSelectItem>
             <MudSelectItem T="string" Value="@("true")">Met targets</MudSelectItem>
@@ -84,7 +84,8 @@
     </div>
 }
 
-<StateView Loading="@(Loading && Rows.Count == 0)" Empty="@(Rows.Count == 0 && !Loading)">
+<StateView Loading="@(Loading && Rows.Count == 0)" Empty="@(Rows.Count == 0 && !Loading)"
+           ErrorMessage="@LoadError" OnRetry="RetryLoadAsync">
     <EmptyContent>
         @if (FiltersActive)
         {
@@ -183,6 +184,16 @@
                 <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
             </div>
         }
+        else if (_loadMoreFailed)
+        {
+            <div class="d-flex flex-wrap align-center justify-center gap-3 pa-4">
+                <MudText Typo="Typo.body2" Color="Color.Error">Couldn't load more tests.</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="OnIntersect">
+                    Try again
+                </MudButton>
+            </div>
+        }
         else if (HasMore)
         {
             <div id="scroll-sentinel" class="pa-2"></div>
@@ -223,7 +234,14 @@
     private bool _selecting;
     private readonly HashSet<int> _selected = [];
 
+    private bool _filteredLoadFailed;
+    private bool _loadMoreFailed;
+
     private bool FiltersActive => _status != AllFilter || _type != AllFilter || _healthy != AllFilter;
+
+    private string? LoadError => FiltersActive
+        ? (_filteredLoadFailed ? "Couldn't load the results for these filters." : null)
+        : (SpeedtestService.LoadFailed && SpeedtestService.Tests.Count == 0 ? "Couldn't load your tests." : null);
 
     private List<SpeedtestDto> Rows => FiltersActive ? _filtered : SpeedtestService.Tests;
 
@@ -253,7 +271,7 @@
         if (firstRender)
         {
             _dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("speedtestWatcherInterop.observeIntersection", _dotNetRef, "scroll-sentinel", 0);
+            await Js.InvokeVoidAsync("speedtestWatcherInterop.observeIntersection", _dotNetRef, "scroll-sentinel", 0);
         }
     }
 
@@ -294,6 +312,8 @@
     private async Task ReloadFilteredAsync()
     {
         _selected.Clear();
+        _loadMoreFailed = false;
+        _filteredLoadFailed = false;
         if (!FiltersActive)
         {
             _filtered = [];
@@ -303,22 +323,25 @@
 
         _filteredLoading = true;
         StateHasChanged();
-        try
-        {
-            var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(FilterQuery(null)) ?? [];
-            _filtered = more;
-            _filteredHasMore = more.Count >= PageSize;
-        }
-        catch
-        {
-            _filtered = [];
-            _filteredHasMore = false;
-        }
-        finally
-        {
-            _filteredLoading = false;
-            StateHasChanged();
-        }
+
+        var result = await Api.GetAsync<List<SpeedtestDto>>(FilterQuery(null));
+        _filtered = result.Value ?? [];
+        _filteredHasMore = result.Value?.Count >= PageSize;
+        _filteredLoadFailed = result.Value == null;
+
+        _filteredLoading = false;
+        StateHasChanged();
+    }
+
+    private Task RetryLoadAsync() => FiltersActive ? ReloadFilteredAsync() : ReloadTestsAsync();
+
+    private async Task ReloadTestsAsync()
+    {
+        SpeedtestService.SetLoading(true);
+        var result = await Api.GetAsync<List<SpeedtestDto>>($"/api/speedtests?limit={PageSize}");
+        if (result.Value != null) SpeedtestService.SetTests(result.Value, result.Value.Count >= PageSize);
+        else SpeedtestService.SetLoadFailed();
+        SpeedtestService.SetLoading(false);
     }
 
     private string FilterQuery(int? afterId)
@@ -400,46 +423,33 @@
     public async Task OnIntersect()
     {
         if (!HasMore || Loading) return;
+        _loadMoreFailed = false;
 
         if (FiltersActive)
         {
             _filteredLoading = true;
-            try
+            var filteredPage = await Api.GetAsync<List<SpeedtestDto>>(FilterQuery(_filtered.LastOrDefault()?.Id));
+            if (filteredPage.Value != null)
             {
-                var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(FilterQuery(_filtered.LastOrDefault()?.Id)) ?? [];
-                _filtered.AddRange(more);
-                _filteredHasMore = more.Count >= PageSize;
+                _filtered.AddRange(filteredPage.Value);
+                _filteredHasMore = filteredPage.Value.Count >= PageSize;
             }
-            catch { }
-            finally
-            {
-                _filteredLoading = false;
-            }
+            _loadMoreFailed = filteredPage.Value == null;
+            _filteredLoading = false;
 
             await InvokeAsync(StateHasChanged);
             return;
         }
 
         SpeedtestService.SetLoading(true);
-        try
+        var page = await Api.GetAsync<List<SpeedtestDto>>($"/api/speedtests?limit={PageSize}&afterId={SpeedtestService.LastId}");
+        if (page.Value != null)
         {
-            var more = await Http.GetFromJsonAsync<List<SpeedtestDto>>(
-                $"/api/speedtests?limit={PageSize}&afterId={SpeedtestService.LastId}");
-            if (more != null && more.Count > 0)
-            {
-                var all = SpeedtestService.Tests.Concat(more).ToList();
-                SpeedtestService.SetTests(all, more.Count >= PageSize);
-            }
-            else
-            {
-                SpeedtestService.SetTests(SpeedtestService.Tests, false);
-            }
+            SpeedtestService.SetTests(SpeedtestService.Tests.Concat(page.Value).ToList(), page.Value.Count >= PageSize);
         }
-        catch { }
-        finally
-        {
-            SpeedtestService.SetLoading(false);
-        }
+        _loadMoreFailed = page.Value == null;
+        SpeedtestService.SetLoading(false);
+
         await InvokeAsync(StateHasChanged);
     }
 

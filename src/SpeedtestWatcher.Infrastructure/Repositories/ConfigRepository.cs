@@ -124,7 +124,7 @@ public class ConfigRepository : IConfigRepository
             {
                 CronExpression.Parse(valStr, CronFormat.Standard);
             }
-            catch
+            catch (CronFormatException)
             {
                 return Task.FromResult<string?>("You need to provide a valid cron expression");
             }

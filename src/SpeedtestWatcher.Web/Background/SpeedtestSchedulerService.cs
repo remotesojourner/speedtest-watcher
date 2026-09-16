@@ -42,7 +42,7 @@ public class SpeedtestSchedulerService : BackgroundService
             {
                 if (await BackgroundDelay.WaitAsync(TimeSpan.FromSeconds(5), stoppingToken))
                 {
-                    await ExecuteSpeedtestAsync("auto", false, stoppingToken);
+                    await ExecuteSpeedtestAsync("auto", stoppingToken);
                 }
             }, stoppingToken);
         }
@@ -61,8 +61,9 @@ public class SpeedtestSchedulerService : BackgroundService
                 {
                     cron = CronExpression.Parse(_currentCron, CronFormat.Standard);
                 }
-                catch
+                catch (CronFormatException ex)
                 {
+                    _logger.LogWarning(ex, "The saved schedule {Cron} is not a valid cron expression, so tests run hourly", _currentCron);
                     cron = CronExpression.Parse("0 * * * *", CronFormat.Standard);
                 }
 
@@ -93,7 +94,7 @@ public class SpeedtestSchedulerService : BackgroundService
                     continue;
                 }
 
-                await ExecuteSpeedtestAsync("auto", false, stoppingToken);
+                await ExecuteSpeedtestAsync("auto", stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -110,7 +111,7 @@ public class SpeedtestSchedulerService : BackgroundService
         }
     }
 
-    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(string type = "auto", bool retry = false, CancellationToken cancellationToken = default, string? serverOverride = null)
+    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(string type = "auto", CancellationToken cancellationToken = default, string? serverOverride = null)
     {
         if (_pauseState.IsRunning)
         {
@@ -127,97 +128,14 @@ public class SpeedtestSchedulerService : BackgroundService
             return new SpeedtestExecutionResult { Success = false, Error = "Speedtest is already running" };
         }
 
-        _pauseState.SetRunning(true);
-        await _hubContext.Clients.All.SendAsync("StatusChanged", true, _pauseState.IsPaused, cancellationToken);
-        await _hubContext.Clients.All.SendAsync("TestStarted", cancellationToken);
-
-        using var scope = _serviceProvider.CreateScope();
-        var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-        var speedtestRepo = scope.ServiceProvider.GetRequiredService<ISpeedtestRepository>();
-        var runner = scope.ServiceProvider.GetRequiredService<ISpeedtestRunner>();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<IIntegrationDispatcher>();
-        var recommendationRepo = scope.ServiceProvider.GetRequiredService<IRecommendationRepository>();
-        var serverSelector = scope.ServiceProvider.GetRequiredService<ServerSelector>();
-        var connectivity = scope.ServiceProvider.GetRequiredService<ConnectivityChecker>();
-
         try
         {
-            var providerStr = await configRepo.GetValueAsync("provider", cancellationToken) ?? "none";
-            if (!Enum.TryParse<SpeedtestProvider>(providerStr, true, out var provider) || provider == SpeedtestProvider.None)
-            {
-                _pauseState.SetRunning(false);
-                await _hubContext.Clients.All.SendAsync("StatusChanged", false, _pauseState.IsPaused, cancellationToken);
-                return new SpeedtestExecutionResult { Success = false, Error = "No provider selected" };
-            }
+            _pauseState.SetRunning(true);
+            await _hubContext.Clients.All.SendAsync("StatusChanged", true, _pauseState.IsPaused, cancellationToken);
+            await _hubContext.Clients.All.SendAsync("TestStarted", cancellationToken);
 
-            var libreUrl = provider == SpeedtestProvider.Libre ? await configRepo.GetValueAsync("libreUrl", cancellationToken) : null;
-            var networkInterface = await configRepo.GetValueAsync("interface", cancellationToken);
-            if (libreUrl == "none") libreUrl = null;
-
-            var check = await connectivity.CheckAsync(cancellationToken);
-            if (!check.Proceed)
-            {
-                var reason = check.SkipReason ?? "Skipped";
-                await RecordSkippedAsync(speedtestRepo, dispatcher, type, reason, cancellationToken);
-                return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
-            }
-
-            var serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
-
-            await dispatcher.TriggerEventAsync(IntegrationEvent.TestStarted, new { provider = providerStr, type }, cancellationToken);
-
-            var result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
-
-            if (!result.Success && !retry)
-            {
-                _logger.LogWarning("Speedtest failed ({Error}). Retrying once...", result.Error);
-                _runLock.Release();
-                _pauseState.SetRunning(false);
-                return await ExecuteSpeedtestAsync(type, true, cancellationToken);
-            }
-
-            var thresholds = await ThresholdsAsync(configRepo, cancellationToken);
-            var testEntity = new Speedtest
-            {
-                ServerId = result.ServerId,
-                ServerName = result.ServerName,
-                ServerHost = result.ServerHost,
-                Ping = result.Success ? result.Ping : -1,
-                Jitter = result.Success ? result.Jitter : null,
-                Download = result.Success ? result.Download : -1,
-                Upload = result.Success ? result.Upload : -1,
-                Time = result.Time,
-                Type = type,
-                ResultId = result.ResultId,
-                Error = result.Success ? null : result.Error ?? "Unknown error",
-                Status = result.Success ? "completed" : "failed",
-                Healthy = result.Success ? thresholds.Evaluate(result.Ping, result.Download, result.Upload) : null,
-                ThresholdPing = thresholds.Ping,
-                ThresholdDownload = thresholds.Download,
-                ThresholdUpload = thresholds.Upload,
-                Created = DateTime.UtcNow
-            };
-
-            var testId = await speedtestRepo.CreateAsync(testEntity, cancellationToken);
-            testEntity.Id = testId;
-
-            var dto = SpeedtestDto.From(testEntity);
-
-            if (result.Success)
-            {
-                await recommendationRepo.UpdateOrCalculateAsync(cancellationToken);
-                await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, testEntity, cancellationToken);
-                if (testEntity.Healthy == false)
-                    await dispatcher.TriggerEventAsync(IntegrationEvent.TestUnhealthy, testEntity, cancellationToken);
-                await _hubContext.Clients.All.SendAsync("NewTestResult", dto, cancellationToken);
-            }
-            else
-            {
-                await dispatcher.TriggerEventAsync(IntegrationEvent.TestFailed, result.Error ?? "Test failed", cancellationToken);
-                await _hubContext.Clients.All.SendAsync("TestFailed", dto, cancellationToken);
-            }
-
-            return result;
+            using var scope = _serviceProvider.CreateScope();
+            return await RunWithOneRetryAsync(scope.ServiceProvider, type, serverOverride, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -227,9 +145,99 @@ public class SpeedtestSchedulerService : BackgroundService
         finally
         {
             _pauseState.SetRunning(false);
-            await _hubContext.Clients.All.SendAsync("StatusChanged", false, _pauseState.IsPaused, cancellationToken);
-            try { _runLock.Release(); } catch { }
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("StatusChanged", false, _pauseState.IsPaused, CancellationToken.None);
+            }
+            finally
+            {
+                _runLock.Release();
+            }
         }
+    }
+
+    private async Task<SpeedtestExecutionResult> RunWithOneRetryAsync(IServiceProvider services, string type, string? serverOverride, CancellationToken cancellationToken)
+    {
+        var configRepo = services.GetRequiredService<IConfigRepository>();
+        var speedtestRepo = services.GetRequiredService<ISpeedtestRepository>();
+        var runner = services.GetRequiredService<ISpeedtestRunner>();
+        var dispatcher = services.GetRequiredService<IIntegrationDispatcher>();
+        var recommendationRepo = services.GetRequiredService<IRecommendationRepository>();
+        var serverSelector = services.GetRequiredService<ServerSelector>();
+        var connectivity = services.GetRequiredService<ConnectivityChecker>();
+
+        var providerStr = await configRepo.GetValueAsync("provider", cancellationToken) ?? "none";
+        if (!Enum.TryParse<SpeedtestProvider>(providerStr, true, out var provider) || provider == SpeedtestProvider.None)
+        {
+            return new SpeedtestExecutionResult { Success = false, Error = "No provider selected" };
+        }
+
+        var libreUrl = provider == SpeedtestProvider.Libre ? await configRepo.GetValueAsync("libreUrl", cancellationToken) : null;
+        var networkInterface = await configRepo.GetValueAsync("interface", cancellationToken);
+        if (libreUrl == "none") libreUrl = null;
+
+        var check = await connectivity.CheckAsync(cancellationToken);
+        if (!check.Proceed)
+        {
+            var reason = check.SkipReason ?? "Skipped";
+            await RecordSkippedAsync(speedtestRepo, dispatcher, type, reason, cancellationToken);
+            return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
+        }
+
+        var serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
+
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestStarted, new { provider = providerStr, type }, cancellationToken);
+
+        var result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
+        if (!result.Success)
+        {
+            _logger.LogWarning("Speedtest failed ({Error}). Retrying once...", result.Error);
+            serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
+            result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
+        }
+
+        var thresholds = await ThresholdsAsync(configRepo, cancellationToken);
+        var testEntity = new Speedtest
+        {
+            ServerId = result.ServerId,
+            ServerName = result.ServerName,
+            ServerHost = result.ServerHost,
+            Ping = result.Success ? result.Ping : -1,
+            Jitter = result.Success ? result.Jitter : null,
+            Download = result.Success ? result.Download : -1,
+            Upload = result.Success ? result.Upload : -1,
+            Time = result.Time,
+            Type = type,
+            ResultId = result.ResultId,
+            Error = result.Success ? null : result.Error ?? "Unknown error",
+            Status = result.Success ? "completed" : "failed",
+            Healthy = result.Success ? thresholds.Evaluate(result.Ping, result.Download, result.Upload) : null,
+            ThresholdPing = thresholds.Ping,
+            ThresholdDownload = thresholds.Download,
+            ThresholdUpload = thresholds.Upload,
+            Created = DateTime.UtcNow
+        };
+
+        var testId = await speedtestRepo.CreateAsync(testEntity, cancellationToken);
+        testEntity.Id = testId;
+
+        var dto = SpeedtestDto.From(testEntity);
+
+        if (result.Success)
+        {
+            await recommendationRepo.UpdateOrCalculateAsync(cancellationToken);
+            await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, testEntity, cancellationToken);
+            if (testEntity.Healthy == false)
+                await dispatcher.TriggerEventAsync(IntegrationEvent.TestUnhealthy, testEntity, cancellationToken);
+            await _hubContext.Clients.All.SendAsync("NewTestResult", dto, cancellationToken);
+        }
+        else
+        {
+            await dispatcher.TriggerEventAsync(IntegrationEvent.TestFailed, result.Error ?? "Test failed", cancellationToken);
+            await _hubContext.Clients.All.SendAsync("TestFailed", dto, cancellationToken);
+        }
+
+        return result;
     }
 
     private async Task RecordSkippedAsync(

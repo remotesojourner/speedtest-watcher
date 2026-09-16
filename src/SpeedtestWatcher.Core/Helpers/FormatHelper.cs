@@ -14,6 +14,13 @@ public static class FormatHelper
     public static DateTime ParseTimestamp(string value) =>
         StoredToLocal(DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
 
+    public static bool TryParseTimestamp(string value, out DateTime local)
+    {
+        var parsed = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var stored);
+        local = parsed ? StoredToLocal(stored) : default;
+        return parsed;
+    }
+
     public static double ConvertSpeed(double? mbps, string speedUnit)
     {
         if (mbps == null || mbps < 0) return mbps ?? 0;
@@ -26,8 +33,8 @@ public static class FormatHelper
 
     public static string FormatTime(DateTime dateTime, string timeFormat)
     {
-        var use12h = timeFormat == "12h";
-        return use12h ? dateTime.ToString("hh:mm tt") : dateTime.ToString("HH:mm");
+        var use12H = timeFormat == "12h";
+        return use12H ? dateTime.ToString("hh:mm tt") : dateTime.ToString("HH:mm");
     }
 
     public static string DatePattern(string? dateFormat) => dateFormat switch

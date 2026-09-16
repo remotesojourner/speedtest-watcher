@@ -88,7 +88,7 @@ public class StorageController : ControllerBase
     }
 
     [HttpPut("tests/history")]
-    public async Task<IActionResult> ImportTests([FromBody] List<Speedtest> tests)
+    public async Task<IActionResult> ImportTests([FromBody] List<Speedtest>? tests)
     {
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });

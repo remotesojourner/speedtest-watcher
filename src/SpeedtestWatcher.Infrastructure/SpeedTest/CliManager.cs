@@ -32,17 +32,9 @@ public class CliManager : ICliManager
         return Path.Combine(_binDirectory, name);
     }
 
-    public bool IsBinaryAvailable(SpeedtestProvider provider)
-    {
-        try
-        {
-            return File.Exists(GetBinaryPath(provider));
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public bool IsBinaryAvailable(SpeedtestProvider provider) =>
+        provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre or SpeedtestProvider.Cloudflare
+        && File.Exists(GetBinaryPath(provider));
 
     public async Task EnsureBinariesAsync(CancellationToken cancellationToken = default)
     {
@@ -94,7 +86,14 @@ public class CliManager : ICliManager
         {
             if (File.Exists(tempFile))
             {
-                try { File.Delete(tempFile); } catch { }
+                try
+                {
+                    File.Delete(tempFile);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(ex, "Could not delete the downloaded file {Path}", tempFile);
+                }
             }
         }
     }

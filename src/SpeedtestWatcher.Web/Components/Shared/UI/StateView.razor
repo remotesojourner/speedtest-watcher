@@ -4,6 +4,21 @@
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="@(Compact ? Size.Small : Size.Large)" />
     </div>
 }
+else if (ErrorMessage != null)
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+        <div class="d-flex flex-wrap align-center justify-space-between gap-3">
+            <span>@ErrorMessage</span>
+            @if (OnRetry.HasDelegate)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="OnRetry">
+                    Try again
+                </MudButton>
+            }
+        </div>
+    </MudAlert>
+}
 else if (Empty)
 {
     <MudAlert Severity="@Severity" Variant="Variant.Outlined">
@@ -25,6 +40,8 @@ else
 @code {
     [Parameter] public bool Loading { get; set; }
     [Parameter] public bool Empty { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
     [Parameter] public string EmptyMessage { get; set; } = "Nothing to show yet.";
     [Parameter] public RenderFragment? EmptyContent { get; set; }
     [Parameter] public Severity Severity { get; set; } = Severity.Info;

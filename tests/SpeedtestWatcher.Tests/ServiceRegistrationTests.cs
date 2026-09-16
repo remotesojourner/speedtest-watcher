@@ -64,7 +64,7 @@ public class ServiceRegistrationTests
         services.AddScoped<StatusStateService>();
         services.AddScoped<SpeedtestStateService>();
         services.AddScoped<ConfigStateService>();
-        services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:2003/") });
+        services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("http://localhost:2003/") });
 
         var sp = services.BuildServiceProvider(new ServiceProviderOptions
         {

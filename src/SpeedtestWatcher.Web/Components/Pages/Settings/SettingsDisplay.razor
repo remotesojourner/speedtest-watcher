@@ -1,6 +1,5 @@
 @inject PreferencesService PreferencesService
 @inject ConfigStateService ConfigService
-@inject HttpClient Http
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="Display Preferences" FullHeight="false"
@@ -97,18 +96,8 @@
     {
         if (ConfigService.CurrentConfig[key]?.ToString() == value) return;
 
-        try
-        {
-            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (response.IsSuccessStatusCode)
-            {
-                ConfigService.CurrentConfig[key] = value;
-                Snackbar.Add("Display settings saved", Severity.Success);
-                return;
-            }
-        }
-        catch { }
-
-        Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+        var result = await ConfigService.SaveAsync((key, value));
+        if (result.Succeeded) Snackbar.Add("Display settings saved", Severity.Success);
+        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
 }

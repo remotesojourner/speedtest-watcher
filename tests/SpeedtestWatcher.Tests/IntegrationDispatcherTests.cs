@@ -87,6 +87,21 @@ public class IntegrationDispatcherTests
         Assert.Contains($"\"color\":{color}", body);
     }
 
+    [Fact]
+    public async Task UnreadableSettings_AreNotSent_AndTheFailureIsLogged()
+    {
+        var handler = new RecordingHandler();
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = "{\"url\": " }]);
+        var logger = new RecordingLogger<IntegrationDispatcher>();
+        var dispatcher = new IntegrationDispatcher(repository, new StubHttpClientFactory(handler), logger);
+
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, new Speedtest { Download = 900 });
+
+        Assert.Empty(handler.Requests);
+        Assert.Equal([true], repository.ActivityErrors.ToArray());
+        Assert.Contains(logger.Warnings, message => message.Contains("discord (abc)") && message.Contains("can't be read"));
+    }
+
     private static (RecordingHandler Handler, IntegrationDispatcher Dispatcher) Build(params (string Name, string Data)[] integrations)
     {
         var handler = new RecordingHandler();
@@ -113,8 +128,15 @@ public class IntegrationDispatcherTests
 
     private sealed class InMemoryIntegrations(List<IntegrationData> items) : IIntegrationRepository
     {
+        public List<bool> ActivityErrors { get; } = [];
+
         public Task<List<IntegrationData>> ListAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(items);
-        public Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default)
+        {
+            ActivityErrors.Add(error);
+            return Task.CompletedTask;
+        }
 
         public Task<List<IntegrationData>> GetByNameAsync(string name, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<IntegrationData?> GetByIdAsync(string id, CancellationToken cancellationToken = default) => throw new NotSupportedException();

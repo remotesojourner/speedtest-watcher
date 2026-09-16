@@ -36,7 +36,7 @@ public class ChartAxisHelperTests
     }
 
     [Theory]
-    [InlineData(new double[] { 940.3, 941.6 }, 1)]
+    [InlineData(new[] { 940.3, 941.6 }, 1)]
     [InlineData(new double[] { 0, 14 }, 5)]
     [InlineData(new double[] { 100, 180 }, 20)]
     [InlineData(new double[] { 0, 960 }, 500)]

@@ -15,17 +15,20 @@ public class SystemController : ControllerBase
     private readonly ServerListProvider _serverListProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<SystemController> _logger;
 
     public SystemController(
         INetworkInterfaceDetector interfaceDetector,
         ServerListProvider serverListProvider,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<SystemController> logger)
     {
         _interfaceDetector = interfaceDetector;
         _serverListProvider = serverListProvider;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _logger = logger;
     }
 
     [HttpGet("version")]
@@ -45,19 +48,25 @@ public class SystemController : ControllerBase
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.Add("User-Agent", "SpeedtestWatcher");
 
-            var response = await client.GetAsync($"https://api.github.com/repos/{repository}/releases/latest");
-            if (response.IsSuccessStatusCode)
+            using var response = await client.GetAsync($"https://api.github.com/repos/{repository}/releases/latest");
+            if (!response.IsSuccessStatusCode)
             {
-                using var stream = await response.Content.ReadAsStreamAsync();
-                using var doc = await JsonDocument.ParseAsync(stream);
-                if (doc.RootElement.TryGetProperty("tag_name", out var tag))
-                {
-                    var tagStr = tag.GetString()?.Replace("v", "") ?? "0";
-                    return Ok(new VersionInfoDto { Local = localVersion, Remote = tagStr });
-                }
+                _logger.LogWarning("GitHub answered {Status} when checking {Repository} for a newer release", (int)response.StatusCode, repository);
+                return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
+            if (doc.RootElement.TryGetProperty("tag_name", out var tag))
+            {
+                var tagStr = tag.GetString()?.Replace("v", "") ?? "0";
+                return Ok(new VersionInfoDto { Local = localVersion, Remote = tagStr });
             }
         }
-        catch { }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            _logger.LogWarning(ex, "Could not check {Repository} for a newer release", repository);
+        }
 
         return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });
     }

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -132,7 +133,8 @@ public class SpeedtestRunner : ISpeedtestRunner
 
             _logger.LogInformation("Spawning {Binary} with args: {Args}", binaryPath, string.Join(" ", args));
 
-            using var process = new Process { StartInfo = psi };
+            using var process = new Process();
+            process.StartInfo = psi;
             var stdoutBuilder = new StringBuilder();
             var stderrBuilder = new StringBuilder();
 
@@ -160,7 +162,14 @@ public class SpeedtestRunner : ISpeedtestRunner
             {
                 if (!process.HasExited)
                 {
-                    try { process.Kill(true); } catch { }
+                    try
+                    {
+                        process.Kill(true);
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+                    {
+                        _logger.LogWarning(ex, "Could not stop the {Provider} speedtest process", provider);
+                    }
                 }
                 return new SpeedtestExecutionResult
                 {
@@ -215,7 +224,14 @@ public class SpeedtestRunner : ISpeedtestRunner
         {
             if (tempConfigPath != null && File.Exists(tempConfigPath))
             {
-                try { File.Delete(tempConfigPath); } catch { }
+                try
+                {
+                    File.Delete(tempConfigPath);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(ex, "Could not delete the temporary speedtest config {Path}", tempConfigPath);
+                }
             }
         }
     }

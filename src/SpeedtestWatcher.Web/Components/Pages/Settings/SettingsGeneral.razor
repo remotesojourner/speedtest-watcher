@@ -1,5 +1,5 @@
 @using System.Globalization
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject ISnackbar Snackbar
 
@@ -25,7 +25,11 @@
                     </MudButton>
                 }
             </div>
-            @if (_recommendation == null)
+            @if (_recommendationUnavailable)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-3">Couldn't load recommendations.</MudText>
+            }
+            else if (_recommendation == null)
             {
                 <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">Recommendations appear after at least 10 tests.</MudText>
             }
@@ -64,15 +68,16 @@
     private double _optDownload;
     private double _optUpload;
     private Recommendation? _recommendation;
+    private bool _recommendationUnavailable;
 
     private bool _internetCheck = true;
     private string _internetCheckUrl = "https://icanhazip.com";
     private string _skipIps = "";
 
     private bool OptimalDirty =>
-        _optPing != ParseConfigNumber(ConfigService.CurrentConfig.Ping)
-        || _optDownload != ParseConfigNumber(ConfigService.CurrentConfig.Download)
-        || _optUpload != ParseConfigNumber(ConfigService.CurrentConfig.Upload);
+        Math.Abs(_optPing - ParseConfigNumber(ConfigService.CurrentConfig.Ping)) > 0.0000001
+        || Math.Abs(_optDownload - ParseConfigNumber(ConfigService.CurrentConfig.Download)) > 0.0000001
+        || Math.Abs(_optUpload - ParseConfigNumber(ConfigService.CurrentConfig.Upload)) > 0.0000001;
 
     private bool CheckUrlValid =>
         Uri.TryCreate(_internetCheckUrl.Trim(), UriKind.Absolute, out var uri)
@@ -103,15 +108,9 @@
         _internetCheckUrl = ConfiguredCheckUrl;
         _skipIps = ConfiguredSkipIps == "none" ? "" : ConfiguredSkipIps;
 
-        try
-        {
-            var response = await Http.GetAsync("/api/recommendations");
-            if (response.IsSuccessStatusCode)
-            {
-                _recommendation = await response.Content.ReadFromJsonAsync<Recommendation>();
-            }
-        }
-        catch { }
+        var recommendation = await Api.GetAsync<Recommendation>("/api/recommendations");
+        _recommendation = recommendation.Value;
+        _recommendationUnavailable = !recommendation.Succeeded && recommendation.Status != System.Net.HttpStatusCode.NotFound;
     }
 
     private void UseRecommended()
@@ -125,41 +124,26 @@
     private async Task SaveOptimalValuesAsync()
     {
         var cfg = ConfigService.CurrentConfig;
-        var saved = true;
-        if (_optPing != ParseConfigNumber(cfg.Ping)) saved &= await PatchConfigAsync("ping", FormatNumber(_optPing));
-        if (_optDownload != ParseConfigNumber(cfg.Download)) saved &= await PatchConfigAsync("download", FormatNumber(_optDownload));
-        if (_optUpload != ParseConfigNumber(cfg.Upload)) saved &= await PatchConfigAsync("upload", FormatNumber(_optUpload));
-        ShowSaveResult(saved, "Optimal values saved");
+        var changes = new List<(string Key, string Value)>();
+        if (Math.Abs(_optPing - ParseConfigNumber(cfg.Ping)) > 0.0000001) changes.Add(("ping", FormatNumber(_optPing)));
+        if (Math.Abs(_optDownload - ParseConfigNumber(cfg.Download)) > 0.0000001) changes.Add(("download", FormatNumber(_optDownload)));
+        if (Math.Abs(_optUpload - ParseConfigNumber(cfg.Upload)) > 0.0000001) changes.Add(("upload", FormatNumber(_optUpload)));
+        ShowSaveResult(await ConfigService.SaveAsync([.. changes]), "Optimal values saved");
     }
 
     private async Task SaveChecksAsync()
     {
-        var saved = await PatchConfigAsync("internetCheckEnabled", _internetCheck ? "true" : "false")
-                    && await PatchConfigAsync("internetCheckUrl", _internetCheckUrl.Trim())
-                    && await PatchConfigAsync("skipIps", SkipIpsValue);
-        ShowSaveResult(saved, "Pre-test checks saved");
+        var result = await ConfigService.SaveAsync(
+            ("internetCheckEnabled", _internetCheck ? "true" : "false"),
+            ("internetCheckUrl", _internetCheckUrl.Trim()),
+            ("skipIps", SkipIpsValue));
+        ShowSaveResult(result, "Pre-test checks saved");
     }
 
-    private async Task<bool> PatchConfigAsync(string key, string value)
+    private void ShowSaveResult(ApiResult result, string successMessage)
     {
-        try
-        {
-            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (!response.IsSuccessStatusCode) return false;
-
-            ConfigService.CurrentConfig[key] = value;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private void ShowSaveResult(bool saved, string successMessage)
-    {
-        if (saved) Snackbar.Add(successMessage, Severity.Success);
-        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+        if (result.Succeeded) Snackbar.Add(successMessage, Severity.Success);
+        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
 
     private static string? RecommendedHint(double? value, string unit) =>

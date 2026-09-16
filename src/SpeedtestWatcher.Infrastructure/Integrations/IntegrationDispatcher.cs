@@ -188,12 +188,18 @@ public class IntegrationDispatcher : IIntegrationDispatcher
 
         foreach (var integration in activeIntegrations)
         {
-            if (ShouldThrottle(eventType, integration))
+            var config = ParseConfig(integration);
+            if (config == null)
+            {
+                await _repository.UpdateActivityAsync(integration.Id, true, cancellationToken);
+                continue;
+            }
+
+            if (ShouldThrottle(eventType, integration.Id, config))
                 continue;
 
             try
             {
-                var config = ParseConfig(integration.Data);
                 var success = await DispatchToProviderAsync(integration.Name, eventType, config, eventData, cancellationToken);
                 await _repository.UpdateActivityAsync(integration.Id, !success, cancellationToken);
             }
@@ -205,11 +211,10 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         }
     }
 
-    private bool ShouldThrottle(IntegrationEvent eventType, IntegrationData integration)
+    private bool ShouldThrottle(IntegrationEvent eventType, string integrationId, Dictionary<string, object?> config)
     {
         if (eventType != IntegrationEvent.MinutePassed) return false;
 
-        var config = ParseConfig(integration.Data);
         var interval = 1;
         if (config.TryGetValue("interval", out var intObj))
         {
@@ -220,26 +225,27 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         if (interval <= 1) return false;
 
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (_lastPings.TryGetValue(integration.Id, out var lastPing))
+        if (_lastPings.TryGetValue(integrationId, out var lastPing))
         {
             long threshold = interval * 60 * 1000 - 30 * 1000;
             if (now - lastPing < threshold)
                 return true;
         }
 
-        _lastPings[integration.Id] = now;
+        _lastPings[integrationId] = now;
         return false;
     }
 
-    private static Dictionary<string, object?> ParseConfig(string json)
+    private Dictionary<string, object?>? ParseConfig(IntegrationData integration)
     {
         try
         {
-            return JsonSerializer.Deserialize<Dictionary<string, object?>>(json) ?? new();
+            return JsonSerializer.Deserialize<Dictionary<string, object?>>(integration.Data) ?? new();
         }
-        catch
+        catch (JsonException ex)
         {
-            return new();
+            _logger.LogWarning(ex, "Integration {Name} ({Id}) was not run because its saved settings can't be read", integration.Name, integration.Id);
+            return null;
         }
     }
 
@@ -387,30 +393,35 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         var chatId = GetString(config, "chat_id");
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(chatId)) return false;
 
-        var text = "";
-        if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
+        string text;
+        switch (eventType)
         {
-            const string defMsg = "✨ *A speedtest is finished*\n🏓 `Ping`: %ping% ms (±%jitter% ms)\n🔼 `Upload`: %upload% Mbps\n🔽 `Download`: %download% Mbps";
-            text = TemplateHelper.ReplaceVariables(GetString(config, "finished_message", defMsg), vars);
-        }
-        else if (eventType == IntegrationEvent.TestFailed && GetBool(config, "send_failed", true))
-        {
-            const string defMsg = "❌ *A speedtest has failed*\n`Reason`: %error%";
-            text = TemplateHelper.ReplaceVariables(GetString(config, "error_message", defMsg), vars);
-        }
-        else if (eventType == IntegrationEvent.TestUnhealthy && GetBool(config, "send_unhealthy", true))
-        {
-            const string defMsg = "⚠️ *A speedtest missed your targets*\n🏓 `Ping`: %ping% ms (target %threshold_ping% ms)\n🔽 `Download`: %download% Mbps (target %threshold_download% Mbps)\n🔼 `Upload`: %upload% Mbps (target %threshold_upload% Mbps)";
-            text = TemplateHelper.ReplaceVariables(GetString(config, "unhealthy_message", defMsg), vars);
-        }
-        else if (eventType == IntegrationEvent.TestSkipped && GetBool(config, "send_skipped", true))
-        {
-            const string defMsg = "⏭️ *A speedtest was skipped*\n`Reason`: %error%";
-            text = TemplateHelper.ReplaceVariables(GetString(config, "skipped_message", defMsg), vars);
-        }
-        else
-        {
-            return true;
+            case IntegrationEvent.TestFinished when GetBool(config, "send_finished", true):
+            {
+                const string defMsg = "✨ *A speedtest is finished*\n🏓 `Ping`: %ping% ms (±%jitter% ms)\n🔼 `Upload`: %upload% Mbps\n🔽 `Download`: %download% Mbps";
+                text = TemplateHelper.ReplaceVariables(GetString(config, "finished_message", defMsg), vars);
+                break;
+            }
+            case IntegrationEvent.TestFailed when GetBool(config, "send_failed", true):
+            {
+                const string defMsg = "❌ *A speedtest has failed*\n`Reason`: %error%";
+                text = TemplateHelper.ReplaceVariables(GetString(config, "error_message", defMsg), vars);
+                break;
+            }
+            case IntegrationEvent.TestUnhealthy when GetBool(config, "send_unhealthy", true):
+            {
+                const string defMsg = "⚠️ *A speedtest missed your targets*\n🏓 `Ping`: %ping% ms (target %threshold_ping% ms)\n🔽 `Download`: %download% Mbps (target %threshold_download% Mbps)\n🔼 `Upload`: %upload% Mbps (target %threshold_upload% Mbps)";
+                text = TemplateHelper.ReplaceVariables(GetString(config, "unhealthy_message", defMsg), vars);
+                break;
+            }
+            case IntegrationEvent.TestSkipped when GetBool(config, "send_skipped", true):
+            {
+                const string defMsg = "⏭️ *A speedtest was skipped*\n`Reason`: %error%";
+                text = TemplateHelper.ReplaceVariables(GetString(config, "skipped_message", defMsg), vars);
+                break;
+            }
+            default:
+                return true;
         }
 
         var payload = new { chat_id = chatId, text, parse_mode = "markdown" };
@@ -424,7 +435,7 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         var key = GetString(config, "key");
         if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(key)) return false;
 
-        var message = "";
+        string message;
         var priority = int.TryParse(GetString(config, "priority", "5"), out var p) ? p : 5;
 
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
@@ -470,7 +481,7 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         var topic = GetString(config, "topic");
         if (string.IsNullOrEmpty(topic)) return false;
 
-        var message = "";
+        string message;
         var priority = GetString(config, "priority", "3");
 
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
@@ -523,7 +534,7 @@ public class IntegrationDispatcher : IIntegrationDispatcher
         var userKey = GetString(config, "user_key");
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userKey)) return false;
 
-        var message = "";
+        string message;
         if (eventType == IntegrationEvent.TestFinished && GetBool(config, "send_finished", true))
         {
             const string defMsg = "A speedtest is finished:\nPing: %ping% ms (±%jitter% ms)\nUpload: %upload% Mbps\nDownload: %download% Mbps";

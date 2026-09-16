@@ -1,14 +1,15 @@
 @using System.Globalization
 @using System.Text.Json
 @using System.Text.RegularExpressions
-@inject HttpClient Http
+@inject ApiClient Api
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Hub" Title="Integrations" FullHeight="false"
              Description="Send results and alerts to other services.">
     <StateView Loading="_loading" Compact="true" Empty="@(_instances.Count == 0)"
-               EmptyMessage="No integrations yet. Add one to send test results or alerts to another service.">
+               EmptyMessage="No integrations yet. Add one to send test results or alerts to another service."
+               ErrorMessage="@(_loadFailed ? "Couldn't load your integrations." : null)" OnRetry="LoadAsync">
         <MudExpansionPanels Elevation="0" MultiExpansion="true" Class="sw-card rounded-lg">
             @foreach (var instance in _instances)
             {
@@ -73,7 +74,7 @@
     </StateView>
 
     <MudMenu Label="Add integration" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary"
-             Class="mt-4" Disabled="_loading">
+             Class="mt-4" Disabled="@(_loading || _loadFailed)">
         @foreach (var schema in _schemas)
         {
             <MudMenuItem OnClick="@(() => Add(schema.Key, schema.Value))">@schema.Value.Title</MudMenuItem>
@@ -105,28 +106,25 @@
     }
 
     private bool _loading = true;
+    private bool _loadFailed;
     private Dictionary<string, IntegrationTypeSchemaDto> _schemas = [];
     private List<IntegrationInstance> _instances = [];
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
-        try
-        {
-            _schemas = await Http.GetFromJsonAsync<Dictionary<string, IntegrationTypeSchemaDto>>("/api/integrations") ?? [];
-            var active = await Http.GetFromJsonAsync<List<ActiveIntegrationDto>>("/api/integrations/active") ?? [];
-            _instances = active
-                .Where(a => _schemas.ContainsKey(a.Name))
-                .Select(a => CreateInstance(a.Name, _schemas[a.Name], a.Id, a.DisplayName, a.Data, a.LastActivity, a.ActivityFailed, isNew: false))
-                .ToList();
-        }
-        catch
-        {
-            Snackbar.Add("Could not load integrations", Severity.Error);
-        }
-        finally
-        {
-            _loading = false;
-        }
+        _loading = true;
+        var schemas = await Api.GetAsync<Dictionary<string, IntegrationTypeSchemaDto>>("/api/integrations");
+        var active = await Api.GetAsync<List<ActiveIntegrationDto>>("/api/integrations/active");
+
+        _loadFailed = schemas.Value == null || active.Value == null;
+        _schemas = schemas.Value ?? new();
+        _instances = (active.Value ?? [])
+            .Where(a => _schemas.ContainsKey(a.Name))
+            .Select(a => CreateInstance(a.Name, _schemas[a.Name], a.Id, a.DisplayName, a.Data, a.LastActivity, a.ActivityFailed, isNew: false))
+            .ToList();
+        _loading = false;
     }
 
     private void Add(string name, IntegrationTypeSchemaDto schema)
@@ -240,40 +238,31 @@
             payload[field.Name] = value;
         }
 
-        try
+        ApiResult result;
+        if (string.IsNullOrEmpty(instance.Id))
         {
-            HttpResponseMessage response;
-            if (string.IsNullOrEmpty(instance.Id))
-            {
-                response = await Http.PutAsJsonAsync($"/api/integrations/{instance.Name}", payload);
-                if (response.IsSuccessStatusCode)
-                {
-                    var created = await response.Content.ReadFromJsonAsync<JsonElement>();
-                    if (created.TryGetProperty("id", out var id)) instance.Id = id.GetString() ?? "";
-                }
-            }
-            else
-            {
-                response = await Http.PatchAsJsonAsync($"/api/integrations/{instance.Id}", payload);
-            }
-
-            if (response.IsSuccessStatusCode)
-            {
-                instance.SavedSnapshot = instance.Snapshot;
-                Snackbar.Add($"{DisplayTitle(instance)} saved", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add("Could not save the integration. Check the highlighted fields.", Severity.Error);
-            }
+            var created = await Api.PutAsync<JsonElement>($"/api/integrations/{instance.Name}", payload);
+            if (created.Succeeded && created.Value.TryGetProperty("id", out var id)) instance.Id = id.GetString() ?? "";
+            result = created;
         }
-        catch
+        else
+        {
+            result = await Api.PatchAsync($"/api/integrations/{instance.Id}", payload);
+        }
+
+        instance.Saving = false;
+        if (result.Succeeded)
+        {
+            instance.SavedSnapshot = instance.Snapshot;
+            Snackbar.Add($"{DisplayTitle(instance)} saved", Severity.Success);
+        }
+        else if (result.Status == null || (int)result.Status >= 500)
         {
             Snackbar.Add("Could not save the integration", Severity.Error);
         }
-        finally
+        else
         {
-            instance.Saving = false;
+            Snackbar.Add(result.MessageOr("Could not save the integration. Check the highlighted fields."), Severity.Error);
         }
     }
 
@@ -287,16 +276,7 @@
                 yesText: "Delete", cancelText: "Cancel");
             if (confirmed != true) return;
 
-            try
-            {
-                var response = await Http.DeleteAsync($"/api/integrations/{instance.Id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    Snackbar.Add("Could not delete the integration", Severity.Error);
-                    return;
-                }
-            }
-            catch
+            if (!(await Api.DeleteAsync($"/api/integrations/{instance.Id}")).Succeeded)
             {
                 Snackbar.Add("Could not delete the integration", Severity.Error);
                 return;

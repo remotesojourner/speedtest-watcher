@@ -1,6 +1,6 @@
 @page "/"
 @using System.Globalization
-@inject HttpClient Http
+@inject ApiClient Api
 @inject PreferencesService PreferencesService
 @inject ConfigStateService ConfigService
 @inject SpeedtestStateService SpeedtestService
@@ -19,7 +19,7 @@
                                 DateFormat="@FormatHelper.DatePattern(ConfigService.CurrentConfig.DateFormat)"
                                 Variant="Variant.Outlined" Margin="Margin.Dense" Class="sw-range-picker" />
         }
-        <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync" SelectionMode="SelectionMode.SingleSelection"
+        <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync!" SelectionMode="SelectionMode.SingleSelection"
                         Color="Color.Primary" Size="Size.Small" Outlined="true" Delimiters="true" CheckMark="false"
                         SelectedClass="sw-range-selected" Class="sw-range-toggle">
             @foreach (var option in RangeOptions)
@@ -47,7 +47,8 @@
 }
 
 <StateView Loading="_loading" Empty="@(_stats == null || _stats.Tests.Total == 0)"
-           EmptyMessage="There are no tests in the selected period.">
+           EmptyMessage="There are no tests in the selected period."
+           ErrorMessage="@(_loadFailed ? "Couldn't load the statistics for this period." : null)" OnRetry="LoadStatisticsAsync">
     <ChildContent>
         @if (_stats != null)
         {
@@ -307,6 +308,7 @@
     private DateTime? _to = DateTime.Today;
     private StatisticsDto? _stats;
     private bool _loading;
+    private bool _loadFailed;
 
     private List<ChartSeries<double>> _downloadSeries = [];
     private List<ChartSeries<double>> _uploadSeries = [];
@@ -398,20 +400,21 @@
     {
         _loading = true;
         StateHasChanged();
-        try
+
+        var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
+        var from = (_from ?? DateTime.Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
+        var to = (_to ?? DateTime.Today).ToString(pattern, CultureInfo.InvariantCulture);
+        var result = await Api.GetAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}");
+
+        _loadFailed = result.Value == null;
+        if (result.Value != null)
         {
-            var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
-            var from = (_from ?? DateTime.Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
-            var to = (_to ?? DateTime.Today).ToString(pattern, CultureInfo.InvariantCulture);
-            _stats = await Http.GetFromJsonAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}");
-            if (_stats != null) BuildCharts(_stats);
+            _stats = result.Value;
+            BuildCharts(_stats);
         }
-        catch { }
-        finally
-        {
-            _loading = false;
-            StateHasChanged();
-        }
+
+        _loading = false;
+        StateHasChanged();
     }
 
     private void BuildCharts(StatisticsDto stats)
@@ -465,29 +468,14 @@
 
     private string ChartLabel(string raw)
     {
-        try
-        {
-            var local = FormatHelper.ParseTimestamp(raw);
-            var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
-            return $"{local.ToString("dd/MM", CultureInfo.InvariantCulture)} {time}";
-        }
-        catch
-        {
-            return raw;
-        }
+        if (!FormatHelper.TryParseTimestamp(raw, out var local)) return raw;
+
+        var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
+        return $"{local.ToString("dd/MM", CultureInfo.InvariantCulture)} {time}";
     }
 
-    private string FormatLabelDateTime(string raw)
-    {
-        try
-        {
-            return PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(raw));
-        }
-        catch
-        {
-            return raw;
-        }
-    }
+    private string FormatLabelDateTime(string raw) =>
+        FormatHelper.TryParseTimestamp(raw, out var local) ? PreferencesService.FormatDateTime(local) : raw;
 
     private static ChartSeries<double> AverageSeries(double[] values) => new()
     {
@@ -514,18 +502,14 @@
 
     private async Task ResumeAsync()
     {
-        try
+        if (!(await Api.PostAsync("/api/speedtests/continue")).Succeeded)
         {
-            var response = await Http.PostAsync("/api/speedtests/continue", null);
-            if (response.IsSuccessStatusCode)
-            {
-                StatusService.UpdateStatus(StatusService.Running, false);
-                Snackbar.Add("Speedtests resumed", Severity.Success);
-                return;
-            }
+            Snackbar.Add("Could not resume speedtests", Severity.Error);
+            return;
         }
-        catch { }
-        Snackbar.Add("Could not resume speedtests", Severity.Error);
+
+        StatusService.UpdateStatus(StatusService.Running, false);
+        Snackbar.Add("Speedtests resumed", Severity.Success);
     }
 
     public void Dispose()

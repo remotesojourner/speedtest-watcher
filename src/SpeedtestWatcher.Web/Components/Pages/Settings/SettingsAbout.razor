@@ -1,4 +1,4 @@
-@inject HttpClient Http
+@inject ApiClient Api
 @inject IConfiguration Configuration
 
 <MudGrid Spacing="4">
@@ -8,10 +8,7 @@
                 <img src="img/logo.svg" style="width:48px;height:48px;object-fit:contain;" alt="" />
                 <div>
                     <MudText Typo="Typo.h6" Class="font-weight-bold">Speedtest Watcher</MudText>
-                    @if (_version != null)
-                    {
-                        <MudText Typo="Typo.body2" Class="sw-muted">v@_version.Local</MudText>
-                    }
+                    <MudText Typo="Typo.body2" Class="sw-muted">v@(ProjectInfo.Version)</MudText>
                 </div>
             </div>
             @if (RepositoryUrl != null && _version != null && _version.Remote != "0" && _version.Remote != _version.Local)
@@ -20,6 +17,10 @@
                     Update available: v@_version.Remote
                     <MudLink Href="@($"{RepositoryUrl}/releases")" Target="_blank" Class="ml-2">Changelog</MudLink>
                 </MudAlert>
+            }
+            else if (RepositoryUrl != null && _versionChecked && (_version == null || _version.Remote == "0"))
+            {
+                <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">Couldn't check for updates.</MudText>
             }
             <MudText Typo="Typo.body2" Class="sw-muted">
                 A self-hosted speed test manager that periodically tests your internet connection and logs results to monitor your ISP performance.
@@ -43,12 +44,13 @@
 
 @code {
     private VersionInfoDto? _version;
+    private bool _versionChecked;
 
     private string? RepositoryUrl => ProjectInfo.RepositoryUrl(Configuration);
 
     protected override async Task OnInitializedAsync()
     {
-        try { _version = await Http.GetFromJsonAsync<VersionInfoDto>("/api/info/version"); }
-        catch { }
+        _version = (await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value;
+        _versionChecked = true;
     }
 }

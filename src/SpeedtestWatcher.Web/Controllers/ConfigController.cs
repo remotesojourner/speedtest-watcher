@@ -81,11 +81,11 @@ public class ConfigController : ControllerBase
         if (AuthSettings.Keys.Contains(key))
             return BadRequest(new { message = "Sign-in settings are changed on the Security tab" });
 
-        var validationError = await _configRepo.ValidateInputAsync(key, request?.Value);
+        var validationError = await _configRepo.ValidateInputAsync(key, request.Value);
         if (validationError != null)
             return BadRequest(new { message = validationError });
 
-        var stringValue = request!.Value!.ToString()!;
+        var stringValue = request.Value!.ToString()!;
 
         var success = await _configRepo.UpdateValueAsync(key, stringValue);
         if (!success)

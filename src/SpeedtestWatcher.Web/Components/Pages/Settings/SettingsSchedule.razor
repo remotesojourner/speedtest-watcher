@@ -1,5 +1,5 @@
 @using Cronos
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject StatusStateService StatusService
 @inject PreferencesService PreferencesService
@@ -126,7 +126,7 @@
                     .GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
                 return next?.ToLocalTime();
             }
-            catch
+            catch (CronFormatException)
             {
                 return null;
             }
@@ -158,59 +158,34 @@
 
     private async Task SaveScheduleAsync()
     {
-        var saved = await PatchConfigAsync("cron", EffectiveCron)
-                    && await PatchConfigAsync("scheduleOffset", _scheduleOffset ? "true" : "false");
-        if (saved) Snackbar.Add("Schedule saved", Severity.Success);
-        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+        var result = await ConfigService.SaveAsync(("cron", EffectiveCron), ("scheduleOffset", _scheduleOffset ? "true" : "false"));
+        if (result.Succeeded) Snackbar.Add("Schedule saved", Severity.Success);
+        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
 
     private async Task PauseTestsAsync()
     {
         var hours = _pauseMode == CustomMode ? _customPauseHours : PausePresets.First(p => p.Id == _pauseMode).Hours;
-        try
+        if (!(await Api.PostAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = hours })).Succeeded)
         {
-            var response = await Http.PostAsJsonAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = hours });
-            if (response.IsSuccessStatusCode)
-            {
-                StatusService.UpdateStatus(StatusService.Running, true);
-                Snackbar.Add("Speedtests paused", Severity.Warning);
-                return;
-            }
+            Snackbar.Add("Could not pause speedtests", Severity.Error);
+            return;
         }
-        catch { }
-        Snackbar.Add("Could not pause speedtests", Severity.Error);
+
+        StatusService.UpdateStatus(StatusService.Running, true);
+        Snackbar.Add("Speedtests paused", Severity.Warning);
     }
 
     private async Task ResumeTestsAsync()
     {
-        try
+        if (!(await Api.PostAsync("/api/speedtests/continue")).Succeeded)
         {
-            var response = await Http.PostAsync("/api/speedtests/continue", null);
-            if (response.IsSuccessStatusCode)
-            {
-                StatusService.UpdateStatus(StatusService.Running, false);
-                Snackbar.Add("Speedtests resumed", Severity.Success);
-                return;
-            }
+            Snackbar.Add("Could not resume speedtests", Severity.Error);
+            return;
         }
-        catch { }
-        Snackbar.Add("Could not resume speedtests", Severity.Error);
-    }
 
-    private async Task<bool> PatchConfigAsync(string key, string value)
-    {
-        try
-        {
-            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (!response.IsSuccessStatusCode) return false;
-
-            ConfigService.CurrentConfig[key] = value;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        StatusService.UpdateStatus(StatusService.Running, false);
+        Snackbar.Add("Speedtests resumed", Severity.Success);
     }
 
     private void OnStatusChanged() => InvokeAsync(StateHasChanged);

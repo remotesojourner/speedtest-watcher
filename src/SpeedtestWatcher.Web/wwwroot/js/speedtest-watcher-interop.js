@@ -7,15 +7,6 @@ window.speedtestWatcherInterop = {
         localStorage.setItem(key, value);
     },
 
-    downloadFileFromBytes: function (filename, contentType, bytesBase64) {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = `data:${contentType};base64,${bytesBase64}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    },
-
     downloadFileFromStream: async function (filename, streamReference) {
         const buffer = await streamReference.arrayBuffer();
         const url = URL.createObjectURL(new Blob([buffer]));

@@ -1,6 +1,6 @@
 @using System.Globalization
 @using System.Text.Json
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject ISnackbar Snackbar
 
@@ -17,7 +17,7 @@
     <MudGrid Spacing="3" Class="mb-2">
         <MudItem xs="12" md="6">
             <MudSelect T="string" @bind-Value="_interface" Label="Network interface" Variant="Variant.Outlined" Margin="Margin.Dense"
-                       HelperText="The local address tests are sent from">
+                       HelperText="@(_interfacesUnavailable ? "Couldn't list this machine's network interfaces" : "The local address tests are sent from")">
                 <MudSelectItem T="string" Value="@("none")">Default route</MudSelectItem>
                 @foreach (var option in _interfaceOptions)
                 {
@@ -55,7 +55,7 @@
                 <MudItem xs="12" md="6">
                     <MudSelect T="string" Value="@(_serverId == "none" ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="Choose a server"
-                               Disabled="_serversLoading" HelperText="@(_serversLoading ? "Loading servers..." : "Nearest servers are listed first")">
+                               Disabled="_serversLoading" HelperText="@ServerListHelp">
                         @foreach (var server in CurrentServers)
                         {
                             <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
@@ -84,8 +84,8 @@
                 <MudItem xs="12" md="6">
                     <MudSelect T="string" Label="Servers" MultiSelection="true" SelectedValues="SelectedIds" SelectedValuesChanged="SetSelectedIds"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="_serversLoading"
-                               MultiSelectionTextFunc="@(selected => $"{selected.Count} selected")"
-                               HelperText="@(_serversLoading ? "Loading servers..." : "Nearest servers are listed first")">
+                               MultiSelectionTextFunc="@(selected => $"{selected?.Count ?? 0} selected")"
+                               HelperText="@ServerListHelp">
                         @foreach (var server in CurrentServers)
                         {
                             <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
@@ -163,12 +163,20 @@
     private string _libreUrl = "";
     private bool _acceptedOokla;
     private bool _serversLoading;
+    private bool _interfacesUnavailable;
+    private readonly HashSet<string> _serverListsUnavailable = [];
     private bool _saving;
     private List<InterfaceOption> _interfaceOptions = [];
     private readonly Dictionary<string, List<ServerOption>> _servers = new();
     private readonly Dictionary<string, List<string>> _serverIds = new();
 
     private IReadOnlyList<ServerOption> CurrentServers => _servers.TryGetValue(_provider, out var list) ? list : [];
+
+    private string ServerListHelp => _serversLoading
+        ? "Loading servers..."
+        : _serverListsUnavailable.Contains(_provider)
+            ? "Couldn't load the server list. You can still enter a server ID."
+            : "Nearest servers are listed first";
 
     private List<string> SelectedIdList => _serverIds.TryGetValue(_provider, out var ids) ? ids : [];
 
@@ -273,20 +281,17 @@
 
     private async Task LoadInterfacesAsync()
     {
-        try
+        var result = await Api.GetAsync<Dictionary<string, List<string>>>("/api/info/interfaces");
+        _interfacesUnavailable = result.Value == null;
+
+        _interfaceOptions = (result.Value ?? new())
+            .SelectMany(entry => entry.Value.Select(ip => new InterfaceOption(ip, $"{entry.Key} — {ip}")))
+            .ToList();
+
+        if (_interface != "none" && _interfaceOptions.All(o => o.Value != _interface))
         {
-            var data = await Http.GetFromJsonAsync<Dictionary<string, List<string>>>("/api/info/interfaces") ?? [];
-
-            _interfaceOptions = data
-                .SelectMany(entry => entry.Value.Select(ip => new InterfaceOption(ip, $"{entry.Key} — {ip}")))
-                .ToList();
-
-            if (_interface != "none" && _interfaceOptions.All(o => o.Value != _interface))
-            {
-                _interfaceOptions.Insert(0, new InterfaceOption(_interface, $"{_interface} (currently saved)"));
-            }
+            _interfaceOptions.Insert(0, new InterfaceOption(_interface, $"{_interface} (currently saved)"));
         }
-        catch { }
     }
 
     private async Task LoadServersAsync(string provider)
@@ -295,76 +300,58 @@
 
         _serversLoading = true;
         StateHasChanged();
-        try
+
+        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{provider}");
+        if (result.Succeeded)
         {
-            var json = await Http.GetFromJsonAsync<JsonElement>($"/api/info/server/{provider}");
-            _servers[provider] = ParseServers(json);
+            _servers[provider] = ParseServers(result.Value);
+            _serverListsUnavailable.Remove(provider);
         }
-        catch
+        else
         {
-            _servers[provider] = [];
+            _serverListsUnavailable.Add(provider);
         }
-        finally
-        {
-            _serversLoading = false;
-            StateHasChanged();
-        }
+
+        _serversLoading = false;
+        StateHasChanged();
     }
 
     private async Task SaveAsync()
     {
         _saving = true;
         var cfg = ConfigService.CurrentConfig;
+        var changes = new List<(string Key, string Value)>();
 
-        var saved = await PatchIfChangedAsync("provider", _provider, cfg.Provider);
-        if (saved)
+        void AddIfChanged(string key, string value, string? current)
         {
-            saved = await PatchIfChangedAsync("serverMode", _serverMode, cfg.ServerMode ?? "auto");
+            if (value != current) changes.Add((key, value));
         }
-        if (saved && _serverMode == "random")
+
+        AddIfChanged("provider", _provider, cfg.Provider);
+        AddIfChanged("serverMode", _serverMode, cfg.ServerMode ?? "auto");
+        if (_serverMode == "random")
         {
-            saved = await PatchIfChangedAsync("serverListMode", _listMode, cfg.ServerListMode ?? "allow");
+            AddIfChanged("serverListMode", _listMode, cfg.ServerListMode ?? "allow");
         }
-        if (saved && SupportsServerChoice && _serverMode == "single")
+        if (SupportsServerChoice && _serverMode == "single")
         {
-            saved = await PatchIfChangedAsync(_provider == "libre" ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
+            AddIfChanged(_provider == "libre" ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
         }
-        if (saved && SupportsServerChoice && _serverMode == "random")
+        if (SupportsServerChoice && _serverMode == "random")
         {
             var ids = SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : "none";
-            saved = await PatchIfChangedAsync(_provider == "libre" ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
+            AddIfChanged(_provider == "libre" ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
         }
-        if (saved && _provider == "libre")
+        if (_provider == "libre")
         {
-            var url = string.IsNullOrWhiteSpace(_libreUrl) ? "none" : _libreUrl.Trim();
-            saved = await PatchIfChangedAsync("libreUrl", url, cfg.LibreUrl ?? "none");
+            AddIfChanged("libreUrl", string.IsNullOrWhiteSpace(_libreUrl) ? "none" : _libreUrl.Trim(), cfg.LibreUrl ?? "none");
         }
-        if (saved)
-        {
-            saved = await PatchIfChangedAsync("interface", _interface, cfg.Interface ?? "none");
-        }
+        AddIfChanged("interface", _interface, cfg.Interface ?? "none");
 
+        var result = await ConfigService.SaveAsync([.. changes]);
         _saving = false;
-        if (saved) Snackbar.Add("The provider settings have been saved", Severity.Success);
-        else Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
-    }
-
-    private async Task<bool> PatchIfChangedAsync(string key, string value, string? current)
-    {
-        if (value == current) return true;
-
-        try
-        {
-            var response = await Http.PatchAsJsonAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (!response.IsSuccessStatusCode) return false;
-
-            ConfigService.CurrentConfig[key] = value;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        if (result.Succeeded) Snackbar.Add("The provider settings have been saved", Severity.Success);
+        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
 
     private static List<ServerOption> ParseServers(JsonElement json)

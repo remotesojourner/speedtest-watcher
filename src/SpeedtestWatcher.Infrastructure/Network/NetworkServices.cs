@@ -101,8 +101,9 @@ public class ServerListProvider
                 var json = await File.ReadAllTextAsync(filePath, cancellationToken);
                 return JsonSerializer.Deserialize<object>(json);
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
             {
+                _logger.LogWarning(ex, "The cached {Provider} server list can't be read, so it is being downloaded again", provider);
             }
         }
 

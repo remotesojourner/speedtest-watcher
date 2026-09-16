@@ -1,4 +1,4 @@
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject SpeedtestStateService SpeedtestService
 @inject ISnackbar Snackbar
@@ -105,23 +105,17 @@
         if (Test == null) return;
 
         _deleting = true;
-        try
+        var result = await Api.DeleteAsync($"/api/speedtests/{Test.Id}");
+        _deleting = false;
+
+        if (!result.Succeeded)
         {
-            var response = await Http.DeleteAsync($"/api/speedtests/{Test.Id}");
-            if (response.IsSuccessStatusCode)
-            {
-                SpeedtestService.RemoveTest(Test.Id);
-                Snackbar.Add("The test has been deleted", Severity.Success);
-                MudDialog.Close(DialogResult.Ok(true));
-                return;
-            }
-        }
-        catch { }
-        finally
-        {
-            _deleting = false;
+            Snackbar.Add("Could not delete the test", Severity.Error);
+            return;
         }
 
-        Snackbar.Add("Could not delete the test", Severity.Error);
+        SpeedtestService.RemoveTest(Test.Id);
+        Snackbar.Add("The test has been deleted", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
     }
 }

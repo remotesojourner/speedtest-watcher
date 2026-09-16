@@ -1,9 +1,9 @@
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject IDialogService DialogService
-@inject IJSRuntime JS
+@inject BrowserInterop Browser
 @inject ISnackbar Snackbar
 
 @if (ConfigService.CurrentConfig.AuthDisabledByEnvironment)
@@ -197,56 +197,47 @@
 
     private async Task SaveAsync()
     {
+        var request = new AuthSettingsRequest
+        {
+            Enabled = _enabled,
+            VisitorAccess = _visitorAccess,
+            Authority = _authority.Trim(),
+            ClientId = _clientId.Trim(),
+            ClientSecret = string.IsNullOrWhiteSpace(_clientSecret) ? null : _clientSecret.Trim(),
+            ClearClientSecret = _clearSecret,
+            Scopes = _scopes
+        };
+
         _saving = true;
-        try
+        var result = await Api.PutAsync<SaveResult>("/api/auth/settings", request);
+        _saving = false;
+
+        if (!result.Succeeded)
         {
-            var request = new AuthSettingsRequest
-            {
-                Enabled = _enabled,
-                VisitorAccess = _visitorAccess,
-                Authority = _authority.Trim(),
-                ClientId = _clientId.Trim(),
-                ClientSecret = string.IsNullOrWhiteSpace(_clientSecret) ? null : _clientSecret.Trim(),
-                ClearClientSecret = _clearSecret,
-                Scopes = _scopes
-            };
-
-            var response = await Http.PutAsJsonAsync("/api/auth/settings", request);
-            if (!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add(await ErrorMessageAsync(response), Severity.Error);
-                return;
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<SaveResult>();
-            Config["authEnabled"] = _enabled ? "true" : "false";
-            Config["visitorAccess"] = _visitorAccess;
-            Config["oidcAuthority"] = string.IsNullOrWhiteSpace(_authority) ? "none" : _authority.Trim();
-            Config["oidcClientId"] = string.IsNullOrWhiteSpace(_clientId) ? "none" : _clientId.Trim();
-            Config["oidcScopes"] = NormalisedScopes;
-            Config["oidcClientSecretSet"] = !_clearSecret && (SecretSaved || !string.IsNullOrWhiteSpace(_clientSecret));
-            Config["authActive"] = result?.Active == true;
-            _clientSecret = "";
-            _clearSecret = false;
-            _scopes = NormalisedScopes;
-
-            if (result?.Active == true && _signedInAs == null)
-            {
-                Snackbar.Add("Sign-in is on. Taking you to your provider...", Severity.Success);
-                Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/settings/security")}", forceLoad: true);
-                return;
-            }
-
-            Snackbar.Add("Sign-in settings saved", Severity.Success);
+            Snackbar.Add(result.MessageOr("Could not save the sign-in settings"), Severity.Error);
+            return;
         }
-        catch
+
+        var active = result.Value?.Active == true;
+        Config["authEnabled"] = _enabled ? "true" : "false";
+        Config["visitorAccess"] = _visitorAccess;
+        Config["oidcAuthority"] = string.IsNullOrWhiteSpace(_authority) ? "none" : _authority.Trim();
+        Config["oidcClientId"] = string.IsNullOrWhiteSpace(_clientId) ? "none" : _clientId.Trim();
+        Config["oidcScopes"] = NormalisedScopes;
+        Config["oidcClientSecretSet"] = !_clearSecret && (SecretSaved || !string.IsNullOrWhiteSpace(_clientSecret));
+        Config["authActive"] = active;
+        _clientSecret = "";
+        _clearSecret = false;
+        _scopes = NormalisedScopes;
+
+        if (active && _signedInAs == null)
         {
-            Snackbar.Add("Could not save the sign-in settings", Severity.Error);
+            Snackbar.Add("Sign-in is on. Taking you to your provider...", Severity.Success);
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/settings/security")}", forceLoad: true);
+            return;
         }
-        finally
-        {
-            _saving = false;
-        }
+
+        Snackbar.Add("Sign-in settings saved", Severity.Success);
     }
 
     private async Task CreateTokenAsync()
@@ -261,27 +252,17 @@
         }
 
         _tokenBusy = true;
-        try
-        {
-            var response = await Http.PostAsync("/api/auth/token", null);
-            var created = response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<ApiTokenResponse>() : null;
-            if (created == null)
-            {
-                Snackbar.Add("Could not create a token", Severity.Error);
-                return;
-            }
+        var created = await Api.PostAsync<ApiTokenResponse>("/api/auth/token");
+        _tokenBusy = false;
 
-            _newToken = created.Token;
-            Config["apiTokenSet"] = true;
-        }
-        catch
+        if (created.Value == null)
         {
             Snackbar.Add("Could not create a token", Severity.Error);
+            return;
         }
-        finally
-        {
-            _tokenBusy = false;
-        }
+
+        _newToken = created.Value.Token;
+        Config["apiTokenSet"] = true;
     }
 
     private async Task RevokeTokenAsync()
@@ -293,57 +274,29 @@
         if (confirmed != true) return;
 
         _tokenBusy = true;
-        try
-        {
-            var response = await Http.DeleteAsync("/api/auth/token");
-            if (!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("Could not revoke the token", Severity.Error);
-                return;
-            }
+        var revoked = await Api.DeleteAsync("/api/auth/token");
+        _tokenBusy = false;
 
-            _newToken = null;
-            Config["apiTokenSet"] = false;
-            Snackbar.Add("The API token has been revoked", Severity.Success);
-        }
-        catch
+        if (!revoked.Succeeded)
         {
             Snackbar.Add("Could not revoke the token", Severity.Error);
+            return;
         }
-        finally
-        {
-            _tokenBusy = false;
-        }
+
+        _newToken = null;
+        Config["apiTokenSet"] = false;
+        Snackbar.Add("The API token has been revoked", Severity.Success);
     }
 
     private async Task CopyAsync(string text)
     {
-        try
-        {
-            if (await JS.InvokeAsync<bool>("speedtestWatcherInterop.copyText", text))
-            {
-                Snackbar.Add("Copied", Severity.Success);
-                return;
-            }
-        }
-        catch { }
-        Snackbar.Add("Couldn't copy. Select the text and copy it instead.", Severity.Warning);
+        if (await Browser.CopyTextAsync(text)) Snackbar.Add("Copied", Severity.Success);
+        else Snackbar.Add("Couldn't copy. Select the text and copy it instead.", Severity.Warning);
     }
 
     private void SignOut() => Navigation.NavigateTo("/auth/logout", forceLoad: true);
 
     private static string Saved(string? value) => string.IsNullOrWhiteSpace(value) || value == "none" ? "" : value;
 
-    private static async Task<string> ErrorMessageAsync(HttpResponseMessage response)
-    {
-        try
-        {
-            var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-            if (body != null && body.TryGetValue("message", out var message)) return message;
-        }
-        catch { }
-        return "Your changes were not applied. Check your input.";
-    }
-
-    private sealed record SaveResult(string Message, bool Active);
+    private sealed record SaveResult(bool Active);
 }

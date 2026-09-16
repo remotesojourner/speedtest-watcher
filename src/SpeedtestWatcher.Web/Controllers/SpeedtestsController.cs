@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Helpers;
@@ -96,12 +95,12 @@ public class SpeedtestsController : ControllerBase
             return StatusCode(StatusCodes.Status410Gone, new { message = "Speedtests are paused" });
 
         _ = Task.Run(async () => await _scheduler.ExecuteSpeedtestAsync(
-            "custom", false, serverOverride: serverId?.ToString(CultureInfo.InvariantCulture)));
+            "custom", serverOverride: serverId?.ToString(CultureInfo.InvariantCulture)));
         return Ok(new { message = "Speedtest successfully created" });
     }
 
     [HttpPost("pause")]
-    public IActionResult Pause([FromBody] PauseRequest request)
+    public IActionResult Pause([FromBody] PauseRequest? request)
     {
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)

@@ -99,6 +99,8 @@ builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddMudServices();
 
+builder.Services.AddScoped<ApiClient>();
+builder.Services.AddScoped<BrowserInterop>();
 builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<StatusStateService>();
 builder.Services.AddScoped<SpeedtestStateService>();

@@ -1,5 +1,5 @@
 @using System.Text.Json
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -9,10 +9,10 @@
         </MudText>
 
         <MudSelect T="string" @bind-Value="_serverId" Label="Server" Variant="Variant.Outlined" Margin="Margin.Dense"
-                   Disabled="_loading" HelperText="@(_loading ? "Loading servers..." : "Nearest servers are listed first")">
+                   Disabled="_loading" HelperText="@ServerListHelp">
             @foreach (var server in _servers)
             {
-                <MudSelectItem T="string" Value="@server.Id">@server.Label</MudSelectItem>
+                <MudSelectItem T="string" Value="@server.Id">@server.OptionLabel</MudSelectItem>
             }
         </MudSelect>
 
@@ -32,12 +32,17 @@
 
     [Parameter] public string Provider { get; set; } = "ookla";
 
-    private sealed record ServerOption(string Id, string Label);
+    private sealed record ServerOption(string Id, string OptionLabel);
 
     private List<ServerOption> _servers = [];
     private string _serverId = "";
     private bool _loading = true;
     private bool _running;
+    private bool _serversUnavailable;
+
+    private string ServerListHelp => _loading
+        ? "Loading servers..."
+        : _serversUnavailable ? "Couldn't load the server list. Enter a server ID below." : "Nearest servers are listed first";
 
     private bool ServerIdValid => string.IsNullOrWhiteSpace(_serverId) || _serverId.Trim().All(char.IsDigit);
 
@@ -45,21 +50,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
+        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{Provider}");
+        _serversUnavailable = !result.Succeeded;
+        if (result.Succeeded && result.Value.ValueKind == JsonValueKind.Object)
         {
-            var json = await Http.GetFromJsonAsync<JsonElement>($"/api/info/server/{Provider}");
-            if (json.ValueKind == JsonValueKind.Object)
-            {
-                _servers = json.EnumerateObject()
-                    .Select(property => new ServerOption(property.Name, Label(property.Name, property.Value)))
-                    .ToList();
-            }
+            _servers = result.Value.EnumerateObject()
+                .Select(property => new ServerOption(property.Name, Label(property.Name, property.Value)))
+                .ToList();
         }
-        catch { }
-        finally
-        {
-            _loading = false;
-        }
+        _loading = false;
     }
 
     private static string Label(string id, JsonElement entry)
@@ -78,23 +77,17 @@
     private async Task RunAsync()
     {
         _running = true;
-        try
+        var result = await Api.PostAsync($"/api/speedtests/run?serverId={Uri.EscapeDataString(_serverId.Trim())}");
+        _running = false;
+
+        if (!result.Succeeded)
         {
-            var response = await Http.PostAsync($"/api/speedtests/run?serverId={_serverId.Trim()}", null);
-            if (response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("Speedtest started", Severity.Success);
-                MudDialog.Close(DialogResult.Ok(true));
-                return;
-            }
-        }
-        catch { }
-        finally
-        {
-            _running = false;
+            Snackbar.Add(result.MessageOr("Could not start the speedtest"), Severity.Error);
+            return;
         }
 
-        Snackbar.Add("Could not start the speedtest", Severity.Error);
+        Snackbar.Add("Speedtest started", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
     }
 
     private void Cancel() => MudDialog.Cancel();

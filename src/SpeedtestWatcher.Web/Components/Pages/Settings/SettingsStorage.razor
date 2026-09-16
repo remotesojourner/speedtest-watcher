@@ -1,11 +1,12 @@
 @using System.Globalization
 @using System.Text
 @using System.Text.Json
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ConfigStateService ConfigService
 @inject SpeedtestStateService SpeedtestService
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
+@inject BrowserInterop Browser
+@inject ILogger<SettingsStorage> Logger
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -16,6 +17,10 @@
             {
                 <DataRow Label="Stored tests" Value="@_storageInfo.TestCount.ToString("N0", CultureInfo.CurrentCulture)" />
                 <DataRow Label="Database size" Value="@FormatSize(_storageInfo.Size)" />
+            }
+            else if (_storageInfoFailed)
+            {
+                <StateView ErrorMessage="Couldn't load the database details." OnRetry="LoadStorageInfoAsync" />
             }
             else
             {
@@ -119,6 +124,7 @@
     ];
 
     private StorageInfoDto? _storageInfo;
+    private bool _storageInfoFailed;
     private MudFileUpload<IBrowserFile>? _testsUpload;
     private MudFileUpload<IBrowserFile>? _configUpload;
     private string _retentionChoice = "365";
@@ -149,51 +155,33 @@
 
     private async Task LoadStorageInfoAsync()
     {
-        try
-        {
-            _storageInfo = await Http.GetFromJsonAsync<StorageInfoDto>("/api/storage");
-        }
-        catch { }
+        var result = await Api.GetAsync<StorageInfoDto>("/api/storage");
+        _storageInfo = result.Value;
+        _storageInfoFailed = result.Value == null;
     }
 
     private async Task SaveRetentionAsync()
     {
         if (SelectedRetentionDays is not { } days) return;
 
-        var value = days.ToString(CultureInfo.InvariantCulture);
-        try
-        {
-            var response = await Http.PatchAsJsonAsync("/api/config/retentionDays", new UpdateConfigKeyRequest { Value = value });
-            if (response.IsSuccessStatusCode)
-            {
-                ConfigService.CurrentConfig["retentionDays"] = value;
-                Snackbar.Add("Retention period updated", Severity.Success);
-                return;
-            }
-        }
-        catch { }
-
-        Snackbar.Add("Your changes were not applied. Check your input.", Severity.Error);
+        var result = await ConfigService.SaveAsync(("retentionDays", days.ToString(CultureInfo.InvariantCulture)));
+        if (result.Succeeded) Snackbar.Add("Retention period updated", Severity.Success);
+        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
 
     private Task ExportTestsAsync(string format) =>
-        DownloadAsync($"/api/storage/tests/history/{format}", $"speedtests.{format}", format == "json" ? "application/json" : "text/csv");
+        DownloadAsync($"/api/storage/tests/history/{format}", $"speedtests.{format}");
 
     private Task ExportConfigAsync() =>
-        DownloadAsync("/api/storage/config", "speedtest-watcher-settings.json", "application/json");
+        DownloadAsync("/api/storage/config", "speedtest-watcher-settings.json");
 
-    private async Task DownloadAsync(string url, string fileName, string contentType)
+    private async Task DownloadAsync(string url, string fileName)
     {
-        try
-        {
-            var bytes = await Http.GetByteArrayAsync(url);
-            await JS.InvokeVoidAsync("speedtestWatcherInterop.downloadFileFromBytes", fileName, contentType, Convert.ToBase64String(bytes));
+        var file = await Api.GetBytesAsync(url);
+        if (file.Value != null && await Browser.DownloadAsync(fileName, file.Value))
             Snackbar.Add($"Exported {fileName}", Severity.Success);
-        }
-        catch
-        {
+        else
             Snackbar.Add("Export failed", Severity.Error);
-        }
     }
 
     private async Task ImportTestsAsync(IBrowserFile? file)
@@ -205,7 +193,7 @@
             return;
         }
 
-        if (await PutJsonAsync("/api/storage/tests/history", json))
+        if ((await Api.PutJsonAsync("/api/storage/tests/history", json)).Succeeded)
         {
             Snackbar.Add("The tests have been imported", Severity.Success);
             await LoadStorageInfoAsync();
@@ -226,22 +214,20 @@
             return;
         }
 
-        if (await PutJsonAsync("/api/storage/config", json))
-        {
-            try
-            {
-                var cfg = await Http.GetFromJsonAsync<ConfigDto>("/api/config");
-                if (cfg != null) ConfigService.SetConfig(cfg);
-            }
-            catch { }
-
-            ResetRetentionFromConfig();
-            Snackbar.Add("The settings have been imported", Severity.Success);
-        }
-        else
+        if (!(await Api.PutJsonAsync("/api/storage/config", json)).Succeeded)
         {
             Snackbar.Add("An error occurred while importing the configuration", Severity.Error);
+            return;
         }
+
+        if (!await ConfigService.ReloadAsync())
+        {
+            Snackbar.Add("The settings were imported. Refresh the page to see them.", Severity.Warning);
+            return;
+        }
+
+        ResetRetentionFromConfig();
+        Snackbar.Add("The settings have been imported", Severity.Success);
     }
 
     private async Task<string?> ReadJsonAsync(IBrowserFile? file, JsonValueKind expectedRoot)
@@ -257,8 +243,13 @@
             using var document = JsonDocument.Parse(text);
             return document.RootElement.ValueKind == expectedRoot ? text : null;
         }
-        catch
+        catch (JsonException)
         {
+            return null;
+        }
+        catch (IOException ex)
+        {
+            Logger.LogWarning(ex, "Could not read the uploaded file {FileName}", file.Name);
             return null;
         }
         finally
@@ -267,28 +258,11 @@
         }
     }
 
-    private async Task<bool> PutJsonAsync(string url, string json)
-    {
-        try
-        {
-            using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await Http.PutAsync(url, content);
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     private async Task ReloadTestListAsync()
     {
-        try
-        {
-            var tests = await Http.GetFromJsonAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
-            if (tests != null) SpeedtestService.SetTests(tests, tests.Count >= 30);
-        }
-        catch { }
+        var tests = await Api.GetAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
+        if (tests.Value != null) SpeedtestService.SetTests(tests.Value, tests.Value.Count >= 30);
+        else Snackbar.Add("The tests were imported. Refresh the page to see them.", Severity.Warning);
     }
 
     private async Task ClearHistoryAsync()
@@ -299,42 +273,32 @@
             yesText: "Delete all", cancelText: "Cancel");
         if (confirmed != true) return;
 
-        try
+        if (!(await Api.DeleteAsync("/api/storage/tests/history")).Succeeded)
         {
-            var response = await Http.DeleteAsync("/api/storage/tests/history");
-            if (response.IsSuccessStatusCode)
-            {
-                SpeedtestService.SetTests([], false);
-                await LoadStorageInfoAsync();
-                Snackbar.Add("The history has been cleared", Severity.Success);
-                return;
-            }
+            Snackbar.Add("Could not clear the history", Severity.Error);
+            return;
         }
-        catch { }
 
-        Snackbar.Add("Could not clear the history", Severity.Error);
+        SpeedtestService.SetTests([], false);
+        await LoadStorageInfoAsync();
+        Snackbar.Add("The history has been cleared", Severity.Success);
     }
 
     private async Task FactoryResetAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
             "Factory reset",
-            "Reset all settings (including the password) and remove every integration? Your speedtest results are kept.",
+            "Reset all settings, including sign-in, and remove every integration? Your speedtest results are kept.",
             yesText: "Reset", cancelText: "Cancel");
         if (confirmed != true) return;
 
-        try
+        if (!(await Api.DeleteAsync("/api/storage/config")).Succeeded)
         {
-            var response = await Http.DeleteAsync("/api/storage/config");
-            if (response.IsSuccessStatusCode)
-            {
-                Navigation.NavigateTo("/", forceLoad: true);
-                return;
-            }
+            Snackbar.Add("Could not reset the settings", Severity.Error);
+            return;
         }
-        catch { }
 
-        Snackbar.Add("Could not reset the settings", Severity.Error);
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 
     private static string FormatSize(long bytes) => bytes switch

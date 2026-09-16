@@ -1,5 +1,5 @@
-@inject HttpClient Http
-@inject IJSRuntime JS
+@inject ApiClient Api
+@inject BrowserInterop Browser
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -46,19 +46,22 @@
     private string _format = "csv";
     private int? _shownCount;
     private int? _allCount;
+    private bool _counting = true;
     private bool _exporting;
 
     private bool FiltersActive => Status != null || Type != null || Healthy != null;
 
+    private string CountPlaceholder => _counting ? "Counting..." : "Couldn't count the results";
+
     private string ShownDescription => _shownCount is not { } count
-        ? "Counting..."
+        ? CountPlaceholder
         : FiltersActive ? $"{Results(count)} matching the current filters" : $"No filters applied, so all {Results(count)}";
 
     private string SelectedDescription => SelectedIds.Count == 0
         ? "Select results in the list first"
         : $"{SelectedIds.Count} selected";
 
-    private string AllDescription => _allCount is { } count ? Results(count) : "Counting...";
+    private string AllDescription => _allCount is { } count ? Results(count) : CountPlaceholder;
 
     private int? ExportCount => _scope switch
     {
@@ -73,6 +76,7 @@
 
         _shownCount = await CountAsync(Status, Type, Healthy);
         _allCount = FiltersActive ? await CountAsync(null, null, null) : _shownCount;
+        _counting = false;
     }
 
     private async Task<int?> CountAsync(string? status, string? type, bool? healthy)
@@ -82,15 +86,8 @@
         if (type != null) query.Add($"type={Uri.EscapeDataString(type)}");
         if (healthy != null) query.Add($"healthy={(healthy.Value ? "true" : "false")}");
 
-        try
-        {
-            var result = await Http.GetFromJsonAsync<CountResult>($"/api/speedtests/count?{string.Join("&", query)}");
-            return result?.Count;
-        }
-        catch
-        {
-            return null;
-        }
+        var result = await Api.GetAsync<CountResult>($"/api/speedtests/count?{string.Join("&", query)}");
+        return result.Value?.Count;
     }
 
     private async Task ExportAsync()
@@ -103,32 +100,19 @@
         };
 
         _exporting = true;
-        try
-        {
-            using var response = await Http.PostAsJsonAsync("/api/speedtests/export", request);
-            if (!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("Could not export the results", Severity.Error);
-                return;
-            }
+        var file = await Api.PostForBytesAsync("/api/speedtests/export", request);
+        var fileName = $"speedtests-{_scope.ToString().ToLowerInvariant()}-{DateTime.Now:yyyyMMdd-HHmm}.{_format}";
+        var downloaded = file.Value != null && await Browser.DownloadAsync(fileName, file.Value);
+        _exporting = false;
 
-            var scopeName = _scope.ToString().ToLowerInvariant();
-            var fileName = $"speedtests-{scopeName}-{DateTime.Now:yyyyMMdd-HHmm}.{_format}";
-            await using var stream = await response.Content.ReadAsStreamAsync();
-            using var streamReference = new DotNetStreamReference(stream);
-            await JS.InvokeVoidAsync("speedtestWatcherInterop.downloadFileFromStream", fileName, streamReference);
-
-            Snackbar.Add($"Exported {Results(ExportCount ?? 0)}", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(true));
-        }
-        catch
+        if (!downloaded)
         {
             Snackbar.Add("Could not export the results", Severity.Error);
+            return;
         }
-        finally
-        {
-            _exporting = false;
-        }
+
+        Snackbar.Add($"Exported {Results(ExportCount ?? 0)}", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
     }
 
     private static string Results(int count) => count == 1 ? "1 result" : $"{count} results";

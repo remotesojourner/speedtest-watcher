@@ -7,10 +7,11 @@
 @inject StatusStateService StatusService
 @inject SpeedtestStateService SpeedtestService
 @inject NavigationManager Navigation
-@inject HttpClient Http
+@inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject IJSRuntime JS
+@inject BrowserInterop Browser
+@inject ILogger<MainLayout> Logger
 @inject IConfiguration Configuration
 @implements IAsyncDisposable
 
@@ -224,12 +225,7 @@
     {
         if (!firstRender || _disposed) return;
 
-        try
-        {
-            var savedTheme = await JS.InvokeAsync<string?>("speedtestWatcherInterop.getLocalStorage", "theme");
-            _isDarkMode = savedTheme != "light";
-        }
-        catch { }
+        _isDarkMode = await Browser.GetLocalStorageAsync("theme") != "light";
 
         await PreferencesService.InitializeAsync();
 
@@ -260,67 +256,43 @@
 
     private async Task<AppState> LoadConfigAsync()
     {
-        try
-        {
-            var response = await Http.GetAsync("/api/config");
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) return AppState.SignInRequired;
-            if (!response.IsSuccessStatusCode) return AppState.ApiError;
+        var result = await Api.GetAsync<ConfigDto>("/api/config");
+        if (result.Status == System.Net.HttpStatusCode.Unauthorized) return AppState.SignInRequired;
+        if (result.Value is not { } cfg) return AppState.ApiError;
 
-            var cfg = await response.Content.ReadFromJsonAsync<ConfigDto>();
-            if (cfg == null) return AppState.ApiError;
-
-            ConfigService.SetConfig(cfg);
-            if (cfg.Provider == "none" && !cfg.ViewMode)
-            {
-                Navigation.NavigateTo("/welcome");
-            }
-            return AppState.Ready;
-        }
-        catch
+        ConfigService.SetConfig(cfg);
+        if (cfg.Provider == "none" && !cfg.ViewMode)
         {
-            return AppState.ApiError;
+            Navigation.NavigateTo("/welcome");
         }
+        return AppState.Ready;
     }
 
     private async Task LoadStatusAndTestsAsync()
     {
-        try
-        {
-            var status = await Http.GetFromJsonAsync<StatusDto>("/api/speedtests/status");
-            if (status != null) StatusService.UpdateStatus(status.Running, status.Paused);
-        }
-        catch { }
+        var status = await Api.GetAsync<StatusDto>("/api/speedtests/status");
+        if (status.Value != null) StatusService.UpdateStatus(status.Value.Running, status.Value.Paused);
 
-        try
-        {
-            SpeedtestService.SetLoading(true);
-            var tests = await Http.GetFromJsonAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
-            if (tests != null) SpeedtestService.SetTests(tests, tests.Count >= 30);
-        }
-        catch { }
-        finally
-        {
-            SpeedtestService.SetLoading(false);
-        }
+        SpeedtestService.SetLoading(true);
+        var tests = await Api.GetAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
+        if (tests.Value != null) SpeedtestService.SetTests(tests.Value, tests.Value.Count >= 30);
+        else SpeedtestService.SetLoadFailed();
+        SpeedtestService.SetLoading(false);
     }
 
     private async Task CheckForUpdateAsync()
     {
         if (ConfigService.CurrentConfig.ViewMode) return;
 
-        try
+        var version = (await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value;
+        if (version != null
+            && Version.TryParse(version.Remote, out var remote)
+            && Version.TryParse(version.Local, out var local)
+            && remote > local)
         {
-            var version = await Http.GetFromJsonAsync<VersionInfoDto>("/api/info/version");
-            if (version != null
-                && Version.TryParse(version.Remote, out var remote)
-                && Version.TryParse(version.Local, out var local)
-                && remote > local)
-            {
-                _updateVersion = version.Remote;
-                await InvokeAsync(StateHasChanged);
-            }
+            _updateVersion = version.Remote;
+            await InvokeAsync(StateHasChanged);
         }
-        catch { }
     }
 
     private async Task RunOnServerAsync()
@@ -344,119 +316,102 @@
     private async Task ToggleThemeAsync()
     {
         _isDarkMode = !_isDarkMode;
-        try
-        {
-            await JS.InvokeVoidAsync("speedtestWatcherInterop.setLocalStorage", "theme", _isDarkMode ? "dark" : "light");
-        }
-        catch { }
+        await Browser.SetLocalStorageAsync("theme", _isDarkMode ? "dark" : "light");
     }
 
     private async Task RunSpeedtestAsync()
     {
-        try
-        {
-            var res = await Http.PostAsync("/api/speedtests/run", null);
-            if (res.IsSuccessStatusCode)
-            {
-                Snackbar.Add("Speedtest started", Severity.Success);
-            }
-            else if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
-            {
-                Snackbar.Add("Speedtest is already running", Severity.Warning);
-            }
-            else if ((int)res.StatusCode == 410)
-            {
-                Snackbar.Add("Tests are paused or no provider selected", Severity.Warning);
-            }
-            else
-            {
-                Snackbar.Add("Could not start speedtest", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
+        var result = await Api.PostAsync("/api/speedtests/run");
+        if (result.Succeeded)
+            Snackbar.Add("Speedtest started", Severity.Success);
+        else if (result.Status is System.Net.HttpStatusCode.Conflict or System.Net.HttpStatusCode.Gone)
+            Snackbar.Add(result.MessageOr("A speedtest can't start right now"), Severity.Warning);
+        else
+            Snackbar.Add("Could not start the speedtest", Severity.Error);
     }
 
     private async Task SetupSignalRAsync()
     {
+        var signedIn = _signedInAs != null;
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(new Uri(Api.BaseAddress, Hubs.SpeedtestHub.HubUrl), options =>
+            {
+                if (signedIn) options.Headers[InternalAccessToken.HeaderName] = InternalToken.Value;
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<SpeedtestDto>("NewTestResult", test =>
+        {
+            if (_disposed) return;
+            InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                SpeedtestService.PrependTest(test);
+                StatusService.UpdateStatus(false, StatusService.Paused);
+                if (test.Status == "skipped")
+                    Snackbar.Add($"Speedtest skipped: {test.Error}", Severity.Info);
+                else
+                    Snackbar.Add($"Speedtest complete: ↓ {test.Download:F1} Mbps  ↑ {test.Upload:F1} Mbps", Severity.Success);
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.On<SpeedtestDto>("TestFailed", test =>
+        {
+            if (_disposed) return;
+            InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                SpeedtestService.PrependTest(test);
+                StatusService.UpdateStatus(false, StatusService.Paused);
+                Snackbar.Add(SpeedtestErrors.Describe(test.Error), Severity.Error);
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.On("TestStarted", () =>
+        {
+            if (_disposed) return;
+            InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                StatusService.UpdateStatus(true, StatusService.Paused);
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.On<bool, bool>("StatusChanged", (running, paused) =>
+        {
+            if (_disposed) return;
+            InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                StatusService.UpdateStatus(running, paused);
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.On<string, string>("ConfigChanged", (key, value) =>
+        {
+            if (_disposed) return;
+            InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                ConfigService.CurrentConfig[key] = value;
+                StateHasChanged();
+            });
+        });
+
         try
         {
-            var signedIn = _signedInAs != null;
-            _hubConnection = new HubConnectionBuilder()
-                .WithUrl(new Uri(Http.BaseAddress!, SpeedtestWatcher.Web.Hubs.SpeedtestHub.HubUrl), options =>
-                {
-                    if (signedIn) options.Headers[InternalAccessToken.HeaderName] = InternalToken.Value;
-                })
-                .WithAutomaticReconnect()
-                .Build();
-
-            _hubConnection.On<SpeedtestDto>("NewTestResult", test =>
-            {
-                if (_disposed) return;
-                InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    SpeedtestService.PrependTest(test);
-                    StatusService.UpdateStatus(false, StatusService.Paused);
-                    if (test.Status == "skipped")
-                        Snackbar.Add($"Speedtest skipped: {test.Error}", Severity.Info);
-                    else
-                        Snackbar.Add($"Speedtest complete: ↓ {test.Download:F1} Mbps  ↑ {test.Upload:F1} Mbps", Severity.Success);
-                    StateHasChanged();
-                });
-            });
-
-            _hubConnection.On<SpeedtestDto>("TestFailed", test =>
-            {
-                if (_disposed) return;
-                InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    SpeedtestService.PrependTest(test);
-                    StatusService.UpdateStatus(false, StatusService.Paused);
-                    Snackbar.Add(SpeedtestErrors.Describe(test.Error), Severity.Error);
-                    StateHasChanged();
-                });
-            });
-
-            _hubConnection.On("TestStarted", () =>
-            {
-                if (_disposed) return;
-                InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    StatusService.UpdateStatus(true, StatusService.Paused);
-                    StateHasChanged();
-                });
-            });
-
-            _hubConnection.On<bool, bool>("StatusChanged", (running, paused) =>
-            {
-                if (_disposed) return;
-                InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    StatusService.UpdateStatus(running, paused);
-                    StateHasChanged();
-                });
-            });
-
-            _hubConnection.On<string, string>("ConfigChanged", (key, value) =>
-            {
-                if (_disposed) return;
-                InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    ConfigService.CurrentConfig[key] = value;
-                    StateHasChanged();
-                });
-            });
-
             await _hubConnection.StartAsync();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Live updates could not connect");
+            if (!_disposed) Snackbar.Add("Live updates aren't available. Refresh the page to try again.", Severity.Warning);
+        }
     }
 
     public async ValueTask DisposeAsync()

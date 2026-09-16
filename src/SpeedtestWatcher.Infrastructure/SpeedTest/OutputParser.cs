@@ -13,7 +13,7 @@ public static class OutputParser
 
     private static double? CalculateJitter(IList<double> latencyMeasurements)
     {
-        if (latencyMeasurements == null || latencyMeasurements.Count < 2) return null;
+        if (latencyMeasurements.Count < 2) return null;
         double totalDiff = 0;
         for (var i = 1; i < latencyMeasurements.Count; i++)
         {

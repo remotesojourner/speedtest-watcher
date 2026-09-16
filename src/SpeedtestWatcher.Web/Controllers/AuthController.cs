@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
     [HttpGet("/auth/login")]
     public IActionResult Login([FromQuery] string? returnUrl)
     {
-        var target = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
+        var target = Url.IsLocalUrl(returnUrl) ? returnUrl : "/";
         if (!_auth.Current.IsActive || User.Identity?.IsAuthenticated == true) return LocalRedirect(target);
 
         return Challenge(new AuthenticationProperties { RedirectUri = target }, AuthSettings.OidcScheme);
