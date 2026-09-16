@@ -12,7 +12,6 @@
 @inject IDialogService DialogService
 @inject BrowserInterop Browser
 @inject ILogger<MainLayout> Logger
-@inject IConfiguration Configuration
 @implements IAsyncDisposable
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_isDarkMode" />
@@ -35,7 +34,7 @@
             {
                 <MudTooltip Text="@($"Update available: v{_updateVersion}")" Placement="Placement.Bottom">
                     <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleUp" Color="Color.Warning"
-                                   Href="@($"{ProjectInfo.RepositoryUrl(Configuration)}/releases/latest")" Target="_blank"
+                                   Href="@($"{ProjectInfo.RepositoryUrl}/releases/latest")" Target="_blank"
                                    aria-label="Update available" />
                 </MudTooltip>
             }

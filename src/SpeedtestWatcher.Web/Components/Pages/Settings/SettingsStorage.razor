@@ -193,17 +193,24 @@
             return;
         }
 
-        if ((await Api.PutJsonAsync("/api/storage/tests/history", json)).Succeeded)
+        var result = await Api.PutJsonAsync<TestImportResultDto>("/api/storage/tests/history", json);
+        if (result.Value is not { } counts)
         {
-            Snackbar.Add("The tests have been imported", Severity.Success);
-            await LoadStorageInfoAsync();
-            await ReloadTestListAsync();
+            Snackbar.Add(ImportError(result, "test"), Severity.Error);
+            return;
         }
-        else
-        {
-            Snackbar.Add("An error occurred while importing the tests", Severity.Error);
-        }
+
+        Snackbar.Add(TestImportSummary(counts), counts.Imported > 0 ? Severity.Success : Severity.Info);
+        await LoadStorageInfoAsync();
+        await ReloadTestListAsync();
     }
+
+    private static string TestImportSummary(TestImportResultDto counts) => (counts.Imported, counts.Skipped) switch
+    {
+        (0, var skipped) => $"Nothing new to import: {Count(skipped, "result was", "results were")} already stored",
+        (var imported, 0) => $"Imported {Count(imported, "result", "results")}",
+        var (imported, skipped) => $"Imported {Count(imported, "result", "results")}. {Count(skipped, "result was", "results were")} already stored"
+    };
 
     private async Task ImportConfigAsync(IBrowserFile? file)
     {
@@ -214,21 +221,42 @@
             return;
         }
 
-        if (!(await Api.PutJsonAsync("/api/storage/config", json)).Succeeded)
+        var result = await Api.PutJsonAsync<SettingsImportResultDto>("/api/storage/config", json);
+        if (result.Value is not { } counts)
         {
-            Snackbar.Add("An error occurred while importing the configuration", Severity.Error);
+            Snackbar.Add(ImportError(result, "settings"), Severity.Error);
             return;
         }
 
         if (!await ConfigService.ReloadAsync())
         {
-            Snackbar.Add("The settings were imported. Refresh the page to see them.", Severity.Warning);
+            Snackbar.Add($"{SettingsImportSummary(counts)} Refresh the page to see them.", Severity.Warning);
             return;
         }
 
         ResetRetentionFromConfig();
-        Snackbar.Add("The settings have been imported", Severity.Success);
+        Snackbar.Add(SettingsImportSummary(counts), counts.Skipped > 0 ? Severity.Warning : Severity.Success);
     }
+
+    private static string SettingsImportSummary(SettingsImportResultDto counts)
+    {
+        var restored = new List<string> { Count(counts.Settings, "setting", "settings") };
+        if (counts.Integrations > 0) restored.Add(Count(counts.Integrations, "integration", "integrations"));
+        if (counts.Recommendations) restored.Add("recommendations");
+
+        var summary = $"Imported {string.Join(", ", restored.SkipLast(1))}{(restored.Count > 1 ? " and " : "")}{restored[^1]}.";
+        return counts.Skipped > 0
+            ? $"{summary} {Count(counts.Skipped, "item wasn't", "items weren't")} valid and {(counts.Skipped == 1 ? "was" : "were")} skipped."
+            : summary;
+    }
+
+    private static string ImportError(ApiResult result, string exportKind) =>
+        result.Status == System.Net.HttpStatusCode.BadRequest && string.IsNullOrWhiteSpace(result.ServerMessage)
+            ? $"That file isn't a Speedtest Watcher {exportKind} export"
+            : result.MessageOr($"An error occurred while importing the {exportKind} file");
+
+    private static string Count(int count, string singular, string plural) =>
+        count == 1 ? $"1 {singular}" : $"{count.ToString("N0", CultureInfo.CurrentCulture)} {plural}";
 
     private async Task<string?> ReadJsonAsync(IBrowserFile? file, JsonValueKind expectedRoot)
     {

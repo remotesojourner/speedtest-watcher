@@ -46,6 +46,9 @@ public sealed class ApiClient
     public Task<ApiResult> PutJsonAsync(string url, string json) =>
         SendWithoutValueAsync(HttpMethod.Put, url, new StringContent(json, Encoding.UTF8, "application/json"));
 
+    public Task<ApiResult<T>> PutJsonAsync<T>(string url, string json) =>
+        SendAsync(HttpMethod.Put, url, new StringContent(json, Encoding.UTF8, "application/json"), ReadJsonAsync<T>);
+
     public Task<ApiResult> PatchAsync(string url, object body) => SendWithoutValueAsync(HttpMethod.Patch, url, JsonBody(body));
 
     public Task<ApiResult> DeleteAsync(string url) => SendWithoutValueAsync(HttpMethod.Delete, url, null);

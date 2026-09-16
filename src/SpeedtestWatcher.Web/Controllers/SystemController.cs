@@ -14,20 +14,17 @@ public class SystemController : ControllerBase
     private readonly INetworkInterfaceDetector _interfaceDetector;
     private readonly ServerListProvider _serverListProvider;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<SystemController> _logger;
 
     public SystemController(
         INetworkInterfaceDetector interfaceDetector,
         ServerListProvider serverListProvider,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
         ILogger<SystemController> logger)
     {
         _interfaceDetector = interfaceDetector;
         _serverListProvider = serverListProvider;
         _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
         _logger = logger;
     }
 
@@ -38,9 +35,6 @@ public class SystemController : ControllerBase
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var localVersion = ProjectInfo.Version;
-        var repository = ProjectInfo.Repository(_configuration);
-        if (repository == null)
-            return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });
 
         try
         {
@@ -48,10 +42,10 @@ public class SystemController : ControllerBase
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.Add("User-Agent", "SpeedtestWatcher");
 
-            using var response = await client.GetAsync($"https://api.github.com/repos/{repository}/releases/latest");
+            using var response = await client.GetAsync($"https://api.github.com/repos/{ProjectInfo.Repository}/releases/latest");
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("GitHub answered {Status} when checking {Repository} for a newer release", (int)response.StatusCode, repository);
+                _logger.LogWarning("GitHub answered {Status} when checking {Repository} for a newer release", (int)response.StatusCode, ProjectInfo.Repository);
                 return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });
             }
 
@@ -65,7 +59,7 @@ public class SystemController : ControllerBase
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
-            _logger.LogWarning(ex, "Could not check {Repository} for a newer release", repository);
+            _logger.LogWarning(ex, "Could not check {Repository} for a newer release", ProjectInfo.Repository);
         }
 
         return Ok(new VersionInfoDto { Local = localVersion, Remote = "0" });

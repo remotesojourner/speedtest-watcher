@@ -46,4 +46,27 @@ public class ChartAxisHelperTests
     {
         Assert.Equal(expected, ChartAxisHelper.TickStep(values));
     }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(24, true)]
+    [InlineData(30, true)]
+    [InlineData(31, false)]
+    [InlineData(168, false)]
+    public void HasRoomForMarkers_OnlyWhilePointsStayApart(int pointCount, bool expected)
+    {
+        Assert.Equal(expected, ChartAxisHelper.HasRoomForMarkers(pointCount));
+    }
+
+    [Theory]
+    [InlineData(new[] { 940.3, 961.6 })]
+    [InlineData(new[] { 108.2, 112.4 })]
+    [InlineData(new[] { 11.0, 14.0 })]
+    public void TickStep_WhenTheAxisBeginsAtZero_KeepsTheWholeAxisToAFewTicks(double[] values)
+    {
+        var step = ChartAxisHelper.TickStep(values, beginAtZero: true);
+
+        var ticksFromZeroToTop = (int)Math.Ceiling(values.Max() / step) + 1;
+        Assert.InRange(ticksFromZeroToTop, 3, 6);
+    }
 }

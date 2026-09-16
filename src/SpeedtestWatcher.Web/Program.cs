@@ -52,6 +52,7 @@ builder.Services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
 builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
 builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+builder.Services.AddScoped<IStorageRepository, StorageRepository>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ICliManager, CliManager>();
@@ -61,6 +62,7 @@ builder.Services.AddSingleton<INetworkInterfaceDetector, InterfaceDetector>();
 builder.Services.AddSingleton<ServerListProvider>();
 builder.Services.AddScoped<ServerSelector>();
 builder.Services.AddScoped<ConnectivityChecker>();
+builder.Services.AddScoped<SettingsBackup>();
 
 var pauseStateService = new PauseStateService();
 builder.Services.AddSingleton<IPauseStateService>(pauseStateService);

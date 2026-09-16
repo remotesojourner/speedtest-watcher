@@ -4,6 +4,19 @@
     --chart-ping: #f59e0b;
     --chart-jitter: #ec4899;
     --chart-grid: rgba(148, 163, 184, 0.15);
+    --sponsor: #ec4899;
+}
+
+.sw-sponsor.mud-button-outlined {
+    border-color: var(--sponsor);
+}
+
+.sw-sponsor.mud-button-outlined:hover {
+    background-color: color-mix(in srgb, var(--sponsor) 10%, transparent);
+}
+
+.sw-sponsor .mud-button-icon-start {
+    color: var(--sponsor);
 }
 
 .sw-muted {
@@ -100,8 +113,21 @@
     justify-content: flex-start;
 }
 
+.sw-chart-average .mud-charts-line-series path.mud-chart-line {
+    pointer-events: none;
+}
+
 .sw-chart-average .mud-charts-line-series path.mud-chart-line:last-of-type {
     stroke-dasharray: 6 4;
+}
+
+.sw-chart-average .mud-charts-line-series circle.mud-chart-point:not([opacity]) {
+    fill: var(--mud-palette-surface);
+}
+
+.sw-chart-average .mud-charts-line-series path.mud-chart-line:last-of-type ~ circle.mud-chart-point {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .sw-hourly-scroll {

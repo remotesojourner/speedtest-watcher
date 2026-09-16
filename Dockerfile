@@ -11,7 +11,8 @@ RUN dotnet restore src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj
 
 COPY . .
 WORKDIR /src/src/SpeedtestWatcher.Web
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+ARG VERSION
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false ${VERSION:+/p:Version=$VERSION}
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

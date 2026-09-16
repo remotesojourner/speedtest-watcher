@@ -447,14 +447,19 @@
             AverageSeries(ping)
         ];
 
-        _downloadOptions.YAxisTicks = ChartAxisHelper.TickStep(download);
-        _uploadOptions.YAxisTicks = ChartAxisHelper.TickStep(upload);
-        _pingOptions.YAxisTicks = ChartAxisHelper.TickStep(ping.Concat(jitter));
-
         var beginAtZero = ConfigService.CurrentConfig.ChartBeginAtZero == "true";
+        _downloadOptions.YAxisTicks = ChartAxisHelper.TickStep(download, beginAtZero);
+        _uploadOptions.YAxisTicks = ChartAxisHelper.TickStep(upload, beginAtZero);
+        _pingOptions.YAxisTicks = ChartAxisHelper.TickStep(ping.Concat(jitter), beginAtZero);
+
         _downloadOptions.YAxisRequireZeroPoint = beginAtZero;
         _uploadOptions.YAxisRequireZeroPoint = beginAtZero;
         _pingOptions.YAxisRequireZeroPoint = beginAtZero;
+
+        var showMarkers = ChartAxisHelper.HasRoomForMarkers(points.Count);
+        _downloadOptions.ShowDataMarkers = showMarkers;
+        _uploadOptions.ShowDataMarkers = showMarkers;
+        _pingOptions.ShowDataMarkers = showMarkers;
 
         _failures = stats.Labels
             .Select((label, index) => (label, index))

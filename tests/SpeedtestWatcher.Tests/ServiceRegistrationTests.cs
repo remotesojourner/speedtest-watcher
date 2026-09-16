@@ -1,8 +1,8 @@
+using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using Moq;
 using MudBlazor;
 using MudBlazor.Services;
 using SpeedtestWatcher.Core.Interfaces;
@@ -18,7 +18,7 @@ public class ServiceRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton(new Mock<IJSRuntime>().Object);
+        services.AddSingleton(A.Fake<IJSRuntime>());
         services.AddSingleton<NavigationManager>(new TestNavigationManager());
         return services;
     }
@@ -60,6 +60,8 @@ public class ServiceRegistrationTests
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
 
         services.AddMudServices();
+        services.AddScoped<ApiClient>();
+        services.AddScoped<BrowserInterop>();
         services.AddScoped<PreferencesService>();
         services.AddScoped<StatusStateService>();
         services.AddScoped<SpeedtestStateService>();

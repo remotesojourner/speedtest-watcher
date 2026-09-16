@@ -60,20 +60,21 @@ public class SpeedtestExportTests : IDisposable
     [Fact]
     public async Task Repository_ListsAndCountsWhatTheFiltersMatch_OrOnlyTheGivenIds()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
         var now = DateTime.UtcNow;
-        var completed = await repo.CreateAsync(new Speedtest { Download = 100, Created = now.AddMinutes(-3) });
-        var missed = await repo.CreateAsync(new Speedtest { Download = 5, Healthy = false, Type = "custom", Created = now.AddMinutes(-2) });
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "on the skip list", Created = now.AddMinutes(-1) });
+        var completed = await repo.CreateAsync(new Speedtest { Download = 100, Created = now.AddMinutes(-3) }, cancellationToken);
+        var missed = await repo.CreateAsync(new Speedtest { Download = 5, Healthy = false, Type = "custom", Created = now.AddMinutes(-2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "on the skip list", Created = now.AddMinutes(-1) }, cancellationToken);
 
-        Assert.Equal(3, await repo.CountMatchingAsync(null, null, null));
-        Assert.Equal(2, await repo.CountMatchingAsync("completed", null, null));
-        Assert.Equal(1, await repo.CountMatchingAsync(null, "custom", false));
+        Assert.Equal(3, await repo.CountMatchingAsync(null, null, null, cancellationToken));
+        Assert.Equal(2, await repo.CountMatchingAsync("completed", null, null, cancellationToken));
+        Assert.Equal(1, await repo.CountMatchingAsync(null, "custom", false, cancellationToken));
 
-        var both = await repo.ListMatchingAsync("completed", null, null);
+        var both = await repo.ListMatchingAsync("completed", null, null, cancellationToken: cancellationToken);
         Assert.Equal([missed, completed], both.Select(t => t.Id));
 
-        var chosen = await repo.ListMatchingAsync(null, null, null, [completed]);
+        var chosen = await repo.ListMatchingAsync(null, null, null, [completed], cancellationToken);
         Assert.Equal(completed, Assert.Single(chosen).Id);
     }
 

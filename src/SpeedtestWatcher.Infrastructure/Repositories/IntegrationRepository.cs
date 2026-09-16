@@ -35,9 +35,9 @@ public class IntegrationRepository : IIntegrationRepository
     {
         var integration = new IntegrationData
         {
-            Id = Guid.NewGuid().ToString("N")[..12],
+            Id = NewId(),
             Name = name,
-            DisplayName = string.IsNullOrWhiteSpace(displayName) ? "Untitled" : displayName,
+            DisplayName = DisplayNameOrDefault(displayName),
             Data = dataJson
         };
 
@@ -45,6 +45,35 @@ public class IntegrationRepository : IIntegrationRepository
         await _db.SaveChangesAsync(cancellationToken);
         return integration.Id;
     }
+
+    public async Task UpsertAsync(IntegrationData integration, CancellationToken cancellationToken = default)
+    {
+        var id = string.IsNullOrWhiteSpace(integration.Id) ? NewId() : integration.Id;
+        var existing = await _db.Integrations.FindAsync([id], cancellationToken);
+        if (existing == null)
+        {
+            _db.Integrations.Add(new IntegrationData
+            {
+                Id = id,
+                Name = integration.Name,
+                DisplayName = DisplayNameOrDefault(integration.DisplayName),
+                Data = integration.Data
+            });
+        }
+        else
+        {
+            existing.Name = integration.Name;
+            existing.DisplayName = DisplayNameOrDefault(integration.DisplayName);
+            existing.Data = integration.Data;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string NewId() => Guid.NewGuid().ToString("N")[..12];
+
+    private static string DisplayNameOrDefault(string? displayName) =>
+        string.IsNullOrWhiteSpace(displayName) ? "Untitled" : displayName;
 
     public async Task<bool> PatchAsync(string id, string? displayName, string dataJson, CancellationToken cancellationToken = default)
     {

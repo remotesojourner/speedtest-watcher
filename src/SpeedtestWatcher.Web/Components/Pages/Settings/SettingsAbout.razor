@@ -1,8 +1,7 @@
 @inject ApiClient Api
-@inject IConfiguration Configuration
 
 <MudGrid Spacing="4">
-    <MudItem xs="12" md="@(RepositoryUrl != null ? 6 : 12)">
+    <MudItem xs="12" md="6">
         <SurfaceCard>
             <div class="d-flex align-center gap-3 mb-3">
                 <img src="img/logo.svg" style="width:48px;height:48px;object-fit:contain;" alt="" />
@@ -11,14 +10,14 @@
                     <MudText Typo="Typo.body2" Class="sw-muted">v@(ProjectInfo.Version)</MudText>
                 </div>
             </div>
-            @if (RepositoryUrl != null && _version != null && _version.Remote != "0" && _version.Remote != _version.Local)
+            @if (_version != null && _version.Remote != "0" && _version.Remote != _version.Local)
             {
                 <MudAlert Severity="Severity.Success" Class="mb-3">
                     Update available: v@_version.Remote
-                    <MudLink Href="@($"{RepositoryUrl}/releases")" Target="_blank" Class="ml-2">Changelog</MudLink>
+                    <MudLink Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank" Class="ml-2">Changelog</MudLink>
                 </MudAlert>
             }
-            else if (RepositoryUrl != null && _versionChecked && (_version == null || _version.Remote == "0"))
+            else if (_versionChecked && (_version == null || _version.Remote == "0"))
             {
                 <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">Couldn't check for updates.</MudText>
             }
@@ -28,25 +27,21 @@
         </SurfaceCard>
     </MudItem>
 
-    @if (RepositoryUrl != null)
-    {
-        <MudItem xs="12" md="6">
-            <SurfaceCard Icon="@Icons.Material.Filled.Link" Title="Links">
-                <div class="d-flex flex-wrap gap-2">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Code" Href="@RepositoryUrl" Target="_blank">GitHub</MudButton>
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.NewReleases" Href="@($"{RepositoryUrl}/releases")" Target="_blank">Releases</MudButton>
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.BugReport" Href="@($"{RepositoryUrl}/issues")" Target="_blank">Report an issue</MudButton>
-                </div>
-            </SurfaceCard>
-        </MudItem>
-    }
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.Link" Title="Links">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Code" Href="@ProjectInfo.RepositoryUrl" Target="_blank">GitHub</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.NewReleases" Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank">Releases</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.BugReport" Href="@($"{ProjectInfo.RepositoryUrl}/issues")" Target="_blank">Report an issue</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Favorite" Href="@ProjectInfo.SponsorUrl" Target="_blank" Class="sw-sponsor">Sponsor</MudButton>
+            </div>
+        </SurfaceCard>
+    </MudItem>
 </MudGrid>
 
 @code {
     private VersionInfoDto? _version;
     private bool _versionChecked;
-
-    private string? RepositoryUrl => ProjectInfo.RepositoryUrl(Configuration);
 
     protected override async Task OnInitializedAsync()
     {

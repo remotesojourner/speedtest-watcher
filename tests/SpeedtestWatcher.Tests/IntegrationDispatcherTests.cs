@@ -36,7 +36,7 @@ public class IntegrationDispatcherTests
     {
         var (handler, dispatcher) = Build((name, MinimalConfigs[name]));
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest);
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest, TestContext.Current.CancellationToken);
 
         var request = Assert.Single(handler.Requests);
         Assert.Contains(name == "webhook" ? "TEST_SKIPPED" : "skip list", request.Body);
@@ -47,7 +47,7 @@ public class IntegrationDispatcherTests
     {
         var (handler, dispatcher) = Build(("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false}"""));
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest);
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest, TestContext.Current.CancellationToken);
 
         Assert.Empty(handler.Requests);
     }
@@ -57,7 +57,7 @@ public class IntegrationDispatcherTests
     {
         var (handler, dispatcher) = Build(("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","skipped_message":"Sat out: %error%"}"""));
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest);
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest, TestContext.Current.CancellationToken);
 
         Assert.Contains("Sat out: Public IP 203.0.113.9 is on the skip list", Assert.Single(handler.Requests).Body);
     }
@@ -67,7 +67,7 @@ public class IntegrationDispatcherTests
     {
         var (handler, dispatcher) = Build(("healthChecks", """{"url":"https://localhost/hc/uuid"}"""));
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest);
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, SkippedTest, TestContext.Current.CancellationToken);
 
         Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
     }
@@ -80,7 +80,7 @@ public class IntegrationDispatcherTests
     {
         var (handler, dispatcher) = Build(("discord", MinimalConfigs["discord"]));
 
-        await dispatcher.TriggerEventAsync(eventType, new Speedtest { Ping = 12, Download = 900, Upload = 100, Error = "Network unreachable" });
+        await dispatcher.TriggerEventAsync(eventType, new Speedtest { Ping = 12, Download = 900, Upload = 100, Error = "Network unreachable" }, TestContext.Current.CancellationToken);
 
         var body = Assert.Single(handler.Requests).Body;
         Assert.Contains(heading, body);
@@ -95,7 +95,7 @@ public class IntegrationDispatcherTests
         var logger = new RecordingLogger<IntegrationDispatcher>();
         var dispatcher = new IntegrationDispatcher(repository, new StubHttpClientFactory(handler), logger);
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, new Speedtest { Download = 900 });
+        await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, new Speedtest { Download = 900 }, TestContext.Current.CancellationToken);
 
         Assert.Empty(handler.Requests);
         Assert.Equal([true], repository.ActivityErrors.ToArray());
@@ -142,6 +142,7 @@ public class IntegrationDispatcherTests
         public Task<IntegrationData?> GetByIdAsync(string id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<string> CreateAsync(string name, string displayName, string dataJson, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<bool> PatchAsync(string id, string? displayName, string dataJson, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task UpsertAsync(IntegrationData integration, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task ClearAllAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }

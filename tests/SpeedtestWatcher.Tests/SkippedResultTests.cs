@@ -27,15 +27,16 @@ public class SkippedResultTests : IDisposable
     [Fact]
     public async Task GetStatistics_CountsOnlyRealFailures_AndIgnoresSkippedTests()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
         var today = DateTime.UtcNow.Date;
 
-        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = today.AddHours(1) });
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) });
-        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = today.AddHours(3) });
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = today.AddHours(1) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = today.AddHours(3) }, cancellationToken);
 
         var dateStr = today.ToString("yyyy-MM-dd");
-        var stats = await repo.GetStatisticsAsync(dateStr, dateStr);
+        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, cancellationToken);
 
         Assert.Equal(3, stats.Tests.Total);
         Assert.Equal(1, stats.Tests.Failed);
@@ -51,16 +52,17 @@ public class SkippedResultTests : IDisposable
     [Fact]
     public async Task GetLatestCompleted_LooksPastFailedAndSkippedResults()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
         var now = DateTime.UtcNow;
 
-        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) });
-        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = now.AddMinutes(-5) });
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now });
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = now.AddMinutes(-5) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
 
-        Assert.Equal("skipped", (await repo.GetLatestAsync())?.Status);
+        Assert.Equal("skipped", (await repo.GetLatestAsync(cancellationToken))?.Status);
 
-        var completed = await repo.GetLatestCompletedAsync();
+        var completed = await repo.GetLatestCompletedAsync(cancellationToken);
         Assert.Equal(100.0, completed?.Download);
         Assert.Equal("completed", completed?.Status);
     }
@@ -68,17 +70,18 @@ public class SkippedResultTests : IDisposable
     [Fact]
     public async Task ListTests_FiltersByStatus()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
         var now = DateTime.UtcNow;
 
-        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) });
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now });
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
 
-        var skipped = await repo.ListTestsAsync(null, 10, status: "skipped");
+        var skipped = await repo.ListTestsAsync(null, 10, status: "skipped", cancellationToken: cancellationToken);
         Assert.Single(skipped);
         Assert.Equal("skipped", skipped[0].Status);
 
-        Assert.Empty(await repo.ListTestsAsync(null, 10, status: "failed"));
+        Assert.Empty(await repo.ListTestsAsync(null, 10, status: "failed", cancellationToken: cancellationToken));
     }
 
     public void Dispose()

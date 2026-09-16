@@ -16,7 +16,7 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task<Recommendation?> GetAsync(CancellationToken cancellationToken = default)
     {
-        return await _db.Recommendations.FirstOrDefaultAsync(cancellationToken);
+        return await _db.Recommendations.OrderBy(r => r.Id).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Recommendation> UpdateOrCalculateAsync(CancellationToken cancellationToken = default)
@@ -27,7 +27,7 @@ public class RecommendationRepository : IRecommendationRepository
             .Take(10)
             .ToListAsync(cancellationToken);
 
-        var existing = await _db.Recommendations.FirstOrDefaultAsync(cancellationToken);
+        var existing = await GetAsync(cancellationToken);
 
         if (recentTests.Count >= 10)
         {
@@ -69,6 +69,23 @@ public class RecommendationRepository : IRecommendationRepository
         }
 
         return existing;
+    }
+
+    public async Task SaveAsync(int ping, double download, double upload, CancellationToken cancellationToken = default)
+    {
+        var existing = await GetAsync(cancellationToken);
+        if (existing == null)
+        {
+            _db.Recommendations.Add(new Recommendation { Ping = ping, Download = download, Upload = upload });
+        }
+        else
+        {
+            existing.Ping = ping;
+            existing.Download = download;
+            existing.Upload = upload;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task ClearAllAsync(CancellationToken cancellationToken = default)

@@ -1,9 +1,10 @@
 using System.Text;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -16,6 +17,8 @@ public class StorageController : ControllerBase
     private readonly IConfigRepository _configRepo;
     private readonly IIntegrationRepository _integrationRepo;
     private readonly IRecommendationRepository _recommendationRepo;
+    private readonly IStorageRepository _storageRepo;
+    private readonly SettingsBackup _settingsBackup;
     private readonly AuthSettings _auth;
 
     public StorageController(
@@ -23,12 +26,16 @@ public class StorageController : ControllerBase
         IConfigRepository configRepo,
         IIntegrationRepository integrationRepo,
         IRecommendationRepository recommendationRepo,
+        IStorageRepository storageRepo,
+        SettingsBackup settingsBackup,
         AuthSettings auth)
     {
         _speedtestRepo = speedtestRepo;
         _configRepo = configRepo;
         _integrationRepo = integrationRepo;
         _recommendationRepo = recommendationRepo;
+        _storageRepo = storageRepo;
+        _settingsBackup = settingsBackup;
         _auth = auth;
     }
 
@@ -38,15 +45,11 @@ public class StorageController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "data", "storage.db");
-        long size = 0;
-        if (System.IO.File.Exists(dbPath))
+        return Ok(new StorageInfoDto
         {
-            size = new FileInfo(dbPath).Length;
-        }
-
-        var count = await _speedtestRepo.CountAsync();
-        return Ok(new StorageInfoDto { Size = size, TestCount = count });
+            Size = await _storageRepo.GetDatabaseSizeAsync(),
+            TestCount = await _speedtestRepo.CountAsync()
+        });
     }
 
     [HttpGet("tests/history/json")]
@@ -56,8 +59,7 @@ public class StorageController : ControllerBase
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var all = await _speedtestRepo.ListAllAsync();
-        var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
-        return File(bytes, "application/json", "tests.json");
+        return File(Encoding.UTF8.GetBytes(SpeedtestExport.ToJson(all)), "application/json", "speedtests.json");
     }
 
     [HttpGet("tests/history/csv")]
@@ -67,14 +69,7 @@ public class StorageController : ControllerBase
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var all = await _speedtestRepo.ListAllAsync();
-        var sb = new StringBuilder();
-        sb.AppendLine("id,serverId,serverName,serverHost,ping,jitter,download,upload,error,type,resultId,time,created");
-        foreach (var t in all)
-        {
-            sb.AppendLine($"{t.Id},{t.ServerId},\"{t.ServerName}\",\"{t.ServerHost}\",{t.Ping},{t.Jitter},{t.Download},{t.Upload},\"{t.Error}\",{t.Type},{t.ResultId},{t.Time},{t.Created:o}");
-        }
-        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
-        return File(bytes, "text/csv", "tests.csv");
+        return File(Encoding.UTF8.GetBytes(SpeedtestExport.ToCsv(all)), "text/csv", "speedtests.csv");
     }
 
     [HttpDelete("tests/history")]
@@ -96,8 +91,8 @@ public class StorageController : ControllerBase
         if (tests == null || tests.Count == 0)
             return BadRequest(new { message = "No tests provided" });
 
-        var count = await _speedtestRepo.ImportTestsAsync(tests);
-        return Ok(new { message = $"{count} tests imported successfully" });
+        var imported = await _speedtestRepo.ImportTestsAsync(tests);
+        return Ok(new TestImportResultDto { Imported = imported, Skipped = tests.Count - imported });
     }
 
     [HttpGet("config")]
@@ -106,37 +101,16 @@ public class StorageController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        var configs = await _configRepo.ListAllAsync();
-        var integrations = await _integrationRepo.ListAllAsync();
-        var recommendations = await _recommendationRepo.GetAsync();
-
-        return Ok(new
-        {
-            config = configs.Where(c => !AuthSettings.Keys.Contains(c.Key)),
-            integrations,
-            recommendations
-        });
+        return Ok(await _settingsBackup.ExportAsync());
     }
 
     [HttpPut("config")]
-    public async Task<IActionResult> ImportFullConfig([FromBody] JsonElement element)
+    public async Task<IActionResult> ImportFullConfig([FromBody] SettingsBackupDto backup)
     {
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        if (element.TryGetProperty("config", out var cfgElem) && cfgElem.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in cfgElem.EnumerateArray())
-            {
-                if (item.TryGetProperty("key", out var k) && item.TryGetProperty("value", out var v)
-                    && !AuthSettings.Keys.Contains(k.GetString() ?? ""))
-                {
-                    await _configRepo.UpdateValueAsync(k.GetString()!, v.GetString()!);
-                }
-            }
-        }
-
-        return Ok(new { message = "Configuration imported successfully" });
+        return Ok(await _settingsBackup.ImportAsync(backup));
     }
 
     [HttpDelete("config")]

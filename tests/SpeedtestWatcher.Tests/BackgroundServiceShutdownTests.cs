@@ -13,13 +13,14 @@ public class BackgroundServiceShutdownTests
     [InlineData(typeof(InterfaceRefreshService))]
     public async Task StoppingTheHost_EndsTheLoopWithoutThrowing(Type serviceType)
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var warnings = new WarningSignal();
         var provider = new ServiceCollection().AddLogging(logging => logging.AddProvider(warnings)).BuildServiceProvider();
         var service = (BackgroundService)ActivatorUtilities.CreateInstance(provider, serviceType);
 
-        await service.StartAsync(CancellationToken.None);
-        await warnings.FirstWarning.WaitAsync(TimeSpan.FromSeconds(5));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(cancellationToken);
+        await warnings.FirstWarning.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+        await service.StopAsync(cancellationToken);
 
         Assert.Equal(TaskStatus.RanToCompletion, service.ExecuteTask!.Status);
     }

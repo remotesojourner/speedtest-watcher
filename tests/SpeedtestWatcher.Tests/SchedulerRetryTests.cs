@@ -21,14 +21,15 @@ public class SchedulerRetryTests : IDisposable
     [Fact(Timeout = 15000)]
     public async Task ARetryKeepsTheRun_SoACompetingRunCannotSlipIn()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
         var pauseState = new ObservablePauseState();
         var scheduler = await BuildSchedulerAsync(runner, pauseState);
 
         var competing = new List<Task<SpeedtestExecutionResult>>();
-        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync("custom"));
+        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync("custom", cancellationToken));
 
-        var result = await scheduler.ExecuteSpeedtestAsync("custom");
+        var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
         await Task.WhenAll(competing);
 
         Assert.True(result.Success, result.Error);
@@ -38,16 +39,17 @@ public class SchedulerRetryTests : IDisposable
     [Fact(Timeout = 15000)]
     public async Task AfterARetry_TheNextRunCanStart_AndOnlyOneRunsAtATime()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom");
+        await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
         var callsAfterFirstRun = runner.Calls;
 
         runner.HoldNextRun();
-        var holding = scheduler.ExecuteSpeedtestAsync("custom");
+        var holding = scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
         await runner.RunStarted;
-        var overlapping = await scheduler.ExecuteSpeedtestAsync("custom");
+        var overlapping = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
         runner.ReleaseHeldRun();
         var held = await holding;
 
@@ -63,7 +65,7 @@ public class SchedulerRetryTests : IDisposable
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom", serverOverride: "4242");
+        await scheduler.ExecuteSpeedtestAsync("custom", TestContext.Current.CancellationToken, "4242");
 
         Assert.Equal(["4242", "4242"], runner.ServerIds);
     }

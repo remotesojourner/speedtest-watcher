@@ -19,14 +19,21 @@ public interface IIntegrationRepository
     Task<IntegrationData?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<string> CreateAsync(string name, string displayName, string dataJson, CancellationToken cancellationToken = default);
     Task<bool> PatchAsync(string id, string? displayName, string dataJson, CancellationToken cancellationToken = default);
+    Task UpsertAsync(IntegrationData integration, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
     Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default);
     Task ClearAllAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IStorageRepository
+{
+    Task<long> GetDatabaseSizeAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IRecommendationRepository
 {
     Task<Recommendation?> GetAsync(CancellationToken cancellationToken = default);
     Task<Recommendation> UpdateOrCalculateAsync(CancellationToken cancellationToken = default);
+    Task SaveAsync(int ping, double download, double upload, CancellationToken cancellationToken = default);
     Task ClearAllAsync(CancellationToken cancellationToken = default);
 }
