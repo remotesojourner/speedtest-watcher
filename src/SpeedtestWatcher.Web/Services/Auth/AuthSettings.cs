@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
@@ -22,7 +23,7 @@ public sealed record AuthSnapshot(
     public bool IsActive => Enabled && Configured && !DisabledByEnvironment;
 }
 
-public sealed class AuthSettings
+public sealed class AuthSettings : IDisposable
 {
     public const string OidcScheme = OpenIdConnectDefaults.AuthenticationScheme;
 
@@ -34,22 +35,22 @@ public sealed class AuthSettings
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IAuthenticationSchemeProvider _schemes;
     private readonly IOptionsMonitorCache<OpenIdConnectOptions> _oidcOptions;
+    private readonly bool _disabledByEnvironment;
     private readonly SemaphoreSlim _reloadLock = new(1, 1);
 
     public AuthSettings(
         IServiceScopeFactory scopeFactory,
         IAuthenticationSchemeProvider schemes,
-        IOptionsMonitorCache<OpenIdConnectOptions> oidcOptions)
+        IOptionsMonitorCache<OpenIdConnectOptions> oidcOptions,
+        IOptions<SpeedtestWatcherOptions> options)
     {
         _scopeFactory = scopeFactory;
         _schemes = schemes;
         _oidcOptions = oidcOptions;
+        _disabledByEnvironment = options.Value.DisableAuth;
     }
 
     public AuthSnapshot Current { get; private set; } = AuthSnapshot.Default;
-
-    public static bool DisabledByEnvironment =>
-        Environment.GetEnvironmentVariable("DISABLE_AUTH")?.Trim().ToLowerInvariant() is "true" or "1" or "yes";
 
     public async Task ReloadAsync(CancellationToken cancellationToken = default)
     {
@@ -73,7 +74,7 @@ public sealed class AuthSettings
                 ClientSecret: await ReadAsync("oidcClientSecret"),
                 Scopes: ParseScopes(await ReadAsync("oidcScopes")),
                 ApiTokenHash: await ReadAsync("apiTokenHash"),
-                DisabledByEnvironment: DisabledByEnvironment);
+                DisabledByEnvironment: _disabledByEnvironment);
 
             Current = snapshot;
 
@@ -101,4 +102,6 @@ public sealed class AuthSettings
         if (!scopes.Contains("openid")) scopes.Insert(0, "openid");
         return scopes;
     }
+
+    public void Dispose() => _reloadLock.Dispose();
 }

@@ -1,8 +1,9 @@
+using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Web.Background;
 
-public class PauseStateService : IPauseStateService
+public sealed class PauseStateService : IPauseStateService, IDisposable
 {
     private readonly object _lock = new();
     private bool _isRunning;
@@ -51,6 +52,8 @@ public class PauseStateService : IPauseStateService
 
     public void Pause(double? hours)
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(hours ?? 0, PauseRequest.MaxResumeInHours, nameof(hours));
+
         lock (_lock)
         {
             _timer?.Dispose();
@@ -79,5 +82,14 @@ public class PauseStateService : IPauseStateService
             _resumesAt = null;
         }
         OnStatusChanged?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        lock (_lock)
+        {
+            _timer?.Dispose();
+            _timer = null;
+        }
     }
 }

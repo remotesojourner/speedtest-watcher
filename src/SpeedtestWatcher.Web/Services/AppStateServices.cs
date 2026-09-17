@@ -11,9 +11,12 @@ public class PreferencesService
     private readonly ILogger<PreferencesService> _logger;
     public string TimeFormat { get; private set; } = "24h";
     public string SpeedUnit { get; private set; } = "mbps";
+    public TimeZoneInfo TimeZone { get; private set; } = TimeZoneInfo.Utc;
     public event Action? OnChange;
 
     public string DateFormat => _config.CurrentConfig.DateFormat ?? "dmy";
+
+    public DateTime Now => ToLocal(DateTime.UtcNow);
 
     public PreferencesService(BrowserInterop browser, ConfigStateService config, ILogger<PreferencesService> logger)
     {
@@ -27,6 +30,11 @@ public class PreferencesService
         var saved = ParseSaved(await _browser.GetLocalStorageAsync("preferences"));
         if (saved.TryGetValue("timeFormat", out var timeFormat)) TimeFormat = timeFormat;
         if (saved.TryGetValue("speedUnit", out var speedUnit)) SpeedUnit = speedUnit;
+        if (await _browser.GetTimeZoneAsync() is { } browserTimeZone)
+        {
+            if (FormatHelper.TryFindTimeZone(browserTimeZone, out var timeZone)) TimeZone = timeZone;
+            else _logger.LogWarning("The browser's time zone {TimeZone} isn't known on this server, so times are shown in UTC", browserTimeZone);
+        }
         OnChange?.Invoke();
     }
 
@@ -38,6 +46,8 @@ public class PreferencesService
         OnChange?.Invoke();
     }
 
+    public DateTime ToLocal(DateTime moment) => FormatHelper.InTimeZone(moment, TimeZone);
+    public DateTime ToLocal(string timestamp) => ToLocal(FormatHelper.ParseUtcTimestamp(timestamp));
     public double ConvertSpeed(double? mbps) => FormatHelper.ConvertSpeed(mbps, SpeedUnit);
     public string FormatTime(DateTime dt) => FormatHelper.FormatTime(dt, TimeFormat);
     public string FormatDate(DateTime dt) => FormatHelper.FormatDate(dt, DateFormat);

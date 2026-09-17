@@ -3,7 +3,6 @@ using System.Text.Json;
 using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Integrations;
 
 namespace SpeedtestWatcher.Tests;
 

@@ -10,10 +10,10 @@
                     <MudText Typo="Typo.body2" Class="sw-muted">v@(ProjectInfo.Version)</MudText>
                 </div>
             </div>
-            @if (_version != null && _version.Remote != "0" && _version.Remote != _version.Local)
+            @if (UpdateCheck.AvailableUpdate(_version) is { } update)
             {
                 <MudAlert Severity="Severity.Success" Class="mb-3">
-                    Update available: v@_version.Remote
+                    Update available: v@update
                     <MudLink Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank" Class="ml-2">Changelog</MudLink>
                 </MudAlert>
             }

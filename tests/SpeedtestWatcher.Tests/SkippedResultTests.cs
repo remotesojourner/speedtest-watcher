@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Core.Models;
@@ -35,8 +36,8 @@ public class SkippedResultTests : IDisposable
         await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) }, cancellationToken);
         await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = today.AddHours(3) }, cancellationToken);
 
-        var dateStr = today.ToString("yyyy-MM-dd");
-        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, cancellationToken);
+        var dateStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, TimeZoneInfo.Utc, cancellationToken);
 
         Assert.Equal(3, stats.Tests.Total);
         Assert.Equal(1, stats.Tests.Failed);

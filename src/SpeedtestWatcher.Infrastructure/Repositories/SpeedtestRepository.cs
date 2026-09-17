@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -46,13 +47,20 @@ public class SpeedtestRepository : ISpeedtestRepository
     public async Task<List<Speedtest>> ListTestsAsync(int? afterId, int limit, string? status = null, string? type = null, bool? healthy = null, CancellationToken cancellationToken = default)
     {
         var query = Filter(status, type, healthy);
-        if (afterId.HasValue && afterId.Value > 0)
+        if (afterId is { } cursorId && cursorId > 0)
         {
-            query = query.Where(t => t.Id < afterId.Value);
+            var cursorCreated = await _db.Speedtests
+                .Where(t => t.Id == cursorId)
+                .Select(t => (DateTime?)t.Created)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (cursorCreated is not { } created) return [];
+
+            query = query.Where(t => t.Created < created || (t.Created == created && t.Id < cursorId));
         }
 
         return await query
             .OrderByDescending(t => t.Created)
+            .ThenByDescending(t => t.Id)
             .Take(limit > 0 ? limit : 10)
             .ToListAsync(cancellationToken);
     }
@@ -166,10 +174,10 @@ public class SpeedtestRepository : ISpeedtestRepository
         return await _db.Speedtests.CountAsync(cancellationToken);
     }
 
-    public async Task<StatisticsDto> GetStatisticsAsync(string fromDate, string toDate, CancellationToken cancellationToken = default)
+    public async Task<StatisticsDto> GetStatisticsAsync(string fromDate, string toDate, TimeZoneInfo timeZone, CancellationToken cancellationToken = default)
     {
-        var from = ParseRangeBound(fromDate, DateTime.UtcNow.AddDays(-7).Date, endOfDay: false);
-        var to = ParseRangeBound(toDate, DateTime.UtcNow, endOfDay: true);
+        var from = ParseRangeBound(fromDate, DateTime.UtcNow.AddDays(-7), endOfDay: false, timeZone);
+        var to = ParseRangeBound(toDate, DateTime.UtcNow, endOfDay: true, timeZone);
 
         var entries = await _db.Speedtests
             .Where(t => t.Created >= from && t.Created <= to)
@@ -200,7 +208,7 @@ public class SpeedtestRepository : ISpeedtestRepository
             AddConsistency(result, completed);
         }
 
-        AddHourlyAverages(result, completed);
+        AddHourlyAverages(result, completed, timeZone);
 
         if (entries.Count <= MaxChartPoints)
             AddChartPointPerResult(result, entries);
@@ -213,13 +221,15 @@ public class SpeedtestRepository : ISpeedtestRepository
 
     private const int MaxChartPoints = 300;
 
-    private static DateTime ParseRangeBound(string raw, DateTime fallback, bool endOfDay)
+    private static DateTime ParseRangeBound(string raw, DateTime fallback, bool endOfDay, TimeZoneInfo timeZone)
     {
-        if (DateTime.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
-            return endOfDay ? date.Date.AddDays(1).AddTicks(-1) : date.Date;
+        if (DateTime.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+            return endOfDay
+                ? FormatHelper.WallClockToUtc(day.Date.AddDays(1), timeZone).AddTicks(-1)
+                : FormatHelper.WallClockToUtc(day.Date, timeZone);
 
-        if (DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal | DateTimeStyles.AdjustToUniversal, out var moment))
-            return moment;
+        if (DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var moment))
+            return moment.Kind == DateTimeKind.Unspecified ? FormatHelper.WallClockToUtc(moment, timeZone) : moment.ToUniversalTime();
 
         return fallback;
     }
@@ -303,11 +313,12 @@ public class SpeedtestRepository : ISpeedtestRepository
         return Math.Sqrt(sumOfSquares / values.Count);
     }
 
-    private static void AddHourlyAverages(StatisticsDto result, List<Speedtest> completed)
+    private static void AddHourlyAverages(StatisticsDto result, List<Speedtest> completed, TimeZoneInfo timeZone)
     {
+        var byHour = completed.ToLookup(e => FormatHelper.InTimeZone(e.Created, timeZone).Hour);
         for (var hour = 0; hour < 24; hour++)
         {
-            var inHour = completed.Where(e => e.Created.ToLocalTime().Hour == hour).ToList();
+            var inHour = byHour[hour].ToList();
             var jitters = inHour.Where(e => e.Jitter.HasValue).Select(e => e.Jitter!.Value).ToList();
 
             result.HourlyAverages.Add(new HourlyAverageDto
@@ -349,7 +360,7 @@ public class SpeedtestRepository : ISpeedtestRepository
 
         foreach (var entry in entries)
         {
-            var entryMs = new DateTimeOffset(entry.Created).ToUnixTimeMilliseconds();
+            var entryMs = new DateTimeOffset(FormatHelper.AsUtc(entry.Created)).ToUnixTimeMilliseconds();
             var bucketIndex = (int)Math.Min(Math.Floor((entryMs - fromMs) / bucketSize), MaxChartPoints - 1);
             if (bucketIndex >= 0 && bucketIndex < MaxChartPoints)
             {

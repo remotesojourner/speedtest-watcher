@@ -3,7 +3,7 @@ namespace SpeedtestWatcher.Core.Models;
 public class Speedtest
 {
     public int Id { get; set; }
-    public int ServerId { get; set; } = 0;
+    public int ServerId { get; set; }
     public string? ServerName { get; set; }
     public string? ServerHost { get; set; }
     public int Ping { get; set; }
@@ -22,6 +22,6 @@ public class Speedtest
 
     public string Type { get; set; } = "auto";
     public string? ResultId { get; set; }
-    public int Time { get; set; } = 0;
+    public int Time { get; set; }
     public DateTime Created { get; set; } = DateTime.UtcNow;
 }

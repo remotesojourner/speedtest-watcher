@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Integrations;
@@ -14,6 +17,7 @@ using SpeedtestWatcher.Infrastructure.Repositories;
 using SpeedtestWatcher.Infrastructure.SpeedTest;
 using SpeedtestWatcher.Web.Background;
 using SpeedtestWatcher.Web.Components;
+using SpeedtestWatcher.Web.Hosting;
 using SpeedtestWatcher.Web.Hubs;
 using SpeedtestWatcher.Web.Middleware;
 using SpeedtestWatcher.Web.Services;
@@ -22,19 +26,15 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var portStr = Environment.GetEnvironmentVariable("PORT");
-var port = int.TryParse(portStr, out var p) ? p : 2003;
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+builder.WebHost.UseUrls($"http://0.0.0.0:{SpeedtestWatcherOptionsSetup.Read(builder.Configuration).Port}");
 
-var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-Directory.CreateDirectory(dataDir);
-Directory.CreateDirectory(Path.Combine(dataDir, "servers"));
-
-var dbPath = Path.Combine(dataDir, "storage.db");
+builder.Services.AddSingleton<IConfigureOptions<SpeedtestWatcherOptions>, SpeedtestWatcherOptionsSetup>();
 
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(dataDir, "keys")))
     .SetApplicationName("SpeedtestWatcher");
+builder.Services.AddOptions<KeyManagementOptions>()
+    .Configure<IOptions<SpeedtestWatcherOptions>, ILoggerFactory>((keyManagement, options, loggerFactory) =>
+        keyManagement.XmlRepository = new FileSystemXmlRepository(new DirectoryInfo(options.Value.KeysDirectory), loggerFactory));
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -43,9 +43,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-builder.Services.AddDbContext<SpeedtestWatcherDbContext>(options =>
+builder.Services.AddDbContext<SpeedtestWatcherDbContext>((services, options) =>
 {
-    options.UseSqlite($"Data Source={dbPath};Cache=Shared");
+    var databasePath = services.GetRequiredService<IOptions<SpeedtestWatcherOptions>>().Value.DatabasePath;
+    options.UseSqlite($"Data Source={databasePath};Cache=Shared");
 });
 
 builder.Services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
@@ -71,6 +72,7 @@ builder.Services.AddSingleton(pauseStateService);
 builder.Services.AddSingleton<SpeedtestSchedulerService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<SpeedtestSchedulerService>());
 
+builder.Services.AddHostedService<RunStatusBroadcaster>();
 builder.Services.AddHostedService<RetentionCleanupService>();
 builder.Services.AddHostedService<IntegrationTickerService>();
 builder.Services.AddHostedService<InterfaceRefreshService>();
@@ -112,10 +114,14 @@ builder.Services.AddScoped(sp => new HttpClient(new InternalAuthHandler(
     sp.GetRequiredService<AuthenticationStateProvider>(),
     sp.GetRequiredService<InternalAccessToken>()))
 {
-    BaseAddress = new Uri($"http://127.0.0.1:{port}/")
+    BaseAddress = new Uri($"http://127.0.0.1:{sp.GetRequiredService<IOptions<SpeedtestWatcherOptions>>().Value.Port}/")
 });
 
 var app = builder.Build();
+
+var hosting = app.Services.GetRequiredService<IOptions<SpeedtestWatcherOptions>>().Value;
+Directory.CreateDirectory(hosting.DataDirectory);
+Directory.CreateDirectory(hosting.ServersDirectory);
 
 using (var scope = app.Services.CreateScope())
 {
@@ -125,6 +131,7 @@ using (var scope = app.Services.CreateScope())
 
     var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
     configRepo.InsertDefaultsAsync().GetAwaiter().GetResult();
+    scope.ServiceProvider.GetRequiredService<IRecommendationRepository>().RemovePlaceholderAsync().GetAwaiter().GetResult();
 }
 
 app.Services.GetRequiredService<AuthSettings>().ReloadAsync().GetAwaiter().GetResult();

@@ -4,21 +4,42 @@ namespace SpeedtestWatcher.Core.Helpers;
 
 public static class FormatHelper
 {
-    public static DateTime StoredToLocal(DateTime value) => value.Kind switch
+    public static DateTime AsUtc(DateTime value) => value.Kind switch
     {
-        DateTimeKind.Local => value,
-        DateTimeKind.Utc => value.ToLocalTime(),
-        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime()
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
     };
 
-    public static DateTime ParseTimestamp(string value) =>
-        StoredToLocal(DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
+    public static DateTime ParseUtcTimestamp(string value) =>
+        AsUtc(DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
 
-    public static bool TryParseTimestamp(string value, out DateTime local)
+    public static bool TryParseUtcTimestamp(string value, out DateTime utc)
     {
         var parsed = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var stored);
-        local = parsed ? StoredToLocal(stored) : default;
+        utc = parsed ? AsUtc(stored) : default;
         return parsed;
+    }
+
+    public static DateTime InTimeZone(DateTime value, TimeZoneInfo timeZone) =>
+        TimeZoneInfo.ConvertTimeFromUtc(AsUtc(value), timeZone);
+
+    public static DateTime WallClockToUtc(DateTime wallClock, TimeZoneInfo timeZone)
+    {
+        var local = DateTime.SpecifyKind(wallClock, DateTimeKind.Unspecified);
+        while (timeZone.IsInvalidTime(local))
+        {
+            local = local.AddMinutes(15);
+        }
+
+        return TimeZoneInfo.ConvertTimeToUtc(local, timeZone);
+    }
+
+    public static bool TryFindTimeZone(string id, out TimeZoneInfo timeZone)
+    {
+        var found = TimeZoneInfo.TryFindSystemTimeZoneById(id, out var match);
+        timeZone = match ?? TimeZoneInfo.Utc;
+        return found;
     }
 
     public static double ConvertSpeed(double? mbps, string speedUnit)
@@ -34,7 +55,7 @@ public static class FormatHelper
     public static string FormatTime(DateTime dateTime, string timeFormat)
     {
         var use12H = timeFormat == "12h";
-        return use12H ? dateTime.ToString("hh:mm tt") : dateTime.ToString("HH:mm");
+        return dateTime.ToString(use12H ? "hh:mm tt" : "HH:mm", CultureInfo.CurrentCulture);
     }
 
     public static string DatePattern(string? dateFormat) => dateFormat switch
@@ -44,15 +65,22 @@ public static class FormatHelper
         _ => "dd/MM/yyyy"
     };
 
+    public static string DayAndMonthPattern(string? dateFormat) => dateFormat switch
+    {
+        "mdy" => "MM/dd",
+        "ymd" => "MM-dd",
+        _ => "dd/MM"
+    };
+
     public static string FormatDate(DateTime dateTime, string? dateFormat) =>
         dateTime.ToString(DatePattern(dateFormat), CultureInfo.InvariantCulture);
 
     public static string FormatDateTime(DateTime dateTime, string timeFormat, string? dateFormat = "ymd") =>
         $"{FormatDate(dateTime, dateFormat)} {FormatTime(dateTime, timeFormat)}";
 
-    public static string ToRelativeTime(DateTime dateTime)
+    public static string ToRelativeTime(DateTime moment)
     {
-        var span = DateTime.UtcNow - dateTime.ToUniversalTime();
+        var span = DateTime.UtcNow - AsUtc(moment);
 
         if (span.TotalSeconds < 60)
             return "Just now";

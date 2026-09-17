@@ -1,9 +1,9 @@
-using System.Text.Json;
-
 namespace SpeedtestWatcher.Web.Middleware;
 
 public class ErrorHandlingMiddleware
 {
+    public const string UnexpectedErrorMessage = "Something went wrong on the server. The details are in the Speedtest Watcher log.";
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
@@ -26,8 +26,7 @@ public class ErrorHandlingMiddleware
             if (!context.Response.HasStarted && context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(JsonSerializer.Serialize(new { message = ex.Message }));
+                await context.Response.WriteAsJsonAsync(new { message = UnexpectedErrorMessage });
             }
             else
             {

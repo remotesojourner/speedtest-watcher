@@ -42,12 +42,17 @@ public class SpeedtestsController : ControllerBase
     }
 
     [HttpGet("statistics")]
-    public async Task<IActionResult> GetStatistics([FromQuery] string? from, [FromQuery] string? to)
+    public async Task<IActionResult> GetStatistics([FromQuery] string? from, [FromQuery] string? to, [FromQuery] string? tz)
     {
-        var fromDate = from ?? DateTime.UtcNow.AddDays(-7).ToString("yyyy-MM-dd");
-        var toDate = to ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var timeZone = TimeZoneInfo.Utc;
+        if (!string.IsNullOrWhiteSpace(tz) && !FormatHelper.TryFindTimeZone(tz, out timeZone))
+            return BadRequest(new { message = $"{tz} isn't a time zone this server knows. Use an IANA name such as Europe/London." });
 
-        var stats = await _repository.GetStatisticsAsync(fromDate, toDate);
+        var today = FormatHelper.InTimeZone(DateTime.UtcNow, timeZone).Date;
+        var fromDate = from ?? today.AddDays(-7).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var toDate = to ?? today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        var stats = await _repository.GetStatisticsAsync(fromDate, toDate, timeZone);
         return Ok(stats);
     }
 
@@ -105,6 +110,9 @@ public class SpeedtestsController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode)
             return Unauthorized(new { message = "Authentication required" });
+
+        if (request?.ResumeIn > PauseRequest.MaxResumeInHours)
+            return BadRequest(new { message = $"Speedtests can be paused for at most {PauseRequest.MaxResumeInHours:0} hours. Pause them indefinitely for a longer break." });
 
         _pauseState.Pause(request?.ResumeIn);
         return Ok(new { message = "Successfully paused the speedtests" });

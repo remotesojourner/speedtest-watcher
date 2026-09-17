@@ -1,5 +1,6 @@
 @inject ApiClient Api
 @inject BrowserInterop Browser
+@inject PreferencesService PreferencesService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -101,7 +102,7 @@
 
         _exporting = true;
         var file = await Api.PostForBytesAsync("/api/speedtests/export", request);
-        var fileName = $"speedtests-{_scope.ToString().ToLowerInvariant()}-{DateTime.Now:yyyyMMdd-HHmm}.{_format}";
+        var fileName = $"speedtests-{_scope.ToString().ToLowerInvariant()}-{PreferencesService.Now:yyyyMMdd-HHmm}.{_format}";
         var downloaded = file.Value != null && await Browser.DownloadAsync(fileName, file.Value);
         _exporting = false;
 

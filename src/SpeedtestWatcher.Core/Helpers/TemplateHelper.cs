@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SpeedtestWatcher.Core.Helpers;
 
 public static class TemplateHelper
@@ -9,12 +11,12 @@ public static class TemplateHelper
         var now = DateTime.Now;
         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["year"] = now.Year.ToString(),
-            ["month"] = now.Month.ToString("D2"),
-            ["day"] = now.Day.ToString("D2"),
-            ["hour"] = now.Hour.ToString("D2"),
-            ["minute"] = now.Minute.ToString("D2"),
-            ["second"] = now.Second.ToString("D2")
+            ["year"] = now.Year.ToString(CultureInfo.InvariantCulture),
+            ["month"] = now.Month.ToString("D2", CultureInfo.InvariantCulture),
+            ["day"] = now.Day.ToString("D2", CultureInfo.InvariantCulture),
+            ["hour"] = now.Hour.ToString("D2", CultureInfo.InvariantCulture),
+            ["minute"] = now.Minute.ToString("D2", CultureInfo.InvariantCulture),
+            ["second"] = now.Second.ToString("D2", CultureInfo.InvariantCulture)
         };
 
         foreach (var (k, v) in variables)

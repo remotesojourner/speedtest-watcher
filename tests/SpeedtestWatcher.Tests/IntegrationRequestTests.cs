@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -7,12 +6,14 @@ using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Integrations;
+using static SpeedtestWatcher.Tests.Approvals;
 
 namespace SpeedtestWatcher.Tests;
 
 public partial class IntegrationRequestTests
 {
-    private const string ApproveVariable = "SPEEDTEST_WATCHER_APPROVE";
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+
     private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%error%";
 
     private static readonly DateTime Tested = new(2026, 9, 16, 8, 5, 0);
@@ -111,7 +112,7 @@ public partial class IntegrationRequestTests
     {
         var dispatcher = TestIntegrations.Dispatcher(new InMemoryIntegrations([]), new RecordingHandler());
 
-        var schemas = JsonSerializer.Serialize(dispatcher.Schemas, new JsonSerializerOptions { WriteIndented = true });
+        var schemas = JsonSerializer.Serialize(dispatcher.Schemas, IndentedJson);
 
         AssertMatchesApproved("IntegrationSchemas.approved.json", schemas + "\n");
     }
@@ -161,19 +162,6 @@ public partial class IntegrationRequestTests
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         return UnixSeconds().Replace(withoutIsoTime, match =>
             Math.Abs(long.Parse(match.Value, CultureInfo.InvariantCulture) - now) < 3600 ? "<send time>" : match.Value);
-    }
-
-    private static void AssertMatchesApproved(string fileName, string actual, [CallerFilePath] string testFile = "")
-    {
-        var approvedPath = Path.Combine(Path.GetDirectoryName(testFile)!, fileName);
-        if (Environment.GetEnvironmentVariable(ApproveVariable) == "1")
-        {
-            File.WriteAllText(approvedPath, actual.ReplaceLineEndings("\n"));
-            return;
-        }
-
-        Assert.True(File.Exists(approvedPath), $"{fileName} is missing. Run the tests once with {ApproveVariable}=1 and review the file.");
-        Assert.Equal(File.ReadAllText(approvedPath).ReplaceLineEndings("\n"), actual.ReplaceLineEndings("\n"));
     }
 
     [GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z")]

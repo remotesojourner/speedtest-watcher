@@ -10,6 +10,8 @@ namespace SpeedtestWatcher.Tests;
 
 public class SpeedtestExportTests : IDisposable
 {
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
     private readonly SqliteConnection _connection;
     private readonly SpeedtestWatcherDbContext _db;
 
@@ -52,7 +54,7 @@ public class SpeedtestExportTests : IDisposable
     {
         var json = SpeedtestExport.ToJson([new Speedtest { Id = 3, Download = 100, Status = "skipped", Error = "on the skip list" }]);
 
-        var parsed = JsonSerializer.Deserialize<List<Speedtest>>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        var parsed = JsonSerializer.Deserialize<List<Speedtest>>(json, WebJson)!;
         Assert.Equal(3, Assert.Single(parsed).Id);
         Assert.Equal("skipped", parsed[0].Status);
     }

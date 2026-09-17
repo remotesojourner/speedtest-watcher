@@ -57,7 +57,7 @@
                 <MudDivider Class="mb-3" />
             }
 
-            <DataRow Label="Time" Value="@PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(Test.Created))" />
+            <DataRow Label="Time" Value="@PreferencesService.FormatDateTime(PreferencesService.ToLocal(Test.Created))" />
             <DataRow Label="Started">
                 <MudChip T="string" Size="Size.Small" Color="@(IsManual ? Color.Info : Color.Default)">
                     @(IsManual ? "Manually, by you" : "Automatically")

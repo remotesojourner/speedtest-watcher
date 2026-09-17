@@ -68,6 +68,8 @@ public class StatusDto
 
 public class PauseRequest
 {
+    public const double MaxResumeInHours = 720;
+
     [JsonPropertyName("resumeIn")]
     public double? ResumeIn { get; set; }
 }

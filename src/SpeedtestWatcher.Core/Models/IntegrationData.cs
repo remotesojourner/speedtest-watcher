@@ -7,5 +7,5 @@ public class IntegrationData
     public string Name { get; set; } = string.Empty;
     public string Data { get; set; } = "{}";
     public DateTime? LastActivity { get; set; }
-    public bool ActivityFailed { get; set; } = false;
+    public bool ActivityFailed { get; set; }
 }

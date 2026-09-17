@@ -348,7 +348,7 @@
         if (string.IsNullOrEmpty(instance.Id)) return "Not saved yet";
         if (instance.ActivityFailed) return "Last run failed";
         return instance.LastActivity.HasValue
-            ? $"Last run {FormatHelper.ToRelativeTime(FormatHelper.StoredToLocal(instance.LastActivity.Value))}"
+            ? $"Last run {FormatHelper.ToRelativeTime(instance.LastActivity.Value)}"
             : "Never executed";
     }
 

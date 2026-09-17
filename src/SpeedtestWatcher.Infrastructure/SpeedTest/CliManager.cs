@@ -1,7 +1,9 @@
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Infrastructure.SpeedTest;
@@ -12,11 +14,11 @@ public class CliManager : ICliManager
     private readonly ILogger<CliManager> _logger;
     private readonly string _binDirectory;
 
-    public CliManager(IHttpClientFactory httpClientFactory, ILogger<CliManager> logger)
+    public CliManager(IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<CliManager> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _binDirectory = Path.Combine(Directory.GetCurrentDirectory(), "bin");
+        _binDirectory = options.Value.BinDirectory;
     }
 
     public string GetBinaryPath(SpeedtestProvider provider)
@@ -98,7 +100,7 @@ public class CliManager : ICliManager
         }
     }
 
-    private string? GetDownloadUrl(SpeedtestProvider provider)
+    private static string? GetDownloadUrl(SpeedtestProvider provider)
     {
         var os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win32" :
                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "darwin" : "linux";

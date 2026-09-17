@@ -1,9 +1,11 @@
 using System.Globalization;
 using Cronos;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Events;
+using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.SpeedTest;
@@ -18,6 +20,7 @@ public class SpeedtestSchedulerService : BackgroundService
     private readonly IPauseStateService _pauseState;
     private readonly IHubContext<SpeedtestHub> _hubContext;
     private readonly ILogger<SpeedtestSchedulerService> _logger;
+    private readonly bool _runTestOnStartup;
     private string _currentCron = "0 * * * *";
     private readonly SemaphoreSlim _runLock = new(1, 1);
 
@@ -25,11 +28,13 @@ public class SpeedtestSchedulerService : BackgroundService
         IServiceProvider serviceProvider,
         IPauseStateService pauseState,
         IHubContext<SpeedtestHub> hubContext,
+        IOptions<SpeedtestWatcherOptions> options,
         ILogger<SpeedtestSchedulerService> logger)
     {
         _serviceProvider = serviceProvider;
         _pauseState = pauseState;
         _hubContext = hubContext;
+        _runTestOnStartup = options.Value.RunTestOnStartup;
         _logger = logger;
     }
 
@@ -37,13 +42,13 @@ public class SpeedtestSchedulerService : BackgroundService
     {
         _logger.LogInformation("Speedtest scheduler service started");
 
-        if (Environment.GetEnvironmentVariable("RUN_TEST_ON_STARTUP") == "true")
+        if (_runTestOnStartup)
         {
             _ = Task.Run(async () =>
             {
                 if (await BackgroundDelay.WaitAsync(TimeSpan.FromSeconds(5), stoppingToken))
                 {
-                    await ExecuteSpeedtestAsync("auto", stoppingToken);
+                    await ExecuteSpeedtestAsync("auto", cancellationToken: stoppingToken);
                 }
             }, stoppingToken);
         }
@@ -95,7 +100,7 @@ public class SpeedtestSchedulerService : BackgroundService
                     continue;
                 }
 
-                await ExecuteSpeedtestAsync("auto", stoppingToken);
+                await ExecuteSpeedtestAsync("auto", cancellationToken: stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -112,7 +117,7 @@ public class SpeedtestSchedulerService : BackgroundService
         }
     }
 
-    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(string type = "auto", CancellationToken cancellationToken = default, string? serverOverride = null)
+    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(string type = "auto", string? serverOverride = null, CancellationToken cancellationToken = default)
     {
         if (_pauseState.IsRunning)
         {
@@ -132,7 +137,6 @@ public class SpeedtestSchedulerService : BackgroundService
         try
         {
             _pauseState.SetRunning(true);
-            await _hubContext.Clients.All.SendAsync("StatusChanged", true, _pauseState.IsPaused, cancellationToken);
             await _hubContext.Clients.All.SendAsync("TestStarted", cancellationToken);
 
             using var scope = _serviceProvider.CreateScope();
@@ -146,14 +150,7 @@ public class SpeedtestSchedulerService : BackgroundService
         finally
         {
             _pauseState.SetRunning(false);
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("StatusChanged", false, _pauseState.IsPaused, CancellationToken.None);
-            }
-            finally
-            {
-                _runLock.Release();
-            }
+            _runLock.Release();
         }
     }
 
@@ -226,12 +223,12 @@ public class SpeedtestSchedulerService : BackgroundService
 
         if (result.Success)
         {
-            var recommendations = await recommendationRepo.UpdateOrCalculateAsync(cancellationToken);
+            var newRecommendation = await recommendationRepo.RecalculateAsync(cancellationToken);
             await dispatcher.PublishAsync(new TestFinished(testEntity), cancellationToken);
             if (testEntity.Healthy == false)
                 await dispatcher.PublishAsync(new TestUnhealthy(testEntity), cancellationToken);
-            if (recommendations.Changed)
-                await dispatcher.PublishAsync(new RecommendationsUpdated(recommendations.Recommendation), cancellationToken);
+            if (newRecommendation != null)
+                await dispatcher.PublishAsync(new RecommendationsUpdated(newRecommendation), cancellationToken);
             await _hubContext.Clients.All.SendAsync("NewTestResult", dto, cancellationToken);
         }
         else

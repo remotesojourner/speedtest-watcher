@@ -23,7 +23,7 @@ public class ServiceRegistrationTests
         return services;
     }
 
-    private class TestNavigationManager : NavigationManager
+    private sealed class TestNavigationManager : NavigationManager
     {
         public TestNavigationManager() => Initialize("http://localhost:2003/", "http://localhost:2003/");
     }

@@ -33,7 +33,8 @@ public interface IStorageRepository
 public interface IRecommendationRepository
 {
     Task<Recommendation?> GetAsync(CancellationToken cancellationToken = default);
-    Task<RecommendationUpdate> UpdateOrCalculateAsync(CancellationToken cancellationToken = default);
+    Task<Recommendation?> RecalculateAsync(CancellationToken cancellationToken = default);
+    Task RemovePlaceholderAsync(CancellationToken cancellationToken = default);
     Task SaveAsync(int ping, double download, double upload, CancellationToken cancellationToken = default);
     Task ClearAllAsync(CancellationToken cancellationToken = default);
 }

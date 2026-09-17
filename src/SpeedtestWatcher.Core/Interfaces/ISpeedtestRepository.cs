@@ -16,7 +16,7 @@ public interface ISpeedtestRepository
     Task<List<Speedtest>> ListMatchingAsync(string? status, string? type, bool? healthy, IReadOnlyCollection<int>? ids = null, CancellationToken cancellationToken = default);
 
     Task<int> CountMatchingAsync(string? status, string? type, bool? healthy, CancellationToken cancellationToken = default);
-    Task<StatisticsDto> GetStatisticsAsync(string fromDate, string toDate, CancellationToken cancellationToken = default);
+    Task<StatisticsDto> GetStatisticsAsync(string fromDate, string toDate, TimeZoneInfo timeZone, CancellationToken cancellationToken = default);
     Task<bool> DeleteByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> DeleteAllAsync(CancellationToken cancellationToken = default);
     Task<int> ImportTestsAsync(IEnumerable<Speedtest> tests, CancellationToken cancellationToken = default);

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Integrations;
 using SpeedtestWatcher.Infrastructure.Repositories;
 using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;

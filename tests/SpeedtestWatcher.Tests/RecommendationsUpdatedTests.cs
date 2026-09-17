@@ -18,6 +18,23 @@ namespace SpeedtestWatcher.Tests;
 public class RecommendationsUpdatedTests : IDisposable
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    private ServiceProvider? _services;
+
+    [Fact(Timeout = 15000)]
+    public async Task CompletedTestsBeforeTheTenth_StoreNoRecommendation()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scheduler = await BuildSchedulerAsync(new RecordingDispatcher(), cancellationToken);
+
+        for (var run = 1; run < RecommendationRepository.CompletedTestsNeeded; run++)
+        {
+            var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+            Assert.True(result.Success, result.Error);
+        }
+
+        using var scope = _services!.CreateScope();
+        Assert.Null(await scope.ServiceProvider.GetRequiredService<IRecommendationRepository>().GetAsync(cancellationToken));
+    }
 
     [Fact(Timeout = 15000)]
     public async Task TheTenthCompletedTest_PublishesTheNewRecommendations_AndUnchangedValuesPublishNothing()
@@ -28,7 +45,7 @@ public class RecommendationsUpdatedTests : IDisposable
 
         for (var run = 1; run <= 11; run++)
         {
-            var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
+            var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
             Assert.True(result.Success, result.Error);
         }
 
@@ -58,6 +75,7 @@ public class RecommendationsUpdatedTests : IDisposable
         services.AddSingleton<IPauseStateService, PauseStateService>();
         services.AddSingleton<SpeedtestSchedulerService>();
         var provider = services.BuildServiceProvider();
+        _services = provider;
 
         using (var scope = provider.CreateScope())
         {
@@ -71,7 +89,11 @@ public class RecommendationsUpdatedTests : IDisposable
         return provider.GetRequiredService<SpeedtestSchedulerService>();
     }
 
-    public void Dispose() => _connection.Dispose();
+    public void Dispose()
+    {
+        _services?.Dispose();
+        _connection.Dispose();
+    }
 
     private sealed class SteadyRunner : ISpeedtestRunner
     {

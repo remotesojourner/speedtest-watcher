@@ -27,9 +27,9 @@ public class SchedulerRetryTests : IDisposable
         var scheduler = await BuildSchedulerAsync(runner, pauseState);
 
         var competing = new List<Task<SpeedtestExecutionResult>>();
-        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync("custom", cancellationToken));
+        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken));
 
-        var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
+        var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
         await Task.WhenAll(competing);
 
         Assert.True(result.Success, result.Error);
@@ -43,13 +43,13 @@ public class SchedulerRetryTests : IDisposable
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
+        await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
         var callsAfterFirstRun = runner.Calls;
 
         runner.HoldNextRun();
-        var holding = scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
+        var holding = scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
         await runner.RunStarted;
-        var overlapping = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken);
+        var overlapping = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
         runner.ReleaseHeldRun();
         var held = await holding;
 
@@ -65,7 +65,7 @@ public class SchedulerRetryTests : IDisposable
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom", TestContext.Current.CancellationToken, "4242");
+        await scheduler.ExecuteSpeedtestAsync("custom", "4242", TestContext.Current.CancellationToken);
 
         Assert.Equal(["4242", "4242"], runner.ServerIds);
     }

@@ -11,21 +11,6 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "nuget"
-    directory: "/src/SpeedtestWatcher.Core"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "nuget"
-    directory: "/src/SpeedtestWatcher.Infrastructure"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "nuget"
-    directory: "/src/SpeedtestWatcher.Web"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "nuget"
-    directory: "/tests/SpeedtestWatcher.Tests"
+    directory: "/"
     schedule:
       interval: "weekly"

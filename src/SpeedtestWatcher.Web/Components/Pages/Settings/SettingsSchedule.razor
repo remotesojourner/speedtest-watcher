@@ -9,7 +9,7 @@
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
         <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="Test Schedule"
-                     Description="How often Speedtest Watcher runs a speedtest automatically.">
+                     Description="How often Speedtest Watcher runs a speedtest automatically. Cron expressions run in UTC.">
             <div class="sw-option-list mb-3">
                 @foreach (var preset in CronPresets)
                 {
@@ -74,8 +74,9 @@
                 @if (_pauseMode == CustomMode)
                 {
                     <MudNumericField T="double?" @bind-Value="_customPauseHours" Label="Hours" Variant="Variant.Outlined"
-                                     Margin="Margin.Dense" Min="0.1" Step="0.5" Immediate="true"
-                                     Error="@(!CustomPauseValid)" ErrorText="Enter a number of hours greater than 0" Class="mb-3" />
+                                     Margin="Margin.Dense" Min="0.1" Max="PauseRequest.MaxResumeInHours" Step="0.5" Immediate="true"
+                                     Error="@(!CustomPauseValid)" ErrorText="@($"Enter more than 0 and at most {PauseRequest.MaxResumeInHours:0} hours")"
+                                     HelperText="Up to 30 days. Pause indefinitely for longer." Class="mb-3" />
                 }
 
                 <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Pause"
@@ -124,7 +125,7 @@
             {
                 var next = CronExpression.Parse(EffectiveCron, CronFormat.Standard)
                     .GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
-                return next?.ToLocalTime();
+                return next is { } utc ? PreferencesService.ToLocal(utc) : null;
             }
             catch (CronFormatException)
             {
@@ -137,7 +138,7 @@
         EffectiveCron != (ConfigService.CurrentConfig.Cron ?? "")
         || _scheduleOffset != (ConfigService.CurrentConfig.ScheduleOffset == "true");
 
-    private bool CustomPauseValid => _customPauseHours is > 0;
+    private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseRequest.MaxResumeInHours;
 
     protected override void OnInitialized()
     {

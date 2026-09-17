@@ -279,15 +279,8 @@
     {
         if (ConfigService.CurrentConfig.ViewMode) return;
 
-        var version = (await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value;
-        if (version != null
-            && Version.TryParse(version.Remote, out var remote)
-            && Version.TryParse(version.Local, out var local)
-            && remote > local)
-        {
-            _updateVersion = version.Remote;
-            await InvokeAsync(StateHasChanged);
-        }
+        _updateVersion = UpdateCheck.AvailableUpdate((await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value);
+        if (_updateVersion != null) await InvokeAsync(StateHasChanged);
     }
 
     private async Task RunOnServerAsync()

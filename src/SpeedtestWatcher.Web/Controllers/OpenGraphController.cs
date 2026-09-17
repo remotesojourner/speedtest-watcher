@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Web.Helpers;
 using SkiaSharp;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -29,9 +30,9 @@ public class OpenGraphController : ControllerBase
     private sealed record CardStyle(SKPaint Fill, SKPaint Border, SKFont LabelFont, SKPaint LabelPaint, SKFont ValueFont);
 
     [HttpGet("image")]
-    public async Task<IActionResult> GetImage()
+    public async Task<IActionResult> GetImage(CancellationToken cancellationToken)
     {
-        var latest = await _repository.GetLatestAsync();
+        var preview = await LinkPreview.ForLatestCompletedTestAsync(_repository, cancellationToken);
 
         using var surface = SKSurface.Create(new SKImageInfo(ImageWidth, ImageHeight));
         var canvas = surface.Canvas;
@@ -54,14 +55,12 @@ public class OpenGraphController : ControllerBase
         using var uploadPaint = TextPaint("#8b5cf6");
 
         canvas.DrawText("Speedtest Watcher Network Performance", 60, 90, SKTextAlign.Left, headerFont, headerPaint);
-        var subtitle = latest != null ? $"Latest test: {latest.Created:yyyy-MM-dd HH:mm:ss} UTC" : "No speedtests recorded yet";
-        canvas.DrawText(subtitle, 60, 130, SKTextAlign.Left, labelFont, labelPaint);
+        canvas.DrawText(preview.Subtitle, 60, 130, SKTextAlign.Left, labelFont, labelPaint);
 
         var style = new CardStyle(cardFill, cardBorder, labelFont, labelPaint, valueFont);
-        var jitter = latest?.Jitter is { } value ? $"±{value:F1} ms jitter" : null;
-        DrawCard(canvas, PingCardLeft, "PING", latest != null ? $"{latest.Ping} ms" : "--", pingPaint, jitter, style);
-        DrawCard(canvas, DownloadCardLeft, "DOWNLOAD", latest != null ? $"{latest.Download:F1}" : "--", downloadPaint, "Mbps", style);
-        DrawCard(canvas, UploadCardLeft, "UPLOAD", latest != null ? $"{latest.Upload:F1}" : "--", uploadPaint, "Mbps", style);
+        DrawCard(canvas, PingCardLeft, "PING", preview.Ping, pingPaint, preview.PingCaption, style);
+        DrawCard(canvas, DownloadCardLeft, "DOWNLOAD", preview.Download, downloadPaint, "Mbps", style);
+        DrawCard(canvas, UploadCardLeft, "UPLOAD", preview.Upload, uploadPaint, "Mbps", style);
 
         canvas.Flush();
 

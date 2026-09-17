@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -142,8 +143,8 @@ public class RepositoryTests : IDisposable
             Created = today.AddHours(4)
         }, cancellationToken);
 
-        var dateStr = today.ToString("yyyy-MM-dd");
-        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, cancellationToken);
+        var dateStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, TimeZoneInfo.Utc, cancellationToken);
 
         Assert.Equal(2, stats.Tests.Total);
         Assert.Equal(0, stats.Tests.Failed);
@@ -170,13 +171,60 @@ public class RepositoryTests : IDisposable
             }, cancellationToken);
         }
 
-        var update = await recRepo.UpdateOrCalculateAsync(cancellationToken);
-        Assert.True(update.Changed);
-        Assert.Equal(11, update.Recommendation.Ping);
-        Assert.Equal(200.0, update.Recommendation.Download);
-        Assert.Equal(100.0, update.Recommendation.Upload);
+        var recommendation = await recRepo.RecalculateAsync(cancellationToken);
+        Assert.NotNull(recommendation);
+        Assert.Equal(11, recommendation.Ping);
+        Assert.Equal(200.0, recommendation.Download);
+        Assert.Equal(100.0, recommendation.Upload);
 
-        Assert.False((await recRepo.UpdateOrCalculateAsync(cancellationToken)).Changed);
+        Assert.Null(await recRepo.RecalculateAsync(cancellationToken));
+    }
+
+    [Fact]
+    public async Task RecommendationRepository_SavesNothingBeforeTenCompletedTests()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var speedtestRepo = new SpeedtestRepository(_db);
+        var recRepo = new RecommendationRepository(_db);
+
+        for (var i = 1; i < RecommendationRepository.CompletedTestsNeeded; i++)
+        {
+            await speedtestRepo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = DateTime.UtcNow.AddMinutes(i) }, cancellationToken);
+            Assert.Null(await recRepo.RecalculateAsync(cancellationToken));
+        }
+
+        Assert.Null(await recRepo.GetAsync(cancellationToken));
+    }
+
+    [Fact]
+    public async Task RecommendationRepository_RemovesThePlaceholderOfEarlierVersions_WhileFewerThanTenTestsHaveCompleted()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var speedtestRepo = new SpeedtestRepository(_db);
+        var recRepo = new RecommendationRepository(_db);
+        await speedtestRepo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = DateTime.UtcNow }, cancellationToken);
+        await recRepo.SaveAsync(25, 100, 50, cancellationToken);
+
+        await recRepo.RemovePlaceholderAsync(cancellationToken);
+
+        Assert.Null(await recRepo.GetAsync(cancellationToken));
+    }
+
+    [Fact]
+    public async Task RecommendationRepository_KeepsRealRecommendationsThatMatchThePlaceholder()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var speedtestRepo = new SpeedtestRepository(_db);
+        var recRepo = new RecommendationRepository(_db);
+        for (var i = 0; i < RecommendationRepository.CompletedTestsNeeded; i++)
+        {
+            await speedtestRepo.CreateAsync(new Speedtest { Ping = 25, Download = 100, Upload = 50, Created = DateTime.UtcNow.AddMinutes(i) }, cancellationToken);
+        }
+        await recRepo.SaveAsync(25, 100, 50, cancellationToken);
+
+        await recRepo.RemovePlaceholderAsync(cancellationToken);
+
+        Assert.NotNull(await recRepo.GetAsync(cancellationToken));
     }
 
     public void Dispose()

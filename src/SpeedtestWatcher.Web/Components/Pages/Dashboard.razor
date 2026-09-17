@@ -304,8 +304,8 @@
     ];
 
     private string _range = "7d";
-    private DateTime? _from = DateTime.Today.AddDays(-7);
-    private DateTime? _to = DateTime.Today;
+    private DateTime? _from;
+    private DateTime? _to;
     private StatisticsDto? _stats;
     private bool _loading;
     private bool _loadFailed;
@@ -324,11 +324,13 @@
     private SpeedtestDto? Latest => SpeedtestService.LatestTest;
 
     private string RangeSubtitle =>
-        $"{(_from ?? DateTime.Today.AddDays(-7)).ToString("d MMM", CultureInfo.CurrentCulture)} – {(_to ?? DateTime.Today).ToString("d MMM yyyy", CultureInfo.CurrentCulture)}";
+        $"{(_from ?? Today.AddDays(-7)).ToString("d MMM", CultureInfo.CurrentCulture)} – {(_to ?? Today).ToString("d MMM yyyy", CultureInfo.CurrentCulture)}";
+
+    private DateTime Today => PreferencesService.Now.Date;
 
     private string? LatestDescription => Latest == null
         ? null
-        : PreferencesService.FormatDateTime(FormatHelper.ParseTimestamp(Latest.Created));
+        : PreferencesService.FormatDateTime(PreferencesService.ToLocal(Latest.Created));
 
     private string StabilityVerdict
     {
@@ -376,7 +378,7 @@
 
     private void ApplyRange()
     {
-        var now = DateTime.Now;
+        var now = PreferencesService.Now;
         switch (_range)
         {
             case "24h":
@@ -402,9 +404,10 @@
         StateHasChanged();
 
         var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
-        var from = (_from ?? DateTime.Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
-        var to = (_to ?? DateTime.Today).ToString(pattern, CultureInfo.InvariantCulture);
-        var result = await Api.GetAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}");
+        var from = (_from ?? Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
+        var to = (_to ?? Today).ToString(pattern, CultureInfo.InvariantCulture);
+        var timeZone = Uri.EscapeDataString(PreferencesService.TimeZone.Id);
+        var result = await Api.GetAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}&tz={timeZone}");
 
         _loadFailed = result.Value == null;
         if (result.Value != null)
@@ -473,14 +476,15 @@
 
     private string ChartLabel(string raw)
     {
-        if (!FormatHelper.TryParseTimestamp(raw, out var local)) return raw;
+        if (!FormatHelper.TryParseUtcTimestamp(raw, out var utc)) return raw;
 
+        var local = PreferencesService.ToLocal(utc);
         var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
-        return $"{local.ToString("dd/MM", CultureInfo.InvariantCulture)} {time}";
+        return $"{local.ToString(FormatHelper.DayAndMonthPattern(PreferencesService.DateFormat), CultureInfo.InvariantCulture)} {time}";
     }
 
     private string FormatLabelDateTime(string raw) =>
-        FormatHelper.TryParseTimestamp(raw, out var local) ? PreferencesService.FormatDateTime(local) : raw;
+        FormatHelper.TryParseUtcTimestamp(raw, out var utc) ? PreferencesService.FormatDateTime(PreferencesService.ToLocal(utc)) : raw;
 
     private static ChartSeries<double> AverageSeries(double[] values) => new()
     {

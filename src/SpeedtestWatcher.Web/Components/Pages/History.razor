@@ -6,8 +6,7 @@
 @inject PreferencesService PreferencesService
 @inject ApiClient Api
 @inject IDialogService DialogService
-@inject IJSRuntime Js
-@implements IAsyncDisposable
+@implements IDisposable
 
 <PageTitle>Speedtest Watcher - History</PageTitle>
 
@@ -113,7 +112,7 @@
                                                      ValueChanged="@(value => ToggleSelected(test.Id, value))" />
                                     }
                                     <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="sw-muted" />
-                                    <MudText Typo="Typo.body2">@PreferencesService.FormatTime(FormatHelper.ParseTimestamp(test.Created))</MudText>
+                                    <MudText Typo="Typo.body2">@PreferencesService.FormatTime(PreferencesService.ToLocal(test.Created))</MudText>
                                     @if (test.Healthy == false)
                                     {
                                         <MudTooltip Text="@TargetsTooltip(test)" Placement="Placement.Top">
@@ -189,14 +188,14 @@
             <div class="d-flex flex-wrap align-center justify-center gap-3 pa-4">
                 <MudText Typo="Typo.body2" Color="Color.Error">Couldn't load more tests.</MudText>
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
-                           OnClick="OnIntersect">
+                           OnClick="LoadMoreAsync">
                     Try again
                 </MudButton>
             </div>
         }
         else if (HasMore)
         {
-            <div id="scroll-sentinel" class="pa-2"></div>
+            <InfiniteScrollSentinel OnVisible="LoadMoreAsync" />
         }
         else
         {
@@ -220,7 +219,6 @@
             ? latest
             : SpeedtestService.Tests.FirstOrDefault(t => t.Status == "completed");
     private Timer? _timer;
-    private DotNetObjectReference<History>? _dotNetRef;
     private List<double> _downloadHistory = [];
 
     private string _status = AllFilter;
@@ -254,7 +252,7 @@
     private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, ConfigService.CurrentConfig.Upload);
 
     private List<TestGroup> TestGroups => Rows
-        .GroupBy(t => FormatHelper.ParseTimestamp(t.Created).Date)
+        .GroupBy(t => PreferencesService.ToLocal(t.Created).Date)
         .Select(g => new TestGroup(DayLabel(g.Key), g.ToList()))
         .ToList();
 
@@ -264,15 +262,6 @@
         StatusService.OnChange += OnStateChanged;
         _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 0, 10000);
         BuildDownloadHistory();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await Js.InvokeVoidAsync("speedtestWatcherInterop.observeIntersection", _dotNetRef, "scroll-sentinel", 0);
-        }
     }
 
     private void OnStateChanged()
@@ -408,19 +397,18 @@
 
     private string DownloadLabel() =>
         LatestReading != null
-            ? $"Download speed · last test {FormatHelper.ToRelativeTime(FormatHelper.ParseTimestamp(LatestReading.Created))}"
+            ? $"Download speed · last test {FormatHelper.ToRelativeTime(FormatHelper.ParseUtcTimestamp(LatestReading.Created))}"
             : "Download speed";
 
-    private static string DayLabel(DateTime day)
+    private string DayLabel(DateTime day)
     {
-        var today = DateTime.Now.Date;
+        var today = PreferencesService.Now.Date;
         if (day == today) return "Today";
         if (day == today.AddDays(-1)) return "Yesterday";
         return day.ToString(day.Year == today.Year ? "dddd, d MMMM" : "dddd, d MMMM yyyy", CultureInfo.CurrentCulture);
     }
 
-    [JSInvokable]
-    public async Task OnIntersect()
+    private async Task LoadMoreAsync()
     {
         if (!HasMore || Loading) return;
         _loadMoreFailed = false;
@@ -469,12 +457,10 @@
 
     private string HeroClass() => StatusService.Running ? "sw-card sw-running" : "sw-card";
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         SpeedtestService.OnChange -= OnStateChanged;
         StatusService.OnChange -= OnStateChanged;
         _timer?.Dispose();
-        _dotNetRef?.Dispose();
-        await Task.CompletedTask;
     }
 }

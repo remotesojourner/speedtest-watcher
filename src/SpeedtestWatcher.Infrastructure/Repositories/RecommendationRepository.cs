@@ -7,6 +7,12 @@ namespace SpeedtestWatcher.Infrastructure.Repositories;
 
 public class RecommendationRepository : IRecommendationRepository
 {
+    public const int CompletedTestsNeeded = 10;
+
+    private const int PlaceholderPing = 25;
+    private const double PlaceholderDownload = 100;
+    private const double PlaceholderUpload = 50;
+
     private readonly SpeedtestWatcherDbContext _db;
 
     public RecommendationRepository(SpeedtestWatcherDbContext db)
@@ -19,57 +25,44 @@ public class RecommendationRepository : IRecommendationRepository
         return await _db.Recommendations.OrderBy(r => r.Id).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<RecommendationUpdate> UpdateOrCalculateAsync(CancellationToken cancellationToken = default)
+    public async Task<Recommendation?> RecalculateAsync(CancellationToken cancellationToken = default)
     {
         var recentTests = await _db.Speedtests
             .Where(t => t.Status == "completed")
             .OrderByDescending(t => t.Created)
-            .Take(10)
+            .Take(CompletedTestsNeeded)
             .ToListAsync(cancellationToken);
 
-        var existing = await GetAsync(cancellationToken);
+        if (recentTests.Count < CompletedTestsNeeded) return null;
 
-        if (recentTests.Count >= 10)
+        var ping = recentTests.Min(t => t.Ping);
+        var download = Math.Round(recentTests.Max(t => t.Download), 2);
+        var upload = Math.Round(recentTests.Max(t => t.Upload), 2);
+
+        var recommendation = await GetAsync(cancellationToken);
+        if (recommendation != null && recommendation.Ping == ping && recommendation.Download == download && recommendation.Upload == upload)
+            return null;
+
+        if (recommendation == null)
         {
-            var minPing = recentTests.Min(t => t.Ping);
-            var maxDown = Math.Round(recentTests.Max(t => t.Download), 2);
-            var maxUp = Math.Round(recentTests.Max(t => t.Upload), 2);
-
-            var changed = existing == null || existing.Ping != minPing || existing.Download != maxDown || existing.Upload != maxUp;
-            if (existing == null)
-            {
-                existing = new Recommendation
-                {
-                    Ping = minPing,
-                    Download = maxDown,
-                    Upload = maxUp
-                };
-                _db.Recommendations.Add(existing);
-            }
-            else
-            {
-                existing.Ping = minPing;
-                existing.Download = maxDown;
-                existing.Upload = maxUp;
-            }
-
-            await _db.SaveChangesAsync(cancellationToken);
-            return new RecommendationUpdate(existing, changed);
+            recommendation = new Recommendation();
+            _db.Recommendations.Add(recommendation);
         }
 
-        if (existing == null)
-        {
-            existing = new Recommendation
-            {
-                Ping = 25,
-                Download = 100,
-                Upload = 50
-            };
-            _db.Recommendations.Add(existing);
-            await _db.SaveChangesAsync(cancellationToken);
-        }
+        recommendation.Ping = ping;
+        recommendation.Download = download;
+        recommendation.Upload = upload;
+        await _db.SaveChangesAsync(cancellationToken);
+        return recommendation;
+    }
 
-        return new RecommendationUpdate(existing, Changed: false);
+    public async Task RemovePlaceholderAsync(CancellationToken cancellationToken = default)
+    {
+        if (await _db.Speedtests.CountAsync(t => t.Status == "completed", cancellationToken) >= CompletedTestsNeeded) return;
+
+        await _db.Recommendations
+            .Where(r => r.Ping == PlaceholderPing && r.Download == PlaceholderDownload && r.Upload == PlaceholderUpload)
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     public async Task SaveAsync(int ping, double download, double upload, CancellationToken cancellationToken = default)

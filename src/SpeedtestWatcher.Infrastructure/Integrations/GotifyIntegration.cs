@@ -1,3 +1,4 @@
+using System.Globalization;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Integrations;
 
@@ -39,7 +40,7 @@ public sealed class GotifyIntegration : MessageIntegration
         {
             MessageKind.Failed => FailedPriority,
             MessageKind.Unhealthy => MissedTargetsPriority,
-            _ => int.TryParse(settings.GetString("priority", DefaultPriority.ToString()), out var configured) ? configured : DefaultPriority
+            _ => int.TryParse(settings.GetString("priority", DefaultPriority.ToString(CultureInfo.InvariantCulture)), out var configured) ? configured : DefaultPriority
         };
 
         var request = JsonPost($"{ServerUrl(settings)}/message", new { message = message.Text, priority });

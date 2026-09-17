@@ -3,11 +3,13 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
-public class InterfaceDetector : INetworkInterfaceDetector
+public sealed class InterfaceDetector : INetworkInterfaceDetector, IDisposable
 {
     private readonly ILogger<InterfaceDetector> _logger;
     private Dictionary<string, List<string>> _cachedInterfaces = new();
@@ -74,19 +76,23 @@ public class InterfaceDetector : INetworkInterfaceDetector
             _lock.Release();
         }
     }
+
+    public void Dispose() => _lock.Dispose();
 }
 
 public class ServerListProvider
 {
+    private static readonly JsonSerializerOptions CacheFileJson = new() { WriteIndented = true };
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ServerListProvider> _logger;
     private readonly string _serversDir;
 
-    public ServerListProvider(IHttpClientFactory httpClientFactory, ILogger<ServerListProvider> logger)
+    public ServerListProvider(IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<ServerListProvider> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _serversDir = Path.Combine(Directory.GetCurrentDirectory(), "data", "servers");
+        _serversDir = options.Value.ServersDirectory;
     }
 
     public async Task<object?> GetServersAsync(string provider, CancellationToken cancellationToken = default)
@@ -165,7 +171,7 @@ public class ServerListProvider
             }
 
             var filePath = Path.Combine(_serversDir, $"{provider}.json");
-            await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+            await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(dict, CacheFileJson), cancellationToken);
         }
         catch (Exception ex)
         {

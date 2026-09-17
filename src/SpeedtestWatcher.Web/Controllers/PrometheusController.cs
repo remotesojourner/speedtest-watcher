@@ -65,10 +65,10 @@ public class PrometheusController : ControllerBase
     {
         if (value is not { } number) return;
 
-        sb.AppendLine($"# HELP speedtest_watcher_{name} {help}");
-        sb.AppendLine($"# TYPE speedtest_watcher_{name} gauge");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"# HELP speedtest_watcher_{name} {help}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"# TYPE speedtest_watcher_{name} gauge");
         var labelPart = string.IsNullOrEmpty(labels) ? "" : $"{{{labels}}}";
-        sb.AppendLine($"speedtest_watcher_{name}{labelPart} {number.ToString(format, CultureInfo.InvariantCulture)}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"speedtest_watcher_{name}{labelPart} {number.ToString(format, CultureInfo.InvariantCulture)}");
     }
 
     private static string Escape(string? value) =>

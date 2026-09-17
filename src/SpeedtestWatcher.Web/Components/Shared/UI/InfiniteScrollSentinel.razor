@@ -1,0 +1,44 @@
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+@inject ILogger<InfiniteScrollSentinel> Logger
+
+<div @ref="_element" class="pa-2"></div>
+
+@code {
+    [Parameter, EditorRequired] public EventCallback OnVisible { get; set; }
+
+    private ElementReference _element;
+    private DotNetObjectReference<InfiniteScrollSentinel>? _self;
+    private IJSObjectReference? _observer;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _self = DotNetObjectReference.Create(this);
+        _observer = await Js.InvokeAsync<IJSObjectReference>("speedtestWatcherInterop.observeIntersection", _self, _element);
+    }
+
+    [JSInvokable]
+    public Task NotifyVisibleAsync() => OnVisible.InvokeAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_observer != null)
+            {
+                await _observer.InvokeVoidAsync("disconnect");
+                await _observer.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException ex)
+        {
+            Logger.LogDebug(ex, "The browser left before the scroll observer was disconnected");
+        }
+        finally
+        {
+            _self?.Dispose();
+        }
+    }
+}

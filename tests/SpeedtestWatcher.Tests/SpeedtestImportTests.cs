@@ -118,13 +118,13 @@ public class SpeedtestImportTests : IDisposable
 
     private static List<Speedtest> Parse(string json) => JsonSerializer.Deserialize<List<Speedtest>>(json, ApiJson)!;
 
-    private async Task<string> ExportAsync(SqliteConnection database, CancellationToken cancellationToken)
+    private static async Task<string> ExportAsync(SqliteConnection database, CancellationToken cancellationToken)
     {
         await using var db = Context(database);
         return SpeedtestExport.ToJson(await new SpeedtestRepository(db).ListAllAsync(cancellationToken));
     }
 
-    private async Task SeedAsync(SqliteConnection database, CancellationToken cancellationToken)
+    private static async Task SeedAsync(SqliteConnection database, CancellationToken cancellationToken)
     {
         await using var db = Context(database);
         var repo = new SpeedtestRepository(db);

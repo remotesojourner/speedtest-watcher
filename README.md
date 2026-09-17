@@ -88,6 +88,8 @@ Most configuration is stored in the SQLite database and managed through the brow
 | `PORT` | `2003` | Port the app listens on. Change the port mapping in `docker-compose.yml` to match |
 | `DISABLE_AUTH` | — | Set to `true` to turn sign-in off regardless of the saved settings. Use it to recover from a broken sign-in setup |
 | `RUN_TEST_ON_STARTUP` | — | Set to `true` to run a test 5 seconds after the app starts |
+| `DATA_DIRECTORY` | `data` in the working directory | Folder for the database, sign-in keys and cached server lists. The Docker image mounts a volume at `/app/data`, so leave it unset there |
+| `BIN_DIRECTORY` | `bin` in the working directory | Folder the speedtest command-line tools are downloaded to. The Docker image mounts a volume at `/app/bin`, so leave it unset there |
 
 ### Sign-in (OIDC)
 
@@ -127,7 +129,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 |---|---|
 | **Test Schedule** | Every minute, every 30 minutes, every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC |
 | **Offset schedule** | Adds a random delay of 30 seconds to 5 minutes, so tests don't start at exact times |
-| **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours. A pause ends when the app restarts |
+| **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours up to 720 (30 days). A pause ends when the app restarts |
 
 ### Tab: Provider
 
@@ -142,7 +144,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 
 | Field | Description |
 |---|---|
-| **Time format** | 24-hour or 12-hour. Saved in this browser |
+| **Time format** | 24-hour or 12-hour. Saved in this browser. Times are always shown in this browser's time zone |
 | **Speed unit** | Mbps or MB/s. Saved in this browser |
 | **Date format** | Day, month or year first |
 | **Dashboard charts** | The range the dashboard opens on (last 24 hours, 7 days or 30 days), and whether charts start at zero |

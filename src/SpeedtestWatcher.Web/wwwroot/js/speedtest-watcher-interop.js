@@ -35,17 +35,22 @@ window.speedtestWatcherInterop = {
         return copied;
     },
 
-    observeIntersection: function (dotnetHelper, elementId, threshold) {
-        const el = document.getElementById(elementId);
-        if (!el) return;
+    observeIntersection: function (dotnetHelper, element) {
         const observer = new IntersectionObserver(entries => {
-            entries.forEach(e => {
-                if (e.isIntersecting) {
-                    dotnetHelper.invokeMethodAsync('OnIntersect');
-                }
-            });
-        }, { rootMargin: '200px', threshold: threshold || 0 });
-        observer.observe(el);
+            if (entries.some(entry => entry.isIntersecting)) {
+                dotnetHelper.invokeMethodAsync('NotifyVisibleAsync');
+            }
+        }, { rootMargin: '200px' });
+        observer.observe(element);
+        return {
+            disconnect: function () {
+                observer.disconnect();
+            }
+        };
+    },
+
+    getTimeZone: function () {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 };
 

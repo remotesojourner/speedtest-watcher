@@ -26,6 +26,19 @@ public sealed class BrowserInterop
         }
     }
 
+    public async Task<string?> GetTimeZoneAsync()
+    {
+        try
+        {
+            return await _js.InvokeAsync<string?>("speedtestWatcherInterop.getTimeZone");
+        }
+        catch (Exception ex) when (IsBrowserFailure(ex))
+        {
+            LogFailure(ex, "Could not read the browser's time zone");
+            return null;
+        }
+    }
+
     public async Task SetLocalStorageAsync(string key, string value)
     {
         try
