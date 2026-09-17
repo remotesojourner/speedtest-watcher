@@ -62,19 +62,13 @@
                     </MudTooltip>
                     @if (ConfigService.CurrentConfig.Provider is "ookla" or "libre")
                     {
-                        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
-                                 Disabled="@(StatusService.Running || StatusService.Paused)">
-                            <ActivatorContent>
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
-                                           Class="sw-split-toggle" Disabled="@(StatusService.Running || StatusService.Paused)"
-                                           OnClick="@(args => context.ToggleAsync(args))" aria-label="More ways to run a test">
-                                    <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" />
-                                </MudButton>
-                            </ActivatorContent>
-                            <ChildContent>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Dns" OnClick="RunOnServerAsync">Run on a specific server...</MudMenuItem>
-                            </ChildContent>
-                        </MudMenu>
+                        <MudTooltip Text="@RunOnServerTooltip" Placement="Placement.Bottom">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
+                                       Class="sw-split-toggle" Disabled="@(StatusService.Running || StatusService.Paused)"
+                                       OnClick="RunOnServerAsync" aria-label="Run on a specific server">
+                                <MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" />
+                            </MudButton>
+                        </MudTooltip>
                     }
                 </div>
             }
@@ -152,6 +146,8 @@
     private string RunTestTooltip => StatusService.Paused
         ? "Speedtests are paused. Resume them in Settings."
         : StatusService.Running ? "Speedtest running" : "Start speedtest";
+
+    private string RunOnServerTooltip => StatusService.Paused || StatusService.Running ? RunTestTooltip : "Run on a specific server";
 
     private MudTheme _theme = new()
     {

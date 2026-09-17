@@ -481,6 +481,184 @@ Content-Length: 192
 Content-Type: application/json; charset=utf-8
 {"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps"}
 
+## apprise with urls · test started
+activity: unchanged
+
+## apprise with urls · test finished
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 217
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
+## apprise with urls · test missed targets
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 265
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise with urls · test failed
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 171
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest has failed. Reason: Network unreachable","type":"failure","format":"text"}
+
+## apprise with urls · test skipped
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 191
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","type":"info","format":"text"}
+
+## apprise with urls · recommendations updated
+activity: unchanged
+
+## apprise with urls · config updated
+activity: unchanged
+
+## apprise with urls · heartbeat
+activity: unchanged
+
+## apprise with urls · send test
+result: sent, activity: unchanged
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 217
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
+## apprise with a config key and tags · test started
+activity: unchanged
+
+## apprise with a config key and tags · test finished
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 163
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
+## apprise with a config key and tags · test missed targets
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 211
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise with a config key and tags · test failed
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 117
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"A speedtest has failed. Reason: Network unreachable","type":"failure","format":"text"}
+
+## apprise with a config key and tags · test skipped
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 137
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","type":"info","format":"text"}
+
+## apprise with a config key and tags · recommendations updated
+activity: unchanged
+
+## apprise with a config key and tags · config updated
+activity: unchanged
+
+## apprise with a config key and tags · heartbeat
+activity: unchanged
+
+## apprise with a config key and tags · send test
+result: sent, activity: unchanged
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 163
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
+## apprise with urls and a config key · test started
+activity: failed
+
+## apprise with urls and a config key · test finished
+activity: failed
+
+## apprise with urls and a config key · test missed targets
+activity: failed
+
+## apprise with urls and a config key · test failed
+activity: failed
+
+## apprise with urls and a config key · test skipped
+activity: failed
+
+## apprise with urls and a config key · recommendations updated
+activity: failed
+
+## apprise with urls and a config key · config updated
+activity: failed
+
+## apprise with urls and a config key · heartbeat
+activity: failed
+
+## apprise with urls and a config key · send test
+result: failed (Use either Apprise URLs or a config key, not both), activity: unchanged
+
+## apprise saved from the settings form · test started
+activity: unchanged
+
+## apprise saved from the settings form · test finished
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 141
+Content-Type: application/json; charset=utf-8
+{"body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
+## apprise saved from the settings form · test missed targets
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 189
+Content-Type: application/json; charset=utf-8
+{"body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise saved from the settings form · test failed
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 95
+Content-Type: application/json; charset=utf-8
+{"body":"A speedtest has failed. Reason: Network unreachable","type":"failure","format":"text"}
+
+## apprise saved from the settings form · test skipped
+activity: unchanged
+
+## apprise saved from the settings form · recommendations updated
+activity: unchanged
+
+## apprise saved from the settings form · config updated
+activity: unchanged
+
+## apprise saved from the settings form · heartbeat
+activity: unchanged
+
+## apprise saved from the settings form · send test
+result: sent, activity: unchanged
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 141
+Content-Type: application/json; charset=utf-8
+{"body":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","type":"success","format":"text"}
+
 ## webhook · test started
 activity: sent
 POST https://localhost/hook

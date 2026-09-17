@@ -538,6 +538,130 @@
       }
     ]
   },
+  "apprise": {
+    "name": "apprise",
+    "title": "Apprise",
+    "description": "Send alerts to any service Apprise supports, through an Apprise API server",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "^https?://.\u002B",
+        "required": true,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "urls",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "key",
+        "type": "text",
+        "description": "",
+        "regex": "^[\\w-]{1,128}$",
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "tags",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
   "webhook": {
     "name": "webhook",
     "title": "Webhook",

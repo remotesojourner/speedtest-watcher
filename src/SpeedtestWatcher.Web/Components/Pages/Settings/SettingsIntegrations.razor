@@ -16,10 +16,17 @@
                 <MudExpansionPanel @key="instance.Key" Expanded="instance.Expanded" ExpandedChanged="@(expanded => instance.Expanded = expanded)">
                     <TitleContent>
                         <div class="d-flex align-center gap-3">
-                            <MudIcon Icon="@StatusIcon(instance)" Color="@StatusColor(instance)" Size="Size.Small" />
+                            <img src="@IntegrationIcons.For(instance.Name)" alt="" class="sw-integration-icon" />
                             <div>
                                 <MudText Typo="Typo.body2" Class="font-weight-bold">@DisplayTitle(instance)</MudText>
-                                <MudText Typo="Typo.caption" Class="sw-muted">@instance.Schema.Title · @StatusText(instance)</MudText>
+                                <MudText Typo="Typo.caption" Class="@(instance.ActivityFailed ? "mud-error-text" : "sw-muted")">
+                                    @instance.Schema.Title ·
+                                    @if (HasRun(instance))
+                                    {
+                                        <MudIcon Icon="@StatusIcon(instance)" Color="@StatusColor(instance)" Class="sw-integration-status" />
+                                    }
+                                    @StatusText(instance)
+                                </MudText>
                             </div>
                         </div>
                     </TitleContent>
@@ -81,7 +88,12 @@
              Class="mt-4" Disabled="@(_loading || _loadFailed)">
         @foreach (var schema in _schemas)
         {
-            <MudMenuItem OnClick="@(() => Add(schema.Key, schema.Value))">@schema.Value.Title</MudMenuItem>
+            <MudMenuItem OnClick="@(() => Add(schema.Key, schema.Value))">
+                <div class="d-flex align-center gap-3">
+                    <img src="@IntegrationIcons.For(schema.Key)" alt="" class="sw-integration-icon sw-integration-icon-small" />
+                    @schema.Value.Title
+                </div>
+            </MudMenuItem>
         }
     </MudMenu>
 </SurfaceCard>
@@ -340,17 +352,11 @@
             : "Never executed";
     }
 
-    private static string StatusIcon(IntegrationInstance instance)
-    {
-        if (string.IsNullOrEmpty(instance.Id)) return Icons.Material.Filled.RadioButtonUnchecked;
-        if (instance.ActivityFailed) return Icons.Material.Filled.Error;
-        return instance.LastActivity.HasValue ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.RadioButtonUnchecked;
-    }
+    private static bool HasRun(IntegrationInstance instance) =>
+        !string.IsNullOrEmpty(instance.Id) && (instance.ActivityFailed || instance.LastActivity.HasValue);
 
-    private static Color StatusColor(IntegrationInstance instance)
-    {
-        if (string.IsNullOrEmpty(instance.Id)) return Color.Default;
-        if (instance.ActivityFailed) return Color.Error;
-        return instance.LastActivity.HasValue ? Color.Success : Color.Default;
-    }
+    private static string StatusIcon(IntegrationInstance instance) =>
+        instance.ActivityFailed ? Icons.Material.Filled.Error : Icons.Material.Filled.CheckCircle;
+
+    private static Color StatusColor(IntegrationInstance instance) => instance.ActivityFailed ? Color.Error : Color.Success;
 }

@@ -27,6 +27,7 @@ public static class IntegrationText
         ["telegram"] = new() { ["token"] = "Bot token", ["chat_id"] = "Chat ID" },
         ["gotify"] = new() { ["key"] = "App token" },
         ["pushover"] = new() { ["token"] = "App token", ["user_key"] = "User key" },
+        ["apprise"] = new() { ["url"] = "Apprise API URL", ["urls"] = "Apprise URLs", ["key"] = "Config key (instead of URLs)" },
         ["healthChecks"] = new() { ["url"] = "Healthchecks URL", ["interval"] = "Ping interval (minutes)" },
         ["ntfy"] = new()
         {
@@ -59,6 +60,14 @@ public static class IntegrationText
     private static readonly Dictionary<string, Dictionary<string, string>> Placeholders = new()
     {
         ["discord"] = new() { ["url"] = "https://discord.com/api/webhooks/...", ["display_name"] = "Speedtest Watcher Notification" },
+        ["apprise"] = new()
+        {
+            ["url"] = "http://apprise:8000",
+            ["urls"] = "discord://id/token, mailto://user:pass@example.com",
+            ["key"] = "apprise",
+            ["tags"] = "Optional, e.g. admin, devops or all",
+            ["title"] = "Speedtest Watcher"
+        },
         ["healthChecks"] = new() { ["url"] = "https://hc-ping.com/<uuid>" },
         ["ntfy"] = new()
         {

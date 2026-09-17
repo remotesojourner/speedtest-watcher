@@ -52,7 +52,7 @@ public abstract class MessageIntegration : HttpIntegration
 
     public override async Task<IntegrationResult> HandleAsync(IntegrationEvent integrationEvent, IntegrationContext context, CancellationToken cancellationToken)
     {
-        if (MissingSetting(context.Settings) is { } missing) return IntegrationResult.Failed(missing);
+        if (SettingsProblem(context.Settings) is { } problem) return IntegrationResult.Failed(problem);
 
         MessageKind? kind = integrationEvent switch
         {
@@ -70,12 +70,12 @@ public abstract class MessageIntegration : HttpIntegration
 
     public override async Task<IntegrationResult> SendTestAsync(IntegrationContext context, Speedtest sample, CancellationToken cancellationToken)
     {
-        if (MissingSetting(context.Settings) is { } missing) return IntegrationResult.Failed(missing);
+        if (SettingsProblem(context.Settings) is { } problem) return IntegrationResult.Failed(problem);
 
         return await SendMessageAsync(Render(MessageKind.Finished, new TestFinished(sample), context.Settings), context.Settings, cancellationToken);
     }
 
-    protected abstract string? MissingSetting(IntegrationSettings settings);
+    protected abstract string? SettingsProblem(IntegrationSettings settings);
 
     protected abstract Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken);
 

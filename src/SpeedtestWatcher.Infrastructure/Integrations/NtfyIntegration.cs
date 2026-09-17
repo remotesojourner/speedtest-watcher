@@ -28,7 +28,7 @@ public sealed class NtfyIntegration : MessageIntegration
 
     protected override MessageTemplates Templates => MessageTemplates.PlainText;
 
-    protected override string? MissingSetting(IntegrationSettings settings) =>
+    protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("topic")) ? "The topic is missing" : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)

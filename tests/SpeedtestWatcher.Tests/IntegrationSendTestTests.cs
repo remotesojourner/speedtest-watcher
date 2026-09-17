@@ -19,6 +19,7 @@ public class IntegrationSendTestTests
     [InlineData("gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false}""", "941.25 Mbps")]
     [InlineData("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","send_finished":false}""", "941.25 Mbps")]
     [InlineData("pushover", """{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user_key":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","send_finished":false}""", "941.25 Mbps")]
+    [InlineData("apprise", """{"url":"https://localhost/apprise","urls":"json://localhost/hook","send_finished":false}""", "941.25 Mbps")]
     [InlineData("webhook", """{"url":"https://localhost/hook","send_finished":false}""", "\"event\":\"TEST\"")]
     [InlineData("healthChecks", """{"url":"https://localhost/hc/uuid"}""", "Acme Fibre")]
     public async Task SendTest_SendsOneSample_EvenWhenThatMessageIsTurnedOff(string name, string settings, string expectedInBody)

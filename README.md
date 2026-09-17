@@ -21,7 +21,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
 - **Dashboard** — averages, min/max, jitter, connection stability, an hour-by-hour table, and charts with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
-- **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets or is skipped
+- **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, Apprise, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets or is skipped
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
 - **Your data** — export results as CSV or JSON, import them again, back up your settings, and clean up old results automatically
 - **Monitoring** — Prometheus metrics and a generated link-preview image
@@ -152,6 +152,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | Integration | Description |
 |---|---|
 | **Discord, Telegram, Gotify, ntfy, Pushover** | Messages when a test finishes, fails, misses your targets or is skipped. Each message can be customised with placeholders such as `%download%`, `%upload%`, `%ping%`, `%server%` and `%error%` |
+| **Apprise** | The same messages, sent to any service [Apprise](https://github.com/caronc/apprise) supports through your [Apprise API](https://github.com/caronc/apprise-api) server. Enter Apprise URLs, or the key of a configuration saved on that server with optional tags (`admin, devops` notifies either tag, `all` notifies everything). Finished, failed, missed-target and skipped messages are sent as success, failure, warning and info |
 | **Webhook** | JSON for started, finished and failed tests, missed targets, skipped tests, new recommendations, settings changes and a keep-alive |
 | **Healthchecks.io** | Heartbeats and test results |
 | **InfluxDB v2** | Test results as metrics, written with Line Protocol |
@@ -262,6 +263,7 @@ docker compose up -d --build
 | Scheduling | [Cronos](https://github.com/HangfireIO/Cronos) |
 | Speed tests | Ookla Speedtest CLI, LibreSpeed CLI, cfspeedtest |
 | Link-preview image | [SkiaSharp](https://github.com/mono/SkiaSharp) |
+| Integration icons | [Dashboard Icons](https://github.com/homarr-labs/dashboard-icons) (Apache License 2.0) |
 | Tests | xUnit v3, FakeItEasy |
 | Containers | Docker + Docker Compose |
 

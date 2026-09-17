@@ -23,7 +23,7 @@ public sealed class PushoverIntegration : MessageIntegration
 
     protected override MessageTemplates Templates => MessageTemplates.PlainText;
 
-    protected override string? MissingSetting(IntegrationSettings settings) =>
+    protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("token")) || string.IsNullOrEmpty(settings.GetString("user_key"))
             ? "The API token or user key is missing"
             : null;

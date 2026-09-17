@@ -31,7 +31,7 @@ public abstract class HttpIntegration : IIntegration
     protected async Task<IntegrationResult> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken,
-        Func<string, IntegrationResult>? judgeSuccessfulReply = null)
+        Func<HttpStatusCode, string, IntegrationResult?>? judgeReply = null)
     {
         using var client = _httpClientFactory.CreateClient();
         client.Timeout = RequestTimeout;
@@ -41,9 +41,9 @@ public abstract class HttpIntegration : IIntegration
             using (var response = await client.SendAsync(request, cancellationToken))
             {
                 var reply = await response.Content.ReadAsStringAsync(cancellationToken);
-                if (!response.IsSuccessStatusCode) return IntegrationResult.Failed(Answered(response.StatusCode, reply));
+                if (judgeReply?.Invoke(response.StatusCode, reply) is { } judged) return judged;
 
-                return judgeSuccessfulReply?.Invoke(reply) ?? IntegrationResult.Sent;
+                return response.IsSuccessStatusCode ? IntegrationResult.Sent : IntegrationResult.Failed(Answered(response.StatusCode, reply));
             }
         }
         catch (HttpRequestException ex)
@@ -66,7 +66,9 @@ public abstract class HttpIntegration : IIntegration
         Content = new StringContent(text, Encoding.UTF8, "text/plain")
     };
 
-    private string Answered(HttpStatusCode status, string reply)
+    protected static bool IsSuccess(HttpStatusCode status) => (int)status is >= 200 and < 300;
+
+    protected string Answered(HttpStatusCode status, string reply)
     {
         var excerpt = Excerpt(reply);
         return excerpt.Length == 0

@@ -51,9 +51,10 @@ public sealed class InfluxDbIntegration : HttpIntegration
         if (Destination.From(context.Settings) is not { } destination) return Task.FromResult(IntegrationResult.Failed(MissingDestination));
 
         var request = new HttpRequestMessage(HttpMethod.Get, $"{destination.Url}/api/v2/buckets?{destination.OrgQuery}&name={Uri.EscapeDataString(destination.Bucket)}");
-        return SendAsync(Authorized(request, context.Settings), cancellationToken, reply => BucketExists(reply, destination.Bucket)
-            ? IntegrationResult.Sent
-            : IntegrationResult.Failed($"InfluxDB has no bucket named {destination.Bucket} in {destination.Org}"));
+        return SendAsync(Authorized(request, context.Settings), cancellationToken, (status, reply) =>
+            IsSuccess(status) && !BucketExists(reply, destination.Bucket)
+                ? IntegrationResult.Failed($"InfluxDB has no bucket named {destination.Bucket} in {destination.Org}")
+                : null);
     }
 
     private static HttpRequestMessage Authorized(HttpRequestMessage request, IntegrationSettings settings)

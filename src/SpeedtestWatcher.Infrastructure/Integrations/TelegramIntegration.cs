@@ -23,7 +23,7 @@ public sealed class TelegramIntegration : MessageIntegration
 
     protected override MessageTemplates Templates => MessageTemplates.TelegramMarkdown;
 
-    protected override string? MissingSetting(IntegrationSettings settings) =>
+    protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("token")) || string.IsNullOrEmpty(settings.GetString("chat_id"))
             ? "The bot token or chat ID is missing"
             : null;

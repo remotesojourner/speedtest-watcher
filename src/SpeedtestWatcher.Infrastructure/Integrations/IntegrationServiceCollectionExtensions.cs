@@ -13,6 +13,7 @@ public static class IntegrationServiceCollectionExtensions
         services.AddScoped<IIntegration, GotifyIntegration>();
         services.AddScoped<IIntegration, NtfyIntegration>();
         services.AddScoped<IIntegration, PushoverIntegration>();
+        services.AddScoped<IIntegration, AppriseIntegration>();
         services.AddScoped<IIntegration, WebhookIntegration>();
         services.AddScoped<IIntegration, HealthchecksIntegration>();
         services.AddScoped<IIntegration, InfluxDbIntegration>();

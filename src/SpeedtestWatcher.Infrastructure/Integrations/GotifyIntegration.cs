@@ -28,7 +28,7 @@ public sealed class GotifyIntegration : MessageIntegration
 
     protected override MessageTemplates Templates => MessageTemplates.PlainText;
 
-    protected override string? MissingSetting(IntegrationSettings settings) =>
+    protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(ServerUrl(settings)) || string.IsNullOrEmpty(settings.GetString("key"))
             ? "The server URL or app token is missing"
             : null;

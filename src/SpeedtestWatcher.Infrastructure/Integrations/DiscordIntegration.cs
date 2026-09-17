@@ -23,7 +23,7 @@ public sealed class DiscordIntegration : MessageIntegration
 
     protected override MessageTemplates Templates => MessageTemplates.DiscordMarkdown;
 
-    protected override string? MissingSetting(IntegrationSettings settings) =>
+    protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("url")) ? "The webhook URL is missing" : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)
