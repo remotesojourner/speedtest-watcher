@@ -65,9 +65,6 @@ public class ConfigController : ControllerBase
             result["apiTokenSet"] = auth.ApiTokenHash != null;
         }
 
-        if (result.Count == 0)
-            return NotFound(new { message = "Hmm. There are no config values. Weird..." });
-
         return Ok(result);
     }
 
@@ -87,9 +84,7 @@ public class ConfigController : ControllerBase
 
         var stringValue = request.Value!.ToString()!;
 
-        var success = await _configRepo.UpdateValueAsync(key, stringValue);
-        if (!success)
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Error updating the key '{key}'" });
+        await _configRepo.UpdateValueAsync(key, stringValue);
 
         await _dispatcher.PublishAsync(new ConfigUpdated(key, stringValue));
         await _hubContext.Clients.All.SendAsync("ConfigChanged", key, stringValue);

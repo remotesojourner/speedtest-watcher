@@ -99,7 +99,7 @@ public sealed class InfluxDbIntegration : HttpIntegration
             line.Append(',').Append(EscapeTagPart(key)).Append('=').Append(EscapeTagPart(value));
         }
 
-        var testedAt = new DateTimeOffset(DateTime.SpecifyKind(test.Created, DateTimeKind.Utc)).ToUnixTimeSeconds();
+        var testedAt = new DateTimeOffset(test.Created).ToUnixTimeSeconds();
         return line.Append(CultureInfo.InvariantCulture,
                 $" download={test.Download:F2},upload={test.Upload:F2},ping={(double)test.Ping:F0},jitter={(test.Jitter ?? 0):F2} {testedAt}")
             .ToString();

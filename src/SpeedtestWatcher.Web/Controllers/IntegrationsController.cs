@@ -45,7 +45,7 @@ public class IntegrationsController : ControllerBase
             {
                 dataDict = JsonSerializer.Deserialize<Dictionary<string, object?>>(i.Data) ?? new();
             }
-            catch
+            catch (JsonException)
             {
                 dataDict = new();
             }
@@ -126,7 +126,7 @@ public class IntegrationsController : ControllerBase
         {
             currentData = JsonSerializer.Deserialize<Dictionary<string, object?>>(existing.Data) ?? new();
         }
-        catch
+        catch (JsonException)
         {
             currentData = new();
         }

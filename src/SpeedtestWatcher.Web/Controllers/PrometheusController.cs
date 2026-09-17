@@ -51,7 +51,7 @@ public class PrometheusController : ControllerBase
     }
 
     private static long? UnixSeconds(Speedtest? test) =>
-        test == null ? null : new DateTimeOffset(DateTime.SpecifyKind(test.Created, DateTimeKind.Utc)).ToUnixTimeSeconds();
+        test == null ? null : new DateTimeOffset(test.Created).ToUnixTimeSeconds();
 
     private static string Labels(Speedtest? test) =>
         string.Join(",",

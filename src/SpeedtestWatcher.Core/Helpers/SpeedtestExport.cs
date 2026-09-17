@@ -23,7 +23,7 @@ public static class SpeedtestExport
         {
             csv.AppendJoin(',',
                     test.Id.ToString(CultureInfo.InvariantCulture),
-                    DateTime.SpecifyKind(test.Created, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    test.Created.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
                     test.Status,
                     test.Healthy switch { true => "true", false => "false", null => "" },
                     test.Type,

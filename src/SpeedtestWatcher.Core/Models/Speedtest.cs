@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Core.Helpers;
+
 namespace SpeedtestWatcher.Core.Models;
 
 public class Speedtest
@@ -23,5 +25,5 @@ public class Speedtest
     public string Type { get; set; } = "auto";
     public string? ResultId { get; set; }
     public int Time { get; set; }
-    public DateTime Created { get; set; } = DateTime.UtcNow;
+    public DateTime Created { get; set => field = FormatHelper.AsUtc(value); } = DateTime.UtcNow;
 }

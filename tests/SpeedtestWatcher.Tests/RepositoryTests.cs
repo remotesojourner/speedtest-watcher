@@ -60,6 +60,9 @@ public class RepositoryTests : IDisposable
         Assert.NotNull(await repo.ValidateInputAsync("internetCheckEnabled", "yes", cancellationToken));
         Assert.Null(await repo.ValidateInputAsync("internetCheckUrl", "https://icanhazip.com", cancellationToken));
         Assert.NotNull(await repo.ValidateInputAsync("internetCheckUrl", "icanhazip", cancellationToken));
+        Assert.NotNull(await repo.ValidateInputAsync("internetCheckUrl", "ftp://icanhazip.com", cancellationToken));
+        Assert.Null(await repo.ValidateInputAsync("libreUrl", "https://speed.example/backend/", cancellationToken));
+        Assert.NotNull(await repo.ValidateInputAsync("libreUrl", "file:///etc/passwd", cancellationToken));
 
         Assert.Null(await repo.ValidateInputAsync("skipIps", "none", cancellationToken));
         Assert.Null(await repo.ValidateInputAsync("skipIps", "203.0.113.9, 2a00:23c8:870c:bf00::1", cancellationToken));

@@ -1,5 +1,4 @@
 @page "/welcome"
-@using System.Globalization
 @inject ConfigStateService ConfigService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -23,7 +22,7 @@
                 <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Choose a provider</MudText>
                 <MudText Typo="Typo.body2" Class="sw-muted mb-4">This provider runs your speedtests. You can change it later in Settings.</MudText>
                 <div class="sw-option-grid">
-                    @foreach (var provider in Providers)
+                    @foreach (var provider in ProviderOption.All)
                     {
                         <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
                                     Active="@(_provider == provider.Id)" OnClick="@(() => _provider = provider.Id)" />
@@ -76,18 +75,11 @@
 @code {
     private enum WelcomeStep { Greeting, Provider, OptimalValues, License }
 
-    private static readonly (string Id, string Title, string Description, string Image)[] Providers =
-    [
-        ("ookla", "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
-        ("libre", "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
-        ("cloudflare", "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
-    ];
-
     private static readonly (string Title, string Url)[] LicenseDocuments =
     [
-        ("Ookla Terms of Service", "https://www.speedtest.net/about/terms"),
-        ("Ookla End User License Agreement", "https://www.speedtest.net/about/eula"),
-        ("Ookla Privacy Policy", "https://www.speedtest.net/about/privacy")
+        ("Ookla Terms of Service", OoklaTerms.TermsOfServiceUrl),
+        ("Ookla End User License Agreement", OoklaTerms.EulaUrl),
+        ("Ookla Privacy Policy", OoklaTerms.PrivacyPolicyUrl)
     ];
 
     private int _step;
@@ -113,10 +105,10 @@
     protected override void OnInitialized()
     {
         var cfg = ConfigService.CurrentConfig;
-        if (cfg.Provider is "ookla" or "libre" or "cloudflare") _provider = cfg.Provider;
-        _ping = ParseNumber(cfg.Ping);
-        _download = ParseNumber(cfg.Download);
-        _upload = ParseNumber(cfg.Upload);
+        if (ProviderOption.IsKnown(cfg.Provider)) _provider = cfg.Provider;
+        _ping = SettingNumber.Parse(cfg.Ping);
+        _download = SettingNumber.Parse(cfg.Download);
+        _upload = SettingNumber.Parse(cfg.Upload);
     }
 
     private async Task ContinueAsync()
@@ -130,9 +122,9 @@
         _saving = true;
         var result = await ConfigService.SaveAsync(
             ("provider", _provider),
-            ("ping", FormatNumber(_ping)),
-            ("download", FormatNumber(_download)),
-            ("upload", FormatNumber(_upload)));
+            ("ping", SettingNumber.Format(_ping)),
+            ("download", SettingNumber.Format(_download)),
+            ("upload", SettingNumber.Format(_upload)));
         _saving = false;
 
         if (!result.Succeeded)
@@ -144,9 +136,4 @@
         Snackbar.Add("Speedtest Watcher is set up. Tests will run on the default hourly schedule.", Severity.Success);
         Navigation.NavigateTo("/");
     }
-
-    private static double ParseNumber(string? raw) =>
-        double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
-
-    private static string FormatNumber(double value) => value.ToString(CultureInfo.InvariantCulture);
 }

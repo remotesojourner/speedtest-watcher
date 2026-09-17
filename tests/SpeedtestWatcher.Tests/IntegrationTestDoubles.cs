@@ -69,7 +69,6 @@ internal sealed class InMemoryIntegrations(List<IntegrationData> items) : IInteg
         return Task.CompletedTask;
     }
 
-    public Task<List<IntegrationData>> GetByNameAsync(string name, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<IntegrationData?> GetByIdAsync(string id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<string> CreateAsync(string name, string displayName, string dataJson, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<bool> PatchAsync(string id, string? displayName, string dataJson, CancellationToken cancellationToken = default) => throw new NotSupportedException();

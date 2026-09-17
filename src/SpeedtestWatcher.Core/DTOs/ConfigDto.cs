@@ -108,6 +108,5 @@ public class ConfigDto : Dictionary<string, object?>
 
 public class UpdateConfigKeyRequest
 {
-    [JsonPropertyName("value")]
     public object? Value { get; set; }
 }

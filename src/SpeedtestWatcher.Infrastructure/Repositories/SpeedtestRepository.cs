@@ -360,7 +360,7 @@ public class SpeedtestRepository : ISpeedtestRepository
 
         foreach (var entry in entries)
         {
-            var entryMs = new DateTimeOffset(FormatHelper.AsUtc(entry.Created)).ToUnixTimeMilliseconds();
+            var entryMs = new DateTimeOffset(entry.Created).ToUnixTimeMilliseconds();
             var bucketIndex = (int)Math.Min(Math.Floor((entryMs - fromMs) / bucketSize), MaxChartPoints - 1);
             if (bucketIndex >= 0 && bucketIndex < MaxChartPoints)
             {

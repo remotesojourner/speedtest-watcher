@@ -24,12 +24,4 @@ public static class SpeedQualityHelper
             return SpeedQuality.Green;
         }
     }
-
-    public static string ToColorString(this SpeedQuality quality) => quality switch
-    {
-        SpeedQuality.Green => "green",
-        SpeedQuality.Orange => "orange",
-        SpeedQuality.Red => "red",
-        _ => "error"
-    };
 }

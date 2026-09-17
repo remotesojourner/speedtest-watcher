@@ -211,7 +211,7 @@ public class SpeedtestRunner : ISpeedtestRunner
                 Error = !string.IsNullOrEmpty(stderr) ? stderr : "Failed to parse speedtest output"
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException or FormatException)
         {
             _logger.LogError(ex, "Error running speedtest for {Provider}", provider);
             return new SpeedtestExecutionResult

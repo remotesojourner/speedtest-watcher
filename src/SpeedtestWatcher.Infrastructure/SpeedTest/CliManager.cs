@@ -52,7 +52,8 @@ public class CliManager : ICliManager
                     await DownloadBinaryAsync(provider, cancellationToken);
                     _logger.LogInformation("Successfully installed {Provider} CLI", provider);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException
+                                           || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
                 {
                     _logger.LogWarning(ex, "Failed to download binary for {Provider}", provider);
                 }
@@ -211,7 +212,7 @@ public class CliManager : ICliManager
                     UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
                     UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
             {
                 _logger.LogDebug(ex, "Failed to set unix file mode on {Path}", path);
             }

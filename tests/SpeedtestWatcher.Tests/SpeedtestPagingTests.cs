@@ -76,5 +76,5 @@ public sealed class SpeedtestPagingTests : IDisposable
 
     private static Speedtest Result(DateTime created) => new() { Ping = 10, Download = 100, Upload = 50, Created = created };
 
-    private static DateTime Created(Speedtest test) => DateTime.SpecifyKind(test.Created, DateTimeKind.Utc);
+    private static DateTime Created(Speedtest test) => test.Created;
 }

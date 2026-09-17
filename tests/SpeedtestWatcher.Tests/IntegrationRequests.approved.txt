@@ -670,34 +670,34 @@ User-Agent: SpeedtestWatcher/WebhookAgent
 ## webhook · test finished
 activity: sent
 POST https://localhost/hook
-Content-Length: 363
+Content-Length: 364
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_FINISHED","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}}
+{"event":"TEST_FINISHED","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## webhook · test missed targets
 activity: sent
 POST https://localhost/hook
-Content-Length: 368
+Content-Length: 369
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00"}}
+{"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}}
 
 ## webhook · test failed
 activity: sent
 POST https://localhost/hook
-Content-Length: 370
+Content-Length: 371
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_FAILED","data":{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00"}}
+{"event":"TEST_FAILED","data":{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}}
 
 ## webhook · test skipped
 activity: sent
 POST https://localhost/hook
-Content-Length: 366
+Content-Length: 367
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00"}}
+{"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}}
 
 ## webhook · recommendations updated
 activity: sent
@@ -726,10 +726,10 @@ User-Agent: SpeedtestWatcher/WebhookAgent
 ## webhook · send test
 result: sent, activity: unchanged
 POST https://localhost/hook
-Content-Length: 354
+Content-Length: 355
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}}
+{"event":"TEST","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## healthChecks · test started
 activity: sent
@@ -742,34 +742,34 @@ User-Agent: SpeedtestWatcher/HealthAgent
 ## healthChecks · test finished
 activity: sent
 POST https://localhost/hc/uuid
-Content-Length: 330
+Content-Length: 331
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
 
 ## healthChecks · test missed targets
 activity: sent
 POST https://localhost/hc/uuid
-Content-Length: 334
+Content-Length: 335
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00"}
+{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}
 
 ## healthChecks · test failed
 activity: sent
 POST https://localhost/hc/uuid/fail
-Content-Length: 339
+Content-Length: 340
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00"}
+{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}
 
 ## healthChecks · test skipped
 activity: sent
 POST https://localhost/hc/uuid/log
-Content-Length: 334
+Content-Length: 335
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00"}
+{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}
 
 ## healthChecks · recommendations updated
 activity: sent
@@ -798,10 +798,10 @@ User-Agent: SpeedtestWatcher/HealthAgent
 ## healthChecks · send test
 result: sent, activity: unchanged
 POST https://localhost/hc/uuid/log
-Content-Length: 330
+Content-Length: 331
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
 
 ## influxdb · test started
 activity: unchanged

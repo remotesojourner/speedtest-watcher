@@ -35,13 +35,14 @@ public class ConnectivityChecker
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(10);
 
-            var response = await client.GetAsync(url, cancellationToken);
+            using var response = await client.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 return new PreTestCheck(false, $"No internet connection: {url} answered {(int)response.StatusCode}");
 
             publicIp = (await response.Content.ReadAsStringAsync(cancellationToken)).Trim();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or UriFormatException
+                                   || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             _logger.LogWarning(ex, "Connectivity check against {Url} failed", url);
             return new PreTestCheck(false, "No internet connection");

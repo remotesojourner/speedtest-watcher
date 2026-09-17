@@ -156,7 +156,7 @@
 
     private bool AuthorityValid =>
         string.IsNullOrWhiteSpace(_authority)
-        || (Uri.TryCreate(_authority.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
+        || WebAddress.IsHttp(_authority);
 
     private bool Complete => !string.IsNullOrWhiteSpace(_authority) && !string.IsNullOrWhiteSpace(_clientId);
 

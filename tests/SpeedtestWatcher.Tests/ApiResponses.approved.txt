@@ -38,7 +38,7 @@
 200 application/json; charset=utf-8
 [
   {
-    "created": "2026-09-15T07:00:00.0000000",
+    "created": "2026-09-15T07:00:00.0000000Z",
     "download": -1,
     "error": "Network unreachable",
     "healthy": null,
@@ -58,7 +58,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-15T06:00:00.0000000",
+    "created": "2026-09-15T06:00:00.0000000Z",
     "download": -1,
     "error": "Public IP 203.0.113.9 is on the skip list",
     "healthy": null,
@@ -78,7 +78,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-14T20:35:00.0000000",
+    "created": "2026-09-14T20:35:00.0000000Z",
     "download": 612.5,
     "error": null,
     "healthy": false,
@@ -98,7 +98,7 @@
     "upload": 98.125
   },
   {
-    "created": "2026-09-14T08:05:00.0000000",
+    "created": "2026-09-14T08:05:00.0000000Z",
     "download": 941.25,
     "error": null,
     "healthy": true,
@@ -122,7 +122,7 @@
 ### GET /api/speedtests/2
 200 application/json; charset=utf-8
 {
-  "created": "2026-09-14T20:35:00.0000000",
+  "created": "2026-09-14T20:35:00.0000000Z",
   "download": 612.5,
   "error": null,
   "healthy": false,
@@ -422,10 +422,10 @@
     "min": 0.4
   },
   "labels": [
-    "2026-09-14T08:05:00.0000000",
-    "2026-09-14T20:35:00.0000000",
-    "2026-09-15T06:00:00.0000000",
-    "2026-09-15T07:00:00.0000000"
+    "2026-09-14T08:05:00.0000000Z",
+    "2026-09-14T20:35:00.0000000Z",
+    "2026-09-15T06:00:00.0000000Z",
+    "2026-09-15T07:00:00.0000000Z"
   ],
   "ping": {
     "avg": 22,
@@ -459,7 +459,7 @@
 200 application/json
 [
   {
-    "created": "2026-09-15T07:00:00",
+    "created": "2026-09-15T07:00:00Z",
     "download": -1,
     "error": "Network unreachable",
     "healthy": null,
@@ -479,7 +479,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-15T06:00:00",
+    "created": "2026-09-15T06:00:00Z",
     "download": -1,
     "error": "Public IP 203.0.113.9 is on the skip list",
     "healthy": null,
@@ -499,7 +499,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-14T20:35:00",
+    "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
     "error": null,
     "healthy": false,
@@ -519,7 +519,7 @@
     "upload": 98.125
   },
   {
-    "created": "2026-09-14T08:05:00",
+    "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
     "error": null,
     "healthy": true,

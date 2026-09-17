@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Cronos;
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -66,7 +67,7 @@ public class ConfigRepository : IConfigRepository
         return entry?.Value;
     }
 
-    public async Task<bool> UpdateValueAsync(string key, string value, CancellationToken cancellationToken = default)
+    public async Task UpdateValueAsync(string key, string value, CancellationToken cancellationToken = default)
     {
         var entry = await _db.Configs.FindAsync([key], cancellationToken);
         if (entry == null)
@@ -79,7 +80,6 @@ public class ConfigRepository : IConfigRepository
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return true;
     }
 
     public async Task InsertDefaultsAsync(CancellationToken cancellationToken = default)
@@ -114,7 +114,7 @@ public class ConfigRepository : IConfigRepository
 
         if (key == "libreUrl" && valStr != "none")
         {
-            if (!Uri.TryCreate(valStr, UriKind.Absolute, out _))
+            if (!WebAddress.IsHttp(valStr))
                 return Task.FromResult<string?>("You need to provide a valid URL in order to change this");
         }
 
@@ -158,7 +158,7 @@ public class ConfigRepository : IConfigRepository
         if ((key == "internetCheckEnabled" || key == "chartBeginAtZero" || key == "authEnabled") && valStr != "true" && valStr != "false")
             return Task.FromResult<string?>("You need to provide a boolean in order to change this");
 
-        if (key == "internetCheckUrl" && !Uri.TryCreate(valStr, UriKind.Absolute, out _))
+        if (key == "internetCheckUrl" && !WebAddress.IsHttp(valStr))
             return Task.FromResult<string?>("You need to provide a valid URL in order to change this");
 
         if (key == "skipIps" && valStr != "none"

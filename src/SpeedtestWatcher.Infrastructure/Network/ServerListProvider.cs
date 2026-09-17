@@ -1,84 +1,9 @@
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
-
-public sealed class InterfaceDetector : INetworkInterfaceDetector, IDisposable
-{
-    private readonly ILogger<InterfaceDetector> _logger;
-    private Dictionary<string, List<string>> _cachedInterfaces = new();
-    private DateTime _lastScan = DateTime.MinValue;
-    private readonly SemaphoreSlim _lock = new(1, 1);
-
-    public InterfaceDetector(ILogger<InterfaceDetector> logger)
-    {
-        _logger = logger;
-    }
-
-    public async Task<Dictionary<string, List<string>>> GetInterfacesAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
-    {
-        if (!forceRefresh && _cachedInterfaces.Count > 0 && DateTime.UtcNow - _lastScan < TimeSpan.FromHours(1))
-        {
-            return _cachedInterfaces;
-        }
-
-        await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            if (!forceRefresh && _cachedInterfaces.Count > 0 && DateTime.UtcNow - _lastScan < TimeSpan.FromHours(1))
-            {
-                return _cachedInterfaces;
-            }
-
-            var result = new Dictionary<string, List<string>>();
-            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
-
-            foreach (var ni in interfaces)
-            {
-                if (ni.OperationalStatus != OperationalStatus.Up) continue;
-                if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
-
-                var ipProps = ni.GetIPProperties();
-                var unicastAddresses = ipProps.UnicastAddresses;
-
-                var ips = new List<string>();
-                foreach (var addr in unicastAddresses)
-                {
-                    if (addr.Address.AddressFamily == AddressFamily.InterNetwork ||
-                        addr.Address.AddressFamily == AddressFamily.InterNetworkV6)
-                    {
-                        if (!IPAddress.IsLoopback(addr.Address))
-                        {
-                            ips.Add(addr.Address.ToString());
-                        }
-                    }
-                }
-
-                if (ips.Count > 0)
-                {
-                    result[ni.Name] = ips;
-                }
-            }
-
-            _cachedInterfaces = result;
-            _lastScan = DateTime.UtcNow;
-            _logger.LogInformation("Detected {Count} active network interfaces", result.Count);
-            return result;
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    public void Dispose() => _lock.Dispose();
-}
 
 public class ServerListProvider
 {
@@ -173,7 +98,8 @@ public class ServerListProvider
             var filePath = Path.Combine(_serversDir, $"{provider}.json");
             await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(dict, CacheFileJson), cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or IOException or UnauthorizedAccessException
+                                   || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             _logger.LogWarning(ex, "Could not load {Provider} server list", provider);
         }

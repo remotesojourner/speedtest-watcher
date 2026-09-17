@@ -1,62 +1,26 @@
-using System.Text.Json.Serialization;
 using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Core.DTOs;
 
 public class SpeedtestDto
 {
-    [JsonPropertyName("id")]
     public int Id { get; set; }
-
-    [JsonPropertyName("serverId")]
     public int ServerId { get; set; }
-
-    [JsonPropertyName("serverName")]
     public string? ServerName { get; set; }
-
-    [JsonPropertyName("serverHost")]
     public string? ServerHost { get; set; }
-
-    [JsonPropertyName("ping")]
     public int Ping { get; set; }
-
-    [JsonPropertyName("jitter")]
     public double? Jitter { get; set; }
-
-    [JsonPropertyName("download")]
     public double Download { get; set; }
-
-    [JsonPropertyName("upload")]
     public double Upload { get; set; }
-
-    [JsonPropertyName("error")]
     public string? Error { get; set; }
-
-    [JsonPropertyName("status")]
     public string Status { get; set; } = "completed";
-
-    [JsonPropertyName("healthy")]
     public bool? Healthy { get; set; }
-
-    [JsonPropertyName("thresholdPing")]
     public int? ThresholdPing { get; set; }
-
-    [JsonPropertyName("thresholdDownload")]
     public double? ThresholdDownload { get; set; }
-
-    [JsonPropertyName("thresholdUpload")]
     public double? ThresholdUpload { get; set; }
-
-    [JsonPropertyName("type")]
     public string Type { get; set; } = "auto";
-
-    [JsonPropertyName("resultId")]
     public string? ResultId { get; set; }
-
-    [JsonPropertyName("time")]
     public int Time { get; set; }
-
-    [JsonPropertyName("created")]
     public string Created { get; set; } = string.Empty;
 
     public static SpeedtestDto From(Speedtest test) => new()

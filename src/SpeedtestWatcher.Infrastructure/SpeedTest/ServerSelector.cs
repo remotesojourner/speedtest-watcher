@@ -54,7 +54,7 @@ public class ServerSelector
             if (await _serverList.GetServersAsync(providerKey, cancellationToken) is JsonElement { ValueKind: JsonValueKind.Object } element)
                 return element.EnumerateObject().Select(property => property.Name).ToList();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
             _logger.LogWarning(ex, "Could not read the {Provider} server list", providerKey);
         }

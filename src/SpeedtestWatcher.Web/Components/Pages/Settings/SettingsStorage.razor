@@ -288,9 +288,8 @@
 
     private async Task ReloadTestListAsync()
     {
-        var tests = await Api.GetAsync<List<SpeedtestDto>>("/api/speedtests?limit=30");
-        if (tests.Value != null) SpeedtestService.SetTests(tests.Value, tests.Value.Count >= 30);
-        else Snackbar.Add("The tests were imported. Refresh the page to see them.", Severity.Warning);
+        if (!await SpeedtestService.ReloadAsync())
+            Snackbar.Add("The tests were imported. Refresh the page to see them.", Severity.Warning);
     }
 
     private async Task ClearHistoryAsync()

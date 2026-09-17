@@ -19,13 +19,6 @@ public class IntegrationRepository : IIntegrationRepository
         return await _db.Integrations.ToListAsync(cancellationToken);
     }
 
-    public async Task<List<IntegrationData>> GetByNameAsync(string name, CancellationToken cancellationToken = default)
-    {
-        return await _db.Integrations
-            .Where(i => i.Name == name)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<IntegrationData?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         return await _db.Integrations.FindAsync([id], cancellationToken);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -68,7 +69,7 @@ public class AuthController : ControllerBase
 
         var authority = Clean(request.Authority);
         if (authority != null
-            && !(Uri.TryCreate(authority, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+            && !WebAddress.IsHttp(authority))
         {
             return BadRequest(new { message = "The provider URL must be a full http(s) URL" });
         }

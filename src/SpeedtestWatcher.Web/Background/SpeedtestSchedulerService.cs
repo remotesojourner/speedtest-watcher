@@ -21,7 +21,6 @@ public class SpeedtestSchedulerService : BackgroundService
     private readonly IHubContext<SpeedtestHub> _hubContext;
     private readonly ILogger<SpeedtestSchedulerService> _logger;
     private readonly bool _runTestOnStartup;
-    private string _currentCron = "0 * * * *";
     private readonly SemaphoreSlim _runLock = new(1, 1);
 
     public SpeedtestSchedulerService(
@@ -59,17 +58,16 @@ public class SpeedtestSchedulerService : BackgroundService
             {
                 using var scope = _serviceProvider.CreateScope();
                 var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-                var cronStr = await configRepo.GetValueAsync("cron", stoppingToken) ?? "0 * * * *";
-                _currentCron = cronStr;
+                var savedCron = await configRepo.GetValueAsync("cron", stoppingToken) ?? "0 * * * *";
 
                 CronExpression cron;
                 try
                 {
-                    cron = CronExpression.Parse(_currentCron, CronFormat.Standard);
+                    cron = CronExpression.Parse(savedCron, CronFormat.Standard);
                 }
                 catch (CronFormatException ex)
                 {
-                    _logger.LogWarning(ex, "The saved schedule {Cron} is not a valid cron expression, so tests run hourly", _currentCron);
+                    _logger.LogWarning(ex, "The saved schedule {Cron} is not a valid cron expression, so tests run hourly", savedCron);
                     cron = CronExpression.Parse("0 * * * *", CronFormat.Standard);
                 }
 

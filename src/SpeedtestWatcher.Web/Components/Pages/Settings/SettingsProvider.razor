@@ -7,7 +7,7 @@
 <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Provider" FullHeight="false"
              Description="Choose who runs your tests and how they connect.">
     <div class="sw-option-grid mb-5">
-        @foreach (var provider in Providers)
+        @foreach (var provider in ProviderOption.All)
         {
             <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
                         Active="@(_provider == provider.Id)" OnClick="@(() => SelectProviderAsync(provider.Id))" />
@@ -131,9 +131,9 @@
             <MudCheckBox T="bool" @bind-Value="_acceptedOokla" Color="Color.Primary" Dense="true" />
             <MudText Typo="Typo.body2">
                 I have read and accept Ookla's
-                <MudLink Href="https://www.speedtest.net/about/eula" Target="_blank">EULA</MudLink>,
-                <MudLink Href="https://www.speedtest.net/about/privacy" Target="_blank">privacy policy</MudLink> and
-                <MudLink Href="https://www.speedtest.net/about/terms" Target="_blank">terms of service</MudLink>.
+                <MudLink Href="@OoklaTerms.EulaUrl" Target="_blank">EULA</MudLink>,
+                <MudLink Href="@OoklaTerms.PrivacyPolicyUrl" Target="_blank">privacy policy</MudLink> and
+                <MudLink Href="@OoklaTerms.TermsOfServiceUrl" Target="_blank">terms of service</MudLink>.
             </MudText>
         </div>
     }
@@ -144,13 +144,6 @@
 </SurfaceCard>
 
 @code {
-    private static readonly (string Id, string Title, string Description, string Image)[] Providers =
-    [
-        ("ookla", "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
-        ("libre", "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
-        ("cloudflare", "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
-    ];
-
     private sealed record ServerOption(string Id, string Label, double Distance);
     private sealed record InterfaceOption(string Value, string Label);
 
@@ -182,7 +175,7 @@
 
     private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
 
-    private string ProviderTitle => Providers.First(p => p.Id == _provider).Title;
+    private string ProviderTitle => ProviderOption.All.First(p => p.Id == _provider).Title;
 
     private bool SupportsServerChoice => _provider != "cloudflare" && !UsingCustomUrl;
 
@@ -192,9 +185,7 @@
 
     private bool CustomIdValid => string.IsNullOrWhiteSpace(_customId) || _customId.Trim().All(char.IsDigit);
 
-    private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl)
-        || (Uri.TryCreate(_libreUrl.Trim(), UriKind.Absolute, out var uri)
-            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
+    private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl) || WebAddress.IsHttp(_libreUrl);
 
     private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == "single") || _serverId != "none";
 
@@ -203,7 +194,7 @@
     protected override async Task OnInitializedAsync()
     {
         var cfg = ConfigService.CurrentConfig;
-        _provider = cfg.Provider is "ookla" or "libre" or "cloudflare" ? cfg.Provider : "ookla";
+        _provider = ProviderOption.IsKnown(cfg.Provider) ? cfg.Provider : "ookla";
         _acceptedOokla = cfg.Provider == "ookla";
         _interface = string.IsNullOrEmpty(cfg.Interface) ? "none" : cfg.Interface;
         _libreUrl = cfg.LibreUrl is null or "none" ? "" : cfg.LibreUrl;

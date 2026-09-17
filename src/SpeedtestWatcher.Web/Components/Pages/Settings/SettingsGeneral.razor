@@ -75,13 +75,12 @@
     private string _skipIps = "";
 
     private bool OptimalDirty =>
-        Math.Abs(_optPing - ParseConfigNumber(ConfigService.CurrentConfig.Ping)) > 0.0000001
-        || Math.Abs(_optDownload - ParseConfigNumber(ConfigService.CurrentConfig.Download)) > 0.0000001
-        || Math.Abs(_optUpload - ParseConfigNumber(ConfigService.CurrentConfig.Upload)) > 0.0000001;
+        Math.Abs(_optPing - SettingNumber.Parse(ConfigService.CurrentConfig.Ping)) > 0.0000001
+        || Math.Abs(_optDownload - SettingNumber.Parse(ConfigService.CurrentConfig.Download)) > 0.0000001
+        || Math.Abs(_optUpload - SettingNumber.Parse(ConfigService.CurrentConfig.Upload)) > 0.0000001;
 
     private bool CheckUrlValid =>
-        Uri.TryCreate(_internetCheckUrl.Trim(), UriKind.Absolute, out var uri)
-        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        WebAddress.IsHttp(_internetCheckUrl);
 
     private bool ChecksDirty =>
         _internetCheck != (ConfigService.CurrentConfig.InternetCheckEnabled != "false")
@@ -101,9 +100,9 @@
     protected override async Task OnInitializedAsync()
     {
         var cfg = ConfigService.CurrentConfig;
-        _optPing = ParseConfigNumber(cfg.Ping);
-        _optDownload = ParseConfigNumber(cfg.Download);
-        _optUpload = ParseConfigNumber(cfg.Upload);
+        _optPing = SettingNumber.Parse(cfg.Ping);
+        _optDownload = SettingNumber.Parse(cfg.Download);
+        _optUpload = SettingNumber.Parse(cfg.Upload);
         _internetCheck = cfg.InternetCheckEnabled != "false";
         _internetCheckUrl = ConfiguredCheckUrl;
         _skipIps = ConfiguredSkipIps == "none" ? "" : ConfiguredSkipIps;
@@ -125,9 +124,9 @@
     {
         var cfg = ConfigService.CurrentConfig;
         var changes = new List<(string Key, string Value)>();
-        if (Math.Abs(_optPing - ParseConfigNumber(cfg.Ping)) > 0.0000001) changes.Add(("ping", FormatNumber(_optPing)));
-        if (Math.Abs(_optDownload - ParseConfigNumber(cfg.Download)) > 0.0000001) changes.Add(("download", FormatNumber(_optDownload)));
-        if (Math.Abs(_optUpload - ParseConfigNumber(cfg.Upload)) > 0.0000001) changes.Add(("upload", FormatNumber(_optUpload)));
+        if (Math.Abs(_optPing - SettingNumber.Parse(cfg.Ping)) > 0.0000001) changes.Add(("ping", SettingNumber.Format(_optPing)));
+        if (Math.Abs(_optDownload - SettingNumber.Parse(cfg.Download)) > 0.0000001) changes.Add(("download", SettingNumber.Format(_optDownload)));
+        if (Math.Abs(_optUpload - SettingNumber.Parse(cfg.Upload)) > 0.0000001) changes.Add(("upload", SettingNumber.Format(_optUpload)));
         ShowSaveResult(await ConfigService.SaveAsync([.. changes]), "Optimal values saved");
     }
 
@@ -148,9 +147,4 @@
 
     private static string? RecommendedHint(double? value, string unit) =>
         value.HasValue ? $"Recommended: {value.Value.ToString(CultureInfo.InvariantCulture)} {unit}" : null;
-
-    private static double ParseConfigNumber(string? raw) =>
-        double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
-
-    private static string FormatNumber(double value) => value.ToString(CultureInfo.InvariantCulture);
 }
