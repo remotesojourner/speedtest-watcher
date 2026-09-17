@@ -1,0 +1,733 @@
+{
+  "discord": {
+    "name": "discord",
+    "title": "Discord",
+    "description": "Send test results and alerts via Discord webhooks",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "https://.*discord\\.com/api/webhooks/\\d\u002B/.\u002B",
+        "required": true,
+        "placeholder": "Webhook URL",
+        "default": null
+      },
+      {
+        "name": "display_name",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": "Speedtest Watcher",
+        "default": null
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
+  "telegram": {
+    "name": "telegram",
+    "title": "Telegram",
+    "description": "Send test results via Telegram bot",
+    "fields": [
+      {
+        "name": "token",
+        "type": "text",
+        "description": "",
+        "regex": "(\\d\u002B):[a-zA-Z0-9_-]\u002B",
+        "required": true,
+        "placeholder": "Bot Token",
+        "default": null
+      },
+      {
+        "name": "chat_id",
+        "type": "text",
+        "description": "",
+        "regex": "\\d\u002B",
+        "required": true,
+        "placeholder": "Chat ID",
+        "default": null
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
+  "gotify": {
+    "name": "gotify",
+    "title": "Gotify",
+    "description": "Send notifications to a Gotify server",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "https?://.\u002B",
+        "required": true,
+        "placeholder": "https://gotify.example.com",
+        "default": null
+      },
+      {
+        "name": "key",
+        "type": "text",
+        "description": "",
+        "regex": "^.{15}$",
+        "required": true,
+        "placeholder": "App Token",
+        "default": null
+      },
+      {
+        "name": "priority",
+        "type": "text",
+        "description": "",
+        "regex": "^[0-9]$",
+        "required": true,
+        "placeholder": null,
+        "default": "5"
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
+  "ntfy": {
+    "name": "ntfy",
+    "title": "ntfy",
+    "description": "Send push alerts via ntfy.sh or custom server",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "^https?://.\u002B",
+        "required": true,
+        "placeholder": null,
+        "default": "https://ntfy.sh"
+      },
+      {
+        "name": "topic",
+        "type": "text",
+        "description": "",
+        "regex": "^[A-Za-z0-9_\\-]{1,64}$",
+        "required": true,
+        "placeholder": "speedtest-watcher-alerts",
+        "default": null
+      },
+      {
+        "name": "token",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": "Speedtest Watcher Alert"
+      },
+      {
+        "name": "tags",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "priority",
+        "type": "text",
+        "description": "",
+        "regex": "^[1-5]$",
+        "required": false,
+        "placeholder": null,
+        "default": "3"
+      },
+      {
+        "name": "error_priority",
+        "type": "text",
+        "description": "",
+        "regex": "^[1-5]$",
+        "required": false,
+        "placeholder": null,
+        "default": "5"
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
+  "pushover": {
+    "name": "pushover",
+    "title": "Pushover",
+    "description": "Send push notifications via Pushover API",
+    "fields": [
+      {
+        "name": "token",
+        "type": "text",
+        "description": "",
+        "regex": "^[a-z0-9]{30}$",
+        "required": true,
+        "placeholder": "API Token",
+        "default": null
+      },
+      {
+        "name": "user_key",
+        "type": "text",
+        "description": "",
+        "regex": "^[a-z0-9]{30}$",
+        "required": true,
+        "placeholder": "User Key",
+        "default": null
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "finished_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "error_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      }
+    ]
+  },
+  "webhook": {
+    "name": "webhook",
+    "title": "Webhook",
+    "description": "Generic JSON webhook for custom integrations",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "https?://.\u002B",
+        "required": true,
+        "placeholder": "https://example.com/webhook",
+        "default": null
+      },
+      {
+        "name": "send_started",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": false
+      },
+      {
+        "name": "send_finished",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_alive",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": false
+      },
+      {
+        "name": "send_failed",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_recommendations",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": false
+      },
+      {
+        "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_config_updates",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": false
+      },
+      {
+        "name": "interval",
+        "type": "number",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": 1
+      }
+    ]
+  },
+  "healthChecks": {
+    "name": "healthChecks",
+    "title": "Healthchecks.io",
+    "description": "Send heartbeats and test results to Healthchecks.io",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "https?://.\u002B",
+        "required": true,
+        "placeholder": "https://hc-ping.com/uuid",
+        "default": null
+      },
+      {
+        "name": "interval",
+        "type": "number",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": 1
+      }
+    ]
+  },
+  "influxdb": {
+    "name": "influxdb",
+    "title": "InfluxDB v2",
+    "description": "Export metrics to InfluxDB v2 via Line Protocol",
+    "fields": [
+      {
+        "name": "url",
+        "type": "text",
+        "description": "",
+        "regex": "^https?://.\u002B",
+        "required": true,
+        "placeholder": "http://localhost:8086",
+        "default": null
+      },
+      {
+        "name": "org",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": true,
+        "placeholder": "organization",
+        "default": null
+      },
+      {
+        "name": "bucket",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": true,
+        "placeholder": "bucket",
+        "default": null
+      },
+      {
+        "name": "token",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": true,
+        "placeholder": "api-token",
+        "default": null
+      },
+      {
+        "name": "measurement",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": "speedtests"
+      },
+      {
+        "name": "host",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "tags",
+        "type": "text",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": "env=prod,server=node1",
+        "default": null
+      }
+    ]
+  }
+}

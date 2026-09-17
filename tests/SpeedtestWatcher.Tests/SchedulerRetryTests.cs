@@ -82,7 +82,7 @@ public class SchedulerRetryTests : IDisposable
         services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
-        services.AddScoped<IIntegrationDispatcher, IntegrationDispatcher>();
+        services.AddIntegrations();
         services.AddSingleton<ServerListProvider>();
         services.AddScoped<ServerSelector>();
         services.AddScoped<ConnectivityChecker>();

@@ -1,0 +1,724 @@
+## discord · test started
+activity: unchanged
+
+## discord · test finished
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 356
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":sparkles: **A speedtest is finished**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · test missed targets
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 404
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":warning: **A speedtest missed your targets**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · test failed
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 229
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":x: **A speedtest has failed**\n \u003E \u0060Reason\u0060: Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · test skipped
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 262
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":fast_forward: **A speedtest was skipped**\n \u003E \u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · recommendations updated
+activity: unchanged
+
+## discord · config updated
+activity: unchanged
+
+## discord · heartbeat
+activity: unchanged
+
+## discord · send test
+result: sent, activity: unchanged
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 356
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":sparkles: **A speedtest is finished**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · test started
+activity: unchanged
+
+## discord with every template variable · test finished
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 223
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · test missed targets
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 222
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"31|2.75|612.50|98.12|completed|no|Acme Fibre|25|900.00|100.00|","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · test failed
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 228
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|failed|unknown|Acme Fibre|-|-|-|Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · test skipped
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 240
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-|Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · recommendations updated
+activity: unchanged
+
+## discord with every template variable · config updated
+activity: unchanged
+
+## discord with every template variable · heartbeat
+activity: unchanged
+
+## discord with every template variable · send test
+result: sent, activity: unchanged
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 223
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord without a url · test started
+activity: failed
+
+## discord without a url · test finished
+activity: failed
+
+## discord without a url · test missed targets
+activity: failed
+
+## discord without a url · test failed
+activity: failed
+
+## discord without a url · test skipped
+activity: failed
+
+## discord without a url · recommendations updated
+activity: failed
+
+## discord without a url · config updated
+activity: failed
+
+## discord without a url · heartbeat
+activity: failed
+
+## discord without a url · send test
+result: failed (The webhook URL is missing), activity: unchanged
+
+## discord saved from the settings form · test started
+activity: unchanged
+
+## discord saved from the settings form · test finished
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 366
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":sparkles: **A speedtest is finished**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · test missed targets
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 414
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":warning: **A speedtest missed your targets**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · test failed
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 239
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":x: **A speedtest has failed**\n \u003E \u0060Reason\u0060: Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · test skipped
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 272
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":fast_forward: **A speedtest was skipped**\n \u003E \u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · recommendations updated
+activity: unchanged
+
+## discord saved from the settings form · config updated
+activity: unchanged
+
+## discord saved from the settings form · heartbeat
+activity: unchanged
+
+## discord saved from the settings form · send test
+result: sent, activity: unchanged
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 366
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":sparkles: **A speedtest is finished**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## ntfy saved from the settings form · test started
+activity: unchanged
+
+## ntfy saved from the settings form · test finished
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 90
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+A speedtest is finished:
+Ping: 12 ms (±0.40 ms)
+Upload: 110.50 Mbps
+Download: 941.25 Mbps
+
+## ntfy saved from the settings form · test missed targets
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 142
+Content-Type: text/plain; charset=utf-8
+Priority: 5
+A speedtest missed your targets:
+Ping: 31 ms (target 25 ms)
+Download: 612.50 Mbps (target 900.00 Mbps)
+Upload: 98.12 Mbps (target 100.00 Mbps)
+
+## ntfy saved from the settings form · test failed
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 51
+Content-Type: text/plain; charset=utf-8
+Priority: 5
+A speedtest has failed. Reason: Network unreachable
+
+## ntfy saved from the settings form · test skipped
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 74
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list
+
+## ntfy saved from the settings form · recommendations updated
+activity: unchanged
+
+## ntfy saved from the settings form · config updated
+activity: unchanged
+
+## ntfy saved from the settings form · heartbeat
+activity: unchanged
+
+## ntfy saved from the settings form · send test
+result: sent, activity: unchanged
+POST https://localhost/ntfy/alerts
+Content-Length: 90
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+A speedtest is finished:
+Ping: 12 ms (±0.40 ms)
+Upload: 110.50 Mbps
+Download: 941.25 Mbps
+
+## telegram · test started
+activity: unchanged
+
+## telegram · test finished
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 230
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2728 *A speedtest is finished*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps","parse_mode":"markdown"}
+
+## telegram · test missed targets
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 284
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u26A0\uFE0F *A speedtest missed your targets*\n\uD83C\uDFD3 \u0060Ping\u0060: 31 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","parse_mode":"markdown"}
+
+## telegram · test failed
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 122
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u274C *A speedtest has failed*\n\u0060Reason\u0060: Network unreachable","parse_mode":"markdown"}
+
+## telegram · test skipped
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 151
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u23ED\uFE0F *A speedtest was skipped*\n\u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","parse_mode":"markdown"}
+
+## telegram · recommendations updated
+activity: unchanged
+
+## telegram · config updated
+activity: unchanged
+
+## telegram · heartbeat
+activity: unchanged
+
+## telegram · send test
+result: sent, activity: unchanged
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 230
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2728 *A speedtest is finished*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps","parse_mode":"markdown"}
+
+## gotify · test started
+activity: unchanged
+
+## gotify · test finished
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 124
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","priority":4}
+
+## gotify · test missed targets
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 172
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","priority":7}
+
+## gotify · test failed
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 78
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest has failed. Reason: Network unreachable","priority":8}
+
+## gotify · test skipped
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 101
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","priority":4}
+
+## gotify · recommendations updated
+activity: unchanged
+
+## gotify · config updated
+activity: unchanged
+
+## gotify · heartbeat
+activity: unchanged
+
+## gotify · send test
+result: sent, activity: unchanged
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 124
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","priority":4}
+
+## gotify with every message turned off · test started
+activity: unchanged
+
+## gotify with every message turned off · test finished
+activity: unchanged
+
+## gotify with every message turned off · test missed targets
+activity: unchanged
+
+## gotify with every message turned off · test failed
+activity: unchanged
+
+## gotify with every message turned off · test skipped
+activity: unchanged
+
+## gotify with every message turned off · recommendations updated
+activity: unchanged
+
+## gotify with every message turned off · config updated
+activity: unchanged
+
+## gotify with every message turned off · heartbeat
+activity: unchanged
+
+## gotify with every message turned off · send test
+result: sent, activity: unchanged
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 124
+Content-Type: application/json; charset=utf-8
+{"message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps","priority":5}
+
+## ntfy · test started
+activity: unchanged
+
+## ntfy · test finished
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 90
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+A speedtest is finished:
+Ping: 12 ms (±0.40 ms)
+Upload: 110.50 Mbps
+Download: 941.25 Mbps
+
+## ntfy · test missed targets
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 142
+Content-Type: text/plain; charset=utf-8
+Priority: 4
+Tags: warning
+Title: Speedtest
+A speedtest missed your targets:
+Ping: 31 ms (target 25 ms)
+Download: 612.50 Mbps (target 900.00 Mbps)
+Upload: 98.12 Mbps (target 100.00 Mbps)
+
+## ntfy · test failed
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 51
+Content-Type: text/plain; charset=utf-8
+Priority: 4
+Tags: warning
+Title: Speedtest
+A speedtest has failed. Reason: Network unreachable
+
+## ntfy · test skipped
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 74
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list
+
+## ntfy · recommendations updated
+activity: unchanged
+
+## ntfy · config updated
+activity: unchanged
+
+## ntfy · heartbeat
+activity: unchanged
+
+## ntfy · send test
+result: sent, activity: unchanged
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 90
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+A speedtest is finished:
+Ping: 12 ms (±0.40 ms)
+Upload: 110.50 Mbps
+Download: 941.25 Mbps
+
+## pushover · test started
+activity: unchanged
+
+## pushover · test finished
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 192
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps"}
+
+## pushover · test missed targets
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 240
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)"}
+
+## pushover · test failed
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 146
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest has failed. Reason: Network unreachable"}
+
+## pushover · test skipped
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 169
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list"}
+
+## pushover · recommendations updated
+activity: unchanged
+
+## pushover · config updated
+activity: unchanged
+
+## pushover · heartbeat
+activity: unchanged
+
+## pushover · send test
+result: sent, activity: unchanged
+POST https://api.pushover.net/1/messages.json
+Content-Length: 192
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest is finished:\nPing: 12 ms (\u00B10.40 ms)\nUpload: 110.50 Mbps\nDownload: 941.25 Mbps"}
+
+## webhook · test started
+activity: sent
+POST https://localhost/hook
+Content-Length: 66
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_STARTED","data":{"provider":"ookla","type":"auto"}}
+
+## webhook · test finished
+activity: sent
+POST https://localhost/hook
+Content-Length: 363
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_FINISHED","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}}
+
+## webhook · test missed targets
+activity: sent
+POST https://localhost/hook
+Content-Length: 368
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00"}}
+
+## webhook · test failed
+activity: sent
+POST https://localhost/hook
+Content-Length: 370
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_FAILED","data":{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00"}}
+
+## webhook · test skipped
+activity: sent
+POST https://localhost/hook
+Content-Length: 366
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00"}}
+
+## webhook · recommendations updated
+activity: sent
+POST https://localhost/hook
+Content-Length: 94
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"RECOMMENDATIONS_UPDATED","data":{"Id":1,"Ping":10,"Download":950.5,"Upload":115.25}}
+
+## webhook · config updated
+activity: sent
+POST https://localhost/hook
+Content-Length: 68
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"CONFIG_UPDATED","data":{"key":"cron","value":"0 * * * *"}}
+
+## webhook · heartbeat
+activity: sent
+POST https://localhost/hook
+Content-Length: 34
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"KEEP_ALIVE","data":null}
+
+## webhook · send test
+result: sent, activity: unchanged
+POST https://localhost/hook
+Content-Length: 354
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}}
+
+## healthChecks · test started
+activity: sent
+POST https://localhost/hc/uuid/start
+Content-Length: 34
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"provider":"ookla","type":"auto"}
+
+## healthChecks · test finished
+activity: sent
+POST https://localhost/hc/uuid
+Content-Length: 330
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}
+
+## healthChecks · test missed targets
+activity: sent
+POST https://localhost/hc/uuid
+Content-Length: 334
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00"}
+
+## healthChecks · test failed
+activity: sent
+POST https://localhost/hc/uuid/fail
+Content-Length: 339
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00"}
+
+## healthChecks · test skipped
+activity: sent
+POST https://localhost/hc/uuid/log
+Content-Length: 334
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00"}
+
+## healthChecks · recommendations updated
+activity: sent
+POST https://localhost/hc/uuid
+Content-Length: 51
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":1,"Ping":10,"Download":950.5,"Upload":115.25}
+
+## healthChecks · config updated
+activity: sent
+POST https://localhost/hc/uuid
+Content-Length: 34
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"key":"cron","value":"0 * * * *"}
+
+## healthChecks · heartbeat
+activity: sent
+POST https://localhost/hc/uuid
+Content-Length: 2
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{}
+
+## healthChecks · send test
+result: sent, activity: unchanged
+POST https://localhost/hc/uuid/log
+Content-Length: 330
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/HealthAgent
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00"}
+
+## influxdb · test started
+activity: unchanged
+
+## influxdb · test finished
+activity: sent
+POST https://localhost/influx/api/v2/write?org=home&bucket=speed&precision=s
+Authorization: Token influx-token
+Content-Length: 84
+Content-Type: text/plain; charset=utf-8
+speedtests,host=watcher download=941.25,upload=110.50,ping=12,jitter=0.40 1789545900
+
+## influxdb · test missed targets
+activity: unchanged
+
+## influxdb · test failed
+activity: unchanged
+
+## influxdb · test skipped
+activity: unchanged
+
+## influxdb · recommendations updated
+activity: unchanged
+
+## influxdb · config updated
+activity: unchanged
+
+## influxdb · heartbeat
+activity: unchanged
+
+## influxdb · send test
+result: sent, activity: unchanged
+GET https://localhost/influx/api/v2/buckets?org=home&name=speed
+Authorization: Token influx-token
+
+
+## influxdb with tags and names that need escaping · test started
+activity: unchanged
+
+## influxdb with tags and names that need escaping · test finished
+activity: sent
+POST https://localhost/influx/api/v2/write?org=home&bucket=speed&precision=s
+Authorization: Token influx-token
+Content-Length: 118
+Content-Type: text/plain; charset=utf-8
+speed\ tests,host=living\ room,env=prod,site=home\ office download=941.25,upload=110.50,ping=12,jitter=0.40 1789545900
+
+## influxdb with tags and names that need escaping · test missed targets
+activity: unchanged
+
+## influxdb with tags and names that need escaping · test failed
+activity: unchanged
+
+## influxdb with tags and names that need escaping · test skipped
+activity: unchanged
+
+## influxdb with tags and names that need escaping · recommendations updated
+activity: unchanged
+
+## influxdb with tags and names that need escaping · config updated
+activity: unchanged
+
+## influxdb with tags and names that need escaping · heartbeat
+activity: unchanged
+
+## influxdb with tags and names that need escaping · send test
+result: sent, activity: unchanged
+GET https://localhost/influx/api/v2/buckets?org=home&name=speed
+Authorization: Token influx-token
+
+
+## unknown type · test started
+activity: failed
+
+## unknown type · test finished
+activity: failed
+
+## unknown type · test missed targets
+activity: failed
+
+## unknown type · test failed
+activity: failed
+
+## unknown type · test skipped
+activity: failed
+
+## unknown type · recommendations updated
+activity: failed
+
+## unknown type · config updated
+activity: failed
+
+## unknown type · heartbeat
+activity: failed
+
+## unknown type · send test
+result: failed (carrierPigeon isn't a known integration type), activity: unchanged
+

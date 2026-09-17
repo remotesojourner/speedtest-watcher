@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
@@ -11,11 +13,13 @@ public class IntegrationsController : ControllerBase
 {
     private readonly IIntegrationRepository _repository;
     private readonly IIntegrationDispatcher _dispatcher;
+    private readonly ISpeedtestRepository _speedtests;
 
-    public IntegrationsController(IIntegrationRepository repository, IIntegrationDispatcher dispatcher)
+    public IntegrationsController(IIntegrationRepository repository, IIntegrationDispatcher dispatcher, ISpeedtestRepository speedtests)
     {
         _repository = repository;
         _dispatcher = dispatcher;
+        _speedtests = speedtests;
     }
 
     [HttpGet]
@@ -24,7 +28,7 @@ public class IntegrationsController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        return Ok(_dispatcher.GetRegisteredIntegrationSchemas());
+        return Ok(_dispatcher.Schemas);
     }
 
     [HttpGet("active")]
@@ -66,7 +70,7 @@ public class IntegrationsController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        var schemas = _dispatcher.GetRegisteredIntegrationSchemas();
+        var schemas = _dispatcher.Schemas;
         if (!schemas.ContainsKey(name))
             return NotFound(new { message = "Integration not found" });
 
@@ -80,6 +84,25 @@ public class IntegrationsController : ControllerBase
         var json = JsonSerializer.Serialize(body);
         var id = await _repository.CreateAsync(name, displayName, json);
         return Ok(new { message = "Integration created", id });
+    }
+
+    [HttpPost("{name}/test")]
+    public async Task<IActionResult> SendTest(string name, [FromBody] Dictionary<string, object?> body, [FromQuery] string? id, CancellationToken cancellationToken)
+    {
+        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
+        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
+
+        if (!_dispatcher.Schemas.ContainsKey(name))
+            return NotFound(new { message = "Integration not found" });
+
+        var sample = await _speedtests.GetLatestCompletedAsync(cancellationToken) ?? SampleResult();
+        var result = await _dispatcher.TestAsync(name, id ?? "unsaved", JsonSerializer.Serialize(body), sample, cancellationToken);
+
+        return Ok(new IntegrationTestResultDto
+        {
+            Success = result.Outcome != IntegrationOutcome.Failed,
+            Message = result.Error
+        });
     }
 
     [HttpPatch("{id}")]
@@ -126,4 +149,16 @@ public class IntegrationsController : ControllerBase
 
         return Ok(new { message = "Integration deleted" });
     }
+
+    private static Speedtest SampleResult() => new()
+    {
+        ServerName = "Sample server",
+        Ping = 15,
+        Jitter = 1.2,
+        Download = 250,
+        Upload = 50,
+        Status = "completed",
+        Healthy = true,
+        Type = "custom"
+    };
 }

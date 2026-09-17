@@ -1,8 +1,6 @@
 using System.Text.Json;
-using FakeItEasy;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -184,7 +182,7 @@ public class SettingsBackupTests : IDisposable
         new(new ConfigRepository(db),
             new IntegrationRepository(db),
             new RecommendationRepository(db),
-            new IntegrationDispatcher(new IntegrationRepository(db), A.Fake<IHttpClientFactory>(), NullLogger<IntegrationDispatcher>.Instance));
+            TestIntegrations.Dispatcher(new IntegrationRepository(db), new RecordingHandler()));
 
     private SpeedtestWatcherDbContext Context() =>
         new(new DbContextOptionsBuilder<SpeedtestWatcherDbContext>().UseSqlite(_database).Options);

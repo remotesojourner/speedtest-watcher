@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Web.Hubs;
 using SpeedtestWatcher.Web.Services.Auth;
@@ -91,7 +91,7 @@ public class ConfigController : ControllerBase
         if (!success)
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Error updating the key '{key}'" });
 
-        await _dispatcher.TriggerEventAsync(IntegrationEvent.ConfigUpdated, new { key, value = stringValue });
+        await _dispatcher.PublishAsync(new ConfigUpdated(key, stringValue));
         await _hubContext.Clients.All.SendAsync("ConfigChanged", key, stringValue);
 
         return Ok(new { message = $"The key '{key}' has been successfully updated" });

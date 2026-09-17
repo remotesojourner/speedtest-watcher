@@ -19,7 +19,7 @@ public class RecommendationRepository : IRecommendationRepository
         return await _db.Recommendations.OrderBy(r => r.Id).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<Recommendation> UpdateOrCalculateAsync(CancellationToken cancellationToken = default)
+    public async Task<RecommendationUpdate> UpdateOrCalculateAsync(CancellationToken cancellationToken = default)
     {
         var recentTests = await _db.Speedtests
             .Where(t => t.Status == "completed")
@@ -35,6 +35,7 @@ public class RecommendationRepository : IRecommendationRepository
             var maxDown = Math.Round(recentTests.Max(t => t.Download), 2);
             var maxUp = Math.Round(recentTests.Max(t => t.Upload), 2);
 
+            var changed = existing == null || existing.Ping != minPing || existing.Download != maxDown || existing.Upload != maxUp;
             if (existing == null)
             {
                 existing = new Recommendation
@@ -53,7 +54,7 @@ public class RecommendationRepository : IRecommendationRepository
             }
 
             await _db.SaveChangesAsync(cancellationToken);
-            return existing;
+            return new RecommendationUpdate(existing, changed);
         }
 
         if (existing == null)
@@ -68,7 +69,7 @@ public class RecommendationRepository : IRecommendationRepository
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        return existing;
+        return new RecommendationUpdate(existing, Changed: false);
     }
 
     public async Task SaveAsync(int ping, double download, double upload, CancellationToken cancellationToken = default)

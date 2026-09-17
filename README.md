@@ -156,6 +156,8 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | **Healthchecks.io** | Heartbeats and test results |
 | **InfluxDB v2** | Test results as metrics, written with Line Protocol |
 
+Every integration has a **Send test** button that uses what's in the form, whether it's saved or not, and shows the service's answer if it fails. Message integrations and the webhook send your latest completed result, or sample values before your first test. Healthchecks.io gets a `/log` ping that doesn't change the check's status, and InfluxDB checks the URL, token, organisation and bucket without writing anything.
+
 ### Tab: Security
 
 | Field | Description |

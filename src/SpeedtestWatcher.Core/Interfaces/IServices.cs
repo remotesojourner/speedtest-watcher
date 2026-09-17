@@ -1,5 +1,8 @@
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Events;
+using SpeedtestWatcher.Core.Integrations;
+using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Core.Interfaces;
 
@@ -27,8 +30,9 @@ public interface ISpeedtestRunner
 
 public interface IIntegrationDispatcher
 {
-    Task TriggerEventAsync(IntegrationEvent eventType, object? eventData, CancellationToken cancellationToken = default);
-    Dictionary<string, IntegrationTypeSchemaDto> GetRegisteredIntegrationSchemas();
+    IReadOnlyDictionary<string, IntegrationTypeSchemaDto> Schemas { get; }
+    Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default);
+    Task<IntegrationResult> TestAsync(string name, string id, string settingsJson, Speedtest sample, CancellationToken cancellationToken = default);
 }
 
 public interface ICliManager

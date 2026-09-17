@@ -62,6 +62,10 @@
                                        OnClick="@(() => SaveAsync(instance))">
                                 @(instance.Saving ? "Saving..." : "Save")
                             </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Send"
+                                       Disabled="@(!CanSendTest(instance))" OnClick="@(() => SendTestAsync(instance))">
+                                @(instance.Testing ? "Sending..." : "Send test")
+                            </MudButton>
                             <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete"
                                        OnClick="@(() => DeleteAsync(instance))">
                                 Delete
@@ -95,6 +99,7 @@
         public bool ActivityFailed { get; init; }
         public bool Expanded { get; set; }
         public bool Saving { get; set; }
+        public bool Testing { get; set; }
         public string SavedSnapshot { get; set; } = "";
 
         public string Snapshot => JsonSerializer.Serialize(new { DisplayName, Values });
@@ -223,20 +228,32 @@
         }
     }
 
-    private bool CanSave(IntegrationInstance instance) =>
-        !instance.Saving && instance.Dirty && instance.Schema.Fields.All(f => ValidationError(f, instance) == null);
+    private static bool IsValid(IntegrationInstance instance) =>
+        instance.Schema.Fields.All(f => ValidationError(f, instance) == null);
+
+    private static bool CanSave(IntegrationInstance instance) => !instance.Saving && instance.Dirty && IsValid(instance);
+
+    private static bool CanSendTest(IntegrationInstance instance) => !instance.Testing && IsValid(instance);
+
+    private static Dictionary<string, object?> Settings(IntegrationInstance instance)
+    {
+        var settings = new Dictionary<string, object?>();
+        foreach (var field in instance.Schema.Fields)
+        {
+            var value = instance.Values.GetValueOrDefault(field.Name);
+            if (field.Type == "number" && value == null) continue;
+            settings[field.Name] = value;
+        }
+
+        return settings;
+    }
 
     private async Task SaveAsync(IntegrationInstance instance)
     {
         instance.Saving = true;
 
-        var payload = new Dictionary<string, object?> { ["integration_name"] = DisplayTitle(instance) };
-        foreach (var field in instance.Schema.Fields)
-        {
-            var value = instance.Values.GetValueOrDefault(field.Name);
-            if (field.Type == "number" && value == null) continue;
-            payload[field.Name] = value;
-        }
+        var payload = Settings(instance);
+        payload["integration_name"] = DisplayTitle(instance);
 
         ApiResult result;
         if (string.IsNullOrEmpty(instance.Id))
@@ -263,6 +280,30 @@
         else
         {
             Snackbar.Add(result.MessageOr("Could not save the integration. Check the highlighted fields."), Severity.Error);
+        }
+    }
+
+    private async Task SendTestAsync(IntegrationInstance instance)
+    {
+        instance.Testing = true;
+
+        var url = string.IsNullOrEmpty(instance.Id)
+            ? $"/api/integrations/{instance.Name}/test"
+            : $"/api/integrations/{instance.Name}/test?id={Uri.EscapeDataString(instance.Id)}";
+        var result = await Api.PostAsync<IntegrationTestResultDto>(url, Settings(instance));
+
+        instance.Testing = false;
+        if (result.Value is { Success: true })
+        {
+            Snackbar.Add($"{DisplayTitle(instance)} test succeeded", Severity.Success);
+        }
+        else if (result.Value is { } failed)
+        {
+            Snackbar.Add($"{DisplayTitle(instance)} test failed. {failed.Message}", Severity.Error, options => options.RequireInteraction = true);
+        }
+        else
+        {
+            Snackbar.Add(result.MessageOr("Could not send the test"), Severity.Error);
         }
     }
 

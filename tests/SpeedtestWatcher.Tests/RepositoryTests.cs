@@ -170,10 +170,13 @@ public class RepositoryTests : IDisposable
             }, cancellationToken);
         }
 
-        var rec = await recRepo.UpdateOrCalculateAsync(cancellationToken);
-        Assert.Equal(11, rec.Ping);
-        Assert.Equal(200.0, rec.Download);
-        Assert.Equal(100.0, rec.Upload);
+        var update = await recRepo.UpdateOrCalculateAsync(cancellationToken);
+        Assert.True(update.Changed);
+        Assert.Equal(11, update.Recommendation.Ping);
+        Assert.Equal(200.0, update.Recommendation.Download);
+        Assert.Equal(100.0, update.Recommendation.Upload);
+
+        Assert.False((await recRepo.UpdateOrCalculateAsync(cancellationToken)).Changed);
     }
 
     public void Dispose()

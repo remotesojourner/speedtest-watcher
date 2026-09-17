@@ -61,3 +61,12 @@ public class ActiveIntegrationDto
     [JsonPropertyName("activityFailed")]
     public bool ActivityFailed { get; set; }
 }
+
+public class IntegrationTestResultDto
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}

@@ -53,7 +53,7 @@ public sealed class SettingsBackup
             }
         }
 
-        var integrationTypes = _dispatcher.GetRegisteredIntegrationSchemas();
+        var integrationTypes = _dispatcher.Schemas;
         foreach (var integration in backup.Integrations)
         {
             if (integrationTypes.ContainsKey(integration.Name) && IsJsonObject(integration.Data))

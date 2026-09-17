@@ -3,6 +3,7 @@ using Cronos;
 using Microsoft.AspNetCore.SignalR;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.SpeedTest;
@@ -186,7 +187,7 @@ public class SpeedtestSchedulerService : BackgroundService
 
         var serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestStarted, new { provider = providerStr, type }, cancellationToken);
+        await dispatcher.PublishAsync(new TestStarted(providerStr, type), cancellationToken);
 
         var result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
         if (!result.Success)
@@ -225,15 +226,17 @@ public class SpeedtestSchedulerService : BackgroundService
 
         if (result.Success)
         {
-            await recommendationRepo.UpdateOrCalculateAsync(cancellationToken);
-            await dispatcher.TriggerEventAsync(IntegrationEvent.TestFinished, testEntity, cancellationToken);
+            var recommendations = await recommendationRepo.UpdateOrCalculateAsync(cancellationToken);
+            await dispatcher.PublishAsync(new TestFinished(testEntity), cancellationToken);
             if (testEntity.Healthy == false)
-                await dispatcher.TriggerEventAsync(IntegrationEvent.TestUnhealthy, testEntity, cancellationToken);
+                await dispatcher.PublishAsync(new TestUnhealthy(testEntity), cancellationToken);
+            if (recommendations.Changed)
+                await dispatcher.PublishAsync(new RecommendationsUpdated(recommendations.Recommendation), cancellationToken);
             await _hubContext.Clients.All.SendAsync("NewTestResult", dto, cancellationToken);
         }
         else
         {
-            await dispatcher.TriggerEventAsync(IntegrationEvent.TestFailed, result.Error ?? "Test failed", cancellationToken);
+            await dispatcher.PublishAsync(new TestFailed(testEntity), cancellationToken);
             await _hubContext.Clients.All.SendAsync("TestFailed", dto, cancellationToken);
         }
 
@@ -261,7 +264,7 @@ public class SpeedtestSchedulerService : BackgroundService
         skipped.Id = await speedtestRepo.CreateAsync(skipped, cancellationToken);
         _logger.LogInformation("Speedtest skipped: {Reason}", reason);
 
-        await dispatcher.TriggerEventAsync(IntegrationEvent.TestSkipped, skipped, cancellationToken);
+        await dispatcher.PublishAsync(new TestSkipped(skipped), cancellationToken);
         await _hubContext.Clients.All.SendAsync("NewTestResult", SpeedtestDto.From(skipped), cancellationToken);
     }
 

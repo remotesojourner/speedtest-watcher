@@ -57,7 +57,7 @@ builder.Services.AddScoped<IStorageRepository, StorageRepository>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ICliManager, CliManager>();
 builder.Services.AddScoped<ISpeedtestRunner, SpeedtestRunner>();
-builder.Services.AddScoped<IIntegrationDispatcher, IntegrationDispatcher>();
+builder.Services.AddIntegrations();
 builder.Services.AddSingleton<INetworkInterfaceDetector, InterfaceDetector>();
 builder.Services.AddSingleton<ServerListProvider>();
 builder.Services.AddScoped<ServerSelector>();

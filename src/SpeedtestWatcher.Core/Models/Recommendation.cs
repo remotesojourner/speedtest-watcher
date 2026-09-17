@@ -7,3 +7,5 @@ public class Recommendation
     public double Download { get; set; }
     public double Upload { get; set; }
 }
+
+public sealed record RecommendationUpdate(Recommendation Recommendation, bool Changed);

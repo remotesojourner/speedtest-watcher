@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Web.Background;
@@ -70,7 +70,7 @@ public class IntegrationTickerService : BackgroundService
             {
                 using var scope = _serviceProvider.CreateScope();
                 var dispatcher = scope.ServiceProvider.GetRequiredService<IIntegrationDispatcher>();
-                await dispatcher.TriggerEventAsync(IntegrationEvent.MinutePassed, null, stoppingToken);
+                await dispatcher.PublishAsync(new Heartbeat(), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
