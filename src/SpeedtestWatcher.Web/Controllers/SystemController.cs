@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Infrastructure.Network;
 using SpeedtestWatcher.Web.Helpers;
@@ -71,10 +73,10 @@ public class SystemController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        if (provider != "ookla" && provider != "libre")
+        if (!EnumNames.TryParse<SpeedtestProvider>(provider, out var chosen) || chosen is not (SpeedtestProvider.Ookla or SpeedtestProvider.Libre))
             return BadRequest(new { message = "Invalid provider" });
 
-        var servers = await _serverListProvider.GetServersAsync(provider);
+        var servers = await _serverListProvider.GetServersAsync(chosen);
         return Ok(servers);
     }
 

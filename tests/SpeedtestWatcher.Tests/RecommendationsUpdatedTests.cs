@@ -28,7 +28,7 @@ public class RecommendationsUpdatedTests : IDisposable
 
         for (var run = 1; run < RecommendationRepository.CompletedTestsNeeded; run++)
         {
-            var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+            var result = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
             Assert.True(result.Success, result.Error);
         }
 
@@ -45,7 +45,7 @@ public class RecommendationsUpdatedTests : IDisposable
 
         for (var run = 1; run <= 11; run++)
         {
-            var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+            var result = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
             Assert.True(result.Success, result.Error);
         }
 
@@ -64,7 +64,7 @@ public class RecommendationsUpdatedTests : IDisposable
         services.AddSignalR();
         services.AddHttpClient();
         services.AddDbContext<SpeedtestWatcherDbContext>(options => options.UseSqlite(_connection));
-        services.AddScoped<IConfigRepository, ConfigRepository>();
+        services.AddScoped<ISettingsStore, SettingsStore>();
         services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddSingleton(dispatcher);
@@ -80,10 +80,9 @@ public class RecommendationsUpdatedTests : IDisposable
         using (var scope = provider.CreateScope())
         {
             await scope.ServiceProvider.GetRequiredService<SpeedtestWatcherDbContext>().Database.EnsureCreatedAsync(cancellationToken);
-            var config = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-            await config.InsertDefaultsAsync(cancellationToken);
-            await config.UpdateValueAsync("provider", "ookla", cancellationToken);
-            await config.UpdateValueAsync("internetCheckEnabled", "false", cancellationToken);
+            var settings = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
+            await settings.InsertDefaultsAsync(cancellationToken);
+            await settings.SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla", ["internetCheckEnabled"] = "false" }, cancellationToken);
         }
 
         return provider.GetRequiredService<SpeedtestSchedulerService>();

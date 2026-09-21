@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
@@ -13,7 +14,7 @@ public class IntegrationDispatcherTests
 {
     private static readonly Speedtest SkippedTest = new()
     {
-        Status = "skipped",
+        Status = TestStatus.Skipped,
         Error = "Public IP 203.0.113.9 is on the skip list"
     };
 
@@ -170,7 +171,7 @@ public class IntegrationDispatcherTests
             ("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","error_message":"%server%: %error%"}"""),
             ("webhook", """{"url":"https://localhost/hook"}"""));
 
-        await dispatcher.PublishAsync(new TestFailed(new Speedtest { ServerName = "Acme Fibre", Status = "failed", Error = "Network unreachable" }), TestContext.Current.CancellationToken);
+        await dispatcher.PublishAsync(new TestFailed(new Speedtest { ServerName = "Acme Fibre", Status = TestStatus.Failed, Error = "Network unreachable" }), TestContext.Current.CancellationToken);
 
         Assert.Equal("Acme Fibre: Network unreachable", handler.Requests[0].Body);
         using var webhook = JsonDocument.Parse(handler.Requests[1].Body);
@@ -185,7 +186,7 @@ public class IntegrationDispatcherTests
         var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = MinimalConfigs["discord"] }]);
         var dispatcher = TestIntegrations.Dispatcher(repository, handler);
 
-        await dispatcher.PublishAsync(new TestStarted("ookla", "auto"), cancellationToken);
+        await dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), cancellationToken);
         await dispatcher.PublishAsync(new Heartbeat(), cancellationToken);
         Assert.Empty(repository.ActivityErrors);
 

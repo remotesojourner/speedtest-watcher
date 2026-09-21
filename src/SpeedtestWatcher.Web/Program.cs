@@ -50,7 +50,7 @@ builder.Services.AddDbContext<SpeedtestWatcherDbContext>((services, options) =>
 });
 
 builder.Services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
-builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
+builder.Services.AddScoped<ISettingsStore, SettingsStore>();
 builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
 builder.Services.AddScoped<IStorageRepository, StorageRepository>();
@@ -63,6 +63,7 @@ builder.Services.AddSingleton<INetworkInterfaceDetector, InterfaceDetector>();
 builder.Services.AddSingleton<ServerListProvider>();
 builder.Services.AddScoped<ServerSelector>();
 builder.Services.AddScoped<ConnectivityChecker>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<SettingsBackup>();
 
 var pauseStateService = new PauseStateService();
@@ -129,8 +130,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("PRAGMA journal_mode = WAL;");
 
-    var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-    configRepo.InsertDefaultsAsync().GetAwaiter().GetResult();
+    scope.ServiceProvider.GetRequiredService<ISettingsStore>().InsertDefaultsAsync().GetAwaiter().GetResult();
     scope.ServiceProvider.GetRequiredService<IRecommendationRepository>().RemovePlaceholderAsync().GetAwaiter().GetResult();
 }
 

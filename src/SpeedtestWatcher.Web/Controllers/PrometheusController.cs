@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 
@@ -58,8 +60,8 @@ public class PrometheusController : ControllerBase
             $"server_id=\"{test?.ServerId ?? 0}\"",
             $"server_name=\"{Escape(test?.ServerName)}\"",
             $"server_host=\"{Escape(test?.ServerHost)}\"",
-            $"status=\"{Escape(test?.Status ?? "none")}\"",
-            $"scheduled=\"{(test?.Type == "custom" ? "false" : "true")}\"");
+            $"status=\"{Escape(test?.Status.ToName() ?? "none")}\"",
+            $"scheduled=\"{(test?.Type == TestType.Custom ? "false" : "true")}\"");
 
     private static void Gauge(StringBuilder sb, string name, string help, double? value, string labels, string format)
     {

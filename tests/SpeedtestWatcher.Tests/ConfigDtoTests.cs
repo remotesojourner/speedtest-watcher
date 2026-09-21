@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -30,7 +31,7 @@ public class ConfigDtoTests
         var config = JsonSerializer.Deserialize<ConfigDto>("{\"ping\":\"25\",\"visitorAccess\":\"read\",\"authActive\":true}")!;
 
         Assert.Equal("25", config.Ping);
-        Assert.Equal("read", config.VisitorAccess);
+        Assert.Equal(VisitorAccess.Read, config.VisitorAccess);
         Assert.True(config.AuthActive);
     }
 }

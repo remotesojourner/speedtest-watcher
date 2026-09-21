@@ -24,11 +24,13 @@ public class ConfigStateService
 
     public async Task<ApiResult> SaveAsync(params (string Key, string Value)[] changes)
     {
+        if (changes.Length == 0) return ApiResult.Ok;
+
+        var result = await _api.PatchAsync("/api/config", changes.ToDictionary(change => change.Key, change => change.Value));
+        if (!result.Succeeded) return result;
+
         foreach (var (key, value) in changes)
         {
-            var result = await _api.PatchAsync($"/api/config/{key}", new UpdateConfigKeyRequest { Value = value });
-            if (!result.Succeeded) return result;
-
             CurrentConfig[key] = value;
         }
 

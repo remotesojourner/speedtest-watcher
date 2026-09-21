@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 
 namespace SpeedtestWatcher.Core.Models;
@@ -14,7 +15,7 @@ public class Speedtest
     public double Upload { get; set; }
     public string? Error { get; set; }
 
-    public string Status { get; set; } = "completed";
+    public TestStatus Status { get; set; } = TestStatus.Completed;
 
     public bool? Healthy { get; set; }
 
@@ -22,7 +23,7 @@ public class Speedtest
     public double? ThresholdDownload { get; set; }
     public double? ThresholdUpload { get; set; }
 
-    public string Type { get; set; } = "auto";
+    public TestType Type { get; set; } = TestType.Auto;
     public string? ResultId { get; set; }
     public int Time { get; set; }
     public DateTime Created { get; set => field = FormatHelper.AsUtc(value); } = DateTime.UtcNow;

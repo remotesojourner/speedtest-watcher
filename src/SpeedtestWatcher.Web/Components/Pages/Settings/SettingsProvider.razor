@@ -10,7 +10,7 @@
         @foreach (var provider in ProviderOption.All)
         {
             <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
-                        Active="@(_provider == provider.Id)" OnClick="@(() => SelectProviderAsync(provider.Id))" />
+                        Active="@(_provider == provider.Provider)" OnClick="@(() => SelectProviderAsync(provider.Provider))" />
         }
     </div>
 
@@ -26,7 +26,7 @@
             </MudSelect>
         </MudItem>
 
-        @if (_provider == "libre")
+        @if (_provider == SpeedtestProvider.Libre)
         {
             <MudItem xs="12" md="6">
                 <MudTextField T="string" Value="_libreUrl" ValueChanged="SetLibreUrl" Label="Custom LibreSpeed server URL"
@@ -42,14 +42,14 @@
         <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Which server to test against</MudText>
         <div class="sw-option-list mb-4">
             <OptionCard Title="Automatically" Description="@($"{ProviderTitle} picks the best server for each test")" Icon="@Icons.Material.Filled.AutoAwesome"
-                        Active="@(_serverMode == "auto")" OnClick="@(() => _serverMode = "auto")" />
+                        Active="@(_serverMode == ServerMode.Auto)" OnClick="@(() => _serverMode = ServerMode.Auto)" />
             <OptionCard Title="Random" Description="A different server each test, chosen from your list" Icon="@Icons.Material.Filled.Shuffle"
-                        Active="@(_serverMode == "random")" OnClick="@(() => _serverMode = "random")" />
+                        Active="@(_serverMode == ServerMode.Random)" OnClick="@(() => _serverMode = ServerMode.Random)" />
             <OptionCard Title="Single" Description="Always test against the same server" Icon="@Icons.Material.Filled.PushPin"
-                        Active="@(_serverMode == "single")" OnClick="@(() => _serverMode = "single")" />
+                        Active="@(_serverMode == ServerMode.Single)" OnClick="@(() => _serverMode = ServerMode.Single)" />
         </div>
 
-        @if (_serverMode == "single")
+        @if (_serverMode == ServerMode.Single)
         {
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
@@ -71,13 +71,13 @@
                 </MudItem>
             </MudGrid>
         }
-        else if (_serverMode == "random")
+        else if (_serverMode == ServerMode.Random)
         {
             <div class="sw-option-list mb-3">
                 <OptionCard Title="Only these servers" Description="Each test picks randomly from the list below" Icon="@Icons.Material.Filled.PlaylistAddCheck"
-                            Active="@(_listMode == "allow")" OnClick="@(() => _listMode = "allow")" />
+                            Active="@(_listMode == ServerListMode.Allow)" OnClick="@(() => _listMode = ServerListMode.Allow)" />
                 <OptionCard Title="Any server except these" Description="Each test picks randomly from the nearby servers, skipping the list below" Icon="@Icons.Material.Filled.Block"
-                            Active="@(_listMode == "deny")" OnClick="@(() => _listMode = "deny")" />
+                            Active="@(_listMode == ServerListMode.Deny)" OnClick="@(() => _listMode = ServerListMode.Deny)" />
             </div>
 
             <MudGrid Spacing="3" Class="mb-2">
@@ -117,7 +117,7 @@
             else
             {
                 <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">
-                    @(_listMode == "deny"
+                    @(_listMode == ServerListMode.Deny
                         ? "Nothing excluded yet, so any nearby server can be used."
                         : "No servers chosen yet, so the provider picks for each test.")
                 </MudText>
@@ -125,7 +125,7 @@
         }
     }
 
-    @if (_provider == "ookla")
+    @if (_provider == SpeedtestProvider.Ookla)
     {
         <div class="d-flex align-center mt-4">
             <MudCheckBox T="bool" @bind-Value="_acceptedOokla" Color="Color.Primary" Dense="true" />
@@ -147,21 +147,21 @@
     private sealed record ServerOption(string Id, string Label, double Distance);
     private sealed record InterfaceOption(string Value, string Label);
 
-    private string _provider = "ookla";
+    private SpeedtestProvider _provider = SpeedtestProvider.Ookla;
     private string _interface = "none";
-    private string _serverMode = "auto";
-    private string _listMode = "allow";
+    private ServerMode _serverMode = ServerMode.Auto;
+    private ServerListMode _listMode = ServerListMode.Allow;
     private string _serverId = "none";
     private string _customId = "";
     private string _libreUrl = "";
     private bool _acceptedOokla;
     private bool _serversLoading;
     private bool _interfacesUnavailable;
-    private readonly HashSet<string> _serverListsUnavailable = [];
+    private readonly HashSet<SpeedtestProvider> _serverListsUnavailable = [];
     private bool _saving;
     private List<InterfaceOption> _interfaceOptions = [];
-    private readonly Dictionary<string, List<ServerOption>> _servers = new();
-    private readonly Dictionary<string, List<string>> _serverIds = new();
+    private readonly Dictionary<SpeedtestProvider, List<ServerOption>> _servers = new();
+    private readonly Dictionary<SpeedtestProvider, List<string>> _serverIds = new();
 
     private IReadOnlyList<ServerOption> CurrentServers => _servers.TryGetValue(_provider, out var list) ? list : [];
 
@@ -175,11 +175,11 @@
 
     private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
 
-    private string ProviderTitle => ProviderOption.All.First(p => p.Id == _provider).Title;
+    private string ProviderTitle => ProviderOption.All.First(p => p.Provider == _provider).Title;
 
-    private bool SupportsServerChoice => _provider != "cloudflare" && !UsingCustomUrl;
+    private bool SupportsServerChoice => (_provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre) && !UsingCustomUrl;
 
-    private bool UsingCustomUrl => _provider == "libre" && !string.IsNullOrWhiteSpace(_libreUrl);
+    private bool UsingCustomUrl => _provider == SpeedtestProvider.Libre && !string.IsNullOrWhiteSpace(_libreUrl);
 
     private bool ServerIdValid => _serverId == "none" || _serverId.All(char.IsDigit);
 
@@ -187,35 +187,35 @@
 
     private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl) || WebAddress.IsHttp(_libreUrl);
 
-    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == "single") || _serverId != "none";
+    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Single) || _serverId != "none";
 
-    private bool CanSave => !_saving && ServerIdValid && SingleServerChosen && CustomIdValid && LibreUrlValid && (_provider != "ookla" || _acceptedOokla);
+    private bool CanSave => !_saving && ServerIdValid && SingleServerChosen && CustomIdValid && LibreUrlValid && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
 
     protected override async Task OnInitializedAsync()
     {
         var cfg = ConfigService.CurrentConfig;
-        _provider = ProviderOption.IsKnown(cfg.Provider) ? cfg.Provider : "ookla";
-        _acceptedOokla = cfg.Provider == "ookla";
+        _provider = cfg.Provider == SpeedtestProvider.None ? SpeedtestProvider.Ookla : cfg.Provider;
+        _acceptedOokla = cfg.Provider == SpeedtestProvider.Ookla;
         _interface = string.IsNullOrEmpty(cfg.Interface) ? "none" : cfg.Interface;
         _libreUrl = cfg.LibreUrl is null or "none" ? "" : cfg.LibreUrl;
-        _serverMode = cfg.ServerMode is "auto" or "random" or "single" ? cfg.ServerMode : "auto";
-        _listMode = cfg.ServerListMode == "deny" ? "deny" : "allow";
+        _serverMode = cfg.ServerMode;
+        _listMode = cfg.ServerListMode;
         _serverId = ConfiguredServerId(_provider);
-        _serverIds["ookla"] = ParseIds(cfg.OoklaServerIds);
-        _serverIds["libre"] = ParseIds(cfg.LibreServerIds);
+        _serverIds[SpeedtestProvider.Ookla] = ParseIds(cfg.OoklaServerIds);
+        _serverIds[SpeedtestProvider.Libre] = ParseIds(cfg.LibreServerIds);
 
         await Task.WhenAll(LoadInterfacesAsync(), LoadServersAsync(_provider));
     }
 
-    private string ConfiguredServerId(string provider)
+    private string ConfiguredServerId(SpeedtestProvider provider)
     {
-        var value = provider == "libre" ? ConfigService.CurrentConfig.LibreId : ConfigService.CurrentConfig.OoklaId;
+        var value = provider == SpeedtestProvider.Libre ? ConfigService.CurrentConfig.LibreId : ConfigService.CurrentConfig.OoklaId;
         return string.IsNullOrEmpty(value) ? "none" : value;
     }
 
-    private string ConfiguredServerIds(string provider)
+    private string ConfiguredServerIds(SpeedtestProvider provider)
     {
-        var value = provider == "libre" ? ConfigService.CurrentConfig.LibreServerIds : ConfigService.CurrentConfig.OoklaServerIds;
+        var value = provider == SpeedtestProvider.Libre ? ConfigService.CurrentConfig.LibreServerIds : ConfigService.CurrentConfig.OoklaServerIds;
         return string.IsNullOrEmpty(value) ? "none" : value;
     }
 
@@ -224,7 +224,7 @@
             ? []
             : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
-    private async Task SelectProviderAsync(string provider)
+    private async Task SelectProviderAsync(SpeedtestProvider provider)
     {
         if (_provider == provider) return;
         _provider = provider;
@@ -285,14 +285,14 @@
         }
     }
 
-    private async Task LoadServersAsync(string provider)
+    private async Task LoadServersAsync(SpeedtestProvider provider)
     {
-        if (provider == "cloudflare" || _servers.ContainsKey(provider)) return;
+        if (provider is not (SpeedtestProvider.Ookla or SpeedtestProvider.Libre) || _servers.ContainsKey(provider)) return;
 
         _serversLoading = true;
         StateHasChanged();
 
-        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{provider}");
+        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{provider.ToName()}");
         if (result.Succeeded)
         {
             _servers[provider] = ParseServers(result.Value);
@@ -318,22 +318,22 @@
             if (value != current) changes.Add((key, value));
         }
 
-        AddIfChanged("provider", _provider, cfg.Provider);
-        AddIfChanged("serverMode", _serverMode, cfg.ServerMode ?? "auto");
-        if (_serverMode == "random")
+        AddIfChanged("provider", _provider.ToName(), cfg.Provider.ToName());
+        AddIfChanged("serverMode", _serverMode.ToName(), cfg.ServerMode.ToName());
+        if (_serverMode == ServerMode.Random)
         {
-            AddIfChanged("serverListMode", _listMode, cfg.ServerListMode ?? "allow");
+            AddIfChanged("serverListMode", _listMode.ToName(), cfg.ServerListMode.ToName());
         }
-        if (SupportsServerChoice && _serverMode == "single")
+        if (SupportsServerChoice && _serverMode == ServerMode.Single)
         {
-            AddIfChanged(_provider == "libre" ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
+            AddIfChanged(_provider == SpeedtestProvider.Libre ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
         }
-        if (SupportsServerChoice && _serverMode == "random")
+        if (SupportsServerChoice && _serverMode == ServerMode.Random)
         {
             var ids = SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : "none";
-            AddIfChanged(_provider == "libre" ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
+            AddIfChanged(_provider == SpeedtestProvider.Libre ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
         }
-        if (_provider == "libre")
+        if (_provider == SpeedtestProvider.Libre)
         {
             AddIfChanged("libreUrl", string.IsNullOrWhiteSpace(_libreUrl) ? "none" : _libreUrl.Trim(), cfg.LibreUrl ?? "none");
         }

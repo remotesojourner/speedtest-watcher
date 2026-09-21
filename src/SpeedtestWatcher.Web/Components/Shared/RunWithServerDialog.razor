@@ -30,7 +30,7 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public string Provider { get; set; } = "ookla";
+    [Parameter] public SpeedtestProvider Provider { get; set; } = SpeedtestProvider.Ookla;
 
     private sealed record ServerOption(string Id, string OptionLabel);
 
@@ -50,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{Provider}");
+        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{Provider.ToName()}");
         _serversUnavailable = !result.Succeeded;
         if (result.Succeeded && result.Value.ValueKind == JsonValueKind.Object)
         {

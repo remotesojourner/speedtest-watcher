@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Models;
@@ -21,27 +22,27 @@ public partial class IntegrationRequestTests
     private static readonly Speedtest Healthy = new()
     {
         Id = 41, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
-        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = "completed", Healthy = true,
-        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = "auto", ResultId = "r-41", Time = 14, Created = Tested
+        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true,
+        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Auto, ResultId = "r-41", Time = 14, Created = Tested
     };
 
     private static readonly Speedtest Unhealthy = new()
     {
         Id = 42, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
-        Ping = 31, Jitter = 2.75, Download = 612.5, Upload = 98.125, Status = "completed", Healthy = false,
-        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = "custom", ResultId = "r-42", Time = 15, Created = Tested.AddHours(1)
+        Ping = 31, Jitter = 2.75, Download = 612.5, Upload = 98.125, Status = TestStatus.Completed, Healthy = false,
+        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Custom, ResultId = "r-42", Time = 15, Created = Tested.AddHours(1)
     };
 
     private static readonly Speedtest Failed = new()
     {
         Id = 44, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
-        Ping = -1, Download = -1, Upload = -1, Status = "failed", Type = "auto",
+        Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Type = TestType.Auto,
         Error = "Network unreachable", Created = Tested.AddHours(3)
     };
 
     private static readonly Speedtest Skipped = new()
     {
-        Id = 43, Ping = -1, Download = -1, Upload = -1, Status = "skipped", Type = "auto",
+        Id = 43, Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Skipped, Type = TestType.Auto,
         Error = "Public IP 203.0.113.9 is on the skip list", Created = Tested.AddHours(2)
     };
 
@@ -119,7 +120,7 @@ public partial class IntegrationRequestTests
 
     private static IEnumerable<(string Name, Func<IntegrationDispatcher, CancellationToken, Task> Publish)> Events() =>
     [
-        ("test started", (dispatcher, ct) => dispatcher.PublishAsync(new TestStarted("ookla", "auto"), ct)),
+        ("test started", (dispatcher, ct) => dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), ct)),
         ("test finished", (dispatcher, ct) => dispatcher.PublishAsync(new TestFinished(Healthy), ct)),
         ("test missed targets", (dispatcher, ct) => dispatcher.PublishAsync(new TestUnhealthy(Unhealthy), ct)),
         ("test failed", (dispatcher, ct) => dispatcher.PublishAsync(new TestFailed(Failed), ct)),

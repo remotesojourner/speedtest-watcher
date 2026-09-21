@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -8,16 +10,19 @@ public abstract class SignInOnApp : TestApp
 {
     public string Token { get; } = ApiToken.Generate();
 
-    protected abstract string VisitorAccess { get; }
+    protected abstract VisitorAccess VisitorAccess { get; }
 
     protected override async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
-        var config = services.GetRequiredService<IConfigRepository>();
-        await config.UpdateValueAsync("provider", "ookla", cancellationToken);
-        await config.UpdateValueAsync("authEnabled", "true", cancellationToken);
-        await config.UpdateValueAsync("oidcAuthority", "https://localhost/identity-provider", cancellationToken);
-        await config.UpdateValueAsync("oidcClientId", "speedtest-watcher", cancellationToken);
-        await config.UpdateValueAsync("visitorAccess", VisitorAccess, cancellationToken);
-        await config.UpdateValueAsync("apiTokenHash", ApiToken.Hash(Token), cancellationToken);
+        var settings = services.GetRequiredService<ISettingsStore>();
+        await settings.SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla" }, cancellationToken);
+        await settings.SaveSignInAsync(new Dictionary<string, string>
+        {
+            ["authEnabled"] = "true",
+            ["oidcAuthority"] = "https://localhost/identity-provider",
+            ["oidcClientId"] = "speedtest-watcher",
+            ["visitorAccess"] = VisitorAccess.ToName(),
+            ["apiTokenHash"] = ApiToken.Hash(Token)
+        }, cancellationToken);
     }
 }

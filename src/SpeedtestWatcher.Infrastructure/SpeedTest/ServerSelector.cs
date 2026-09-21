@@ -1,72 +1,61 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Infrastructure.Network;
 
 namespace SpeedtestWatcher.Infrastructure.SpeedTest;
 
 public class ServerSelector
 {
-    private readonly IConfigRepository _configRepo;
     private readonly ServerListProvider _serverList;
     private readonly ILogger<ServerSelector> _logger;
 
-    public ServerSelector(IConfigRepository configRepo, ServerListProvider serverList, ILogger<ServerSelector> logger)
+    public ServerSelector(ServerListProvider serverList, ILogger<ServerSelector> logger)
     {
-        _configRepo = configRepo;
         _serverList = serverList;
         _logger = logger;
     }
 
-    public async Task<string?> SelectAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
+    public async Task<string?> SelectAsync(ProviderSettings settings, CancellationToken cancellationToken = default)
     {
-        if (provider != SpeedtestProvider.Ookla && provider != SpeedtestProvider.Libre) return null;
+        if (settings.ServersFor(settings.Selected) is not { } servers) return null;
 
-        var providerKey = provider == SpeedtestProvider.Ookla ? "ookla" : "libre";
-        var mode = Value(await _configRepo.GetValueAsync("serverMode", cancellationToken)) ?? "auto";
+        return settings.ServerMode switch
+        {
+            ServerMode.Single => servers.SingleId,
+            ServerMode.Random => await RandomServerAsync(settings, servers, cancellationToken),
+            _ => null
+        };
+    }
 
-        if (mode == "single")
-            return Value(await _configRepo.GetValueAsync($"{providerKey}Id", cancellationToken));
-
-        if (mode != "random") return null;
-
-        var listed = ParseIds(await _configRepo.GetValueAsync($"{providerKey}ServerIds", cancellationToken));
-        var deny = Value(await _configRepo.GetValueAsync("serverListMode", cancellationToken)) == "deny";
-
-        var candidates = deny
-            ? (await NearbyServerIdsAsync(providerKey, cancellationToken)).Where(id => !listed.Contains(id)).ToList()
-            : listed;
+    private async Task<string?> RandomServerAsync(ProviderSettings settings, ServerChoice servers, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string> candidates = settings.ServerListMode == ServerListMode.Deny
+            ? (await NearbyServerIdsAsync(settings.Selected, cancellationToken)).Where(id => !servers.ListedIds.Contains(id)).ToList()
+            : servers.ListedIds;
 
         if (candidates.Count == 0)
         {
-            _logger.LogInformation("No {Provider} servers to choose from; letting the provider decide", providerKey);
+            _logger.LogInformation("No {Provider} servers to choose from; letting the provider decide", settings.Selected);
             return null;
         }
 
         return candidates[Random.Shared.Next(candidates.Count)];
     }
 
-    private async Task<List<string>> NearbyServerIdsAsync(string providerKey, CancellationToken cancellationToken)
+    private async Task<List<string>> NearbyServerIdsAsync(SpeedtestProvider provider, CancellationToken cancellationToken)
     {
         try
         {
-            if (await _serverList.GetServersAsync(providerKey, cancellationToken) is JsonElement { ValueKind: JsonValueKind.Object } element)
+            if (await _serverList.GetServersAsync(provider, cancellationToken) is JsonElement { ValueKind: JsonValueKind.Object } element)
                 return element.EnumerateObject().Select(property => property.Name).ToList();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
-            _logger.LogWarning(ex, "Could not read the {Provider} server list", providerKey);
+            _logger.LogWarning(ex, "Could not read the {Provider} server list", provider);
         }
 
         return [];
     }
-
-    private static List<string> ParseIds(string? raw) =>
-        Value(raw) is { } value
-            ? value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
-            : [];
-
-    private static string? Value(string? raw) =>
-        string.IsNullOrWhiteSpace(raw) || raw == "none" ? null : raw.Trim();
 }

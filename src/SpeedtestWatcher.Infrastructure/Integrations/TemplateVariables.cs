@@ -1,5 +1,6 @@
 using System.Globalization;
 using SpeedtestWatcher.Core.Events;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Infrastructure.Integrations;
@@ -22,7 +23,7 @@ public static class TemplateVariables
         ["download"] = Decimal(test.Download)!,
         ["upload"] = Decimal(test.Upload)!,
         ["error"] = test.Error ?? string.Empty,
-        ["status"] = test.Status,
+        ["status"] = test.Status.ToName(),
         ["healthy"] = test.Healthy switch { true => "yes", false => "no", null => "unknown" },
         ["server"] = test.ServerName ?? string.Empty,
         ["threshold_ping"] = test.ThresholdPing?.ToString(CultureInfo.InvariantCulture) ?? "-",

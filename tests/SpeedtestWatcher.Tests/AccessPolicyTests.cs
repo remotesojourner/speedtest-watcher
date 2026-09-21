@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Tests;
@@ -54,7 +56,7 @@ public class AccessPolicyTests
     [Fact]
     public void VisitorsWithReadAccess_AreReadOnly()
     {
-        var readOnly = SignInOn with { VisitorAccess = "read" };
+        var readOnly = SignInOn with { VisitorAccess = VisitorAccess.Read };
 
         Assert.Equal(Access.ReadOnly, AccessPolicy.Decide(readOnly, signedIn: false, internalCall: false, validApiToken: false));
     }
@@ -127,6 +129,6 @@ public class AccessTokenTests
     [InlineData("", new[] { "openid" })]
     public void Scopes_AlwaysIncludeOpenId_WithoutDuplicates(string raw, string[] expected)
     {
-        Assert.Equal(expected, AuthSettings.ParseScopes(raw));
+        Assert.Equal(expected, SignInSettings.ParseScopes(raw));
     }
 }

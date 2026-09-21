@@ -1,15 +1,13 @@
-using System.Diagnostics.CodeAnalysis;
+using SpeedtestWatcher.Core.Enums;
 
 namespace SpeedtestWatcher.Web.Helpers;
 
-public sealed record ProviderOption(string Id, string Title, string Description, string Image)
+public sealed record ProviderOption(SpeedtestProvider Provider, string Title, string Description, string Image)
 {
     public static IReadOnlyList<ProviderOption> All { get; } =
     [
-        new("ookla", "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
-        new("libre", "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
-        new("cloudflare", "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
+        new(SpeedtestProvider.Ookla, "Ookla", "Popular provider with a global server network", "img/ookla.webp"),
+        new(SpeedtestProvider.Libre, "LibreSpeed", "Open-source, self-hostable speedtest", "img/libre.webp"),
+        new(SpeedtestProvider.Cloudflare, "Cloudflare", "Fast CDN-based testing", "img/cloudflare.webp")
     ];
-
-    public static bool IsKnown([NotNullWhen(true)] string? id) => All.Any(option => option.Id == id);
 }

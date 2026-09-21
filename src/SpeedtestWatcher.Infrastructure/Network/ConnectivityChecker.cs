@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.Settings;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
@@ -10,25 +10,20 @@ public record PreTestCheck(bool Proceed, string? SkipReason)
 
 public class ConnectivityChecker
 {
-    private readonly IConfigRepository _configRepo;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ConnectivityChecker> _logger;
 
-    public ConnectivityChecker(IConfigRepository configRepo, IHttpClientFactory httpClientFactory, ILogger<ConnectivityChecker> logger)
+    public ConnectivityChecker(IHttpClientFactory httpClientFactory, ILogger<ConnectivityChecker> logger)
     {
-        _configRepo = configRepo;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
-    public async Task<PreTestCheck> CheckAsync(CancellationToken cancellationToken = default)
+    public async Task<PreTestCheck> CheckAsync(PreTestCheckSettings settings, CancellationToken cancellationToken = default)
     {
-        var checkEnabled = (await _configRepo.GetValueAsync("internetCheckEnabled", cancellationToken) ?? "true") == "true";
-        var skipIps = ParseList(await _configRepo.GetValueAsync("skipIps", cancellationToken));
+        if (!settings.InternetCheckEnabled && settings.SkipIps.Count == 0) return PreTestCheck.Ok;
 
-        if (!checkEnabled && skipIps.Count == 0) return PreTestCheck.Ok;
-
-        var url = Value(await _configRepo.GetValueAsync("internetCheckUrl", cancellationToken)) ?? "https://icanhazip.com";
+        var url = settings.InternetCheckUrl;
         string publicIp;
         try
         {
@@ -48,17 +43,9 @@ public class ConnectivityChecker
             return new PreTestCheck(false, "No internet connection");
         }
 
-        if (skipIps.Count > 0 && publicIp.Length > 0 && skipIps.Contains(publicIp, StringComparer.OrdinalIgnoreCase))
+        if (settings.SkipIps.Count > 0 && publicIp.Length > 0 && settings.SkipIps.Contains(publicIp, StringComparer.OrdinalIgnoreCase))
             return new PreTestCheck(false, $"Public IP {publicIp} is on the skip list");
 
         return PreTestCheck.Ok;
     }
-
-    private static List<string> ParseList(string? raw) =>
-        Value(raw) is { } value
-            ? value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
-            : [];
-
-    private static string? Value(string? raw) =>
-        string.IsNullOrWhiteSpace(raw) || raw == "none" ? null : raw.Trim();
 }

@@ -54,7 +54,7 @@ public class ServiceRegistrationTests
         var services = CreateBaseServices();
         services.AddHttpClient();
         services.AddDbContext<SpeedtestWatcherDbContext>(options => options.UseSqlite("Data Source=:memory:"));
-        services.AddScoped<IConfigRepository, ConfigRepository>();
+        services.AddScoped<ISettingsStore, SettingsStore>();
         services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();

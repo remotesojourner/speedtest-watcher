@@ -94,9 +94,9 @@
 
     private bool _deleting;
 
-    private bool IsManual => Test?.Type == "custom";
+    private bool IsManual => Test?.Type == TestType.Custom;
 
-    private bool IsSkipped => Test?.Status == "skipped";
+    private bool IsSkipped => Test?.Status == TestStatus.Skipped;
 
     private bool IsFailed => !IsSkipped && !string.IsNullOrEmpty(Test?.Error);
 

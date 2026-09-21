@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Web.Background;
@@ -15,26 +16,26 @@ public class SpeedtestsController : ControllerBase
     private readonly ISpeedtestRepository _repository;
     private readonly IPauseStateService _pauseState;
     private readonly SpeedtestSchedulerService _scheduler;
-    private readonly IConfigRepository _configRepo;
+    private readonly ISettingsStore _settingsStore;
 
     public SpeedtestsController(
         ISpeedtestRepository repository,
         IPauseStateService pauseState,
         SpeedtestSchedulerService scheduler,
-        IConfigRepository configRepo)
+        ISettingsStore settingsStore)
     {
         _repository = repository;
         _pauseState = pauseState;
         _scheduler = scheduler;
-        _configRepo = configRepo;
+        _settingsStore = settingsStore;
     }
 
     [HttpGet]
     public async Task<IActionResult> ListTests(
         [FromQuery] int? afterId,
         [FromQuery] int limit = 10,
-        [FromQuery] string? status = null,
-        [FromQuery] string? type = null,
+        [FromQuery] TestStatus? status = null,
+        [FromQuery] TestType? type = null,
         [FromQuery] bool? healthy = null)
     {
         var tests = await _repository.ListTestsAsync(afterId, limit, status, type, healthy);
@@ -57,7 +58,7 @@ public class SpeedtestsController : ControllerBase
     }
 
     [HttpGet("count")]
-    public async Task<IActionResult> CountTests([FromQuery] string? status = null, [FromQuery] string? type = null, [FromQuery] bool? healthy = null)
+    public async Task<IActionResult> CountTests([FromQuery] TestStatus? status = null, [FromQuery] TestType? type = null, [FromQuery] bool? healthy = null)
     {
         return Ok(new { count = await _repository.CountMatchingAsync(status, type, healthy) });
     }
@@ -92,15 +93,15 @@ public class SpeedtestsController : ControllerBase
         if (_pauseState.IsRunning)
             return Conflict(new { message = "Speedtest is already running" });
 
-        var provider = await _configRepo.GetValueAsync("provider");
-        if (provider == null || provider == "none")
+        var settings = await _settingsStore.GetAsync();
+        if (settings.Provider.Selected == SpeedtestProvider.None)
             return StatusCode(StatusCodes.Status410Gone, new { message = "No speedtest provider selected" });
 
         if (_pauseState.IsPaused)
             return StatusCode(StatusCodes.Status410Gone, new { message = "Speedtests are paused" });
 
         _ = Task.Run(async () => await _scheduler.ExecuteSpeedtestAsync(
-            "custom", serverOverride: serverId?.ToString(CultureInfo.InvariantCulture)));
+            TestType.Custom, serverOverride: serverId?.ToString(CultureInfo.InvariantCulture)));
         return Ok(new { message = "Speedtest successfully created" });
     }
 

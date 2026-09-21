@@ -1,4 +1,3 @@
-using System.Globalization;
 using Cronos;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
@@ -47,7 +46,7 @@ public class SpeedtestSchedulerService : BackgroundService
             {
                 if (await BackgroundDelay.WaitAsync(TimeSpan.FromSeconds(5), stoppingToken))
                 {
-                    await ExecuteSpeedtestAsync("auto", cancellationToken: stoppingToken);
+                    await ExecuteSpeedtestAsync(TestType.Auto, cancellationToken: stoppingToken);
                 }
             }, stoppingToken);
         }
@@ -57,8 +56,8 @@ public class SpeedtestSchedulerService : BackgroundService
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var configRepo = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-                var savedCron = await configRepo.GetValueAsync("cron", stoppingToken) ?? "0 * * * *";
+                var settingsStore = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
+                var savedCron = (await settingsStore.GetAsync(stoppingToken)).Schedule.Cron;
 
                 CronExpression cron;
                 try
@@ -84,8 +83,7 @@ public class SpeedtestSchedulerService : BackgroundService
                     await Task.Delay(delay, stoppingToken);
                 }
 
-                var scheduleOffset = await configRepo.GetValueAsync("scheduleOffset", stoppingToken) ?? "true";
-                if (scheduleOffset == "true")
+                if ((await settingsStore.GetAsync(stoppingToken)).Schedule.RandomOffset)
                 {
                     var randomOffsetSeconds = Random.Shared.Next(30, 300);
                     _logger.LogInformation("Applying random schedule offset of {Seconds}s", randomOffsetSeconds);
@@ -98,7 +96,7 @@ public class SpeedtestSchedulerService : BackgroundService
                     continue;
                 }
 
-                await ExecuteSpeedtestAsync("auto", cancellationToken: stoppingToken);
+                await ExecuteSpeedtestAsync(TestType.Auto, cancellationToken: stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -115,14 +113,14 @@ public class SpeedtestSchedulerService : BackgroundService
         }
     }
 
-    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(string type = "auto", string? serverOverride = null, CancellationToken cancellationToken = default)
+    public async Task<SpeedtestExecutionResult> ExecuteSpeedtestAsync(TestType type = TestType.Auto, string? serverOverride = null, CancellationToken cancellationToken = default)
     {
         if (_pauseState.IsRunning)
         {
             return new SpeedtestExecutionResult { Success = false, Error = "Speedtest is already running" };
         }
 
-        if (_pauseState.IsPaused && type == "auto")
+        if (_pauseState.IsPaused && type == TestType.Auto)
         {
             return new SpeedtestExecutionResult { Success = false, Error = "Speedtest is paused" };
         }
@@ -152,9 +150,9 @@ public class SpeedtestSchedulerService : BackgroundService
         }
     }
 
-    private async Task<SpeedtestExecutionResult> RunWithOneRetryAsync(IServiceProvider services, string type, string? serverOverride, CancellationToken cancellationToken)
+    private async Task<SpeedtestExecutionResult> RunWithOneRetryAsync(IServiceProvider services, TestType type, string? serverOverride, CancellationToken cancellationToken)
     {
-        var configRepo = services.GetRequiredService<IConfigRepository>();
+        var settings = await services.GetRequiredService<ISettingsStore>().GetAsync(cancellationToken);
         var speedtestRepo = services.GetRequiredService<ISpeedtestRepository>();
         var runner = services.GetRequiredService<ISpeedtestRunner>();
         var dispatcher = services.GetRequiredService<IIntegrationDispatcher>();
@@ -162,17 +160,16 @@ public class SpeedtestSchedulerService : BackgroundService
         var serverSelector = services.GetRequiredService<ServerSelector>();
         var connectivity = services.GetRequiredService<ConnectivityChecker>();
 
-        var providerStr = await configRepo.GetValueAsync("provider", cancellationToken) ?? "none";
-        if (!Enum.TryParse<SpeedtestProvider>(providerStr, true, out var provider) || provider == SpeedtestProvider.None)
+        var provider = settings.Provider.Selected;
+        if (provider == SpeedtestProvider.None)
         {
             return new SpeedtestExecutionResult { Success = false, Error = "No provider selected" };
         }
 
-        var libreUrl = provider == SpeedtestProvider.Libre ? await configRepo.GetValueAsync("libreUrl", cancellationToken) : null;
-        var networkInterface = await configRepo.GetValueAsync("interface", cancellationToken);
-        if (libreUrl == "none") libreUrl = null;
+        var libreUrl = provider == SpeedtestProvider.Libre ? settings.Provider.LibreUrl : null;
+        var networkInterface = settings.Provider.Interface;
 
-        var check = await connectivity.CheckAsync(cancellationToken);
+        var check = await connectivity.CheckAsync(settings.PreTestChecks, cancellationToken);
         if (!check.Proceed)
         {
             var reason = check.SkipReason ?? "Skipped";
@@ -180,19 +177,19 @@ public class SpeedtestSchedulerService : BackgroundService
             return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
         }
 
-        var serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
+        var serverId = serverOverride ?? await serverSelector.SelectAsync(settings.Provider, cancellationToken);
 
-        await dispatcher.PublishAsync(new TestStarted(providerStr, type), cancellationToken);
+        await dispatcher.PublishAsync(new TestStarted(provider, type), cancellationToken);
 
         var result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
         if (!result.Success)
         {
             _logger.LogWarning("Speedtest failed ({Error}). Retrying once...", result.Error);
-            serverId = serverOverride ?? await serverSelector.SelectAsync(provider, cancellationToken);
+            serverId = serverOverride ?? await serverSelector.SelectAsync(settings.Provider, cancellationToken);
             result = await runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
         }
 
-        var thresholds = await ThresholdsAsync(configRepo, cancellationToken);
+        var targets = settings.Targets;
         var testEntity = new Speedtest
         {
             ServerId = result.ServerId,
@@ -206,11 +203,11 @@ public class SpeedtestSchedulerService : BackgroundService
             Type = type,
             ResultId = result.ResultId,
             Error = result.Success ? null : result.Error ?? "Unknown error",
-            Status = result.Success ? "completed" : "failed",
-            Healthy = result.Success ? thresholds.Evaluate(result.Ping, result.Download, result.Upload) : null,
-            ThresholdPing = thresholds.Ping,
-            ThresholdDownload = thresholds.Download,
-            ThresholdUpload = thresholds.Upload,
+            Status = result.Success ? TestStatus.Completed : TestStatus.Failed,
+            Healthy = result.Success ? targets.Evaluate(result.Ping, result.Download, result.Upload) : null,
+            ThresholdPing = targets.Ping,
+            ThresholdDownload = targets.Download,
+            ThresholdUpload = targets.Upload,
             Created = DateTime.UtcNow
         };
 
@@ -241,7 +238,7 @@ public class SpeedtestSchedulerService : BackgroundService
     private async Task RecordSkippedAsync(
         ISpeedtestRepository speedtestRepo,
         IIntegrationDispatcher dispatcher,
-        string type,
+        TestType type,
         string reason,
         CancellationToken cancellationToken)
     {
@@ -250,7 +247,7 @@ public class SpeedtestSchedulerService : BackgroundService
             Ping = -1,
             Download = -1,
             Upload = -1,
-            Status = "skipped",
+            Status = TestStatus.Skipped,
             Error = reason,
             Type = type,
             Created = DateTime.UtcNow
@@ -261,31 +258,5 @@ public class SpeedtestSchedulerService : BackgroundService
 
         await dispatcher.PublishAsync(new TestSkipped(skipped), cancellationToken);
         await _hubContext.Clients.All.SendAsync("NewTestResult", SpeedtestDto.From(skipped), cancellationToken);
-    }
-
-    private sealed record Thresholds(int? Ping, double? Download, double? Upload)
-    {
-        public bool? Evaluate(int ping, double download, double upload)
-        {
-            if (Ping == null && Download == null && Upload == null) return null;
-            if (Ping is { } maxPing && ping > maxPing) return false;
-            if (Download is { } minDownload && download < minDownload) return false;
-            if (Upload is { } minUpload && upload < minUpload) return false;
-            return true;
-        }
-    }
-
-    private static async Task<Thresholds> ThresholdsAsync(IConfigRepository configRepo, CancellationToken cancellationToken)
-    {
-        return new Thresholds(
-            ParseInt(await configRepo.GetValueAsync("ping", cancellationToken)),
-            ParseDouble(await configRepo.GetValueAsync("download", cancellationToken)),
-            ParseDouble(await configRepo.GetValueAsync("upload", cancellationToken)));
-
-        static int? ParseInt(string? raw) =>
-            int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) && value > 0 ? value : null;
-
-        static double? ParseDouble(string? raw) =>
-            double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && value > 0 ? value : null;
     }
 }

@@ -1,10 +1,12 @@
+using SpeedtestWatcher.Core.Enums;
+
 namespace SpeedtestWatcher.Core.DTOs;
 
 public class AuthSettingsRequest
 {
     public bool Enabled { get; set; }
 
-    public string VisitorAccess { get; set; } = "none";
+    public VisitorAccess VisitorAccess { get; set; } = VisitorAccess.None;
 
     public string? Authority { get; set; }
 

@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Core.DTOs;
@@ -13,12 +14,12 @@ public class SpeedtestDto
     public double Download { get; set; }
     public double Upload { get; set; }
     public string? Error { get; set; }
-    public string Status { get; set; } = "completed";
+    public TestStatus Status { get; set; } = TestStatus.Completed;
     public bool? Healthy { get; set; }
     public int? ThresholdPing { get; set; }
     public double? ThresholdDownload { get; set; }
     public double? ThresholdUpload { get; set; }
-    public string Type { get; set; } = "auto";
+    public TestType Type { get; set; } = TestType.Auto;
     public string? ResultId { get; set; }
     public int Time { get; set; }
     public string Created { get; set; } = string.Empty;

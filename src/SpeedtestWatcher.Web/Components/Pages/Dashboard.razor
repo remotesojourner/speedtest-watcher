@@ -93,7 +93,7 @@
                         {
                             <MudText Typo="Typo.body2" Class="sw-muted">No tests yet.</MudText>
                         }
-                        else if (Latest.Status == "skipped")
+                        else if (Latest.Status == TestStatus.Skipped)
                         {
                             <MudText Typo="Typo.body2" Class="sw-muted" Style="overflow-wrap:anywhere;">Skipped — @Latest.Error</MudText>
                         }

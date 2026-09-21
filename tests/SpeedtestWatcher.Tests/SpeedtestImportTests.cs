@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -53,14 +55,14 @@ public class SpeedtestImportTests : IDisposable
         var restored = await check.Speedtests.OrderBy(t => t.Created).ToListAsync(cancellationToken);
         Assert.Equal(4, restored.Count);
 
-        var healthy = restored.Single(t => t.Status == "completed" && t.Download > 1);
+        var healthy = restored.Single(t => t.Status == TestStatus.Completed && t.Download > 1);
         Assert.Equal(Morning, healthy.Created);
         Assert.Equal((12, 941.25, 110.5, 0.75), (healthy.Ping, healthy.Download, healthy.Upload, healthy.Jitter!.Value));
         Assert.Equal((true, 25, 100.0, 50.0), (healthy.Healthy!.Value, healthy.ThresholdPing!.Value, healthy.ThresholdDownload!.Value, healthy.ThresholdUpload!.Value));
-        Assert.Equal(("custom", "Acme Fibre", "speed.acme.example", "r-1"), (healthy.Type, healthy.ServerName, healthy.ServerHost, healthy.ResultId));
+        Assert.Equal((TestType.Custom, "Acme Fibre", "speed.acme.example", "r-1"), (healthy.Type, healthy.ServerName, healthy.ServerHost, healthy.ResultId));
 
-        Assert.Equal("Network unreachable", restored.Single(t => t.Status == "failed").Error);
-        Assert.Equal("Public IP 203.0.113.9 is on the skip list", restored.Single(t => t.Status == "skipped").Error);
+        Assert.Equal("Network unreachable", restored.Single(t => t.Status == TestStatus.Failed).Error);
+        Assert.Equal("Public IP 203.0.113.9 is on the skip list", restored.Single(t => t.Status == TestStatus.Skipped).Error);
     }
 
     [Fact]
@@ -113,10 +115,23 @@ public class SpeedtestImportTests : IDisposable
         var imported = await new SpeedtestRepository(db).ImportTestsAsync(Parse(pascalCaseExport), cancellationToken);
 
         Assert.Equal(3, imported);
-        Assert.Equal(1, await db.Speedtests.CountAsync(t => t.Status == "skipped", cancellationToken));
+        Assert.Equal(1, await db.Speedtests.CountAsync(t => t.Status == TestStatus.Skipped, cancellationToken));
     }
 
-    private static List<Speedtest> Parse(string json) => JsonSerializer.Deserialize<List<Speedtest>>(json, ApiJson)!;
+    [Theory]
+    [InlineData("paused", null, "cron", TestStatus.Completed, TestType.Auto)]
+    [InlineData(null, "Network unreachable", null, TestStatus.Failed, TestType.Auto)]
+    [InlineData("SKIPPED", "On the skip list", "Custom", TestStatus.Skipped, TestType.Custom)]
+    public void StatusesAndTypesItDoesNotKnow_FallBackToWhatTheRowSuggests(
+        string? status, string? error, string? type, TestStatus expectedStatus, TestType expectedType)
+    {
+        var row = new SpeedtestImportRow { Status = status, Error = error, Type = type }.ToSpeedtest();
+
+        Assert.Equal((expectedStatus, expectedType), (row.Status, row.Type));
+    }
+
+    private static List<Speedtest> Parse(string json) =>
+        JsonSerializer.Deserialize<List<SpeedtestImportRow>>(json, ApiJson)!.Select(row => row.ToSpeedtest()).ToList();
 
     private static async Task<string> ExportAsync(SqliteConnection database, CancellationToken cancellationToken)
     {
@@ -132,11 +147,11 @@ public class SpeedtestImportTests : IDisposable
         {
             Ping = 12, Jitter = 0.75, Download = 941.25, Upload = 110.5, Healthy = true,
             ThresholdPing = 25, ThresholdDownload = 100, ThresholdUpload = 50,
-            Type = "custom", ServerName = "Acme Fibre", ServerHost = "speed.acme.example", ResultId = "r-1", Time = 14,
+            Type = TestType.Custom, ServerName = "Acme Fibre", ServerHost = "speed.acme.example", ResultId = "r-1", Time = 14,
             Created = Morning
         }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = "failed", Error = "Network unreachable", Created = Morning.AddHours(1) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = "skipped", Error = "Public IP 203.0.113.9 is on the skip list", Created = Morning.AddHours(2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Error = "Network unreachable", Created = Morning.AddHours(1) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Skipped, Error = "Public IP 203.0.113.9 is on the skip list", Created = Morning.AddHours(2) }, cancellationToken);
     }
 
     private SqliteConnection NewDatabase()

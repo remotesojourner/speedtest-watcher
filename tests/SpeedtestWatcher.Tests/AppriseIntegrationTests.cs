@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Models;
@@ -13,7 +14,7 @@ public class AppriseIntegrationTests
 
     private static readonly Speedtest Result = new()
     {
-        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = "completed", Healthy = true, Error = "Network unreachable"
+        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true, Error = "Network unreachable"
     };
 
     private readonly RecordingHandler _handler = new();

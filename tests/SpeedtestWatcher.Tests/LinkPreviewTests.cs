@@ -1,4 +1,5 @@
 using FakeItEasy;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Web.Helpers;
@@ -14,7 +15,7 @@ public sealed class LinkPreviewTests
     {
         A.CallTo(() => _results.GetLatestAsync(A<CancellationToken>._)).Returns(new Speedtest
         {
-            Status = "failed", Ping = -1, Download = -1, Upload = -1, Created = new DateTime(2026, 9, 15, 7, 0, 0)
+            Status = TestStatus.Failed, Ping = -1, Download = -1, Upload = -1, Created = new DateTime(2026, 9, 15, 7, 0, 0)
         });
         A.CallTo(() => _results.GetLatestCompletedAsync(A<CancellationToken>._)).Returns(new Speedtest
         {

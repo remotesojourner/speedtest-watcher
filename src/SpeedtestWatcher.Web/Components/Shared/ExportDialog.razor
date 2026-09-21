@@ -38,8 +38,8 @@
 
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public string? Status { get; set; }
-    [Parameter] public string? Type { get; set; }
+    [Parameter] public TestStatus? Status { get; set; }
+    [Parameter] public TestType? Type { get; set; }
     [Parameter] public bool? Healthy { get; set; }
     [Parameter] public IReadOnlyCollection<int> SelectedIds { get; set; } = [];
 
@@ -80,11 +80,11 @@
         _counting = false;
     }
 
-    private async Task<int?> CountAsync(string? status, string? type, bool? healthy)
+    private async Task<int?> CountAsync(TestStatus? status, TestType? type, bool? healthy)
     {
         var query = new List<string>();
-        if (status != null) query.Add($"status={Uri.EscapeDataString(status)}");
-        if (type != null) query.Add($"type={Uri.EscapeDataString(type)}");
+        if (status is { } wantedStatus) query.Add($"status={wantedStatus.ToName()}");
+        if (type is { } wantedType) query.Add($"type={wantedType.ToName()}");
         if (healthy != null) query.Add($"healthy={(healthy.Value ? "true" : "false")}");
 
         var result = await Api.GetAsync<CountResult>($"/api/speedtests/count?{string.Join("&", query)}");

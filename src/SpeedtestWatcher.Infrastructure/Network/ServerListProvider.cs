@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Hosting;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
@@ -20,10 +22,10 @@ public class ServerListProvider
         _serversDir = options.Value.ServersDirectory;
     }
 
-    public async Task<object?> GetServersAsync(string provider, CancellationToken cancellationToken = default)
+    public async Task<object?> GetServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(_serversDir);
-        var filePath = Path.Combine(_serversDir, $"{provider}.json");
+        var filePath = CacheFilePath(provider);
 
         if (File.Exists(filePath))
         {
@@ -49,7 +51,7 @@ public class ServerListProvider
         return new Dictionary<string, object>();
     }
 
-    public async Task RefreshServersAsync(string provider, CancellationToken cancellationToken = default)
+    public async Task RefreshServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -57,7 +59,7 @@ public class ServerListProvider
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(15);
 
-            var url = provider == "ookla"
+            var url = provider == SpeedtestProvider.Ookla
                 ? "https://www.speedtest.net/api/js/servers?limit=20"
                 : "https://librespeed.org/backend-servers/servers.php";
 
@@ -75,7 +77,7 @@ public class ServerListProvider
                     if (row.TryGetProperty("id", out var idElem))
                     {
                         var id = idElem.ToString();
-                        if (provider == "ookla")
+                        if (provider == SpeedtestProvider.Ookla)
                         {
                             dict[id] = new
                             {
@@ -95,8 +97,7 @@ public class ServerListProvider
                 }
             }
 
-            var filePath = Path.Combine(_serversDir, $"{provider}.json");
-            await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(dict, CacheFileJson), cancellationToken);
+            await File.WriteAllTextAsync(CacheFilePath(provider), JsonSerializer.Serialize(dict, CacheFileJson), cancellationToken);
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or IOException or UnauthorizedAccessException
                                    || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
@@ -104,4 +105,6 @@ public class ServerListProvider
             _logger.LogWarning(ex, "Could not load {Provider} server list", provider);
         }
     }
+
+    private string CacheFilePath(SpeedtestProvider provider) => Path.Combine(_serversDir, $"{provider.ToName()}.json");
 }

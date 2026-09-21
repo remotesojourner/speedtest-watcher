@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
 
@@ -8,7 +9,7 @@ namespace SpeedtestWatcher.Web.Services.Auth;
 
 public sealed record AuthSnapshot(
     bool Enabled,
-    string VisitorAccess,
+    VisitorAccess VisitorAccess,
     string? Authority,
     string? ClientId,
     string? ClientSecret,
@@ -16,7 +17,7 @@ public sealed record AuthSnapshot(
     string? ApiTokenHash,
     bool DisabledByEnvironment)
 {
-    public static readonly AuthSnapshot Default = new(false, "none", null, null, null, ["openid", "profile", "email"], null, false);
+    public static readonly AuthSnapshot Default = new(false, VisitorAccess.None, null, null, null, ["openid", "profile", "email"], null, false);
 
     public bool Configured => !string.IsNullOrEmpty(Authority) && !string.IsNullOrEmpty(ClientId);
 
@@ -26,11 +27,6 @@ public sealed record AuthSnapshot(
 public sealed class AuthSettings : IDisposable
 {
     public const string OidcScheme = OpenIdConnectDefaults.AuthenticationScheme;
-
-    public static readonly IReadOnlySet<string> Keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "authEnabled", "visitorAccess", "oidcAuthority", "oidcClientId", "oidcClientSecret", "oidcScopes", "apiTokenHash"
-    };
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IAuthenticationSchemeProvider _schemes;
@@ -58,22 +54,16 @@ public sealed class AuthSettings : IDisposable
         try
         {
             using var scope = _scopeFactory.CreateScope();
-            var config = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-
-            async Task<string?> ReadAsync(string key)
-            {
-                var value = await config.GetValueAsync(key, cancellationToken);
-                return string.IsNullOrWhiteSpace(value) || value == "none" ? null : value;
-            }
+            var signIn = (await scope.ServiceProvider.GetRequiredService<ISettingsStore>().GetAsync(cancellationToken)).SignIn;
 
             var snapshot = new AuthSnapshot(
-                Enabled: await ReadAsync("authEnabled") == "true",
-                VisitorAccess: await ReadAsync("visitorAccess") == "read" ? "read" : "none",
-                Authority: await ReadAsync("oidcAuthority"),
-                ClientId: await ReadAsync("oidcClientId"),
-                ClientSecret: await ReadAsync("oidcClientSecret"),
-                Scopes: ParseScopes(await ReadAsync("oidcScopes")),
-                ApiTokenHash: await ReadAsync("apiTokenHash"),
+                Enabled: signIn.Enabled,
+                VisitorAccess: signIn.VisitorAccess,
+                Authority: signIn.Authority,
+                ClientId: signIn.ClientId,
+                ClientSecret: signIn.ClientSecret,
+                Scopes: signIn.Scopes,
+                ApiTokenHash: signIn.ApiTokenHash,
                 DisabledByEnvironment: _disabledByEnvironment);
 
             Current = snapshot;
@@ -90,17 +80,6 @@ public sealed class AuthSettings : IDisposable
         {
             _reloadLock.Release();
         }
-    }
-
-    public static IReadOnlyList<string> ParseScopes(string? raw)
-    {
-        var scopes = (raw ?? "")
-            .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
-
-        if (!scopes.Contains("openid")) scopes.Insert(0, "openid");
-        return scopes;
     }
 
     public void Dispose() => _reloadLock.Dispose();

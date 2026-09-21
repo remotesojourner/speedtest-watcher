@@ -27,9 +27,9 @@ public class SchedulerRetryTests : IDisposable
         var scheduler = await BuildSchedulerAsync(runner, pauseState);
 
         var competing = new List<Task<SpeedtestExecutionResult>>();
-        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken));
+        pauseState.OnFirstMarkedIdle = () => competing.Add(scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken));
 
-        var result = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+        var result = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
         await Task.WhenAll(competing);
 
         Assert.True(result.Success, result.Error);
@@ -43,13 +43,13 @@ public class SchedulerRetryTests : IDisposable
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+        await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
         var callsAfterFirstRun = runner.Calls;
 
         runner.HoldNextRun();
-        var holding = scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+        var holding = scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
         await runner.RunStarted;
-        var overlapping = await scheduler.ExecuteSpeedtestAsync("custom", cancellationToken: cancellationToken);
+        var overlapping = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
         runner.ReleaseHeldRun();
         var held = await holding;
 
@@ -65,7 +65,7 @@ public class SchedulerRetryTests : IDisposable
         var runner = new FailsFirstRunner();
         var scheduler = await BuildSchedulerAsync(runner, new ObservablePauseState());
 
-        await scheduler.ExecuteSpeedtestAsync("custom", "4242", TestContext.Current.CancellationToken);
+        await scheduler.ExecuteSpeedtestAsync(TestType.Custom, "4242", TestContext.Current.CancellationToken);
 
         Assert.Equal(["4242", "4242"], runner.ServerIds);
     }
@@ -78,7 +78,7 @@ public class SchedulerRetryTests : IDisposable
         services.AddSignalR();
         services.AddHttpClient();
         services.AddDbContext<SpeedtestWatcherDbContext>(options => options.UseSqlite(_connection));
-        services.AddScoped<IConfigRepository, ConfigRepository>();
+        services.AddScoped<ISettingsStore, SettingsStore>();
         services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
@@ -94,10 +94,9 @@ public class SchedulerRetryTests : IDisposable
         using (var scope = provider.CreateScope())
         {
             scope.ServiceProvider.GetRequiredService<SpeedtestWatcherDbContext>().Database.EnsureCreated();
-            var config = scope.ServiceProvider.GetRequiredService<IConfigRepository>();
-            await config.InsertDefaultsAsync();
-            await config.UpdateValueAsync("provider", "ookla");
-            await config.UpdateValueAsync("internetCheckEnabled", "false");
+            var settings = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
+            await settings.InsertDefaultsAsync();
+            await settings.SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla", ["internetCheckEnabled"] = "false" });
         }
 
         return provider.GetRequiredService<SpeedtestSchedulerService>();

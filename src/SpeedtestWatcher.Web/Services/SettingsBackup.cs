@@ -2,25 +2,27 @@ using System.Text.Json;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Repositories;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Core.Settings;
 
 namespace SpeedtestWatcher.Web.Services;
 
 public sealed class SettingsBackup
 {
-    private readonly IConfigRepository _config;
+    private readonly ISettingsStore _store;
+    private readonly SettingsService _settings;
     private readonly IIntegrationRepository _integrations;
     private readonly IRecommendationRepository _recommendations;
     private readonly IIntegrationDispatcher _dispatcher;
 
     public SettingsBackup(
-        IConfigRepository config,
+        ISettingsStore store,
+        SettingsService settings,
         IIntegrationRepository integrations,
         IRecommendationRepository recommendations,
         IIntegrationDispatcher dispatcher)
     {
-        _config = config;
+        _store = store;
+        _settings = settings;
         _integrations = integrations;
         _recommendations = recommendations;
         _dispatcher = dispatcher;
@@ -28,9 +30,10 @@ public sealed class SettingsBackup
 
     public async Task<SettingsBackupDto> ExportAsync(CancellationToken cancellationToken = default) => new()
     {
-        Config = (await _config.ListAllAsync(cancellationToken))
-            .Where(entry => !AuthSettings.Keys.Contains(entry.Key))
-            .OrderBy(entry => entry.Key, StringComparer.Ordinal)
+        Config = (await _store.GetValuesAsync(cancellationToken))
+            .Where(setting => !SettingDefinitions.Find(setting.Key)!.IsManagedOnSecurityTab)
+            .OrderBy(setting => setting.Key, StringComparer.Ordinal)
+            .Select(setting => new ConfigEntry { Key = setting.Key, Value = setting.Value })
             .ToList(),
         Integrations = await _integrations.ListAllAsync(cancellationToken),
         Recommendations = await _recommendations.GetAsync(cancellationToken)
@@ -40,11 +43,12 @@ public sealed class SettingsBackup
     {
         var result = new SettingsImportResultDto();
 
+        var importable = new Dictionary<string, string>();
         foreach (var entry in backup.Config)
         {
-            if (await IsImportableSettingAsync(entry, cancellationToken))
+            if (IsImportableSetting(entry))
             {
-                await _config.UpdateValueAsync(entry.Key, entry.Value, cancellationToken);
+                importable[entry.Key] = entry.Value;
                 result.Settings++;
             }
             else
@@ -52,6 +56,9 @@ public sealed class SettingsBackup
                 result.Skipped++;
             }
         }
+
+        if (importable.Count > 0)
+            await _settings.SaveAsync(importable, cancellationToken);
 
         var integrationTypes = _dispatcher.Schemas;
         foreach (var integration in backup.Integrations)
@@ -80,10 +87,9 @@ public sealed class SettingsBackup
         return result;
     }
 
-    private async Task<bool> IsImportableSettingAsync(ConfigEntry entry, CancellationToken cancellationToken) =>
-        !AuthSettings.Keys.Contains(entry.Key)
-        && ConfigRepository.ConfigDefaults.ContainsKey(entry.Key)
-        && await _config.ValidateInputAsync(entry.Key, entry.Value, cancellationToken) == null;
+    private static bool IsImportableSetting(ConfigEntry entry) =>
+        SettingDefinitions.Find(entry.Key) is { IsManagedOnSecurityTab: false } definition
+        && definition.ProblemWith(entry.Value) == null;
 
     private static bool IsJsonObject(string data)
     {

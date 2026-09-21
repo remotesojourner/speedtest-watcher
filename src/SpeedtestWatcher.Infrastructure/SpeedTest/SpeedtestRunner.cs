@@ -59,7 +59,7 @@ public class SpeedtestRunner : ISpeedtestRunner
             args.Add("--accept-gdpr");
             args.Add("--format=json");
 
-            if (!string.IsNullOrEmpty(networkInterface) && networkInterface != "none")
+            if (!string.IsNullOrEmpty(networkInterface))
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     args.Add($"--ip={networkInterface}");
@@ -67,7 +67,7 @@ public class SpeedtestRunner : ISpeedtestRunner
                     args.Add($"--interface={networkInterface}");
             }
 
-            if (!string.IsNullOrEmpty(serverId) && serverId != "none")
+            if (!string.IsNullOrEmpty(serverId))
                 args.Add($"--server-id={serverId}");
         }
         else if (provider == SpeedtestProvider.Libre)
@@ -75,10 +75,10 @@ public class SpeedtestRunner : ISpeedtestRunner
             args.Add("--json");
             args.Add("--duration=5");
 
-            if (!string.IsNullOrEmpty(networkInterface) && networkInterface != "none")
+            if (!string.IsNullOrEmpty(networkInterface))
                 args.Add($"--source={networkInterface}");
 
-            if (!string.IsNullOrEmpty(customUrl) && customUrl != "none")
+            if (!string.IsNullOrEmpty(customUrl))
             {
                 var customServer = new[]
                 {
@@ -99,7 +99,7 @@ public class SpeedtestRunner : ISpeedtestRunner
                 args.Add($"--local-json={tempConfigPath}");
                 args.Add("--server=1");
             }
-            else if (!string.IsNullOrEmpty(serverId) && serverId != "none")
+            else if (!string.IsNullOrEmpty(serverId))
             {
                 args.Add($"--server={serverId}");
             }
@@ -108,7 +108,7 @@ public class SpeedtestRunner : ISpeedtestRunner
         {
             args.Add("--output-format=json");
 
-            if (!string.IsNullOrEmpty(networkInterface) && networkInterface != "none")
+            if (!string.IsNullOrEmpty(networkInterface))
             {
                 if (networkInterface.Contains(':'))
                     args.Add($"--ipv6={networkInterface}");

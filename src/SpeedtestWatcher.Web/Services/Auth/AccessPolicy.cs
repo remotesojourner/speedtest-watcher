@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Web.Hubs;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
@@ -15,7 +16,7 @@ public static class AccessPolicy
     {
         if (!settings.IsActive) return Access.Full;
         if (signedIn || internalCall || validApiToken) return Access.Full;
-        return settings.VisitorAccess == "read" ? Access.ReadOnly : Access.None;
+        return settings.VisitorAccess == VisitorAccess.Read ? Access.ReadOnly : Access.None;
     }
 
     public static bool IsPublic(PathString path) =>

@@ -51,7 +51,7 @@
             }
             else if (_state == AppState.Ready)
             {
-                <div class="@(ConfigService.CurrentConfig.Provider is "ookla" or "libre" ? "sw-split-button sw-run-test" : "sw-run-test")">
+                <div class="@(CanChooseServer ? "sw-split-button sw-run-test" : "sw-run-test")">
                     <MudTooltip Text="@RunTestTooltip" Placement="Placement.Bottom">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
                                    StartIcon="@Icons.Material.Filled.Speed" Class="sw-split-main"
@@ -60,7 +60,7 @@
                             @(StatusService.Running ? "Running..." : "Run Test")
                         </MudButton>
                     </MudTooltip>
-                    @if (ConfigService.CurrentConfig.Provider is "ookla" or "libre")
+                    @if (CanChooseServer)
                     {
                         <MudTooltip Text="@RunOnServerTooltip" Placement="Placement.Bottom">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
@@ -256,7 +256,7 @@
         if (result.Value is not { } cfg) return AppState.ApiError;
 
         ConfigService.SetConfig(cfg);
-        if (cfg.Provider == "none" && !cfg.ViewMode)
+        if (cfg.Provider == SpeedtestProvider.None && !cfg.ViewMode)
         {
             Navigation.NavigateTo("/welcome");
         }
@@ -279,11 +279,13 @@
         if (_updateVersion != null) await InvokeAsync(StateHasChanged);
     }
 
+    private bool CanChooseServer => ConfigService.CurrentConfig.Provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre;
+
     private async Task RunOnServerAsync()
     {
         var parameters = new DialogParameters<RunWithServerDialog>
         {
-            { x => x.Provider, ConfigService.CurrentConfig.Provider ?? "ookla" }
+            { x => x.Provider, ConfigService.CurrentConfig.Provider }
         };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
         await DialogService.ShowAsync<RunWithServerDialog>("Run a test on a specific server", parameters, options);
@@ -333,7 +335,7 @@
                 if (_disposed) return;
                 SpeedtestService.PrependTest(test);
                 StatusService.UpdateStatus(false, StatusService.Paused);
-                if (test.Status == "skipped")
+                if (test.Status == TestStatus.Skipped)
                     Snackbar.Add($"Speedtest skipped: {test.Error}", Severity.Info);
                 else
                     Snackbar.Add($"Speedtest complete: ↓ {test.Download:F1} Mbps  ↑ {test.Upload:F1} Mbps", Severity.Success);

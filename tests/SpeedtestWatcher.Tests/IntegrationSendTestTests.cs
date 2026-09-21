@@ -1,4 +1,5 @@
 using System.Net;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Integrations;
@@ -9,7 +10,7 @@ public class IntegrationSendTestTests
 {
     private static readonly Speedtest Sample = new()
     {
-        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = "completed", Healthy = true,
+        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true,
         ServerName = "Acme Fibre", Created = new DateTime(2026, 9, 16, 8, 5, 0)
     };
 

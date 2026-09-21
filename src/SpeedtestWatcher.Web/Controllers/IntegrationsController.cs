@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
@@ -157,8 +158,8 @@ public class IntegrationsController : ControllerBase
         Jitter = 1.2,
         Download = 250,
         Upload = 50,
-        Status = "completed",
+        Status = TestStatus.Completed,
         Healthy = true,
-        Type = "custom"
+        Type = TestType.Custom
     };
 }

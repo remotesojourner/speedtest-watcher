@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Infrastructure.Data;
@@ -18,6 +19,8 @@ public class SpeedtestWatcherDbContext : DbContext
     {
         configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
         configurationBuilder.Properties<DateTime?>().HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<TestStatus>().HaveConversion<EnumNameConverter<TestStatus>>();
+        configurationBuilder.Properties<TestType>().HaveConversion<EnumNameConverter<TestType>>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,12 +40,12 @@ public class SpeedtestWatcherDbContext : DbContext
             entity.Property(e => e.Download).HasColumnName("download").IsRequired();
             entity.Property(e => e.Upload).HasColumnName("upload").IsRequired();
             entity.Property(e => e.Error).HasColumnName("error");
-            entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("completed");
+            entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue(TestStatus.Completed);
             entity.Property(e => e.Healthy).HasColumnName("healthy");
             entity.Property(e => e.ThresholdPing).HasColumnName("thresholdPing");
             entity.Property(e => e.ThresholdDownload).HasColumnName("thresholdDownload");
             entity.Property(e => e.ThresholdUpload).HasColumnName("thresholdUpload");
-            entity.Property(e => e.Type).HasColumnName("type").HasDefaultValue("auto");
+            entity.Property(e => e.Type).HasColumnName("type").HasDefaultValue(TestType.Auto);
             entity.Property(e => e.ResultId).HasColumnName("resultId");
             entity.Property(e => e.Time).HasColumnName("time").HasDefaultValue(0);
             entity.Property(e => e.Created).HasColumnName("created");

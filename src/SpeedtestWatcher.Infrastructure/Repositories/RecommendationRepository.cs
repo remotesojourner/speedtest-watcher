@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -28,7 +29,7 @@ public class RecommendationRepository : IRecommendationRepository
     public async Task<Recommendation?> RecalculateAsync(CancellationToken cancellationToken = default)
     {
         var recentTests = await _db.Speedtests
-            .Where(t => t.Status == "completed")
+            .Where(t => t.Status == TestStatus.Completed)
             .OrderByDescending(t => t.Created)
             .Take(CompletedTestsNeeded)
             .ToListAsync(cancellationToken);
@@ -58,7 +59,7 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task RemovePlaceholderAsync(CancellationToken cancellationToken = default)
     {
-        if (await _db.Speedtests.CountAsync(t => t.Status == "completed", cancellationToken) >= CompletedTestsNeeded) return;
+        if (await _db.Speedtests.CountAsync(t => t.Status == TestStatus.Completed, cancellationToken) >= CompletedTestsNeeded) return;
 
         await _db.Recommendations
             .Where(r => r.Ping == PlaceholderPing && r.Download == PlaceholderDownload && r.Upload == PlaceholderUpload)

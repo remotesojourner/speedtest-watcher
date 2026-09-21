@@ -1,12 +1,15 @@
 using System.Text.Json;
+using FakeItEasy;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Repositories;
+using SpeedtestWatcher.Web.Hubs;
 using SpeedtestWatcher.Web.Services;
-using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -17,13 +20,14 @@ public class SettingsBackupTests : IDisposable
     private static readonly JsonSerializerOptions ApiJson = new(JsonSerializerDefaults.Web);
 
     private readonly SqliteConnection _database = new("DataSource=:memory:");
+    private readonly IClientProxy _everyone = A.Fake<IClientProxy>();
 
     public SettingsBackupTests()
     {
         _database.Open();
         using var db = Context();
         db.Database.EnsureCreated();
-        new ConfigRepository(db).InsertDefaultsAsync().GetAwaiter().GetResult();
+        new SettingsStore(db).InsertDefaultsAsync().GetAwaiter().GetResult();
     }
 
     [Fact]
@@ -33,9 +37,7 @@ public class SettingsBackupTests : IDisposable
         string integrationId;
         await using (var db = Context())
         {
-            var config = new ConfigRepository(db);
-            await config.UpdateValueAsync("cron", "0,30 * * * *", cancellationToken);
-            await config.UpdateValueAsync("chartRange", "24h", cancellationToken);
+            await new SettingsStore(db).SaveAsync(new Dictionary<string, string> { ["cron"] = "0,30 * * * *", ["chartRange"] = "24h" }, cancellationToken);
             integrationId = await new IntegrationRepository(db).CreateAsync("discord", "Family server", DiscordData, cancellationToken);
             await new RecommendationRepository(db).SaveAsync(12, 940.5, 110.25, cancellationToken);
         }
@@ -50,9 +52,8 @@ public class SettingsBackupTests : IDisposable
         }
 
         await using var check = Context();
-        var configCheck = new ConfigRepository(check);
-        Assert.Equal("0,30 * * * *", await configCheck.GetValueAsync("cron", cancellationToken));
-        Assert.Equal("24h", await configCheck.GetValueAsync("chartRange", cancellationToken));
+        var values = await new SettingsStore(check).GetValuesAsync(cancellationToken);
+        Assert.Equal(("0,30 * * * *", "24h"), (values["cron"], values["chartRange"]));
 
         var integration = Assert.Single(await new IntegrationRepository(check).ListAllAsync(cancellationToken));
         Assert.Equal((integrationId, "discord", "Family server", DiscordData), (integration.Id, integration.Name, integration.DisplayName, integration.Data));
@@ -89,15 +90,13 @@ public class SettingsBackupTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await using (var db = Context())
         {
-            var config = new ConfigRepository(db);
-            await config.UpdateValueAsync("oidcClientSecret", "hunter2", cancellationToken);
-            await config.UpdateValueAsync("apiTokenHash", "ABC123", cancellationToken);
+            await new SettingsStore(db).SaveSignInAsync(new Dictionary<string, string> { ["oidcClientSecret"] = "hunter2", ["apiTokenHash"] = "ABC123" }, cancellationToken);
         }
 
         var backupJson = await ExportJsonAsync(cancellationToken);
 
         Assert.DoesNotContain("hunter2", backupJson);
-        Assert.DoesNotContain(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!.Config, entry => AuthSettings.Keys.Contains(entry.Key));
+        Assert.DoesNotContain(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!.Config, entry => SettingDefinitions.Find(entry.Key)!.IsManagedOnSecurityTab);
     }
 
     [Fact]
@@ -130,14 +129,14 @@ public class SettingsBackupTests : IDisposable
         }
 
         Assert.Equal((1, 1, false, 7), (result.Settings, result.Integrations, result.Recommendations, result.Skipped));
+        A.CallTo(() => _everyone.SendCoreAsync("ConfigChanged", A<object?[]>.That.IsSameSequenceAs(new object?[] { "chartRange", "30d" }), A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
+        A.CallTo(() => _everyone.SendCoreAsync(A<string>._, A<object?[]>._, A<CancellationToken>._)).MustHaveHappenedOnceExactly();
 
         await using var check = Context();
-        var config = new ConfigRepository(check);
-        Assert.Equal("false", await config.GetValueAsync("authEnabled", cancellationToken));
-        Assert.Equal("none", await config.GetValueAsync("oidcClientSecret", cancellationToken));
-        Assert.Null(await config.GetValueAsync("madeUpSetting", cancellationToken));
-        Assert.Equal("0 * * * *", await config.GetValueAsync("cron", cancellationToken));
-        Assert.Equal("30d", await config.GetValueAsync("chartRange", cancellationToken));
+        var values = await new SettingsStore(check).GetValuesAsync(cancellationToken);
+        Assert.Equal(("false", "none", "0 * * * *", "30d"), (values["authEnabled"], values["oidcClientSecret"], values["cron"], values["chartRange"]));
+        Assert.False(await check.Configs.AnyAsync(entry => entry.Key == "madeUpSetting", cancellationToken));
         Assert.Equal("Phone", Assert.Single(await new IntegrationRepository(check).ListAllAsync(cancellationToken)).DisplayName);
         Assert.Null(await new RecommendationRepository(check).GetAsync(cancellationToken));
     }
@@ -158,7 +157,7 @@ public class SettingsBackupTests : IDisposable
         }
 
         await using var check = Context();
-        Assert.Equal("24h", await new ConfigRepository(check).GetValueAsync("chartRange", cancellationToken));
+        Assert.Equal("24h", (await new SettingsStore(check).GetValuesAsync(cancellationToken))["chartRange"]);
         Assert.Equal("Backup check", (await new IntegrationRepository(check).GetByIdAsync("b77102ac0f13", cancellationToken))!.DisplayName);
         Assert.Equal(25, (await new RecommendationRepository(check).GetAsync(cancellationToken))!.Ping);
     }
@@ -172,16 +171,20 @@ public class SettingsBackupTests : IDisposable
     private async Task FactoryResetAsync(CancellationToken cancellationToken)
     {
         await using var db = Context();
-        await new ConfigRepository(db).ResetToDefaultsAsync(cancellationToken);
+        await new SettingsStore(db).ResetToDefaultsAsync(cancellationToken);
         await new IntegrationRepository(db).ClearAllAsync(cancellationToken);
         await new RecommendationRepository(db).ClearAllAsync(cancellationToken);
     }
 
-    private static SettingsBackup Backup(SpeedtestWatcherDbContext db) =>
-        new(new ConfigRepository(db),
-            new IntegrationRepository(db),
-            new RecommendationRepository(db),
-            TestIntegrations.Dispatcher(new IntegrationRepository(db), new RecordingHandler()));
+    private SettingsBackup Backup(SpeedtestWatcherDbContext db)
+    {
+        var dispatcher = TestIntegrations.Dispatcher(new IntegrationRepository(db), new RecordingHandler());
+        var hub = A.Fake<IHubContext<SpeedtestHub>>();
+        A.CallTo(() => hub.Clients.All).Returns(_everyone);
+        var store = new SettingsStore(db);
+
+        return new SettingsBackup(store, new SettingsService(store, dispatcher, hub), new IntegrationRepository(db), new RecommendationRepository(db), dispatcher);
+    }
 
     private SpeedtestWatcherDbContext Context() =>
         new(new DbContextOptionsBuilder<SpeedtestWatcherDbContext>().UseSqlite(_database).Options);

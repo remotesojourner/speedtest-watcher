@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
@@ -39,12 +40,12 @@ public class SpeedtestRepository : ISpeedtestRepository
     public async Task<Speedtest?> GetLatestCompletedAsync(CancellationToken cancellationToken = default)
     {
         return await _db.Speedtests
-            .Where(t => t.Status == "completed")
+            .Where(t => t.Status == TestStatus.Completed)
             .OrderByDescending(t => t.Created)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<List<Speedtest>> ListTestsAsync(int? afterId, int limit, string? status = null, string? type = null, bool? healthy = null, CancellationToken cancellationToken = default)
+    public async Task<List<Speedtest>> ListTestsAsync(int? afterId, int limit, TestStatus? status = null, TestType? type = null, bool? healthy = null, CancellationToken cancellationToken = default)
     {
         var query = Filter(status, type, healthy);
         if (afterId is { } cursorId && cursorId > 0)
@@ -65,7 +66,7 @@ public class SpeedtestRepository : ISpeedtestRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<Speedtest>> ListMatchingAsync(string? status, string? type, bool? healthy, IReadOnlyCollection<int>? ids = null, CancellationToken cancellationToken = default)
+    public async Task<List<Speedtest>> ListMatchingAsync(TestStatus? status, TestType? type, bool? healthy, IReadOnlyCollection<int>? ids = null, CancellationToken cancellationToken = default)
     {
         var query = Filter(status, type, healthy);
         if (ids != null)
@@ -78,21 +79,21 @@ public class SpeedtestRepository : ISpeedtestRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountMatchingAsync(string? status, string? type, bool? healthy, CancellationToken cancellationToken = default) =>
+    public Task<int> CountMatchingAsync(TestStatus? status, TestType? type, bool? healthy, CancellationToken cancellationToken = default) =>
         Filter(status, type, healthy).CountAsync(cancellationToken);
 
-    private IQueryable<Speedtest> Filter(string? status, string? type, bool? healthy)
+    private IQueryable<Speedtest> Filter(TestStatus? status, TestType? type, bool? healthy)
     {
         var query = _db.Speedtests.AsQueryable();
 
-        if (!string.IsNullOrEmpty(status))
+        if (status is { } wantedStatus)
         {
-            query = query.Where(t => t.Status == status);
+            query = query.Where(t => t.Status == wantedStatus);
         }
 
-        if (!string.IsNullOrEmpty(type))
+        if (type is { } wantedType)
         {
-            query = query.Where(t => t.Type == type);
+            query = query.Where(t => t.Type == wantedType);
         }
 
         if (healthy.HasValue)
@@ -145,13 +146,6 @@ public class SpeedtestRepository : ISpeedtestRepository
             if (!alreadyStored.Add(test.Created)) continue;
 
             test.Id = 0;
-
-            if (test.Type != "custom" && test.Type != "auto")
-                test.Type = "auto";
-
-            if (test.Status != "completed" && test.Status != "failed" && test.Status != "skipped")
-                test.Status = string.IsNullOrEmpty(test.Error) ? "completed" : "failed";
-
             _db.Speedtests.Add(test);
             count++;
         }
@@ -183,14 +177,14 @@ public class SpeedtestRepository : ISpeedtestRepository
             .Where(t => t.Created >= from && t.Created <= to)
             .OrderBy(t => t.Created)
             .ToListAsync(cancellationToken);
-        var completed = entries.Where(e => e.Status == "completed").ToList();
+        var completed = entries.Where(e => e.Status == TestStatus.Completed).ToList();
 
         var result = new StatisticsDto
         {
             Tests = new TestsCountDto
             {
                 Total = entries.Count,
-                Failed = entries.Count(e => e.Status == "failed")
+                Failed = entries.Count(e => e.Status == TestStatus.Failed)
             },
             RawDataPoints = entries.Count,
             Downsampled = entries.Count > MaxChartPoints,
@@ -337,8 +331,8 @@ public class SpeedtestRepository : ISpeedtestRepository
     {
         foreach (var entry in entries)
         {
-            var failed = entry.Status == "failed";
-            var hasReadings = entry.Status == "completed";
+            var failed = entry.Status == TestStatus.Failed;
+            var hasReadings = entry.Status == TestStatus.Completed;
             AddChartPoint(result, entry.Created, failed, failed ? entry.Error : null,
                 hasReadings ? entry.Ping : null,
                 hasReadings ? entry.Jitter : null,
@@ -370,8 +364,8 @@ public class SpeedtestRepository : ISpeedtestRepository
 
         foreach (var bucket in buckets)
         {
-            var valid = bucket.Entries.Where(e => e.Status == "completed").ToList();
-            var failedCount = bucket.Entries.Count(e => e.Status == "failed");
+            var valid = bucket.Entries.Where(e => e.Status == TestStatus.Completed).ToList();
+            var failedCount = bucket.Entries.Count(e => e.Status == TestStatus.Failed);
             if (valid.Count == 0 && failedCount == 0) continue;
 
             var midpoint = DateTimeOffset.FromUnixTimeMilliseconds(bucket.Start + (long)(bucketSize / 2)).UtcDateTime;

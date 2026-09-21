@@ -75,9 +75,9 @@
             <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">People who aren't signed in</MudText>
             <div class="sw-option-list mb-4">
                 <OptionCard Title="No access" Description="They're sent to sign in before they see anything" Icon="@Icons.Material.Filled.Lock"
-                            Active="@(_visitorAccess == "none")" OnClick="@(() => _visitorAccess = "none")" />
+                            Active="@(_visitorAccess == VisitorAccess.None)" OnClick="@(() => _visitorAccess = VisitorAccess.None)" />
                 <OptionCard Title="Read-only" Description="They can see results, but can't run tests or change settings" Icon="@Icons.Material.Filled.Visibility"
-                            Active="@(_visitorAccess == "read")" OnClick="@(() => _visitorAccess = "read")" />
+                            Active="@(_visitorAccess == VisitorAccess.Read)" OnClick="@(() => _visitorAccess = VisitorAccess.Read)" />
             </div>
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSave)" OnClick="SaveAsync">
@@ -128,7 +128,7 @@
 
 @code {
     private bool _enabled;
-    private string _visitorAccess = "none";
+    private VisitorAccess _visitorAccess = VisitorAccess.None;
     private string _authority = "";
     private string _clientId = "";
     private string _clientSecret = "";
@@ -162,7 +162,7 @@
 
     private bool Dirty =>
         _enabled != (Config.AuthEnabled == "true")
-        || _visitorAccess != (Config.VisitorAccess == "read" ? "read" : "none")
+        || _visitorAccess != Config.VisitorAccess
         || _authority.Trim() != Saved(Config.OidcAuthority)
         || _clientId.Trim() != Saved(Config.OidcClientId)
         || NormalisedScopes != Saved(Config.OidcScopes)
@@ -171,7 +171,7 @@
 
     private bool CanSave => !_saving && Dirty && AuthorityValid && (!_enabled || Complete);
 
-    private string NormalisedScopes => string.Join(' ', AuthSettings.ParseScopes(_scopes));
+    private string NormalisedScopes => string.Join(' ', SignInSettings.ParseScopes(_scopes));
 
     private string PrometheusExample =>
         $"""
@@ -186,7 +186,7 @@
     protected override async Task OnInitializedAsync()
     {
         _enabled = Config.AuthEnabled == "true";
-        _visitorAccess = Config.VisitorAccess == "read" ? "read" : "none";
+        _visitorAccess = Config.VisitorAccess;
         _authority = Saved(Config.OidcAuthority);
         _clientId = Saved(Config.OidcClientId);
         _scopes = string.IsNullOrWhiteSpace(Saved(Config.OidcScopes)) ? "openid profile email" : Saved(Config.OidcScopes);
@@ -220,7 +220,7 @@
 
         var active = result.Value?.Active == true;
         Config["authEnabled"] = _enabled ? "true" : "false";
-        Config["visitorAccess"] = _visitorAccess;
+        Config["visitorAccess"] = _visitorAccess.ToName();
         Config["oidcAuthority"] = string.IsNullOrWhiteSpace(_authority) ? "none" : _authority.Trim();
         Config["oidcClientId"] = string.IsNullOrWhiteSpace(_clientId) ? "none" : _clientId.Trim();
         Config["oidcScopes"] = NormalisedScopes;

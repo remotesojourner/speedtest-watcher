@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Repositories;
@@ -33,8 +34,8 @@ public class SkippedResultTests : IDisposable
         var today = DateTime.UtcNow.Date;
 
         await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = today.AddHours(1) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = today.AddHours(3) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = TestStatus.Skipped, Error = "Public IP 1.2.3.4 is on the skip list", Created = today.AddHours(2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = TestStatus.Failed, Error = "Network unreachable", Created = today.AddHours(3) }, cancellationToken);
 
         var dateStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var stats = await repo.GetStatisticsAsync(dateStr, dateStr, TimeZoneInfo.Utc, cancellationToken);
@@ -58,14 +59,14 @@ public class SkippedResultTests : IDisposable
         var now = DateTime.UtcNow;
 
         await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Status = "failed", Error = "Network unreachable", Created = now.AddMinutes(-5) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = TestStatus.Failed, Error = "Network unreachable", Created = now.AddMinutes(-5) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = TestStatus.Skipped, Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
 
-        Assert.Equal("skipped", (await repo.GetLatestAsync(cancellationToken))?.Status);
+        Assert.Equal(TestStatus.Skipped, (await repo.GetLatestAsync(cancellationToken))?.Status);
 
         var completed = await repo.GetLatestCompletedAsync(cancellationToken);
         Assert.Equal(100.0, completed?.Download);
-        Assert.Equal("completed", completed?.Status);
+        Assert.Equal(TestStatus.Completed, completed?.Status);
     }
 
     [Fact]
@@ -76,13 +77,13 @@ public class SkippedResultTests : IDisposable
         var now = DateTime.UtcNow;
 
         await repo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = now.AddMinutes(-10) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Status = "skipped", Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Status = TestStatus.Skipped, Error = "Public IP 1.2.3.4 is on the skip list", Created = now }, cancellationToken);
 
-        var skipped = await repo.ListTestsAsync(null, 10, status: "skipped", cancellationToken: cancellationToken);
+        var skipped = await repo.ListTestsAsync(null, 10, status: TestStatus.Skipped, cancellationToken: cancellationToken);
         Assert.Single(skipped);
-        Assert.Equal("skipped", skipped[0].Status);
+        Assert.Equal(TestStatus.Skipped, skipped[0].Status);
 
-        Assert.Empty(await repo.ListTestsAsync(null, 10, status: "failed", cancellationToken: cancellationToken));
+        Assert.Empty(await repo.ListTestsAsync(null, 10, status: TestStatus.Failed, cancellationToken: cancellationToken));
     }
 
     public void Dispose()

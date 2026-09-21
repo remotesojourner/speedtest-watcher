@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -14,7 +13,7 @@ namespace SpeedtestWatcher.Web.Controllers;
 public class StorageController : ControllerBase
 {
     private readonly ISpeedtestRepository _speedtestRepo;
-    private readonly IConfigRepository _configRepo;
+    private readonly ISettingsStore _settingsStore;
     private readonly IIntegrationRepository _integrationRepo;
     private readonly IRecommendationRepository _recommendationRepo;
     private readonly IStorageRepository _storageRepo;
@@ -23,7 +22,7 @@ public class StorageController : ControllerBase
 
     public StorageController(
         ISpeedtestRepository speedtestRepo,
-        IConfigRepository configRepo,
+        ISettingsStore settingsStore,
         IIntegrationRepository integrationRepo,
         IRecommendationRepository recommendationRepo,
         IStorageRepository storageRepo,
@@ -31,7 +30,7 @@ public class StorageController : ControllerBase
         AuthSettings auth)
     {
         _speedtestRepo = speedtestRepo;
-        _configRepo = configRepo;
+        _settingsStore = settingsStore;
         _integrationRepo = integrationRepo;
         _recommendationRepo = recommendationRepo;
         _storageRepo = storageRepo;
@@ -83,7 +82,7 @@ public class StorageController : ControllerBase
     }
 
     [HttpPut("tests/history")]
-    public async Task<IActionResult> ImportTests([FromBody] List<Speedtest>? tests)
+    public async Task<IActionResult> ImportTests([FromBody] List<SpeedtestImportRow>? tests)
     {
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
@@ -91,7 +90,7 @@ public class StorageController : ControllerBase
         if (tests == null || tests.Count == 0)
             return BadRequest(new { message = "No tests provided" });
 
-        var imported = await _speedtestRepo.ImportTestsAsync(tests);
+        var imported = await _speedtestRepo.ImportTestsAsync(tests.Select(row => row.ToSpeedtest()));
         return Ok(new TestImportResultDto { Imported = imported, Skipped = tests.Count - imported });
     }
 
@@ -119,7 +118,7 @@ public class StorageController : ControllerBase
         var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
         if (isViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        await _configRepo.ResetToDefaultsAsync();
+        await _settingsStore.ResetToDefaultsAsync();
         await _integrationRepo.ClearAllAsync();
         await _recommendationRepo.ClearAllAsync();
         await _auth.ReloadAsync();

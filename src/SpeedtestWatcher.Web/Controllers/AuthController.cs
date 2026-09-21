@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -14,13 +15,13 @@ namespace SpeedtestWatcher.Web.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthSettings _auth;
-    private readonly IConfigRepository _config;
+    private readonly ISettingsStore _settings;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public AuthController(AuthSettings auth, IConfigRepository config, IHttpClientFactory httpClientFactory)
+    public AuthController(AuthSettings auth, ISettingsStore settings, IHttpClientFactory httpClientFactory)
     {
         _auth = auth;
-        _config = config;
+        _settings = settings;
         _httpClientFactory = httpClientFactory;
     }
 
@@ -64,9 +65,6 @@ public class AuthController : ControllerBase
     {
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        if (request.VisitorAccess is not ("none" or "read"))
-            return BadRequest(new { message = "Visitor access must be none or read" });
-
         var authority = Clean(request.Authority);
         if (authority != null
             && !WebAddress.IsHttp(authority))
@@ -87,16 +85,16 @@ public class AuthController : ControllerBase
         var values = new Dictionary<string, string>
         {
             ["authEnabled"] = request.Enabled ? "true" : "false",
-            ["visitorAccess"] = request.VisitorAccess,
-            ["oidcAuthority"] = authority ?? "none",
-            ["oidcClientId"] = clientId ?? "none",
-            ["oidcScopes"] = string.Join(' ', AuthSettings.ParseScopes(request.Scopes))
+            ["visitorAccess"] = request.VisitorAccess.ToName(),
+            ["oidcAuthority"] = authority ?? SettingDefinitions.Unset,
+            ["oidcClientId"] = clientId ?? SettingDefinitions.Unset,
+            ["oidcScopes"] = string.Join(' ', SignInSettings.ParseScopes(request.Scopes))
         };
         if (Clean(request.ClientSecret) is { } secret) values["oidcClientSecret"] = secret;
-        else if (request.ClearClientSecret) values["oidcClientSecret"] = "none";
+        else if (request.ClearClientSecret) values["oidcClientSecret"] = SettingDefinitions.Unset;
 
-        foreach (var (key, value) in values)
-            await _config.UpdateValueAsync(key, value, cancellationToken);
+        var saved = await _settings.SaveSignInAsync(values, cancellationToken);
+        if (!saved.Succeeded) return BadRequest(new { message = saved.Error });
 
         await _auth.ReloadAsync(cancellationToken);
         return Ok(new { message = "Sign-in settings saved", active = _auth.Current.IsActive });
@@ -108,7 +106,7 @@ public class AuthController : ControllerBase
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
 
         var token = ApiToken.Generate();
-        await _config.UpdateValueAsync("apiTokenHash", ApiToken.Hash(token), cancellationToken);
+        await _settings.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = ApiToken.Hash(token) }, cancellationToken);
         await _auth.ReloadAsync(cancellationToken);
 
         return Ok(new ApiTokenResponse { Token = token });
@@ -119,7 +117,7 @@ public class AuthController : ControllerBase
     {
         if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
 
-        await _config.UpdateValueAsync("apiTokenHash", "none", cancellationToken);
+        await _settings.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = SettingDefinitions.Unset }, cancellationToken);
         await _auth.ReloadAsync(cancellationToken);
         return Ok(new { message = "The API token has been revoked" });
     }
@@ -153,7 +151,7 @@ public class AuthController : ControllerBase
     }
 
     private static string? Clean(string? value) =>
-        string.IsNullOrWhiteSpace(value) || value.Trim() == "none" ? null : value.Trim();
+        string.IsNullOrWhiteSpace(value) || value.Trim() == SettingDefinitions.Unset ? null : value.Trim();
 
     private static ContentResult MessagePage(string title, string message, string? note, string actionHref, string actionText)
     {

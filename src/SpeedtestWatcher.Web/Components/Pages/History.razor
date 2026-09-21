@@ -44,26 +44,28 @@
     <MudText Typo="Typo.h6" Class="font-weight-bold">Recent Tests</MudText>
 
     <div class="d-flex flex-wrap align-center gap-2">
-        <MudSelect T="string" Value="_status" ValueChanged="SetStatusAsync!" Label="Status" Variant="Variant.Outlined"
-                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            <MudSelectItem T="string" Value="@AllFilter">All results</MudSelectItem>
-            <MudSelectItem T="string" Value="@("completed")">Completed</MudSelectItem>
-            <MudSelectItem T="string" Value="@("failed")">Failed</MudSelectItem>
-            <MudSelectItem T="string" Value="@("skipped")">Skipped</MudSelectItem>
+        <MudSelect T="FilterChoice<TestStatus>" Value="_status" ValueChanged="SetStatusAsync!" ToStringFunc="@(choice => choice?.Label)"
+                   Label="Status" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in StatusChoices)
+            {
+                <MudSelectItem T="FilterChoice<TestStatus>" Value="choice">@choice.Label</MudSelectItem>
+            }
         </MudSelect>
 
-        <MudSelect T="string" Value="_type" ValueChanged="SetTypeAsync!" Label="Started by" Variant="Variant.Outlined"
-                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            <MudSelectItem T="string" Value="@AllFilter">Anything</MudSelectItem>
-            <MudSelectItem T="string" Value="@("auto")">Schedule</MudSelectItem>
-            <MudSelectItem T="string" Value="@("custom")">By hand</MudSelectItem>
+        <MudSelect T="FilterChoice<TestType>" Value="_type" ValueChanged="SetTypeAsync!" ToStringFunc="@(choice => choice?.Label)"
+                   Label="Started by" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in TypeChoices)
+            {
+                <MudSelectItem T="FilterChoice<TestType>" Value="choice">@choice.Label</MudSelectItem>
+            }
         </MudSelect>
 
-        <MudSelect T="string" Value="_healthy" ValueChanged="SetHealthAsync!" Label="Targets" Variant="Variant.Outlined"
-                   Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            <MudSelectItem T="string" Value="@AllFilter">Any result</MudSelectItem>
-            <MudSelectItem T="string" Value="@("true")">Met targets</MudSelectItem>
-            <MudSelectItem T="string" Value="@("false")">Missed targets</MudSelectItem>
+        <MudSelect T="FilterChoice<bool>" Value="_healthy" ValueChanged="SetHealthAsync!" ToStringFunc="@(choice => choice?.Label)"
+                   Label="Targets" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in HealthChoices)
+            {
+                <MudSelectItem T="FilterChoice<bool>" Value="choice">@choice.Label</MudSelectItem>
+            }
         </MudSelect>
 
         <MudTooltip Text="@(_selecting ? "Stop selecting" : "Select results")" Placement="Placement.Bottom">
@@ -122,7 +124,7 @@
                                 </div>
                             </MudItem>
 
-                            @if (test.Status == "skipped")
+                            @if (test.Status == TestStatus.Skipped)
                             {
                                 <MudItem xs="12" sm="9">
                                     <div class="d-flex align-center gap-2">
@@ -209,21 +211,44 @@
 </StateView>
 
 @code {
-    private const string AllFilter = "all";
     private const int PageSize = SpeedtestStateService.PageSize;
 
     private sealed record TestGroup(string Label, List<SpeedtestDto> Tests);
 
+    private sealed record FilterChoice<TValue>(TValue? Value, string Label) where TValue : struct;
+
+    private static readonly FilterChoice<TestStatus>[] StatusChoices =
+    [
+        new(null, "All results"),
+        new(TestStatus.Completed, "Completed"),
+        new(TestStatus.Failed, "Failed"),
+        new(TestStatus.Skipped, "Skipped")
+    ];
+
+    private static readonly FilterChoice<TestType>[] TypeChoices =
+    [
+        new(null, "Anything"),
+        new(TestType.Auto, "Schedule"),
+        new(TestType.Custom, "By hand")
+    ];
+
+    private static readonly FilterChoice<bool>[] HealthChoices =
+    [
+        new(null, "Any result"),
+        new(true, "Met targets"),
+        new(false, "Missed targets")
+    ];
+
     private SpeedtestDto? LatestReading =>
-        SpeedtestService.LatestTest is { Status: "completed" } latest
+        SpeedtestService.LatestTest is { Status: TestStatus.Completed } latest
             ? latest
-            : SpeedtestService.Tests.FirstOrDefault(t => t.Status == "completed");
+            : SpeedtestService.Tests.FirstOrDefault(t => t.Status == TestStatus.Completed);
     private Timer? _timer;
     private List<double> _downloadHistory = [];
 
-    private string _status = AllFilter;
-    private string _type = AllFilter;
-    private string _healthy = AllFilter;
+    private FilterChoice<TestStatus> _status = StatusChoices[0];
+    private FilterChoice<TestType> _type = TypeChoices[0];
+    private FilterChoice<bool> _healthy = HealthChoices[0];
 
     private List<SpeedtestDto> _filtered = [];
     private bool _filteredHasMore = true;
@@ -235,7 +260,7 @@
     private bool _filteredLoadFailed;
     private bool _loadMoreFailed;
 
-    private bool FiltersActive => _status != AllFilter || _type != AllFilter || _healthy != AllFilter;
+    private bool FiltersActive => _status.Value != null || _type.Value != null || _healthy.Value != null;
 
     private string? LoadError => FiltersActive
         ? (_filteredLoadFailed ? "Couldn't load the results for these filters." : null)
@@ -273,26 +298,26 @@
     private void BuildDownloadHistory()
     {
         _downloadHistory = SpeedtestService.Tests
-            .Where(t => t.Status == "completed")
+            .Where(t => t.Status == TestStatus.Completed)
             .Take(20)
             .Reverse()
             .Select(t => t.Download)
             .ToList();
     }
 
-    private Task SetStatusAsync(string value)
+    private Task SetStatusAsync(FilterChoice<TestStatus> value)
     {
         _status = value;
         return ReloadFilteredAsync();
     }
 
-    private Task SetTypeAsync(string value)
+    private Task SetTypeAsync(FilterChoice<TestType> value)
     {
         _type = value;
         return ReloadFilteredAsync();
     }
 
-    private Task SetHealthAsync(string value)
+    private Task SetHealthAsync(FilterChoice<bool> value)
     {
         _healthy = value;
         return ReloadFilteredAsync();
@@ -328,9 +353,9 @@
     {
         var query = new List<string> { $"limit={PageSize}" };
         if (afterId is { } id) query.Add($"afterId={id}");
-        if (_status != AllFilter) query.Add($"status={_status}");
-        if (_type != AllFilter) query.Add($"type={_type}");
-        if (_healthy != AllFilter) query.Add($"healthy={_healthy}");
+        if (_status.Value is { } status) query.Add($"status={status.ToName()}");
+        if (_type.Value is { } type) query.Add($"type={type.ToName()}");
+        if (_healthy.Value is { } healthy) query.Add($"healthy={(healthy ? "true" : "false")}");
         return $"/api/speedtests?{string.Join("&", query)}";
     }
 
@@ -368,9 +393,9 @@
     {
         var parameters = new DialogParameters<ExportDialog>
         {
-            { x => x.Status, _status == AllFilter ? null : _status },
-            { x => x.Type, _type == AllFilter ? null : _type },
-            { x => x.Healthy, _healthy == AllFilter ? null : _healthy == "true" },
+            { x => x.Status, _status.Value },
+            { x => x.Type, _type.Value },
+            { x => x.Healthy, _healthy.Value },
             { x => x.SelectedIds, _selected.ToList() }
         };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };

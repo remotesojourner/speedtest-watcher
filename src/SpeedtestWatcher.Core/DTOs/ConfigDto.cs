@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Core.Helpers;
 
 namespace SpeedtestWatcher.Core.DTOs;
 
@@ -21,7 +23,7 @@ public class ConfigDto : Dictionary<string, object?>
     public string? ScheduleOffset => this.TryGetValue("scheduleOffset", out var v) ? v?.ToString() : null;
 
     [JsonIgnore]
-    public string? Provider => this.TryGetValue("provider", out var v) ? v?.ToString() : null;
+    public SpeedtestProvider Provider => Choice<SpeedtestProvider>("provider");
 
     [JsonIgnore]
     public string? OoklaId => this.TryGetValue("ooklaId", out var v) ? v?.ToString() : null;
@@ -33,7 +35,7 @@ public class ConfigDto : Dictionary<string, object?>
     public string? LibreUrl => this.TryGetValue("libreUrl", out var v) ? v?.ToString() : null;
 
     [JsonIgnore]
-    public string? VisitorAccess => this.TryGetValue("visitorAccess", out var v) ? v?.ToString() : null;
+    public VisitorAccess VisitorAccess => Choice<VisitorAccess>("visitorAccess");
 
     [JsonIgnore]
     public string? AuthEnabled => this.TryGetValue("authEnabled", out var v) ? v?.ToString() : null;
@@ -66,10 +68,10 @@ public class ConfigDto : Dictionary<string, object?>
     public string? RetentionDays => this.TryGetValue("retentionDays", out var v) ? v?.ToString() : null;
 
     [JsonIgnore]
-    public string? ServerMode => this.TryGetValue("serverMode", out var v) ? v?.ToString() : null;
+    public ServerMode ServerMode => Choice<ServerMode>("serverMode");
 
     [JsonIgnore]
-    public string? ServerListMode => this.TryGetValue("serverListMode", out var v) ? v?.ToString() : null;
+    public ServerListMode ServerListMode => Choice<ServerListMode>("serverListMode");
 
     [JsonIgnore]
     public string? OoklaServerIds => this.TryGetValue("ooklaServerIds", out var v) ? v?.ToString() : null;
@@ -97,6 +99,9 @@ public class ConfigDto : Dictionary<string, object?>
 
     [JsonIgnore]
     public bool ViewMode => IsTrue("viewMode");
+
+    private TEnum Choice<TEnum>(string key) where TEnum : struct, Enum =>
+        EnumNames.TryParse<TEnum>(TryGetValue(key, out var v) ? v?.ToString() : null, out var choice) ? choice : default;
 
     private bool IsTrue(string key) => TryGetValue(key, out var v) && v switch
     {

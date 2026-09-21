@@ -25,7 +25,7 @@
                     @foreach (var provider in ProviderOption.All)
                     {
                         <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
-                                    Active="@(_provider == provider.Id)" OnClick="@(() => _provider = provider.Id)" />
+                                    Active="@(_provider == provider.Provider)" OnClick="@(() => _provider = provider.Provider)" />
                     }
                 </div>
                 break;
@@ -83,14 +83,14 @@
     ];
 
     private int _step;
-    private string _provider = "ookla";
+    private SpeedtestProvider _provider = SpeedtestProvider.Ookla;
     private double _ping;
     private double _download;
     private double _upload;
     private bool _acceptedTerms;
     private bool _saving;
 
-    private List<WelcomeStep> Steps => _provider == "ookla"
+    private List<WelcomeStep> Steps => _provider == SpeedtestProvider.Ookla
         ? [WelcomeStep.Greeting, WelcomeStep.Provider, WelcomeStep.OptimalValues, WelcomeStep.License]
         : [WelcomeStep.Greeting, WelcomeStep.Provider, WelcomeStep.OptimalValues];
 
@@ -105,7 +105,7 @@
     protected override void OnInitialized()
     {
         var cfg = ConfigService.CurrentConfig;
-        if (ProviderOption.IsKnown(cfg.Provider)) _provider = cfg.Provider;
+        if (cfg.Provider != SpeedtestProvider.None) _provider = cfg.Provider;
         _ping = SettingNumber.Parse(cfg.Ping);
         _download = SettingNumber.Parse(cfg.Download);
         _upload = SettingNumber.Parse(cfg.Upload);
@@ -121,7 +121,7 @@
 
         _saving = true;
         var result = await ConfigService.SaveAsync(
-            ("provider", _provider),
+            ("provider", _provider.ToName()),
             ("ping", SettingNumber.Format(_ping)),
             ("download", SettingNumber.Format(_download)),
             ("upload", SettingNumber.Format(_upload)));
