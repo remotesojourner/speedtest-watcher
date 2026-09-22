@@ -9,8 +9,8 @@ using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Application.Statistics;
 using SpeedtestWatcher.Application.Storage;
 using SpeedtestWatcher.Application.Updates;
-using SpeedtestWatcher.Web.Services;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.SignIn;
+using SpeedtestWatcher.Web.Ui.State;
 
 namespace SpeedtestWatcher.Tests;
 

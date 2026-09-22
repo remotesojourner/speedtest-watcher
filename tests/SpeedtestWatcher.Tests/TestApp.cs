@@ -6,8 +6,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SpeedtestWatcher.Application.Common;
-using SpeedtestWatcher.Web.Hosting;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.SignIn;
+using SpeedtestWatcher.Web.Startup;
 
 namespace SpeedtestWatcher.Tests;
 

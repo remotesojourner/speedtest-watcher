@@ -4,7 +4,7 @@ using SpeedtestWatcher.Application.Integrations;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Web.Services;
+using SpeedtestWatcher.Web.Ui.State;
 
 namespace SpeedtestWatcher.Tests;
 

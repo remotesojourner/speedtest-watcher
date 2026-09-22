@@ -3,10 +3,9 @@ using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Web.Api.OpenApi;
-using SpeedtestWatcher.Web.Components;
-using SpeedtestWatcher.Web.Hosting;
-using SpeedtestWatcher.Web.Middleware;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.SignIn;
+using SpeedtestWatcher.Web.Startup;
+using SpeedtestWatcher.Web.Ui;
 
 var builder = WebApplication.CreateBuilder(args);
 

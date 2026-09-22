@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Web.Helpers;
+using SpeedtestWatcher.Web.Ui.Display;
 
 namespace SpeedtestWatcher.Tests;
 

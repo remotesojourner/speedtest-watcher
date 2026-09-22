@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using SpeedtestWatcher.Application.SignIn;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.SignIn;
 
 namespace SpeedtestWatcher.Tests;
 

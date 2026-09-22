@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using SpeedtestWatcher.Web.Middleware;
+using SpeedtestWatcher.Web.Startup;
 
 namespace SpeedtestWatcher.Tests;
 

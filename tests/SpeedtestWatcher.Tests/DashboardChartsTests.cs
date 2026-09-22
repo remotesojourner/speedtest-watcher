@@ -1,6 +1,6 @@
 using System.Globalization;
 using SpeedtestWatcher.Application.Statistics;
-using SpeedtestWatcher.Web.Components.Pages;
+using SpeedtestWatcher.Web.Ui.Pages;
 
 namespace SpeedtestWatcher.Tests;
 

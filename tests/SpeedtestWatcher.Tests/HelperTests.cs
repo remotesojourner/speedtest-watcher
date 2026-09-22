@@ -1,5 +1,5 @@
 using SpeedtestWatcher.Application.Integrations;
-using SpeedtestWatcher.Web.Helpers;
+using SpeedtestWatcher.Web.Ui.Display;
 
 namespace SpeedtestWatcher.Tests;
 

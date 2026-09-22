@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.SignIn;
 
 namespace SpeedtestWatcher.Web.Api.OpenApi;
 
