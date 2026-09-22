@@ -5,68 +5,60 @@ using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.SpeedTest;
 
 namespace SpeedtestWatcher.Infrastructure.SpeedTest;
 
 public class CliManager : ICliManager
 {
+    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<CliManager> _logger;
     private readonly string _binDirectory;
 
-    public CliManager(IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<CliManager> logger)
+    public CliManager(IEnumerable<ISpeedtestTool> tools, IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<CliManager> logger)
     {
+        _tools = tools.ToDictionary(tool => tool.Provider);
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _binDirectory = options.Value.BinDirectory;
     }
 
-    public string GetBinaryPath(SpeedtestProvider provider)
-    {
-        var exeSuffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
-        var name = provider switch
-        {
-            SpeedtestProvider.Ookla => $"speedtest{exeSuffix}",
-            SpeedtestProvider.Libre => $"librespeed-cli{exeSuffix}",
-            SpeedtestProvider.Cloudflare => $"cfspeedtest{exeSuffix}",
-            _ => throw new ArgumentOutOfRangeException(nameof(provider))
-        };
-        return Path.Combine(_binDirectory, name);
-    }
+    public string GetBinaryPath(SpeedtestProvider provider) =>
+        _tools.TryGetValue(provider, out var tool) ? BinaryPath(tool) : throw new ArgumentOutOfRangeException(nameof(provider));
 
     public bool IsBinaryAvailable(SpeedtestProvider provider) =>
-        provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre or SpeedtestProvider.Cloudflare
-        && File.Exists(GetBinaryPath(provider));
+        _tools.TryGetValue(provider, out var tool) && File.Exists(BinaryPath(tool));
 
     public async Task EnsureBinariesAsync(CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(_binDirectory);
 
-        foreach (var provider in new[] { SpeedtestProvider.Ookla, SpeedtestProvider.Libre, SpeedtestProvider.Cloudflare })
+        foreach (var tool in _tools.Values.Where(tool => !File.Exists(BinaryPath(tool))))
         {
-            if (!IsBinaryAvailable(provider))
+            try
             {
-                try
-                {
-                    _logger.LogInformation("Downloading speedtest CLI for {Provider}...", provider);
-                    await DownloadBinaryAsync(provider, cancellationToken);
-                    _logger.LogInformation("Successfully installed {Provider} CLI", provider);
-                }
-                catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException
-                                           || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
-                {
-                    _logger.LogWarning(ex, "Failed to download binary for {Provider}", provider);
-                }
+                _logger.LogInformation("Downloading speedtest CLI for {Provider}...", tool.Provider);
+                await DownloadBinaryAsync(tool, cancellationToken);
+                _logger.LogInformation("Successfully installed {Provider} CLI", tool.Provider);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException
+                                       || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+            {
+                _logger.LogWarning(ex, "Failed to download binary for {Provider}", tool.Provider);
             }
         }
     }
 
-    private async Task DownloadBinaryAsync(SpeedtestProvider provider, CancellationToken cancellationToken)
+    private string BinaryPath(ISpeedtestTool tool) =>
+        Path.Combine(_binDirectory, tool.BinaryName + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : ""));
+
+    private async Task DownloadBinaryAsync(ISpeedtestTool tool, CancellationToken cancellationToken)
     {
-        var url = GetDownloadUrl(provider);
+        var url = tool.DownloadUrl(PlatformTarget.Current);
         if (string.IsNullOrEmpty(url))
         {
-            _logger.LogWarning("No compatible binary URL found for {Provider} on this platform", provider);
+            _logger.LogWarning("No compatible binary URL found for {Provider} on this platform", tool.Provider);
             return;
         }
 
@@ -83,7 +75,7 @@ public class CliManager : ICliManager
                 await response.Content.CopyToAsync(fs, cancellationToken);
             }
 
-            ExtractBinary(tempFile, provider);
+            ExtractBinary(tempFile, BinaryPath(tool));
         }
         finally
         {
@@ -101,68 +93,8 @@ public class CliManager : ICliManager
         }
     }
 
-    private static string? GetDownloadUrl(SpeedtestProvider provider)
+    private void ExtractBinary(string archivePath, string targetPath)
     {
-        var os = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win32" :
-                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "darwin" : "linux";
-
-        var arch = RuntimeInformation.ProcessArchitecture switch
-        {
-            Architecture.X64 => "x64",
-            Architecture.Arm64 => "arm64",
-            Architecture.Arm => "arm",
-            Architecture.X86 => "ia32",
-            _ => "x64"
-        };
-
-        return provider switch
-        {
-            SpeedtestProvider.Ookla => GetOoklaUrl(os, arch),
-            SpeedtestProvider.Libre => GetLibreUrl(os, arch),
-            SpeedtestProvider.Cloudflare => GetCloudflareUrl(os, arch),
-            _ => null
-        };
-    }
-
-    private static string? GetOoklaUrl(string os, string arch)
-    {
-        const string baseUrl = "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-";
-        if (os == "win32" && arch == "x64") return $"{baseUrl}win64.zip";
-        if (os == "darwin" && arch == "x64") return $"{baseUrl}macosx-x86_64.tgz";
-        if (os == "linux" && arch == "x64") return $"{baseUrl}linux-x86_64.tgz";
-        if (os == "linux" && arch == "arm64") return $"{baseUrl}linux-aarch64.tgz";
-        if (os == "linux" && arch == "arm") return $"{baseUrl}linux-armhf.tgz";
-        if (os == "linux" && arch == "ia32") return $"{baseUrl}linux-i386.tgz";
-        return null;
-    }
-
-    private static string? GetLibreUrl(string os, string arch)
-    {
-        const string baseUrl = "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_";
-        if (os == "win32" && arch == "x64") return $"{baseUrl}windows_amd64.zip";
-        if (os == "win32" && arch == "arm64") return $"{baseUrl}windows_arm64.zip";
-        if (os == "darwin" && arch == "x64") return $"{baseUrl}darwin_amd64.tar.gz";
-        if (os == "darwin" && arch == "arm64") return $"{baseUrl}darwin_arm64.tar.gz";
-        if (os == "linux" && arch == "x64") return $"{baseUrl}linux_amd64.tar.gz";
-        if (os == "linux" && arch == "arm64") return $"{baseUrl}linux_arm64.tar.gz";
-        if (os == "linux" && arch == "arm") return $"{baseUrl}linux_armv7.tar.gz";
-        return null;
-    }
-
-    private static string? GetCloudflareUrl(string os, string arch)
-    {
-        const string baseUrl = "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/";
-        if (os == "win32" && arch == "x64") return $"{baseUrl}cfspeedtest-x86_64-pc-windows-msvc.zip";
-        if (os == "darwin" && arch == "x64") return $"{baseUrl}cfspeedtest-x86_64-apple-darwin.tar.gz";
-        if (os == "darwin" && arch == "arm64") return $"{baseUrl}cfspeedtest-aarch64-apple-darwin.tar.gz";
-        if (os == "linux" && arch == "x64") return $"{baseUrl}cfspeedtest-x86_64-unknown-linux-gnu.tar.gz";
-        if (os == "linux" && arch == "arm64") return $"{baseUrl}cfspeedtest-aarch64-unknown-linux-gnu.tar.gz";
-        return null;
-    }
-
-    private void ExtractBinary(string archivePath, SpeedtestProvider provider)
-    {
-        var targetPath = GetBinaryPath(provider);
         var targetFileName = Path.GetFileName(targetPath);
 
         if (archivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))

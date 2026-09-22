@@ -3,6 +3,7 @@ WORKDIR /src
 
 COPY SpeedtestWatcher.slnx Directory.Build.props Directory.Packages.props ./
 COPY src/SpeedtestWatcher.Core/SpeedtestWatcher.Core.csproj src/SpeedtestWatcher.Core/
+COPY src/SpeedtestWatcher.Application/SpeedtestWatcher.Application.csproj src/SpeedtestWatcher.Application/
 COPY src/SpeedtestWatcher.Infrastructure/SpeedtestWatcher.Infrastructure.csproj src/SpeedtestWatcher.Infrastructure/
 COPY src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj src/SpeedtestWatcher.Web/
 COPY tests/SpeedtestWatcher.Tests/SpeedtestWatcher.Tests.csproj tests/SpeedtestWatcher.Tests/

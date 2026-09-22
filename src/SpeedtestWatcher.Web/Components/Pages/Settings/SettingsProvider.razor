@@ -1,16 +1,15 @@
-@using System.Globalization
-@using System.Text.Json
 @inject ApiClient Api
+@inject IEnumerable<ISpeedtestTool> Tools
 @inject ConfigStateService ConfigService
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Provider" FullHeight="false"
              Description="Choose who runs your tests and how they connect.">
     <div class="sw-option-grid mb-5">
-        @foreach (var provider in ProviderOption.All)
+        @foreach (var tool in Tools)
         {
-            <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
-                        Active="@(_provider == provider.Provider)" OnClick="@(() => SelectProviderAsync(provider.Provider))" />
+            <OptionCard Title="@tool.Title" Description="@tool.Description" Image="@tool.ImagePath()"
+                        Active="@(_provider == tool.Provider)" OnClick="@(() => SelectProviderAsync(tool.Provider))" />
         }
     </div>
 
@@ -144,7 +143,7 @@
 </SurfaceCard>
 
 @code {
-    private sealed record ServerOption(string Id, string Label, double Distance);
+    private sealed record ServerOption(string Id, string Label);
     private sealed record InterfaceOption(string Value, string Label);
 
     private SpeedtestProvider _provider = SpeedtestProvider.Ookla;
@@ -175,9 +174,11 @@
 
     private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
 
-    private string ProviderTitle => ProviderOption.All.First(p => p.Provider == _provider).Title;
+    private ISpeedtestTool CurrentTool => Tools.First(tool => tool.Provider == _provider);
 
-    private bool SupportsServerChoice => (_provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre) && !UsingCustomUrl;
+    private string ProviderTitle => CurrentTool.Title;
+
+    private bool SupportsServerChoice => CurrentTool.SupportsServerChoice() && !UsingCustomUrl;
 
     private bool UsingCustomUrl => _provider == SpeedtestProvider.Libre && !string.IsNullOrWhiteSpace(_libreUrl);
 
@@ -287,15 +288,15 @@
 
     private async Task LoadServersAsync(SpeedtestProvider provider)
     {
-        if (provider is not (SpeedtestProvider.Ookla or SpeedtestProvider.Libre) || _servers.ContainsKey(provider)) return;
+        if (!Tools.Any(tool => tool.Provider == provider && tool.SupportsServerChoice()) || _servers.ContainsKey(provider)) return;
 
         _serversLoading = true;
         StateHasChanged();
 
-        var result = await Api.GetAsync<JsonElement>($"/api/info/server/{provider.ToName()}");
-        if (result.Succeeded)
+        var result = await Api.GetAsync<List<ServerInfo>>($"/api/info/server/{provider.ToName()}");
+        if (result.Value is { } servers)
         {
-            _servers[provider] = ParseServers(result.Value);
+            _servers[provider] = ServerLabels.NearestFirst(servers).Select(server => new ServerOption(server.Id, ServerLabels.For(server))).ToList();
             _serverListsUnavailable.Remove(provider);
         }
         else
@@ -344,57 +345,4 @@
         if (result.Succeeded) Snackbar.Add("The provider settings have been saved", Severity.Success);
         else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
     }
-
-    private static List<ServerOption> ParseServers(JsonElement json)
-    {
-        IEnumerable<(string Id, JsonElement Entry)> entries = json.ValueKind switch
-        {
-            JsonValueKind.Object => json.EnumerateObject().Select(p => (p.Name, p.Value)),
-            JsonValueKind.Array => json.EnumerateArray().Select(e => (ReadString(e, "id") ?? "", e)),
-            _ => []
-        };
-
-        return entries
-            .Where(e => !string.IsNullOrEmpty(e.Id))
-            .Select(e => new ServerOption(e.Id, FormatServerLabel(e.Id, e.Entry), ReadDouble(e.Entry, "distance") ?? double.MaxValue))
-            .OrderBy(s => s.Distance)
-            .ToList();
-    }
-
-    private static string FormatServerLabel(string id, JsonElement entry)
-    {
-        if (entry.ValueKind == JsonValueKind.String) return entry.GetString() ?? id;
-        if (entry.ValueKind != JsonValueKind.Object) return id;
-
-        var location = string.Join(", ", new[] { ReadString(entry, "name"), ReadString(entry, "country") }
-            .Where(part => !string.IsNullOrEmpty(part)));
-        var sponsor = ReadString(entry, "sponsor");
-
-        string head;
-        if (!string.IsNullOrEmpty(sponsor)) head = string.IsNullOrEmpty(location) ? sponsor : $"{sponsor} - {location}";
-        else if (!string.IsNullOrEmpty(location)) head = location;
-        else head = ReadString(entry, "host") ?? id;
-
-        var distance = ReadDouble(entry, "distance");
-        return distance.HasValue ? $"{head} ({distance.Value.ToString(CultureInfo.InvariantCulture)} km)" : head;
-    }
-
-    private static string? ReadString(JsonElement element, string name)
-    {
-        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(name, out var value)) return null;
-        return value.ValueKind switch
-        {
-            JsonValueKind.String => value.GetString(),
-            JsonValueKind.Number => value.GetRawText(),
-            _ => null
-        };
-    }
-
-    private static double? ReadDouble(JsonElement element, string name) =>
-        element.ValueKind == JsonValueKind.Object
-        && element.TryGetProperty(name, out var value)
-        && value.ValueKind == JsonValueKind.Number
-        && value.TryGetDouble(out var number)
-            ? number
-            : null;
 }

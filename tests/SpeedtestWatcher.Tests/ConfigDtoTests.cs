@@ -10,11 +10,11 @@ public class ConfigDtoTests
     [InlineData("{\"viewMode\":true}", true)]
     [InlineData("{\"viewMode\":false}", false)]
     [InlineData("{\"provider\":\"ookla\"}", false)]
-    public void Flags_AreReadFromDeserializedJson(string json, bool expectedViewMode)
+    public void Flags_AreReadFromDeserializedJson(string json, bool expectedReadOnly)
     {
         var config = JsonSerializer.Deserialize<ConfigDto>(json)!;
 
-        Assert.Equal(expectedViewMode, config.ViewMode);
+        Assert.Equal(expectedReadOnly, config.ReadOnlyVisitor);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class ConfigDtoTests
     {
         var config = new ConfigDto { ["viewMode"] = true };
 
-        Assert.True(config.ViewMode);
+        Assert.True(config.ReadOnlyVisitor);
     }
 
     [Fact]

@@ -76,7 +76,7 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (Test != null && !ConfigService.CurrentConfig.ViewMode)
+        @if (Test != null && !ConfigService.CurrentConfig.ReadOnlyVisitor)
         {
             <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Delete"
                        Disabled="_deleting" OnClick="DeleteTestAsync">

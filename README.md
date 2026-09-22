@@ -138,7 +138,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | **Speedtest Provider** | Ookla, LibreSpeed or Cloudflare |
 | **Network interface** | The local address tests are sent from. Default: the default route |
 | **Custom LibreSpeed server URL** | LibreSpeed only. Tests against your own LibreSpeed server instead of choosing from the public list |
-| **Which server to test against** | Ookla and LibreSpeed only. **Automatically**, **Random** (only the servers you list, or any nearby server except them) or **Single** |
+| **Which server to test against** | Ookla and LibreSpeed only. **Automatically**, **Random** (only the servers you list, or any nearby server except them) or **Single**. The list of nearby servers is downloaded again once it is a week old |
 
 ### Tab: Display
 

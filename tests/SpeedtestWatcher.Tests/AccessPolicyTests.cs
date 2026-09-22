@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Web.Services.Auth;
@@ -62,15 +64,14 @@ public class AccessPolicyTests
     }
 
     [Theory]
-    [InlineData("/auth/login", true)]
-    [InlineData("/auth/failed", true)]
-    [InlineData("/signin-oidc", true)]
-    [InlineData("/authorize", false)]
-    [InlineData("/api/config", false)]
-    [InlineData("/settings/security", false)]
-    public void OnlySignInPaths_AreAlwaysReachable(string path, bool expected)
+    [InlineData(Access.Full, Access.Full, true)]
+    [InlineData(Access.Full, Access.ReadOnly, true)]
+    [InlineData(Access.ReadOnly, Access.ReadOnly, true)]
+    [InlineData(Access.ReadOnly, Access.Full, false)]
+    [InlineData(Access.None, Access.ReadOnly, false)]
+    public void ReadEndpoints_LetReadOnlyVisitorsIn_AndEverythingElseNeedsFullAccess(Access access, Access required, bool allowed)
     {
-        Assert.Equal(expected, AccessPolicy.IsPublic(new PathString(path)));
+        Assert.Equal(allowed, AccessPolicy.Allows(access, required));
     }
 
     [Theory]
@@ -105,10 +106,10 @@ public class AccessTokenTests
     {
         var context = new DefaultHttpContext();
         context.Request.Headers.Authorization = "Bearer swt_abc";
-        Assert.Equal("swt_abc", ApiToken.FromRequest(context.Request));
+        Assert.Equal("swt_abc", BearerToken.FromRequest(context.Request));
 
         context.Request.Headers.Authorization = "Basic cHJvbWV0aGV1czpzZWNyZXQ=";
-        Assert.Null(ApiToken.FromRequest(context.Request));
+        Assert.Null(BearerToken.FromRequest(context.Request));
     }
 
     [Fact]

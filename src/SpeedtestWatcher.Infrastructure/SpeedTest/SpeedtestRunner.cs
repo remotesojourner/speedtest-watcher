@@ -1,21 +1,22 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.SpeedTest;
 
 namespace SpeedtestWatcher.Infrastructure.SpeedTest;
 
 public class SpeedtestRunner : ISpeedtestRunner
 {
+    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly ICliManager _cliManager;
     private readonly ILogger<SpeedtestRunner> _logger;
 
-    public SpeedtestRunner(ICliManager cliManager, ILogger<SpeedtestRunner> logger)
+    public SpeedtestRunner(IEnumerable<ISpeedtestTool> tools, ICliManager cliManager, ILogger<SpeedtestRunner> logger)
     {
+        _tools = tools.ToDictionary(tool => tool.Provider);
         _cliManager = cliManager;
         _logger = logger;
     }
@@ -27,7 +28,7 @@ public class SpeedtestRunner : ISpeedtestRunner
         string? networkInterface,
         CancellationToken cancellationToken = default)
     {
-        if (provider == SpeedtestProvider.None)
+        if (!_tools.TryGetValue(provider, out var tool))
         {
             return new SpeedtestExecutionResult
             {
@@ -50,75 +51,14 @@ public class SpeedtestRunner : ISpeedtestRunner
             }
         }
 
-        var args = new List<string>();
-        string? tempConfigPath = null;
-
-        if (provider == SpeedtestProvider.Ookla)
-        {
-            args.Add("--accept-license");
-            args.Add("--accept-gdpr");
-            args.Add("--format=json");
-
-            if (!string.IsNullOrEmpty(networkInterface))
-            {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    args.Add($"--ip={networkInterface}");
-                else
-                    args.Add($"--interface={networkInterface}");
-            }
-
-            if (!string.IsNullOrEmpty(serverId))
-                args.Add($"--server-id={serverId}");
-        }
-        else if (provider == SpeedtestProvider.Libre)
-        {
-            args.Add("--json");
-            args.Add("--duration=5");
-
-            if (!string.IsNullOrEmpty(networkInterface))
-                args.Add($"--source={networkInterface}");
-
-            if (!string.IsNullOrEmpty(customUrl))
-            {
-                var customServer = new[]
-                {
-                    new
-                    {
-                        id = 1,
-                        name = "Custom Server",
-                        server = customUrl,
-                        dlURL = "garbage.php",
-                        ulURL = "empty.php",
-                        pingURL = "empty.php",
-                        getIpURL = "getIP.php"
-                    }
-                };
-
-                tempConfigPath = Path.Combine(Path.GetTempPath(), $"libre_custom_{Guid.NewGuid()}.json");
-                await File.WriteAllTextAsync(tempConfigPath, JsonSerializer.Serialize(customServer), cancellationToken);
-                args.Add($"--local-json={tempConfigPath}");
-                args.Add("--server=1");
-            }
-            else if (!string.IsNullOrEmpty(serverId))
-            {
-                args.Add($"--server={serverId}");
-            }
-        }
-        else if (provider == SpeedtestProvider.Cloudflare)
-        {
-            args.Add("--output-format=json");
-
-            if (!string.IsNullOrEmpty(networkInterface))
-            {
-                if (networkInterface.Contains(':'))
-                    args.Add($"--ipv6={networkInterface}");
-                else
-                    args.Add($"--ipv4={networkInterface}");
-            }
-        }
+        var scratchFile = Path.Combine(Path.GetTempPath(), $"speedtest_watcher_{Guid.NewGuid():N}.json");
+        var command = tool.BuildArguments(new RunOptions(serverId, customUrl, networkInterface, scratchFile));
 
         try
         {
+            if (command.ScratchFileContent != null)
+                await File.WriteAllTextAsync(scratchFile, command.ScratchFileContent, cancellationToken);
+
             var psi = new ProcessStartInfo
             {
                 FileName = binaryPath,
@@ -128,10 +68,10 @@ public class SpeedtestRunner : ISpeedtestRunner
                 CreateNoWindow = true
             };
 
-            foreach (var a in args)
-                psi.ArgumentList.Add(a);
+            foreach (var argument in command.Arguments)
+                psi.ArgumentList.Add(argument);
 
-            _logger.LogInformation("Spawning {Binary} with args: {Args}", binaryPath, string.Join(" ", args));
+            _logger.LogInformation("Spawning {Binary} with args: {Args}", binaryPath, string.Join(" ", command.Arguments));
 
             using var process = new Process();
             process.StartInfo = psi;
@@ -199,13 +139,7 @@ public class SpeedtestRunner : ISpeedtestRunner
                 };
             }
 
-            using var resultDocument = FindResultDocument(stdout, provider);
-            if (resultDocument != null)
-            {
-                return OutputParser.Parse(provider, ResultElement(resultDocument, provider));
-            }
-
-            return new SpeedtestExecutionResult
+            return tool.ParseResult(stdout) ?? new SpeedtestExecutionResult
             {
                 Success = false,
                 Error = !string.IsNullOrEmpty(stderr) ? stderr : "Failed to parse speedtest output"
@@ -222,61 +156,17 @@ public class SpeedtestRunner : ISpeedtestRunner
         }
         finally
         {
-            if (tempConfigPath != null && File.Exists(tempConfigPath))
+            if (File.Exists(scratchFile))
             {
                 try
                 {
-                    File.Delete(tempConfigPath);
+                    File.Delete(scratchFile);
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    _logger.LogWarning(ex, "Could not delete the temporary speedtest config {Path}", tempConfigPath);
+                    _logger.LogWarning(ex, "Could not delete the temporary speedtest config {Path}", scratchFile);
                 }
             }
         }
     }
-
-    private static JsonDocument? FindResultDocument(string stdout, SpeedtestProvider provider)
-    {
-        var lines = stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => line.Trim()).Reverse();
-        foreach (var line in lines)
-        {
-            if (!line.StartsWith('{') && !line.StartsWith('[')) continue;
-
-            var document = TryParseJson(line);
-            if (document == null) continue;
-
-            if (provider != SpeedtestProvider.Ookla || IsOoklaResult(ResultElement(document, provider)))
-                return document;
-
-            document.Dispose();
-        }
-
-        return null;
-    }
-
-    private static JsonDocument? TryParseJson(string line)
-    {
-        try
-        {
-            return JsonDocument.Parse(line);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement ResultElement(JsonDocument document, SpeedtestProvider provider)
-    {
-        var root = document.RootElement;
-        var isWrappedInArray = root.ValueKind == JsonValueKind.Array && provider != SpeedtestProvider.Cloudflare && root.GetArrayLength() > 0;
-        return isWrappedInArray ? root[0] : root;
-    }
-
-    private static bool IsOoklaResult(JsonElement element) =>
-        element.ValueKind == JsonValueKind.Object
-        && element.TryGetProperty("type", out var type)
-        && type.ValueKind == JsonValueKind.String
-        && type.GetString() == "result";
 }

@@ -1,14 +1,10 @@
 using Microsoft.Extensions.Logging;
+using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Settings;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
-public record PreTestCheck(bool Proceed, string? SkipReason)
-{
-    public static readonly PreTestCheck Ok = new(true, null);
-}
-
-public class ConnectivityChecker
+public class ConnectivityChecker : IConnectivityChecker
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ConnectivityChecker> _logger;

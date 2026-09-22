@@ -1,10 +1,9 @@
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Storage;
 using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Web.Services;
-using SpeedtestWatcher.Web.Services.Auth;
+using SpeedtestWatcher.Web.Api;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
@@ -12,117 +11,47 @@ namespace SpeedtestWatcher.Web.Controllers;
 [Route("api/storage")]
 public class StorageController : ControllerBase
 {
-    private readonly ISpeedtestRepository _speedtestRepo;
-    private readonly ISettingsStore _settingsStore;
-    private readonly IIntegrationRepository _integrationRepo;
-    private readonly IRecommendationRepository _recommendationRepo;
-    private readonly IStorageRepository _storageRepo;
-    private readonly SettingsBackup _settingsBackup;
-    private readonly AuthSettings _auth;
+    private readonly StorageService _storage;
+    private readonly ResultsService _results;
+    private readonly SettingsBackupService _backup;
 
-    public StorageController(
-        ISpeedtestRepository speedtestRepo,
-        ISettingsStore settingsStore,
-        IIntegrationRepository integrationRepo,
-        IRecommendationRepository recommendationRepo,
-        IStorageRepository storageRepo,
-        SettingsBackup settingsBackup,
-        AuthSettings auth)
+    public StorageController(StorageService storage, ResultsService results, SettingsBackupService backup)
     {
-        _speedtestRepo = speedtestRepo;
-        _settingsStore = settingsStore;
-        _integrationRepo = integrationRepo;
-        _recommendationRepo = recommendationRepo;
-        _storageRepo = storageRepo;
-        _settingsBackup = settingsBackup;
-        _auth = auth;
+        _storage = storage;
+        _results = results;
+        _backup = backup;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetStorageInfo()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        return Ok(new StorageInfoDto
-        {
-            Size = await _storageRepo.GetDatabaseSizeAsync(),
-            TestCount = await _speedtestRepo.CountAsync()
-        });
-    }
+    public async Task<IActionResult> GetStorageInfo(CancellationToken cancellationToken) =>
+        (await _storage.GetInfoAsync(cancellationToken)).ToActionResult();
 
     [HttpGet("tests/history/json")]
-    public async Task<IActionResult> ExportTestsJson()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        var all = await _speedtestRepo.ListAllAsync();
-        return File(Encoding.UTF8.GetBytes(SpeedtestExport.ToJson(all)), "application/json", "speedtests.json");
-    }
+    public Task<IActionResult> ExportTestsJson(CancellationToken cancellationToken) => ExportAsync("json", cancellationToken);
 
     [HttpGet("tests/history/csv")]
-    public async Task<IActionResult> ExportTestsCsv()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        var all = await _speedtestRepo.ListAllAsync();
-        return File(Encoding.UTF8.GetBytes(SpeedtestExport.ToCsv(all)), "text/csv", "speedtests.csv");
-    }
+    public Task<IActionResult> ExportTestsCsv(CancellationToken cancellationToken) => ExportAsync("csv", cancellationToken);
 
     [HttpDelete("tests/history")]
-    public async Task<IActionResult> DeleteTestHistory()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        await _speedtestRepo.DeleteAllAsync();
-        return Ok(new { message = "Tests cleared" });
-    }
+    public async Task<IActionResult> DeleteTestHistory(CancellationToken cancellationToken) =>
+        (await _storage.DeleteAllResultsAsync(cancellationToken)).ToActionResult("Tests cleared");
 
     [HttpPut("tests/history")]
-    public async Task<IActionResult> ImportTests([FromBody] List<SpeedtestImportRow>? tests)
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        if (tests == null || tests.Count == 0)
-            return BadRequest(new { message = "No tests provided" });
-
-        var imported = await _speedtestRepo.ImportTestsAsync(tests.Select(row => row.ToSpeedtest()));
-        return Ok(new TestImportResultDto { Imported = imported, Skipped = tests.Count - imported });
-    }
+    public async Task<IActionResult> ImportTests([FromBody] List<SpeedtestImportRow>? tests, CancellationToken cancellationToken) =>
+        (await _results.ImportAsync(tests, cancellationToken)).ToActionResult();
 
     [HttpGet("config")]
-    public async Task<IActionResult> ExportFullConfig()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        return Ok(await _settingsBackup.ExportAsync());
-    }
+    public async Task<IActionResult> ExportFullConfig(CancellationToken cancellationToken) =>
+        (await _backup.ExportAsync(cancellationToken)).ToActionResult();
 
     [HttpPut("config")]
-    public async Task<IActionResult> ImportFullConfig([FromBody] SettingsBackupDto backup)
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        return Ok(await _settingsBackup.ImportAsync(backup));
-    }
+    public async Task<IActionResult> ImportFullConfig([FromBody] SettingsBackupDto backup, CancellationToken cancellationToken) =>
+        (await _backup.ImportAsync(backup, cancellationToken)).ToActionResult();
 
     [HttpDelete("config")]
-    public async Task<IActionResult> FactoryReset()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
+    public async Task<IActionResult> FactoryReset(CancellationToken cancellationToken) =>
+        (await _storage.FactoryResetAsync(cancellationToken)).ToActionResult("Factory reset completed successfully");
 
-        await _settingsStore.ResetToDefaultsAsync();
-        await _integrationRepo.ClearAllAsync();
-        await _recommendationRepo.ClearAllAsync();
-        await _auth.ReloadAsync();
-
-        return Ok(new { message = "Factory reset completed successfully" });
-    }
+    private async Task<IActionResult> ExportAsync(string format, CancellationToken cancellationToken) =>
+        (await _storage.ExportResultsAsync(format, cancellationToken)).ToActionResult(file => File(file.Content, file.ContentType, file.FileName));
 }

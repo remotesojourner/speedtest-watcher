@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Web.Helpers;
+using SpeedtestWatcher.Web.Services.Auth;
 using SkiaSharp;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -20,19 +22,20 @@ public class OpenGraphController : ControllerBase
     private const float DownloadCardLeft = 430;
     private const float UploadCardLeft = 800;
 
-    private readonly ISpeedtestRepository _repository;
+    private readonly ResultsService _results;
 
-    public OpenGraphController(ISpeedtestRepository repository)
+    public OpenGraphController(ResultsService results)
     {
-        _repository = repository;
+        _results = results;
     }
 
     private sealed record CardStyle(SKPaint Fill, SKPaint Border, SKFont LabelFont, SKPaint LabelPaint, SKFont ValueFont);
 
     [HttpGet("image")]
+    [Authorize(Policy = AccessPolicies.Read)]
     public async Task<IActionResult> GetImage(CancellationToken cancellationToken)
     {
-        var preview = await LinkPreview.ForLatestCompletedTestAsync(_repository, cancellationToken);
+        var preview = LinkPreview.For(await _results.GetLatestCompletedAsync(cancellationToken));
 
         using var surface = SKSurface.Create(new SKImageInfo(ImageWidth, ImageHeight));
         var canvas = surface.Canvas;

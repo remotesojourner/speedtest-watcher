@@ -1,5 +1,6 @@
 @page "/welcome"
 @inject ConfigStateService ConfigService
+@inject IEnumerable<ISpeedtestTool> Tools
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -22,10 +23,10 @@
                 <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Choose a provider</MudText>
                 <MudText Typo="Typo.body2" Class="sw-muted mb-4">This provider runs your speedtests. You can change it later in Settings.</MudText>
                 <div class="sw-option-grid">
-                    @foreach (var provider in ProviderOption.All)
+                    @foreach (var tool in Tools)
                     {
-                        <OptionCard Title="@provider.Title" Description="@provider.Description" Image="@provider.Image"
-                                    Active="@(_provider == provider.Provider)" OnClick="@(() => _provider = provider.Provider)" />
+                        <OptionCard Title="@tool.Title" Description="@tool.Description" Image="@tool.ImagePath()"
+                                    Active="@(_provider == tool.Provider)" OnClick="@(() => _provider = tool.Provider)" />
                     }
                 </div>
                 break;

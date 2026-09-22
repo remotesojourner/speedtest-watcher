@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Web.Api;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
@@ -7,22 +8,14 @@ namespace SpeedtestWatcher.Web.Controllers;
 [Route("api/recommendations")]
 public class RecommendationsController : ControllerBase
 {
-    private readonly IRecommendationRepository _repository;
+    private readonly RecommendationService _recommendations;
 
-    public RecommendationsController(IRecommendationRepository repository)
+    public RecommendationsController(RecommendationService recommendations)
     {
-        _repository = repository;
+        _recommendations = recommendations;
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        var rec = await _repository.GetAsync();
-        if (rec == null) return NotFound(new { message = "No recommendations found" });
-
-        return Ok(rec);
-    }
+    public async Task<IActionResult> Get(CancellationToken cancellationToken) =>
+        (await _recommendations.GetAsync(cancellationToken)).ToActionResult();
 }

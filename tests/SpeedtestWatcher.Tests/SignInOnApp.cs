@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Tests;
 

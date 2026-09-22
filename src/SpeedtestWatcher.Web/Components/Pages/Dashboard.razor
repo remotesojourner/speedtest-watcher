@@ -35,7 +35,7 @@
     <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
         <div class="d-flex flex-wrap align-center justify-space-between gap-3">
             <span>Speedtests are currently paused.</span>
-            @if (!ConfigService.CurrentConfig.ViewMode)
+            @if (!ConfigService.CurrentConfig.ReadOnlyVisitor)
             {
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeAsync">

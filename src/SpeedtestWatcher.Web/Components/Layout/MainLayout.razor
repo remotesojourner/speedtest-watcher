@@ -4,6 +4,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject InternalAccessToken InternalToken
 @inject ConfigStateService ConfigService
+@inject IEnumerable<ISpeedtestTool> Tools
 @inject StatusStateService StatusService
 @inject SpeedtestStateService SpeedtestService
 @inject NavigationManager Navigation
@@ -42,7 +43,7 @@
             {
                 <MudChip T="string" Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
             }
-            @if (_state == AppState.Ready && ConfigService.CurrentConfig.ViewMode)
+            @if (_state == AppState.Ready && ConfigService.CurrentConfig.ReadOnlyVisitor)
             {
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
@@ -256,7 +257,7 @@
         if (result.Value is not { } cfg) return AppState.ApiError;
 
         ConfigService.SetConfig(cfg);
-        if (cfg.Provider == SpeedtestProvider.None && !cfg.ViewMode)
+        if (cfg.Provider == SpeedtestProvider.None && !cfg.ReadOnlyVisitor)
         {
             Navigation.NavigateTo("/welcome");
         }
@@ -273,13 +274,13 @@
 
     private async Task CheckForUpdateAsync()
     {
-        if (ConfigService.CurrentConfig.ViewMode) return;
+        if (ConfigService.CurrentConfig.ReadOnlyVisitor) return;
 
         _updateVersion = UpdateCheck.AvailableUpdate((await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value);
         if (_updateVersion != null) await InvokeAsync(StateHasChanged);
     }
 
-    private bool CanChooseServer => ConfigService.CurrentConfig.Provider is SpeedtestProvider.Ookla or SpeedtestProvider.Libre;
+    private bool CanChooseServer => Tools.Any(tool => tool.Provider == ConfigService.CurrentConfig.Provider && tool.SupportsServerChoice());
 
     private async Task RunOnServerAsync()
     {

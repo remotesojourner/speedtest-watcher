@@ -12,6 +12,7 @@
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
@@ -25,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SpeedtestWatcher.Application\SpeedtestWatcher.Application.csproj" />
     <ProjectReference Include="..\..\src\SpeedtestWatcher.Core\SpeedtestWatcher.Core.csproj" />
     <ProjectReference Include="..\..\src\SpeedtestWatcher.Infrastructure\SpeedtestWatcher.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\SpeedtestWatcher.Web\SpeedtestWatcher.Web.csproj" />

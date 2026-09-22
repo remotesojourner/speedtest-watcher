@@ -45,6 +45,11 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting(SpeedtestWatcherOptionsSetup.BinDirectoryVariable, Path.Combine(_root, "bin"));
         builder.UseSetting(SpeedtestWatcherOptionsSetup.DisableAuthVariable, "false");
         builder.UseSetting(SpeedtestWatcherOptionsSetup.RunTestOnStartupVariable, "false");
+        builder.UseDefaultServiceProvider(options =>
+        {
+            options.ValidateOnBuild = true;
+            options.ValidateScopes = true;
+        });
 
         builder.ConfigureTestServices(services =>
         {

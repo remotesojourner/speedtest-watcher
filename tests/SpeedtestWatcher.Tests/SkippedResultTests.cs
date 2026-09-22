@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
@@ -38,7 +39,7 @@ public class SkippedResultTests : IDisposable
         await repo.CreateAsync(new Speedtest { Status = TestStatus.Failed, Error = "Network unreachable", Created = today.AddHours(3) }, cancellationToken);
 
         var dateStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, TimeZoneInfo.Utc, cancellationToken);
+        var stats = (await new StatisticsService(repo).GetAsync(dateStr, dateStr, null, cancellationToken)).Value!;
 
         Assert.Equal(3, stats.Tests.Total);
         Assert.Equal(1, stats.Tests.Failed);
@@ -47,8 +48,8 @@ public class SkippedResultTests : IDisposable
         Assert.Equal(100.0, stats.Download?.Avg);
         Assert.Equal(50.0, stats.Upload?.Avg);
 
-        Assert.Equal(1, stats.Failed.Count(failed => failed));
-        Assert.Equal(["Network unreachable"], stats.Errors.Where(e => !string.IsNullOrEmpty(e)));
+        Assert.Equal(1, stats.ChartPoints.Count(point => point.Failed));
+        Assert.Equal(["Network unreachable"], stats.ChartPoints.Select(point => point.Error).OfType<string>());
     }
 
     [Fact]

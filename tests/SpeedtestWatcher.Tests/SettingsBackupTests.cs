@@ -1,15 +1,15 @@
 using System.Text.Json;
 using FakeItEasy;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Application.Events;
+using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Repositories;
-using SpeedtestWatcher.Web.Hubs;
-using SpeedtestWatcher.Web.Services;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -20,7 +20,8 @@ public class SettingsBackupTests : IDisposable
     private static readonly JsonSerializerOptions ApiJson = new(JsonSerializerDefaults.Web);
 
     private readonly SqliteConnection _database = new("DataSource=:memory:");
-    private readonly IClientProxy _everyone = A.Fake<IClientProxy>();
+    private readonly AppEvents _events = new();
+    private readonly List<IReadOnlyDictionary<string, string>> _broadcasts = [];
 
     public SettingsBackupTests()
     {
@@ -48,7 +49,7 @@ public class SettingsBackupTests : IDisposable
         SettingsImportResultDto result;
         await using (var db = Context())
         {
-            result = await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!, cancellationToken);
+            result = (await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!, cancellationToken)).Value!;
         }
 
         await using var check = Context();
@@ -125,13 +126,11 @@ public class SettingsBackupTests : IDisposable
         SettingsImportResultDto result;
         await using (var db = Context())
         {
-            result = await Backup(db).ImportAsync(backup, cancellationToken);
+            result = (await Backup(db).ImportAsync(backup, cancellationToken)).Value!;
         }
 
         Assert.Equal((1, 1, false, 7), (result.Settings, result.Integrations, result.Recommendations, result.Skipped));
-        A.CallTo(() => _everyone.SendCoreAsync("ConfigChanged", A<object?[]>.That.IsSameSequenceAs(new object?[] { "chartRange", "30d" }), A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
-        A.CallTo(() => _everyone.SendCoreAsync(A<string>._, A<object?[]>._, A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        Assert.Equal(new Dictionary<string, string> { ["chartRange"] = "30d" }, Assert.Single(_broadcasts));
 
         await using var check = Context();
         var values = await new SettingsStore(check).GetValuesAsync(cancellationToken);
@@ -165,7 +164,7 @@ public class SettingsBackupTests : IDisposable
     private async Task<string> ExportJsonAsync(CancellationToken cancellationToken)
     {
         await using var db = Context();
-        return JsonSerializer.Serialize(await Backup(db).ExportAsync(cancellationToken), ApiJson);
+        return JsonSerializer.Serialize((await Backup(db).ExportAsync(cancellationToken)).Value, ApiJson);
     }
 
     private async Task FactoryResetAsync(CancellationToken cancellationToken)
@@ -176,14 +175,14 @@ public class SettingsBackupTests : IDisposable
         await new RecommendationRepository(db).ClearAllAsync(cancellationToken);
     }
 
-    private SettingsBackup Backup(SpeedtestWatcherDbContext db)
+    private SettingsBackupService Backup(SpeedtestWatcherDbContext db)
     {
         var dispatcher = TestIntegrations.Dispatcher(new IntegrationRepository(db), new RecordingHandler());
-        var hub = A.Fake<IHubContext<SpeedtestHub>>();
-        A.CallTo(() => hub.Clients.All).Returns(_everyone);
         var store = new SettingsStore(db);
+        var settings = new SettingsService(store, dispatcher, _events, A.Fake<ISignInState>(), FixedAccess.Full);
+        _events.SettingsChanged += changes => _broadcasts.Add(changes);
 
-        return new SettingsBackup(store, new SettingsService(store, dispatcher, hub), new IntegrationRepository(db), new RecommendationRepository(db), dispatcher);
+        return new SettingsBackupService(store, settings, new IntegrationRepository(db), new RecommendationRepository(db), dispatcher, FixedAccess.Full);
     }
 
     private SpeedtestWatcherDbContext Context() =>

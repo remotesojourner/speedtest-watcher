@@ -98,7 +98,7 @@ public class ConfigDto : Dictionary<string, object?>
     public string? DateFormat => this.TryGetValue("dateFormat", out var v) ? v?.ToString() : null;
 
     [JsonIgnore]
-    public bool ViewMode => IsTrue("viewMode");
+    public bool ReadOnlyVisitor => IsTrue("viewMode");
 
     private TEnum Choice<TEnum>(string key) where TEnum : struct, Enum =>
         EnumNames.TryParse<TEnum>(TryGetValue(key, out var v) ? v?.ToString() : null, out var choice) ? choice : default;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
+using SpeedtestWatcher.Application.Security;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Core.Interfaces;
@@ -24,7 +25,7 @@ public sealed record AuthSnapshot(
     public bool IsActive => Enabled && Configured && !DisabledByEnvironment;
 }
 
-public sealed class AuthSettings : IDisposable
+public sealed class AuthSettings : ISignInState, IDisposable
 {
     public const string OidcScheme = OpenIdConnectDefaults.AuthenticationScheme;
 
@@ -47,6 +48,10 @@ public sealed class AuthSettings : IDisposable
     }
 
     public AuthSnapshot Current { get; private set; } = AuthSnapshot.Default;
+
+    public bool IsActive => Current.IsActive;
+
+    public bool DisabledByEnvironment => Current.DisabledByEnvironment;
 
     public async Task ReloadAsync(CancellationToken cancellationToken = default)
     {

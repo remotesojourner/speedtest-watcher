@@ -1,17 +1,13 @@
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Events;
 using SpeedtestWatcher.Core.Integrations;
 using SpeedtestWatcher.Core.Interfaces;
 using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Network;
-using SpeedtestWatcher.Infrastructure.Repositories;
-using SpeedtestWatcher.Infrastructure.SpeedTest;
-using SpeedtestWatcher.Web.Background;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -26,9 +22,9 @@ public class RecommendationsUpdatedTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         var scheduler = await BuildSchedulerAsync(new RecordingDispatcher(), cancellationToken);
 
-        for (var run = 1; run < RecommendationRepository.CompletedTestsNeeded; run++)
+        for (var run = 1; run < RecommendationService.CompletedTestsNeeded; run++)
         {
-            var result = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
+            var result = await scheduler.RunAsync(TestType.Custom, cancellationToken: cancellationToken);
             Assert.True(result.Success, result.Error);
         }
 
@@ -45,7 +41,7 @@ public class RecommendationsUpdatedTests : IDisposable
 
         for (var run = 1; run <= 11; run++)
         {
-            var result = await scheduler.ExecuteSpeedtestAsync(TestType.Custom, cancellationToken: cancellationToken);
+            var result = await scheduler.RunAsync(TestType.Custom, cancellationToken: cancellationToken);
             Assert.True(result.Success, result.Error);
         }
 
@@ -56,36 +52,10 @@ public class RecommendationsUpdatedTests : IDisposable
         Assert.Same(update, published.Events[tenthFinished + 1]);
     }
 
-    private async Task<SpeedtestSchedulerService> BuildSchedulerAsync(IIntegrationDispatcher dispatcher, CancellationToken cancellationToken)
+    private async Task<SpeedtestRunService> BuildSchedulerAsync(IIntegrationDispatcher dispatcher, CancellationToken cancellationToken)
     {
-        _connection.Open();
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSignalR();
-        services.AddHttpClient();
-        services.AddDbContext<SpeedtestWatcherDbContext>(options => options.UseSqlite(_connection));
-        services.AddScoped<ISettingsStore, SettingsStore>();
-        services.AddScoped<ISpeedtestRepository, SpeedtestRepository>();
-        services.AddScoped<IRecommendationRepository, RecommendationRepository>();
-        services.AddSingleton(dispatcher);
-        services.AddSingleton<ServerListProvider>();
-        services.AddScoped<ServerSelector>();
-        services.AddScoped<ConnectivityChecker>();
-        services.AddSingleton<ISpeedtestRunner, SteadyRunner>();
-        services.AddSingleton<IPauseStateService, PauseStateService>();
-        services.AddSingleton<SpeedtestSchedulerService>();
-        var provider = services.BuildServiceProvider();
-        _services = provider;
-
-        using (var scope = provider.CreateScope())
-        {
-            await scope.ServiceProvider.GetRequiredService<SpeedtestWatcherDbContext>().Database.EnsureCreatedAsync(cancellationToken);
-            var settings = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
-            await settings.InsertDefaultsAsync(cancellationToken);
-            await settings.SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla", ["internetCheckEnabled"] = "false" }, cancellationToken);
-        }
-
-        return provider.GetRequiredService<SpeedtestSchedulerService>();
+        _services = await RunTestServices.BuildAsync(_connection, new SteadyRunner(), cancellationToken, dispatcher);
+        return _services.CreateScope().ServiceProvider.GetRequiredService<SpeedtestRunService>();
     }
 
     public void Dispose()

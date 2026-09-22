@@ -1,12 +1,11 @@
 using System.Text.Encodings.Web;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Application.Security;
 using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Web.Api;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -15,19 +14,16 @@ namespace SpeedtestWatcher.Web.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthSettings _auth;
-    private readonly ISettingsStore _settings;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly SignInService _signIn;
 
-    public AuthController(AuthSettings auth, ISettingsStore settings, IHttpClientFactory httpClientFactory)
+    public AuthController(AuthSettings auth, SignInService signIn)
     {
         _auth = auth;
-        _settings = settings;
-        _httpClientFactory = httpClientFactory;
+        _signIn = signIn;
     }
 
-    private bool IsViewMode => HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-
     [HttpGet("/auth/login")]
+    [AllowAnonymous]
     public IActionResult Login([FromQuery] string? returnUrl)
     {
         var target = Url.IsLocalUrl(returnUrl) ? returnUrl : "/";
@@ -37,6 +33,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("/auth/logout")]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -45,6 +42,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("/auth/signed-out")]
+    [AllowAnonymous]
     public ContentResult SignedOut() => MessagePage(
         "You've signed out",
         "You're signed out of Speedtest Watcher. Your identity provider may still have you signed in there.",
@@ -53,6 +51,7 @@ public class AuthController : ControllerBase
         "Sign in again");
 
     [HttpGet("/auth/failed")]
+    [AllowAnonymous]
     public ContentResult Failed([FromQuery] string? reason) => MessagePage(
         "Sign-in didn't work",
         string.IsNullOrWhiteSpace(reason) ? "The identity provider didn't complete the sign-in." : reason,
@@ -61,97 +60,16 @@ public class AuthController : ControllerBase
         "Try again");
 
     [HttpPut("/api/auth/settings")]
-    public async Task<IActionResult> SaveSettings([FromBody] AuthSettingsRequest request, CancellationToken cancellationToken)
-    {
-        if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        var authority = Clean(request.Authority);
-        if (authority != null
-            && !WebAddress.IsHttp(authority))
-        {
-            return BadRequest(new { message = "The provider URL must be a full http(s) URL" });
-        }
-
-        var clientId = Clean(request.ClientId);
-        if (request.Enabled)
-        {
-            if (authority == null || clientId == null)
-                return BadRequest(new { message = "Sign-in needs the provider URL and a client ID" });
-
-            var problem = await CheckDiscoveryAsync(authority, cancellationToken);
-            if (problem != null) return BadRequest(new { message = problem });
-        }
-
-        var values = new Dictionary<string, string>
-        {
-            ["authEnabled"] = request.Enabled ? "true" : "false",
-            ["visitorAccess"] = request.VisitorAccess.ToName(),
-            ["oidcAuthority"] = authority ?? SettingDefinitions.Unset,
-            ["oidcClientId"] = clientId ?? SettingDefinitions.Unset,
-            ["oidcScopes"] = string.Join(' ', SignInSettings.ParseScopes(request.Scopes))
-        };
-        if (Clean(request.ClientSecret) is { } secret) values["oidcClientSecret"] = secret;
-        else if (request.ClearClientSecret) values["oidcClientSecret"] = SettingDefinitions.Unset;
-
-        var saved = await _settings.SaveSignInAsync(values, cancellationToken);
-        if (!saved.Succeeded) return BadRequest(new { message = saved.Error });
-
-        await _auth.ReloadAsync(cancellationToken);
-        return Ok(new { message = "Sign-in settings saved", active = _auth.Current.IsActive });
-    }
+    public async Task<IActionResult> SaveSettings([FromBody] AuthSettingsRequest request, CancellationToken cancellationToken) =>
+        (await _signIn.SaveAsync(request, cancellationToken)).ToActionResult(active => Ok(new { message = "Sign-in settings saved", active }));
 
     [HttpPost("/api/auth/token")]
-    public async Task<IActionResult> CreateToken(CancellationToken cancellationToken)
-    {
-        if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        var token = ApiToken.Generate();
-        await _settings.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = ApiToken.Hash(token) }, cancellationToken);
-        await _auth.ReloadAsync(cancellationToken);
-
-        return Ok(new ApiTokenResponse { Token = token });
-    }
+    public async Task<IActionResult> CreateToken(CancellationToken cancellationToken) =>
+        (await _signIn.CreateTokenAsync(cancellationToken)).ToActionResult();
 
     [HttpDelete("/api/auth/token")]
-    public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken)
-    {
-        if (IsViewMode) return Unauthorized(new { message = "Authentication required" });
-
-        await _settings.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = SettingDefinitions.Unset }, cancellationToken);
-        await _auth.ReloadAsync(cancellationToken);
-        return Ok(new { message = "The API token has been revoked" });
-    }
-
-    private async Task<string?> CheckDiscoveryAsync(string authority, CancellationToken cancellationToken)
-    {
-        var url = authority.TrimEnd('/') + "/.well-known/openid-configuration";
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(10);
-            using var response = await client.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                return $"The provider answered {(int)response.StatusCode} for {url}. Check the provider URL.";
-
-            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-            var root = document.RootElement;
-            if (root.ValueKind != JsonValueKind.Object
-                || !root.TryGetProperty("authorization_endpoint", out _)
-                || !root.TryGetProperty("token_endpoint", out _))
-            {
-                return $"{url} isn't an OpenID Connect discovery document. Check the provider URL.";
-            }
-
-            return null;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-        {
-            return $"Couldn't read {url}: {ex.Message}";
-        }
-    }
-
-    private static string? Clean(string? value) =>
-        string.IsNullOrWhiteSpace(value) || value.Trim() == SettingDefinitions.Unset ? null : value.Trim();
+    public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken) =>
+        (await _signIn.RevokeTokenAsync(cancellationToken)).ToActionResult("The API token has been revoked");
 
     private static ContentResult MessagePage(string title, string message, string? note, string actionHref, string actionText)
     {

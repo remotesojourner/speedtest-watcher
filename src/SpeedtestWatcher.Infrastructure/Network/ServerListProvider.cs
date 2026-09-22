@@ -4,107 +4,102 @@ using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
 using SpeedtestWatcher.Core.Hosting;
+using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Core.SpeedTest;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
-public class ServerListProvider
+public class ServerListProvider : IServerListProvider
 {
-    private static readonly JsonSerializerOptions CacheFileJson = new() { WriteIndented = true };
+    public static readonly TimeSpan MaxCacheAge = TimeSpan.FromDays(7);
 
+    private static readonly JsonSerializerOptions CacheFileJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+
+    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly TimeProvider _time;
     private readonly ILogger<ServerListProvider> _logger;
     private readonly string _serversDir;
 
-    public ServerListProvider(IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<ServerListProvider> logger)
+    public ServerListProvider(
+        IEnumerable<ISpeedtestTool> tools,
+        IHttpClientFactory httpClientFactory,
+        TimeProvider time,
+        IOptions<SpeedtestWatcherOptions> options,
+        ILogger<ServerListProvider> logger)
     {
+        _tools = tools.ToDictionary(tool => tool.Provider);
         _httpClientFactory = httpClientFactory;
+        _time = time;
         _logger = logger;
         _serversDir = options.Value.ServersDirectory;
     }
 
-    public async Task<object?> GetServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ServerInfo>?> GetServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
     {
-        Directory.CreateDirectory(_serversDir);
-        var filePath = CacheFilePath(provider);
+        if (!_tools.TryGetValue(provider, out var tool) || tool.Servers is not { } catalog) return null;
 
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-                return JsonSerializer.Deserialize<object>(json);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-            {
-                _logger.LogWarning(ex, "The cached {Provider} server list can't be read, so it is being downloaded again", provider);
-            }
-        }
+        var cacheFile = Path.Combine(_serversDir, $"{provider.ToName()}.json");
+        var cached = await ReadCacheAsync(cacheFile, provider, cancellationToken);
+        if (cached != null && _time.GetUtcNow().UtcDateTime - File.GetLastWriteTimeUtc(cacheFile) < MaxCacheAge) return cached;
 
-        await RefreshServersAsync(provider, cancellationToken);
+        var downloaded = await DownloadAsync(provider, catalog, cancellationToken);
+        if (downloaded == null) return cached ?? [];
 
-        if (File.Exists(filePath))
-        {
-            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-            return JsonSerializer.Deserialize<object>(json);
-        }
-
-        return new Dictionary<string, object>();
+        await WriteCacheAsync(cacheFile, provider, downloaded, cancellationToken);
+        return downloaded;
     }
 
-    public async Task RefreshServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
+    private async Task<IReadOnlyList<ServerInfo>?> ReadCacheAsync(string cacheFile, SpeedtestProvider provider, CancellationToken cancellationToken)
+    {
+        if (!File.Exists(cacheFile)) return null;
+
+        try
+        {
+            await using var stream = File.OpenRead(cacheFile);
+            return await JsonSerializer.DeserializeAsync<List<ServerInfo>>(stream, CacheFileJson, cancellationToken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogInformation(ex, "The cached {Provider} server list can't be read, so it is being downloaded again", provider);
+            return null;
+        }
+    }
+
+    private async Task<IReadOnlyList<ServerInfo>?> DownloadAsync(SpeedtestProvider provider, ServerCatalog catalog, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(15);
+
+            using var response = await client.GetAsync(catalog.ListUrl, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("The {Provider} server list answered {Status}", provider, (int)response.StatusCode);
+                return null;
+            }
+
+            return catalog.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or FormatException
+                                   || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            _logger.LogWarning(ex, "Could not load {Provider} server list", provider);
+            return null;
+        }
+    }
+
+    private async Task WriteCacheAsync(string cacheFile, SpeedtestProvider provider, IReadOnlyList<ServerInfo> servers, CancellationToken cancellationToken)
     {
         try
         {
             Directory.CreateDirectory(_serversDir);
-            var client = _httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(15);
-
-            var url = provider == SpeedtestProvider.Ookla
-                ? "https://www.speedtest.net/api/js/servers?limit=20"
-                : "https://librespeed.org/backend-servers/servers.php";
-
-            var response = await client.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode) return;
-
-            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-            var dict = new Dictionary<string, object>();
-            if (doc.RootElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var row in doc.RootElement.EnumerateArray())
-                {
-                    if (row.TryGetProperty("id", out var idElem))
-                    {
-                        var id = idElem.ToString();
-                        if (provider == SpeedtestProvider.Ookla)
-                        {
-                            dict[id] = new
-                            {
-                                name = row.TryGetProperty("name", out var n) ? n.GetString() : null,
-                                sponsor = row.TryGetProperty("sponsor", out var sp) ? sp.GetString() : null,
-                                country = row.TryGetProperty("country", out var c) ? c.GetString() : null,
-                                cc = row.TryGetProperty("cc", out var cc) ? cc.GetString() : null,
-                                distance = row.TryGetProperty("distance", out var d) ? d.GetDouble() : 0,
-                                host = row.TryGetProperty("host", out var h) ? h.GetString() : null
-                            };
-                        }
-                        else
-                        {
-                            dict[id] = (row.TryGetProperty("name", out var n) ? n.GetString() : null) ?? id;
-                        }
-                    }
-                }
-            }
-
-            await File.WriteAllTextAsync(CacheFilePath(provider), JsonSerializer.Serialize(dict, CacheFileJson), cancellationToken);
+            await File.WriteAllTextAsync(cacheFile, JsonSerializer.Serialize(servers, CacheFileJson), cancellationToken);
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or IOException or UnauthorizedAccessException
-                                   || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogWarning(ex, "Could not load {Provider} server list", provider);
+            _logger.LogWarning(ex, "Could not cache the {Provider} server list", provider);
         }
     }
-
-    private string CacheFilePath(SpeedtestProvider provider) => Path.Combine(_serversDir, $"{provider.ToName()}.json");
 }

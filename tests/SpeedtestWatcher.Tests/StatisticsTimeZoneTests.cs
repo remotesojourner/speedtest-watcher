@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using SpeedtestWatcher.Core.Helpers;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Repositories;
@@ -33,7 +33,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
 
-        var stats = await _repository.GetStatisticsAsync("2026-09-13", "2026-09-15", Zone(zone), cancellationToken);
+        var stats = await StatisticsAsync("2026-09-13", "2026-09-15", zone, cancellationToken);
 
         Assert.Equal(new[] { morningHour, eveningHour }.Order(), stats.HourlyAverages.Where(hour => hour.Count > 0).Select(hour => hour.Hour).Order());
     }
@@ -47,7 +47,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
 
-        var stats = await _repository.GetStatisticsAsync("2026-09-14", "2026-09-14", Zone(zone), cancellationToken);
+        var stats = await StatisticsAsync("2026-09-14", "2026-09-14", zone, cancellationToken);
 
         Assert.Equal(expectedResults, stats.Tests.Total);
     }
@@ -58,7 +58,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
 
-        var stats = await _repository.GetStatisticsAsync("2026-09-14T00:00:00", "2026-09-14T12:00:00", Zone("America/New_York"), cancellationToken);
+        var stats = await StatisticsAsync("2026-09-14T00:00:00", "2026-09-14T12:00:00", "America/New_York", cancellationToken);
 
         Assert.Equal(1, stats.Tests.Total);
     }
@@ -69,7 +69,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
 
-        var stats = await _repository.GetStatisticsAsync("2026-09-14T20:00:00Z", "2026-09-14T22:00:00+01:00", Zone("Asia/Tokyo"), cancellationToken);
+        var stats = await StatisticsAsync("2026-09-14T20:00:00Z", "2026-09-14T22:00:00+01:00", "Asia/Tokyo", cancellationToken);
 
         Assert.Equal(1, stats.Tests.Total);
     }
@@ -86,9 +86,10 @@ public sealed class StatisticsTimeZoneTests : IDisposable
         await _repository.CreateAsync(new Speedtest { Ping = 20, Download = 200, Upload = 60, Created = EveningUtc }, cancellationToken);
     }
 
-    private static TimeZoneInfo Zone(string id)
+    private async Task<SpeedtestStatistics> StatisticsAsync(string from, string to, string zone, CancellationToken cancellationToken)
     {
-        Assert.True(FormatHelper.TryFindTimeZone(id, out var timeZone), $"{id} isn't installed on this machine");
-        return timeZone;
+        var result = await new StatisticsService(_repository).GetAsync(from, to, zone, cancellationToken);
+        Assert.True(result.Succeeded, $"{zone} isn't installed on this machine");
+        return result.Value!;
     }
 }

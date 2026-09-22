@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Core.Models;
 using SpeedtestWatcher.Infrastructure.Data;
 using SpeedtestWatcher.Infrastructure.Repositories;
@@ -80,87 +81,13 @@ public class RepositoryTests : IDisposable
         }, cancellationToken);
 
         var dateStr = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var stats = await repo.GetStatisticsAsync(dateStr, dateStr, TimeZoneInfo.Utc, cancellationToken);
+        var stats = (await new StatisticsService(repo).GetAsync(dateStr, dateStr, null, cancellationToken)).Value!;
 
         Assert.Equal(2, stats.Tests.Total);
         Assert.Equal(0, stats.Tests.Failed);
         Assert.Equal(15, stats.Ping?.Avg);
         Assert.Equal(150.0, stats.Download?.Avg);
         Assert.Equal(75.0, stats.Upload?.Avg);
-    }
-
-    [Fact]
-    public async Task RecommendationRepository_CalculatesFromTop10Tests()
-    {
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var speedtestRepo = new SpeedtestRepository(_db);
-        var recRepo = new RecommendationRepository(_db);
-
-        for (var i = 1; i <= 10; i++)
-        {
-            await speedtestRepo.CreateAsync(new Speedtest
-            {
-                Ping = 10 + i,
-                Download = 100 + i * 10,
-                Upload = 50 + i * 5,
-                Created = DateTime.UtcNow.AddMinutes(i)
-            }, cancellationToken);
-        }
-
-        var recommendation = await recRepo.RecalculateAsync(cancellationToken);
-        Assert.NotNull(recommendation);
-        Assert.Equal(11, recommendation.Ping);
-        Assert.Equal(200.0, recommendation.Download);
-        Assert.Equal(100.0, recommendation.Upload);
-
-        Assert.Null(await recRepo.RecalculateAsync(cancellationToken));
-    }
-
-    [Fact]
-    public async Task RecommendationRepository_SavesNothingBeforeTenCompletedTests()
-    {
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var speedtestRepo = new SpeedtestRepository(_db);
-        var recRepo = new RecommendationRepository(_db);
-
-        for (var i = 1; i < RecommendationRepository.CompletedTestsNeeded; i++)
-        {
-            await speedtestRepo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = DateTime.UtcNow.AddMinutes(i) }, cancellationToken);
-            Assert.Null(await recRepo.RecalculateAsync(cancellationToken));
-        }
-
-        Assert.Null(await recRepo.GetAsync(cancellationToken));
-    }
-
-    [Fact]
-    public async Task RecommendationRepository_RemovesThePlaceholderOfEarlierVersions_WhileFewerThanTenTestsHaveCompleted()
-    {
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var speedtestRepo = new SpeedtestRepository(_db);
-        var recRepo = new RecommendationRepository(_db);
-        await speedtestRepo.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = DateTime.UtcNow }, cancellationToken);
-        await recRepo.SaveAsync(25, 100, 50, cancellationToken);
-
-        await recRepo.RemovePlaceholderAsync(cancellationToken);
-
-        Assert.Null(await recRepo.GetAsync(cancellationToken));
-    }
-
-    [Fact]
-    public async Task RecommendationRepository_KeepsRealRecommendationsThatMatchThePlaceholder()
-    {
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var speedtestRepo = new SpeedtestRepository(_db);
-        var recRepo = new RecommendationRepository(_db);
-        for (var i = 0; i < RecommendationRepository.CompletedTestsNeeded; i++)
-        {
-            await speedtestRepo.CreateAsync(new Speedtest { Ping = 25, Download = 100, Upload = 50, Created = DateTime.UtcNow.AddMinutes(i) }, cancellationToken);
-        }
-        await recRepo.SaveAsync(25, 100, 50, cancellationToken);
-
-        await recRepo.RemovePlaceholderAsync(cancellationToken);
-
-        Assert.NotNull(await recRepo.GetAsync(cancellationToken));
     }
 
     public void Dispose()

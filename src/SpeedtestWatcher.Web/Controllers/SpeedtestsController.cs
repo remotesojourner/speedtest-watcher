@@ -1,11 +1,11 @@
 using System.Globalization;
-using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Web.Background;
+using SpeedtestWatcher.Web.Api;
+using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
@@ -13,144 +13,70 @@ namespace SpeedtestWatcher.Web.Controllers;
 [Route("api/speedtests")]
 public class SpeedtestsController : ControllerBase
 {
-    private readonly ISpeedtestRepository _repository;
-    private readonly IPauseStateService _pauseState;
-    private readonly SpeedtestSchedulerService _scheduler;
-    private readonly ISettingsStore _settingsStore;
+    private readonly ResultsService _results;
+    private readonly StatisticsService _statistics;
+    private readonly PauseService _pause;
+    private readonly SpeedtestRunService _runs;
 
-    public SpeedtestsController(
-        ISpeedtestRepository repository,
-        IPauseStateService pauseState,
-        SpeedtestSchedulerService scheduler,
-        ISettingsStore settingsStore)
+    public SpeedtestsController(ResultsService results, StatisticsService statistics, PauseService pause, SpeedtestRunService runs)
     {
-        _repository = repository;
-        _pauseState = pauseState;
-        _scheduler = scheduler;
-        _settingsStore = settingsStore;
+        _results = results;
+        _statistics = statistics;
+        _pause = pause;
+        _runs = runs;
     }
 
     [HttpGet]
+    [Authorize(Policy = AccessPolicies.Read)]
     public async Task<IActionResult> ListTests(
         [FromQuery] int? afterId,
         [FromQuery] int limit = 10,
         [FromQuery] TestStatus? status = null,
         [FromQuery] TestType? type = null,
-        [FromQuery] bool? healthy = null)
-    {
-        var tests = await _repository.ListTestsAsync(afterId, limit, status, type, healthy);
-        return Ok(tests.Select(SpeedtestDto.From));
-    }
+        [FromQuery] bool? healthy = null,
+        CancellationToken cancellationToken = default) =>
+        Ok(await _results.ListAsync(afterId, limit, status, type, healthy, cancellationToken));
 
     [HttpGet("statistics")]
-    public async Task<IActionResult> GetStatistics([FromQuery] string? from, [FromQuery] string? to, [FromQuery] string? tz)
-    {
-        var timeZone = TimeZoneInfo.Utc;
-        if (!string.IsNullOrWhiteSpace(tz) && !FormatHelper.TryFindTimeZone(tz, out timeZone))
-            return BadRequest(new { message = $"{tz} isn't a time zone this server knows. Use an IANA name such as Europe/London." });
-
-        var today = FormatHelper.InTimeZone(DateTime.UtcNow, timeZone).Date;
-        var fromDate = from ?? today.AddDays(-7).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        var toDate = to ?? today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-        var stats = await _repository.GetStatisticsAsync(fromDate, toDate, timeZone);
-        return Ok(stats);
-    }
+    [Authorize(Policy = AccessPolicies.Read)]
+    public async Task<IActionResult> GetStatistics([FromQuery] string? from, [FromQuery] string? to, [FromQuery] string? tz, CancellationToken cancellationToken) =>
+        (await _statistics.GetAsync(from, to, tz, cancellationToken)).ToActionResult(statistics => Ok(statistics.ToDto()));
 
     [HttpGet("count")]
-    public async Task<IActionResult> CountTests([FromQuery] TestStatus? status = null, [FromQuery] TestType? type = null, [FromQuery] bool? healthy = null)
-    {
-        return Ok(new { count = await _repository.CountMatchingAsync(status, type, healthy) });
-    }
+    [Authorize(Policy = AccessPolicies.Read)]
+    public async Task<IActionResult> CountTests(
+        [FromQuery] TestStatus? status = null, [FromQuery] TestType? type = null, [FromQuery] bool? healthy = null, CancellationToken cancellationToken = default) =>
+        Ok(new { count = await _results.CountAsync(status, type, healthy, cancellationToken) });
 
     [HttpPost("export")]
-    public async Task<IActionResult> ExportTests([FromBody] ExportRequest request)
+    [Authorize(Policy = AccessPolicies.Read)]
+    public async Task<IActionResult> ExportTests([FromBody] ExportRequest request, CancellationToken cancellationToken)
     {
-        var tests = await _repository.ListMatchingAsync(request.Status, request.Type, request.Healthy, request.Ids);
-
-        return request.Format.Equals("json", StringComparison.OrdinalIgnoreCase)
-            ? File(Encoding.UTF8.GetBytes(SpeedtestExport.ToJson(tests)), "application/json", "speedtests.json")
-            : File(Encoding.UTF8.GetBytes(SpeedtestExport.ToCsv(tests)), "text/csv", "speedtests.csv");
+        var file = await _results.ExportAsync(request, cancellationToken);
+        return File(file.Content, file.ContentType, file.FileName);
     }
 
     [HttpGet("status")]
-    public IActionResult GetStatus()
-    {
-        return Ok(new StatusDto
-        {
-            Paused = _pauseState.IsPaused,
-            Running = _pauseState.IsRunning
-        });
-    }
+    [Authorize(Policy = AccessPolicies.Read)]
+    public IActionResult GetStatus() => Ok(_pause.GetStatus());
 
     [HttpPost("run")]
-    public async Task<IActionResult> RunTest([FromQuery] int? serverId)
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode)
-            return Unauthorized(new { message = "Authentication required" });
-
-        if (_pauseState.IsRunning)
-            return Conflict(new { message = "Speedtest is already running" });
-
-        var settings = await _settingsStore.GetAsync();
-        if (settings.Provider.Selected == SpeedtestProvider.None)
-            return StatusCode(StatusCodes.Status410Gone, new { message = "No speedtest provider selected" });
-
-        if (_pauseState.IsPaused)
-            return StatusCode(StatusCodes.Status410Gone, new { message = "Speedtests are paused" });
-
-        _ = Task.Run(async () => await _scheduler.ExecuteSpeedtestAsync(
-            TestType.Custom, serverOverride: serverId?.ToString(CultureInfo.InvariantCulture)));
-        return Ok(new { message = "Speedtest successfully created" });
-    }
+    public async Task<IActionResult> RunTest([FromQuery] int? serverId, CancellationToken cancellationToken) =>
+        (await _runs.StartManualRunAsync(serverId?.ToString(CultureInfo.InvariantCulture), cancellationToken)).ToActionResult("Speedtest successfully created");
 
     [HttpPost("pause")]
-    public IActionResult Pause([FromBody] PauseRequest? request)
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode)
-            return Unauthorized(new { message = "Authentication required" });
-
-        if (request?.ResumeIn > PauseRequest.MaxResumeInHours)
-            return BadRequest(new { message = $"Speedtests can be paused for at most {PauseRequest.MaxResumeInHours:0} hours. Pause them indefinitely for a longer break." });
-
-        _pauseState.Pause(request?.ResumeIn);
-        return Ok(new { message = "Successfully paused the speedtests" });
-    }
+    public IActionResult Pause([FromBody] PauseRequest? request) =>
+        _pause.Pause(request?.ResumeIn).ToActionResult("Successfully paused the speedtests");
 
     [HttpPost("continue")]
-    public IActionResult Continue()
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode)
-            return Unauthorized(new { message = "Authentication required" });
-
-        _pauseState.Resume();
-        return Ok(new { message = "Successfully resumed the speedtests" });
-    }
+    public IActionResult Continue() => _pause.Resume().ToActionResult("Successfully resumed the speedtests");
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var test = await _repository.GetByIdAsync(id);
-        if (test == null)
-            return NotFound(new { message = "Speedtest not found" });
-
-        return Ok(SpeedtestDto.From(test));
-    }
+    [Authorize(Policy = AccessPolicies.Read)]
+    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken) =>
+        (await _results.GetAsync(id, cancellationToken)).ToActionResult();
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var isViewMode = HttpContext.Items.TryGetValue("ViewMode", out var vm) && vm is true;
-        if (isViewMode)
-            return Unauthorized(new { message = "Authentication required" });
-
-        var deleted = await _repository.DeleteByIdAsync(id);
-        if (!deleted)
-            return NotFound(new { message = "Speedtest not found" });
-
-        return Ok(new { message = "Successfully deleted the provided speedtest" });
-    }
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken) =>
+        (await _results.DeleteAsync(id, cancellationToken)).ToActionResult("Successfully deleted the provided speedtest");
 }

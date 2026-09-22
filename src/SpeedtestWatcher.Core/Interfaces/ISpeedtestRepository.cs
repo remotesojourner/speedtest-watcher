@@ -1,4 +1,3 @@
-using SpeedtestWatcher.Core.DTOs;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Models;
 
@@ -17,7 +16,7 @@ public interface ISpeedtestRepository
     Task<List<Speedtest>> ListMatchingAsync(TestStatus? status, TestType? type, bool? healthy, IReadOnlyCollection<int>? ids = null, CancellationToken cancellationToken = default);
 
     Task<int> CountMatchingAsync(TestStatus? status, TestType? type, bool? healthy, CancellationToken cancellationToken = default);
-    Task<StatisticsDto> GetStatisticsAsync(string fromDate, string toDate, TimeZoneInfo timeZone, CancellationToken cancellationToken = default);
+    Task<List<Speedtest>> ListCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default);
     Task<bool> DeleteByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> DeleteAllAsync(CancellationToken cancellationToken = default);
     Task<int> ImportTestsAsync(IEnumerable<Speedtest> tests, CancellationToken cancellationToken = default);
