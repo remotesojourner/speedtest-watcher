@@ -6,3 +6,5 @@
 data/
 bin/
 src/SpeedtestWatcher.Web/data/
+tests/
+docs/
