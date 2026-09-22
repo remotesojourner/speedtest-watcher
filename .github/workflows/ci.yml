@@ -20,7 +20,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   SOLUTION: SpeedtestWatcher.slnx
-  TEST_PROJECT: tests/SpeedtestWatcher.Tests
+  BROWSER_TEST_PROJECT: tests/SpeedtestWatcher.IntegrationTests
 
 jobs:
   version:
@@ -80,14 +80,14 @@ jobs:
         run: dotnet build ${{ env.SOLUTION }} --no-restore -c Release
 
       - name: Install Chromium for the browser tests
-        run: pwsh ${{ env.TEST_PROJECT }}/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: pwsh ${{ env.BROWSER_TEST_PROJECT }}/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Test
         env:
           SPEEDTEST_WATCHER_BROWSER_TESTS: required
         run: >
-          dotnet run --project ${{ env.TEST_PROJECT }} --no-build -c Release --
-          -result-trx ${{ github.workspace }}/test-results/results.trx
+          dotnet test --solution ${{ env.SOLUTION }} --no-build -c Release
+          --results-directory ${{ github.workspace }}/test-results --report-xunit-trx
 
       - name: Publish test results
         uses: dorny/test-reporter@v3

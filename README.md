@@ -257,19 +257,19 @@ The app listens on `http://localhost:2003`, or on `PORT` if it's set.
 
 ### Tests
 
-The tests use xUnit v3, so run the test project directly:
+The unit tests (`tests/SpeedtestWatcher.UnitTests`) use fakes only. The integration tests (`tests/SpeedtestWatcher.IntegrationTests`) run real parts together: SQLite, the app over HTTP, and the app in a browser. Run both with:
 
 ```bash
-dotnet run --project tests/SpeedtestWatcher.Tests
+dotnet test
 ```
 
 The browser tests drive the app in Chromium with [Playwright](https://playwright.dev/dotnet/). Install Chromium once after building, or they're skipped:
 
 ```bash
-pwsh tests/SpeedtestWatcher.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
+pwsh tests/SpeedtestWatcher.IntegrationTests/bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
-To leave them out, add `-- -trait- "Category=Browser"` to the test command.
+To leave them out, add `--filter-not-trait "Category=Browser"` to the test command.
 
 ### Database migrations
 

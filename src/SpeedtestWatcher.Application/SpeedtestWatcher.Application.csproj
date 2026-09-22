@@ -15,7 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="SpeedtestWatcher.Tests" />
+    <InternalsVisibleTo Include="SpeedtestWatcher.UnitTests" />
+    <InternalsVisibleTo Include="SpeedtestWatcher.IntegrationTests" />
+    <InternalsVisibleTo Include="SpeedtestWatcher.TestSupport" />
   </ItemGroup>
 
 </Project>

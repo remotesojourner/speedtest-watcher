@@ -4,6 +4,8 @@
     <Project Path="src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/SpeedtestWatcher.Tests/SpeedtestWatcher.Tests.csproj" />
+    <Project Path="tests/SpeedtestWatcher.IntegrationTests/SpeedtestWatcher.IntegrationTests.csproj" />
+    <Project Path="tests/SpeedtestWatcher.TestSupport/SpeedtestWatcher.TestSupport.csproj" />
+    <Project Path="tests/SpeedtestWatcher.UnitTests/SpeedtestWatcher.UnitTests.csproj" />
   </Folder>
 </Solution>

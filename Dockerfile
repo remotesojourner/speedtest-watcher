@@ -4,7 +4,9 @@ WORKDIR /src
 COPY SpeedtestWatcher.slnx Directory.Build.props Directory.Packages.props ./
 COPY src/SpeedtestWatcher.Application/SpeedtestWatcher.Application.csproj src/SpeedtestWatcher.Application/
 COPY src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj src/SpeedtestWatcher.Web/
-COPY tests/SpeedtestWatcher.Tests/SpeedtestWatcher.Tests.csproj tests/SpeedtestWatcher.Tests/
+COPY tests/SpeedtestWatcher.IntegrationTests/SpeedtestWatcher.IntegrationTests.csproj tests/SpeedtestWatcher.IntegrationTests/
+COPY tests/SpeedtestWatcher.TestSupport/SpeedtestWatcher.TestSupport.csproj tests/SpeedtestWatcher.TestSupport/
+COPY tests/SpeedtestWatcher.UnitTests/SpeedtestWatcher.UnitTests.csproj tests/SpeedtestWatcher.UnitTests/
 
 RUN dotnet restore src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj
 
