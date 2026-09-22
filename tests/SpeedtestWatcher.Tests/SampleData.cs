@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

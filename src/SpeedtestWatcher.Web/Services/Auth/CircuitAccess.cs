@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
-using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 

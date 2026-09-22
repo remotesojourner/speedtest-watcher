@@ -1,5 +1,5 @@
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests.Browser;
 

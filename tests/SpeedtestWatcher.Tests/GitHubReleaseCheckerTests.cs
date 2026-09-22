@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Time.Testing;
-using SpeedtestWatcher.Infrastructure.Network;
+using SpeedtestWatcher.Application.Updates;
 
 namespace SpeedtestWatcher.Tests;
 

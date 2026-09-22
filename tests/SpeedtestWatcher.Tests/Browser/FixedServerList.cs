@@ -1,6 +1,4 @@
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.SpeedTest;
+using SpeedtestWatcher.Application.Providers;
 
 namespace SpeedtestWatcher.Tests.Browser;
 

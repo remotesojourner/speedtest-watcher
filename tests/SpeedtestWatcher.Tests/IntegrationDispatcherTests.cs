@@ -2,11 +2,9 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Events;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Integrations;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

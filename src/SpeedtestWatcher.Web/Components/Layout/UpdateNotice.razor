@@ -1,4 +1,4 @@
-@inject SystemInfoService SystemInfo
+@inject VersionService Versions
 
 @if (_updateVersion != null)
 {
@@ -13,5 +13,5 @@
     private string? _updateVersion;
 
     protected override async Task OnInitializedAsync() =>
-        _updateVersion = UpdateCheck.AvailableUpdate(await SystemInfo.GetVersionAsync());
+        _updateVersion = UpdateCheck.AvailableUpdate(await Versions.GetVersionAsync());
 }

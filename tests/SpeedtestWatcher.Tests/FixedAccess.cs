@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Tests;
 

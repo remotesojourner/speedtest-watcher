@@ -1,12 +1,9 @@
 using FakeItEasy;
-using SpeedtestWatcher.Application.Events;
-using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
 using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Settings;
 using SpeedtestWatcher.Web.Services;
 
 namespace SpeedtestWatcher.Tests;

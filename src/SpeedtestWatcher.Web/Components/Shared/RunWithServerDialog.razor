@@ -1,4 +1,4 @@
-@inject SystemInfoService SystemInfo
+@inject ProviderOptionsService ProviderOptions
 @inject SpeedtestRunService Runs
 @inject ISnackbar Snackbar
 
@@ -50,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await SystemInfo.GetServersAsync(Provider.ToName());
+        var result = await ProviderOptions.GetServersAsync(Provider.ToName());
         _serversUnavailable = result.Value == null;
         _servers = ServerLabels.NearestFirst(result.Value ?? []).Select(server => new ServerOption(server.Id, ServerLabels.For(server))).ToList();
         _loading = false;

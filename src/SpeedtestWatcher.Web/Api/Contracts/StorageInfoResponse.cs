@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Web.Api.Contracts;
 

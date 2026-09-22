@@ -2,7 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.Statistics;
 using SpeedtestWatcher.Web.Api;
 using SpeedtestWatcher.Web.Api.Contracts;
 using SpeedtestWatcher.Web.Services.Auth;

@@ -1,5 +1,5 @@
 using Microsoft.Playwright;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.Providers;
 using static Microsoft.Playwright.Assertions;
 
 namespace SpeedtestWatcher.Tests.Browser;

@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Core.Interfaces;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 

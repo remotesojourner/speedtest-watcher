@@ -44,5 +44,5 @@ dotnet_diagnostic.CA1001.severity = none
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1816.severity = none
 
-[src/SpeedtestWatcher.Infrastructure/Data/Migrations/*.cs]
+[src/SpeedtestWatcher.Application/Storage/Migrations/*.cs]
 generated_code = true

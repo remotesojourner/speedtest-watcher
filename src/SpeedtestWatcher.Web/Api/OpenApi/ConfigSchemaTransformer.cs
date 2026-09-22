@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Api.OpenApi;

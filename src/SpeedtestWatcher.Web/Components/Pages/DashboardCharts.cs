@@ -1,5 +1,5 @@
 using MudBlazor;
-using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Statistics;
 using SpeedtestWatcher.Web.Helpers;
 
 namespace SpeedtestWatcher.Web.Components.Pages;

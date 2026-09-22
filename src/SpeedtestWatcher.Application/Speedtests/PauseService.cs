@@ -1,5 +1,5 @@
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 

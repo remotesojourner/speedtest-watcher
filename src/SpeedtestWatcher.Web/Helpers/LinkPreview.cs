@@ -1,5 +1,5 @@
 using System.Globalization;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Helpers;
 

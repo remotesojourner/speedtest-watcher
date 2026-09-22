@@ -1,7 +1,9 @@
-using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Application.Storage;
 

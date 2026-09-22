@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
-using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Recommendations;
-using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Infrastructure;
 using SpeedtestWatcher.Web.Api.OpenApi;
 using SpeedtestWatcher.Web.Components;
 using SpeedtestWatcher.Web.Hosting;
@@ -17,11 +15,9 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{SpeedtestWatcherOptionsSetup.Read(buil
 builder.Services
     .AddHosting()
     .AddApplication()
-    .AddInfrastructure()
     .AddAccessControl()
     .AddWebApi()
-    .AddWebUi()
-    .AddBackgroundServices();
+    .AddWebUi();
 
 var app = builder.Build();
 

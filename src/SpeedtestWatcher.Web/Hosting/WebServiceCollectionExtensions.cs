@@ -5,14 +5,13 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using MudBlazor.Services;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.Hosting;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Web.Api;
 using SpeedtestWatcher.Web.Api.OpenApi;
-using SpeedtestWatcher.Web.Background;
 using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -92,16 +91,6 @@ public static class WebServiceCollectionExtensions
         services.AddScoped<SettingsState>();
         services.AddScoped<RecentResults>();
         services.AddScoped<LiveUpdates>();
-        return services;
-    }
-
-    public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
-    {
-        services.AddHostedService<SpeedtestSchedulerService>();
-        services.AddHostedService<RetentionCleanupService>();
-        services.AddHostedService<IntegrationTickerService>();
-        services.AddHostedService<InterfaceRefreshService>();
-        services.AddHostedService<CliDownloadService>();
         return services;
     }
 }

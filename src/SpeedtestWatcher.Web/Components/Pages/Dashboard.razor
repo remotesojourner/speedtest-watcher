@@ -19,7 +19,7 @@
         {
             <MudDateRangePicker DateRange="@(new DateRange(_from, _to))" DateRangeChanged="SetCustomRangeAsync"
                                 PlaceholderStart="From" PlaceholderEnd="To" AutoClose="true"
-                                DateFormat="@FormatHelper.DatePattern(Settings.Current.Display.DateFormat)"
+                                DateFormat="@DisplayFormat.DatePattern(Settings.Current.Display.DateFormat)"
                                 Variant="Variant.Outlined" Margin="Margin.Dense" Class="sw-range-picker" />
         }
         <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync!" SelectionMode="SelectionMode.SingleSelection"
@@ -454,7 +454,7 @@
     {
         var local = PreferencesService.ToLocal(utc);
         var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
-        return $"{local.ToString(FormatHelper.DayAndMonthPattern(PreferencesService.DateFormat), CultureInfo.InvariantCulture)} {time}";
+        return $"{local.ToString(DisplayFormat.DayAndMonthPattern(PreferencesService.DateFormat), CultureInfo.InvariantCulture)} {time}";
     }
 
     private string HourHeader(int hour) => PreferencesService.TimeFormat == "12h"

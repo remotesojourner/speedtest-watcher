@@ -2,11 +2,10 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Events;
-using SpeedtestWatcher.Core.Integrations;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Integrations;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.Speedtests;
 using static SpeedtestWatcher.Tests.Approvals;
 
 namespace SpeedtestWatcher.Tests;

@@ -1,13 +1,9 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Events;
-using SpeedtestWatcher.Core.Integrations;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Tests;
 

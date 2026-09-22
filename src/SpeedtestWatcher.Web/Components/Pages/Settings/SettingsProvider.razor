@@ -1,5 +1,5 @@
 @using System.Net.NetworkInformation
-@inject SystemInfoService SystemInfo
+@inject ProviderOptionsService ProviderOptions
 @inject IEnumerable<ISpeedtestTool> Tools
 @inject SettingsState Settings
 @inject ISnackbar Snackbar
@@ -267,7 +267,7 @@
         var interfaces = new Dictionary<string, List<string>>();
         try
         {
-            interfaces = await SystemInfo.GetInterfacesAsync();
+            interfaces = await ProviderOptions.GetInterfacesAsync();
         }
         catch (NetworkInformationException)
         {
@@ -291,7 +291,7 @@
         _serversLoading = true;
         StateHasChanged();
 
-        var result = await SystemInfo.GetServersAsync(provider.ToName());
+        var result = await ProviderOptions.GetServersAsync(provider.ToName());
         if (result.Value is { } servers)
         {
             _servers[provider] = ServerLabels.NearestFirst(servers).Select(server => new ServerOption(server.Id, ServerLabels.For(server))).ToList();

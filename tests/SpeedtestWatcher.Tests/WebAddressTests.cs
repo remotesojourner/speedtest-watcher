@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.Helpers;
+using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Tests;
 

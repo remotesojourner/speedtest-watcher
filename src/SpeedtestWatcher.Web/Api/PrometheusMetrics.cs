@@ -1,9 +1,7 @@
 using System.Globalization;
 using System.Text;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Models;
 
 namespace SpeedtestWatcher.Web.Api;
 

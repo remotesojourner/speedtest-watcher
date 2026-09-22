@@ -2,14 +2,12 @@ using System.Text.Json;
 using FakeItEasy;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using SpeedtestWatcher.Application.Events;
-using SpeedtestWatcher.Application.Security;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Settings;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Core.Settings;
-using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Repositories;
+using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

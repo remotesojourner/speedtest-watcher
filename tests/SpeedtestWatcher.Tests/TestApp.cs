@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Web.Hosting;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -60,9 +61,9 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
 
     private static void RemoveTheAppsBackgroundServices(IServiceCollection services)
     {
-        var app = typeof(Program).Assembly;
+        Assembly[] app = [typeof(Program).Assembly, typeof(ApplicationServiceCollectionExtensions).Assembly];
         var backgroundServices = services
-            .Where(service => service.ServiceType == typeof(IHostedService) && !service.IsKeyedService && DeclaredIn(service, app))
+            .Where(service => service.ServiceType == typeof(IHostedService) && !service.IsKeyedService && app.Any(assembly => DeclaredIn(service, assembly)))
             .ToList();
 
         foreach (var service in backgroundServices) services.Remove(service);

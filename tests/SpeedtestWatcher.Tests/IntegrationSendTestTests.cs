@@ -1,8 +1,6 @@
 using System.Net;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Integrations;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Integrations;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

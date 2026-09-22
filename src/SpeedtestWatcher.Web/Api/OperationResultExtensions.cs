@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Web.Api.Contracts;
 

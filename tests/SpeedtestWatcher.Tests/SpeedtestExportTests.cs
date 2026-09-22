@@ -1,12 +1,8 @@
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Repositories;
+using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

@@ -1,4 +1,4 @@
-@inject SystemInfoService SystemInfo
+@inject VersionService Versions
 
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
@@ -45,7 +45,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _version = await SystemInfo.GetVersionAsync();
+        _version = await Versions.GetVersionAsync();
         _versionChecked = true;
     }
 }

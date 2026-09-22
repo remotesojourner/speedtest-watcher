@@ -1,6 +1,4 @@
 using MudBlazor;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
 
 namespace SpeedtestWatcher.Web.Helpers;
 

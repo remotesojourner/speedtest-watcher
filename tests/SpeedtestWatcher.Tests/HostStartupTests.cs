@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Infrastructure.Data;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

@@ -1,6 +1,5 @@
-using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Settings;
-using SpeedtestWatcher.Core.Settings;
 
 namespace SpeedtestWatcher.Web.Services;
 

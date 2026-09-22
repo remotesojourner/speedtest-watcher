@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

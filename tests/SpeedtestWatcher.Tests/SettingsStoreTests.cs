@@ -1,11 +1,10 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Core.Settings;
-using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Repositories;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

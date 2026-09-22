@@ -1,5 +1,4 @@
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 

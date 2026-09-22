@@ -1,5 +1,5 @@
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Web.Helpers;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -25,19 +25,19 @@ public class HelperTests
     [Fact]
     public void FormatHelper_ConvertSpeed_HandlesMbpsAndMBytes()
     {
-        Assert.Equal(100.0, FormatHelper.ConvertSpeed(100.0, "mbps"));
-        Assert.Equal(12.5, FormatHelper.ConvertSpeed(100.0, "mbytes"));
-        Assert.Equal(0, FormatHelper.ConvertSpeed(null, "mbps"));
+        Assert.Equal(100.0, DisplayFormat.ConvertSpeed(100.0, "mbps"));
+        Assert.Equal(12.5, DisplayFormat.ConvertSpeed(100.0, "mbytes"));
+        Assert.Equal(0, DisplayFormat.ConvertSpeed(null, "mbps"));
     }
 
     [Fact]
     public void FormatHelper_ToRelativeTime_FormatsCorrectly()
     {
         var now = DateTime.UtcNow;
-        Assert.Equal("Just now", FormatHelper.ToRelativeTime(now.AddSeconds(-20)));
-        Assert.Equal("5 minutes ago", FormatHelper.ToRelativeTime(now.AddMinutes(-5)));
-        Assert.Equal("2 hours ago", FormatHelper.ToRelativeTime(now.AddHours(-2)));
-        Assert.Equal("3 days ago", FormatHelper.ToRelativeTime(now.AddDays(-3)));
+        Assert.Equal("Just now", DisplayFormat.ToRelativeTime(now.AddSeconds(-20)));
+        Assert.Equal("5 minutes ago", DisplayFormat.ToRelativeTime(now.AddMinutes(-5)));
+        Assert.Equal("2 hours ago", DisplayFormat.ToRelativeTime(now.AddHours(-2)));
+        Assert.Equal("3 days ago", DisplayFormat.ToRelativeTime(now.AddDays(-3)));
     }
 
     [Fact]

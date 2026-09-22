@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Events;
+using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 

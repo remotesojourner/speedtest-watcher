@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Web.Api.Contracts;
 

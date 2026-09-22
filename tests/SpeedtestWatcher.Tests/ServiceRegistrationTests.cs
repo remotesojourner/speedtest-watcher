@@ -1,12 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
-using SpeedtestWatcher.Application.Info;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
-using SpeedtestWatcher.Application.Security;
 using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Statistics;
 using SpeedtestWatcher.Application.Storage;
+using SpeedtestWatcher.Application.Updates;
 using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -33,7 +35,8 @@ public sealed class ServiceRegistrationTests : IClassFixture<SignInOffApp>
         typeof(SignInService),
         typeof(IntegrationService),
         typeof(StorageService),
-        typeof(SystemInfoService),
+        typeof(VersionService),
+        typeof(ProviderOptionsService),
         typeof(ICurrentAccess),
         typeof(CircuitAccess),
         typeof(HttpCurrentAccess),

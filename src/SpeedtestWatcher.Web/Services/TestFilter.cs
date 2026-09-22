@@ -1,5 +1,4 @@
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Services;
 

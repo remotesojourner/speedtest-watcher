@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using SpeedtestWatcher.Core.Hosting;
+using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Web.Api.OpenApi;
 

@@ -28,8 +28,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SpeedtestWatcher.Application\SpeedtestWatcher.Application.csproj" />
-    <ProjectReference Include="..\..\src\SpeedtestWatcher.Core\SpeedtestWatcher.Core.csproj" />
-    <ProjectReference Include="..\..\src\SpeedtestWatcher.Infrastructure\SpeedtestWatcher.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\SpeedtestWatcher.Web\SpeedtestWatcher.Web.csproj" />
   </ItemGroup>
 

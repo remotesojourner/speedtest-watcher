@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Web.Api.Contracts;
 

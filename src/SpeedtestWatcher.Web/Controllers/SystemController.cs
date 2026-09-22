@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Application.Info;
+using SpeedtestWatcher.Application.Updates;
 using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Controllers;
@@ -10,11 +10,11 @@ namespace SpeedtestWatcher.Web.Controllers;
 [Produces("application/json")]
 public class SystemController : ControllerBase
 {
-    private readonly SystemInfoService _info;
+    private readonly VersionService _versions;
 
-    public SystemController(SystemInfoService info)
+    public SystemController(VersionService versions)
     {
-        _info = info;
+        _versions = versions;
     }
 
     /// <summary>
@@ -27,5 +27,5 @@ public class SystemController : ControllerBase
     [HttpGet("version")]
     [ProducesResponseType<VersionResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<VersionResponse>> GetVersion(CancellationToken cancellationToken) =>
-        VersionResponse.From(await _info.GetVersionAsync(cancellationToken));
+        VersionResponse.From(await _versions.GetVersionAsync(cancellationToken));
 }

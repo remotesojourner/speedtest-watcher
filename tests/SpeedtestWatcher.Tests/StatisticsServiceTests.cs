@@ -1,6 +1,5 @@
 using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Statistics;
 
 namespace SpeedtestWatcher.Tests;
 

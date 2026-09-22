@@ -1,9 +1,8 @@
 using System.Text.Json;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Settings;
 

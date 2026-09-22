@@ -1,5 +1,4 @@
-using SpeedtestWatcher.Core.SpeedTest;
-using SpeedtestWatcher.Infrastructure.SpeedTest;
+using SpeedtestWatcher.Application.Providers;
 
 namespace SpeedtestWatcher.Tests;
 

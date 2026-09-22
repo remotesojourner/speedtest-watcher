@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests.Browser;
 

@@ -1,9 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Events;
-using SpeedtestWatcher.Core.Integrations;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

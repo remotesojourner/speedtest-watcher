@@ -82,7 +82,7 @@
     private bool BeginAtZero => Settings.Current.Display.ChartBeginAtZero;
 
     private static string Example(string dateFormat) =>
-        FormatHelper.FormatDate(new DateTime(2026, 9, 16), dateFormat);
+        DisplayFormat.FormatDate(new DateTime(2026, 9, 16), dateFormat);
 
     private async Task SavePreferencesAsync(string timeFormat, string speedUnit)
     {

@@ -1,5 +1,5 @@
 using System.Data.Common;
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Services;
 

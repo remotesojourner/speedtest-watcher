@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
-using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Services.Auth;

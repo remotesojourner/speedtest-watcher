@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SpeedtestWatcher.Web.Background;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

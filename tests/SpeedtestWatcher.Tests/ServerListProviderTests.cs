@@ -1,11 +1,8 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Core.SpeedTest;
-using SpeedtestWatcher.Infrastructure.Network;
-using SpeedtestWatcher.Infrastructure.SpeedTest;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Providers;
 
 namespace SpeedtestWatcher.Tests;
 

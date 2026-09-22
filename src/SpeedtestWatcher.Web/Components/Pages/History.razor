@@ -390,7 +390,7 @@
 
     private string DownloadLabel() =>
         LatestReading != null
-            ? $"Download speed · last test {FormatHelper.ToRelativeTime(FormatHelper.ParseUtcTimestamp(LatestReading.Created))}"
+            ? $"Download speed · last test {DisplayFormat.ToRelativeTime(TimeZones.ParseUtcTimestamp(LatestReading.Created))}"
             : "Download speed";
 
     private string DayLabel(DateTime day)

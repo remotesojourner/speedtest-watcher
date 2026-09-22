@@ -3,15 +3,14 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SpeedtestWatcher.Application;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.SpeedTest;
-using SpeedtestWatcher.Infrastructure.Data;
-using SpeedtestWatcher.Infrastructure.Integrations;
-using SpeedtestWatcher.Infrastructure.Network;
-using SpeedtestWatcher.Infrastructure.Repositories;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Tests;
 

@@ -1,5 +1,5 @@
-using SpeedtestWatcher.Application.Events;
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Services;
 

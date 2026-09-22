@@ -1,5 +1,6 @@
 using System.Text.Json;
-using SpeedtestWatcher.Core.Helpers;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Web.Helpers;
 
 namespace SpeedtestWatcher.Web.Services;
 
@@ -31,7 +32,7 @@ public class PreferencesService
         if (saved.TryGetValue("speedUnit", out var speedUnit)) SpeedUnit = speedUnit;
         if (await _browser.GetTimeZoneAsync() is { } browserTimeZone)
         {
-            if (FormatHelper.TryFindTimeZone(browserTimeZone, out var timeZone)) TimeZone = timeZone;
+            if (TimeZones.TryFindTimeZone(browserTimeZone, out var timeZone)) TimeZone = timeZone;
             else _logger.LogWarning("The browser's time zone {TimeZone} isn't known on this server, so times are shown in UTC", browserTimeZone);
         }
         OnChange?.Invoke();
@@ -45,12 +46,12 @@ public class PreferencesService
         OnChange?.Invoke();
     }
 
-    public DateTime ToLocal(DateTime moment) => FormatHelper.InTimeZone(moment, TimeZone);
-    public DateTime ToLocal(string timestamp) => ToLocal(FormatHelper.ParseUtcTimestamp(timestamp));
-    public double ConvertSpeed(double? mbps) => FormatHelper.ConvertSpeed(mbps, SpeedUnit);
-    public string FormatTime(DateTime dt) => FormatHelper.FormatTime(dt, TimeFormat);
-    public string FormatDate(DateTime dt) => FormatHelper.FormatDate(dt, DateFormat);
-    public string FormatDateTime(DateTime dt) => FormatHelper.FormatDateTime(dt, TimeFormat, DateFormat);
+    public DateTime ToLocal(DateTime moment) => TimeZones.InTimeZone(moment, TimeZone);
+    public DateTime ToLocal(string timestamp) => ToLocal(TimeZones.ParseUtcTimestamp(timestamp));
+    public double ConvertSpeed(double? mbps) => DisplayFormat.ConvertSpeed(mbps, SpeedUnit);
+    public string FormatTime(DateTime dt) => DisplayFormat.FormatTime(dt, TimeFormat);
+    public string FormatDate(DateTime dt) => DisplayFormat.FormatDate(dt, DateFormat);
+    public string FormatDateTime(DateTime dt) => DisplayFormat.FormatDateTime(dt, TimeFormat, DateFormat);
 
     private Dictionary<string, string> ParseSaved(string? json)
     {

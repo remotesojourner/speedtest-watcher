@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Tests;
 

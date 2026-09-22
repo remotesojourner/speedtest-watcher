@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Tests;

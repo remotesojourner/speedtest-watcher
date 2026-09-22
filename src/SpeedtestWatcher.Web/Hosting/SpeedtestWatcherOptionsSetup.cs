@@ -1,6 +1,6 @@
 using System.Globalization;
 using Microsoft.Extensions.Options;
-using SpeedtestWatcher.Core.Hosting;
+using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Web.Hosting;
 

@@ -1,10 +1,6 @@
 using System.Text;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 

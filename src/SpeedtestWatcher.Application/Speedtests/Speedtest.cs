@@ -1,0 +1,29 @@
+using SpeedtestWatcher.Application.Common;
+
+namespace SpeedtestWatcher.Application.Speedtests;
+
+public class Speedtest
+{
+    public int Id { get; set; }
+    public int ServerId { get; set; }
+    public string? ServerName { get; set; }
+    public string? ServerHost { get; set; }
+    public int Ping { get; set; }
+    public double? Jitter { get; set; }
+    public double Download { get; set; }
+    public double Upload { get; set; }
+    public string? Error { get; set; }
+
+    public TestStatus Status { get; set; } = TestStatus.Completed;
+
+    public bool? Healthy { get; set; }
+
+    public int? ThresholdPing { get; set; }
+    public double? ThresholdDownload { get; set; }
+    public double? ThresholdUpload { get; set; }
+
+    public TestType Type { get; set; } = TestType.Auto;
+    public string? ResultId { get; set; }
+    public int Time { get; set; }
+    public DateTime Created { get; set => field = TimeZones.AsUtc(value); } = DateTime.UtcNow;
+}

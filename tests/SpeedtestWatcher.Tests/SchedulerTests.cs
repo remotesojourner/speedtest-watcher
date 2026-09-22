@@ -2,11 +2,10 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Settings;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Hosting;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Web.Background;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Tests;
 

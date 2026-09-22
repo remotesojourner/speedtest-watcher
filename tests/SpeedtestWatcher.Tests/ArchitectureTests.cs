@@ -1,22 +1,22 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Application;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Tests;
 
 public class ArchitectureTests
 {
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+    private const string StorageNamespace = "SpeedtestWatcher.Application.Storage";
 
-    private static readonly Assembly Core = typeof(Speedtest).Assembly;
     private static readonly Assembly ApplicationLayer = typeof(OperationResult).Assembly;
-    private static readonly Assembly Infrastructure = typeof(SpeedtestWatcherDbContext).Assembly;
     private static readonly Assembly Web = typeof(Program).Assembly;
+    private static readonly Type[] InputOutput = [typeof(HttpClient), typeof(IHttpClientFactory), typeof(Process)];
 
     private static readonly Dictionary<short, OpCode> OpCodesByValue = typeof(OpCodes)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
@@ -24,21 +24,21 @@ public class ArchitectureTests
         .ToDictionary(opCode => opCode.Value);
 
     [Fact]
-    public void ApplicationAndInfrastructure_ReferenceOnlyCore()
+    public void TheWebsiteReferencesOnlyApplication_AndApplicationKnowsNothingOfTheWeb()
     {
-        Assert.Empty(ProjectReferences(Core));
-        Assert.Equal(["SpeedtestWatcher.Core"], ProjectReferences(ApplicationLayer));
-        Assert.Equal(["SpeedtestWatcher.Core"], ProjectReferences(Infrastructure));
+        Assert.Equal(["SpeedtestWatcher.Application"], ProjectReferences(Web));
+        Assert.Empty(ProjectReferences(ApplicationLayer));
+        Assert.DoesNotContain(ApplicationLayer.GetReferencedAssemblies(), reference => reference.Name!.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
     }
 
     [Fact]
-    public void Controllers_UseApplicationServices_NotRepositoriesOrInfrastructure()
+    public void Controllers_UseApplicationServices_NotRepositories()
     {
         var offending = Web.GetTypes()
             .Where(type => type.IsSubclassOf(typeof(ControllerBase)))
             .SelectMany(controller => controller.GetConstructors()
                 .SelectMany(constructor => constructor.GetParameters())
-                .Where(parameter => parameter.ParameterType.Assembly == Infrastructure || IsRepository(parameter.ParameterType))
+                .Where(parameter => IsRepository(parameter.ParameterType))
                 .Select(parameter => $"{controller.Name} takes {parameter.ParameterType.Name}"))
             .ToList();
 
@@ -46,13 +46,13 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void Components_InjectServices_NotRepositoriesOrInfrastructure()
+    public void Components_InjectServices_NotRepositoriesOrHttpClients()
     {
         var offending = Web.GetTypes()
             .Where(type => type.IsAssignableTo(typeof(ComponentBase)))
             .SelectMany(component => component.GetProperties(Declared)
                 .Where(property => property.IsDefined(typeof(InjectAttribute)))
-                .Where(property => property.PropertyType.Assembly == Infrastructure || IsRepository(property.PropertyType) || property.PropertyType == typeof(HttpClient))
+                .Where(property => IsRepository(property.PropertyType) || property.PropertyType == typeof(HttpClient))
                 .Select(property => $"{component.Name} injects {property.PropertyType.Name}"))
             .ToList();
 
@@ -60,13 +60,27 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void OnlyProgram_UsesInfrastructureTypes()
+    public void InApplication_OnlyRepositoriesAndStorage_UseTheDbContext()
     {
-        var offending = Web.GetTypes()
-            .Where(type => !BelongsToProgram(type))
-            .SelectMany(type => TypesUsedBy(type)
-                .Where(used => used.Assembly == Infrastructure)
-                .Select(used => $"{type.FullName} uses {used.FullName}"))
+        var offending = ApplicationLayer.GetTypes()
+            .Select(type => (Type: type, Owner: Outermost(type)))
+            .Where(entry => !IsRepositoryImplementation(entry.Owner) && !InStorage(entry.Owner) && !IsRegistration(entry.Owner))
+            .Where(entry => TypesUsedBy(entry.Type).Any(used => used.IsAssignableTo(typeof(DbContext))))
+            .Select(entry => entry.Owner.FullName)
+            .Distinct()
+            .ToList();
+
+        Assert.Empty(offending);
+    }
+
+    [Fact]
+    public void ApplicationTypesThatTalkToTheOutsideWorld_AreInternal()
+    {
+        var offending = ApplicationLayer.GetTypes()
+            .Select(type => (Type: type, Owner: Outermost(type)))
+            .Where(entry => entry.Owner.IsPublic && !IsRegistration(entry.Owner))
+            .Where(entry => TypesUsedBy(entry.Type).Any(used => InputOutput.Contains(used)))
+            .Select(entry => entry.Owner.FullName)
             .Distinct()
             .ToList();
 
@@ -81,16 +95,20 @@ public class ArchitectureTests
             .ToList();
 
     private static bool IsRepository(Type type) =>
-        type.Assembly == Core && (type.Name.EndsWith("Repository", StringComparison.Ordinal) || type == typeof(ISettingsStore));
+        type.Assembly == ApplicationLayer && (type.Name.EndsWith("Repository", StringComparison.Ordinal) || type == typeof(ISettingsStore));
 
-    private static bool BelongsToProgram(Type type)
+    private static bool IsRepositoryImplementation(Type type) => type.GetInterfaces().Any(IsRepository);
+
+    private static bool InStorage(Type type) =>
+        type.Namespace is { } name && (name == StorageNamespace || name.StartsWith(StorageNamespace + ".", StringComparison.Ordinal));
+
+    private static bool IsRegistration(Type type) => type.Name.EndsWith("ServiceCollectionExtensions", StringComparison.Ordinal);
+
+    private static Type Outermost(Type type)
     {
-        for (var current = type; current != null; current = current.DeclaringType)
-        {
-            if (current == typeof(Program)) return true;
-        }
-
-        return false;
+        var current = type;
+        while (current.DeclaringType != null) current = current.DeclaringType;
+        return current;
     }
 
     private static IEnumerable<Type> TypesUsedBy(Type type)

@@ -1,5 +1,5 @@
-using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.SpeedTest;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Providers;
 
 namespace SpeedtestWatcher.Web.Helpers;
 

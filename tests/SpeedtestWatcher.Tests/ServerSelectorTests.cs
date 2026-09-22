@@ -1,9 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using SpeedtestWatcher.Application.Speedtests;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Settings;
-using SpeedtestWatcher.Core.SpeedTest;
+using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Tests;
 

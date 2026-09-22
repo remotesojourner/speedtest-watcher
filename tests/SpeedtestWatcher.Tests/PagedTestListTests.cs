@@ -1,6 +1,5 @@
 using Microsoft.Data.Sqlite;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
+using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Web.Services;
 
 namespace SpeedtestWatcher.Tests;

@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Core.DTOs;
+using SpeedtestWatcher.Application.Updates;
 using SpeedtestWatcher.Web.Helpers;
 
 namespace SpeedtestWatcher.Tests;

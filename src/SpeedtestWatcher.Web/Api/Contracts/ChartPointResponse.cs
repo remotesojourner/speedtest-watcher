@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Statistics;
 
 namespace SpeedtestWatcher.Web.Api.Contracts;
 

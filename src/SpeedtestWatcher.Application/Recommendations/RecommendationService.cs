@@ -1,6 +1,5 @@
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Recommendations;
 

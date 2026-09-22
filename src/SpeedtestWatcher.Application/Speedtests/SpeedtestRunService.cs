@@ -1,15 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SpeedtestWatcher.Application.Events;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Core.Enums;
-using SpeedtestWatcher.Core.Events;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Core.Settings;
+using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 

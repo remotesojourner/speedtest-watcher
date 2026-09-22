@@ -2,10 +2,7 @@ using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SpeedtestWatcher.Core.Integrations;
-using SpeedtestWatcher.Core.Interfaces;
-using SpeedtestWatcher.Core.Models;
-using SpeedtestWatcher.Infrastructure.Integrations;
+using SpeedtestWatcher.Application.Integrations;
 
 namespace SpeedtestWatcher.Tests;
 

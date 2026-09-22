@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Web.Helpers;
 using SpeedtestWatcher.Web.Services.Auth;
-using SkiaSharp;
 
 namespace SpeedtestWatcher.Web.Controllers;
 

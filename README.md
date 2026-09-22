@@ -276,7 +276,7 @@ To leave them out, add `-- -trait- "Category=Browser"` to the test command.
 EF Core migrations are applied automatically on startup. To add a new migration during development:
 
 ```bash
-dotnet ef migrations add <MigrationName> --project src/SpeedtestWatcher.Infrastructure --startup-project src/SpeedtestWatcher.Web --output-dir Data/Migrations
+dotnet ef migrations add <MigrationName> --project src/SpeedtestWatcher.Application --startup-project src/SpeedtestWatcher.Web --output-dir Storage/Migrations
 ```
 
 ### Docker image
