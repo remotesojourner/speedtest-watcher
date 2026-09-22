@@ -1,5 +1,7 @@
 using System.Text;
+using Cronos;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Speedtests;
@@ -9,6 +11,8 @@ public sealed class ResultsService
     private readonly ISpeedtestRepository _results;
     private readonly ICurrentAccess _access;
 
+    private const int RunsBehindAnEstimate = 10;
+
     public ResultsService(ISpeedtestRepository results, ICurrentAccess access)
     {
         _results = results;
@@ -17,12 +21,19 @@ public sealed class ResultsService
 
     public async Task<IReadOnlyList<SpeedtestDto>> ListAsync(
         int? afterId, int limit, TestStatus? status, TestType? type, bool? healthy, CancellationToken cancellationToken = default) =>
-        (await _results.ListTestsAsync(afterId, limit, status, type, healthy, cancellationToken)).Select(SpeedtestDto.From).ToList();
+        (await _results.ListTestsAsync(afterId, limit, status, type, healthy, cancellationToken)).Select(Visible).ToList();
 
     public async Task<OperationResult<SpeedtestDto>> GetAsync(int id, CancellationToken cancellationToken = default) =>
         await _results.GetByIdAsync(id, cancellationToken) is { } test
-            ? OperationResult.Ok(SpeedtestDto.From(test))
+            ? OperationResult.Ok(Visible(test))
             : OperationResult.NotFound("Speedtest not found");
+
+    private SpeedtestDto Visible(Speedtest test)
+    {
+        var dto = SpeedtestDto.From(test);
+        if (!_access.HasFullAccess) dto.PublicIp = null;
+        return dto;
+    }
 
     public Task<int> CountAsync(TestStatus? status, TestType? type, bool? healthy, CancellationToken cancellationToken = default) =>
         _results.CountMatchingAsync(status, type, healthy, cancellationToken);
@@ -50,6 +61,35 @@ public sealed class ResultsService
 
     public Task<Speedtest?> GetLatestCompletedAsync(CancellationToken cancellationToken = default) =>
         _results.GetLatestCompletedAsync(cancellationToken);
+
+    public async Task<DataUsedDto> DataUsedAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        return new DataUsedDto(
+            await _results.SumBytesSinceAsync(now.AddHours(-24), cancellationToken),
+            await _results.SumBytesSinceAsync(now.AddDays(-7), cancellationToken),
+            await _results.SumBytesSinceAsync(now.AddDays(-30), cancellationToken),
+            await _results.SumBytesSinceAsync(null, cancellationToken));
+    }
+
+    public async Task<long?> EstimateMonthlyBytesAsync(ScheduleSettings schedule, CancellationToken cancellationToken = default)
+    {
+        int runs;
+        try
+        {
+            runs = schedule.RunsPerMonth(DateTime.UtcNow);
+        }
+        catch (CronFormatException)
+        {
+            return null;
+        }
+
+        var recent = await _results.RecentRunBytesAsync(RunsBehindAnEstimate, cancellationToken);
+        if (recent.Count == 0 || runs == 0) return null;
+
+        var sorted = recent.Order().ToList();
+        return sorted[sorted.Count / 2] * runs;
+    }
 
     public async Task<ResultsSummary> SummarizeAsync(CancellationToken cancellationToken = default) => new(
         await _results.GetLatestAsync(cancellationToken),

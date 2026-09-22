@@ -63,6 +63,7 @@ internal sealed class CloudflareTool : ISpeedtestTool
         {
             var downloads = new List<double>();
             var uploads = new List<double>();
+            long downloadBytes = 0, uploadBytes = 0;
 
             foreach (var item in measurements.EnumerateArray())
             {
@@ -71,12 +72,23 @@ internal sealed class CloudflareTool : ISpeedtestTool
                 if (item.TryGetProperty("max", out var max)) speed = max.GetDouble();
                 else if (item.TryGetProperty("median", out var median)) speed = median.GetDouble();
 
-                if (type == "Download") downloads.Add(speed);
-                else if (type == "Upload") uploads.Add(speed);
+                var moved = (long)((JsonOutput.Number(item, "payload_size") ?? 0) * (JsonOutput.Number(item, "successes") ?? 0));
+                if (type == "Download")
+                {
+                    downloads.Add(speed);
+                    downloadBytes += moved;
+                }
+                else if (type == "Upload")
+                {
+                    uploads.Add(speed);
+                    uploadBytes += moved;
+                }
             }
 
             result.Download = downloads.Count > 0 ? Math.Round(downloads.Max(), 2) : 0;
             result.Upload = uploads.Count > 0 ? Math.Round(uploads.Max(), 2) : 0;
+            result.DownloadBytes = downloadBytes > 0 ? downloadBytes : null;
+            result.UploadBytes = uploadBytes > 0 ? uploadBytes : null;
         }
 
         if (root.TryGetProperty("latency_measurement", out var latency))

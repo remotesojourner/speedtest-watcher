@@ -1860,7 +1860,11 @@
           "serverId",
           "serverName",
           "serverHost",
-          "resultId"
+          "resultId",
+          "packetLoss",
+          "downloadBytes",
+          "uploadBytes",
+          "publicIp"
         ],
         "type": "object",
         "properties": {
@@ -2012,6 +2016,49 @@
               "string"
             ],
             "description": "The provider's own id for the result, such as Ookla's result id."
+          },
+          "packetLoss": {
+            "examples": [
+              0
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Packet loss as a percentage, when the provider measures it. Only Ookla does.",
+            "format": "double"
+          },
+          "downloadBytes": {
+            "examples": [
+              903347628
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes downloaded during the test, when the provider reports them.",
+            "format": "int64"
+          },
+          "uploadBytes": {
+            "examples": [
+              88429797
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes uploaded during the test, when the provider reports them.",
+            "format": "int64"
+          },
+          "publicIp": {
+            "examples": [
+              "203.0.113.9"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The public IP the test ran from, when the pre-test check looked it up. Only for full access; read-only visitors get `null`."
           }
         },
         "description": "One stored speedtest result. Failed and skipped results have `-1` for ping, download and upload."
@@ -2059,6 +2106,8 @@
           "upload",
           "time",
           "consistency",
+          "packetLoss",
+          "dataUsedBytes",
           "hourlyAverages",
           "points",
           "rawDataPoints",
@@ -2132,6 +2181,25 @@
           "consistency": {
             "description": "How steady the completed tests' readings were.",
             "$ref": "#/components/schemas/ConsistencyResponse"
+          },
+          "packetLoss": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Packet loss across the completed tests that measured it, as percentages. Only Ookla measures it."
+          },
+          "dataUsedBytes": {
+            "examples": [
+              991777425
+            ],
+            "type": "integer",
+            "description": "Bytes the tests in the period moved, download and upload together, as far as the providers reported them.",
+            "format": "int64"
           },
           "hourlyAverages": {
             "type": "array",
@@ -2351,6 +2419,39 @@
               "string"
             ],
             "description": "Why the test failed or was skipped."
+          },
+          "packetLoss": {
+            "examples": [
+              0
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Packet loss as a percentage.",
+            "format": "double"
+          },
+          "downloadBytes": {
+            "examples": [
+              903347628
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes downloaded during the test.",
+            "format": "int64"
+          },
+          "uploadBytes": {
+            "examples": [
+              88429797
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes uploaded during the test.",
+            "format": "int64"
           },
           "serverId": {
             "type": "integer",

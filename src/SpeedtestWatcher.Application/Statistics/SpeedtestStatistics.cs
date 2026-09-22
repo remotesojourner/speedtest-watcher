@@ -6,10 +6,12 @@ public sealed record SpeedtestStatistics(
     MetricStatsDto<double>? Jitter,
     MetricStatsDto<double>? Download,
     MetricStatsDto<double>? Upload,
+    MetricStatsDto<double>? PacketLoss,
     MetricStatsDto<int>? Time,
     IReadOnlyList<ChartPoint> ChartPoints,
     IReadOnlyList<HourlyAverageDto> HourlyAverages,
     ConsistencyDto Consistency,
+    long DataUsedBytes,
     int RawDataPoints,
     bool Downsampled,
     DateRangeDto DateRange);

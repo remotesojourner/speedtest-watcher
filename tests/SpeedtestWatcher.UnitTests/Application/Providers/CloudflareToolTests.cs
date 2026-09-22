@@ -20,6 +20,17 @@ public class CloudflareToolTests
         Assert.NotNull(result.Jitter);
     }
 
+    [Fact]
+    public void TheBytesMovedAreWorkedOutFromThePayloadSizes()
+    {
+        const string Run = """{"metadata":{"country":"GB","ip":"203.0.113.9","colo":"LHR"},"latency_measurement":{"avg_latency_ms":78.8,"latency_measurements":[53.2]},"speed_measurements":[{"test_type":"Download","payload_size":100000,"median":13.1,"max":13.1,"successes":3},{"test_type":"Upload","payload_size":100000,"median":9.4,"max":9.4,"successes":2}]}""";
+
+        var result = _tool.ParseResult(new ToolOutput(Run, "", 0), _automatic);
+
+        Assert.Equal((300000L, 200000L), (result.DownloadBytes, result.UploadBytes));
+        Assert.Null(result.PacketLoss);
+    }
+
     [Theory]
     [InlineData("192.168.1.20", "--ipv4=192.168.1.20")]
     [InlineData("2a00:23c8:870c:bf00::1", "--ipv6=2a00:23c8:870c:bf00::1")]

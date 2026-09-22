@@ -111,6 +111,30 @@ public sealed record SpeedtestResponse
     /// </summary>
     public required string? ResultId { get; init; }
 
+    /// <summary>
+    /// Packet loss as a percentage, when the provider measures it. Only Ookla does.
+    /// </summary>
+    /// <example>0</example>
+    public required double? PacketLoss { get; init; }
+
+    /// <summary>
+    /// Bytes downloaded during the test, when the provider reports them.
+    /// </summary>
+    /// <example>903347628</example>
+    public required long? DownloadBytes { get; init; }
+
+    /// <summary>
+    /// Bytes uploaded during the test, when the provider reports them.
+    /// </summary>
+    /// <example>88429797</example>
+    public required long? UploadBytes { get; init; }
+
+    /// <summary>
+    /// The public IP the test ran from, when the pre-test check looked it up. Only for full access; read-only visitors get <c>null</c>.
+    /// </summary>
+    /// <example>203.0.113.9</example>
+    public required string? PublicIp { get; init; }
+
     public static SpeedtestResponse From(SpeedtestDto test) => new()
     {
         Id = test.Id,
@@ -130,6 +154,10 @@ public sealed record SpeedtestResponse
         ServerId = test.ServerId,
         ServerName = test.ServerName,
         ServerHost = test.ServerHost,
-        ResultId = test.ResultId
+        ResultId = test.ResultId,
+        PacketLoss = test.PacketLoss,
+        DownloadBytes = test.DownloadBytes,
+        UploadBytes = test.UploadBytes,
+        PublicIp = test.PublicIp
     };
 }

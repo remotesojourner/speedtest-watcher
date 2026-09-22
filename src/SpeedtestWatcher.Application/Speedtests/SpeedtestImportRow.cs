@@ -12,6 +12,9 @@ public class SpeedtestImportRow
     public double Download { get; set; }
     public double Upload { get; set; }
     public string? Error { get; set; }
+    public double? PacketLoss { get; set; }
+    public long? DownloadBytes { get; set; }
+    public long? UploadBytes { get; set; }
     public string? Status { get; set; }
     public bool? Healthy { get; set; }
     public int? ThresholdPing { get; set; }
@@ -32,6 +35,9 @@ public class SpeedtestImportRow
         Download = Download,
         Upload = Upload,
         Error = Error,
+        PacketLoss = PacketLoss,
+        DownloadBytes = DownloadBytes,
+        UploadBytes = UploadBytes,
         Status = EnumNames.TryParse<TestStatus>(Status, out var status) ? status : FallbackStatus,
         Healthy = Healthy,
         ThresholdPing = ThresholdPing,

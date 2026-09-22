@@ -9,8 +9,8 @@ using SpeedtestWatcher.Application.Storage;
 namespace SpeedtestWatcher.Application.Storage.Migrations
 {
     [DbContext(typeof(SpeedtestWatcherDbContext))]
-    [Migration("20260915185209_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260922175203_AddDataUsedAndPacketLoss")]
+    partial class AddDataUsedAndPacketLoss
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,23 +18,7 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
-            modelBuilder.Entity("SpeedtestWatcher.Core.Models.ConfigEntry", b =>
-                {
-                    b.Property<string>("Key")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("key");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("value");
-
-                    b.HasKey("Key");
-
-                    b.ToTable("config", (string)null);
-                });
-
-            modelBuilder.Entity("SpeedtestWatcher.Core.Models.IntegrationData", b =>
+            modelBuilder.Entity("SpeedtestWatcher.Application.Integrations.IntegrationData", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT")
@@ -74,7 +58,7 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.ToTable("integration_data", (string)null);
                 });
 
-            modelBuilder.Entity("SpeedtestWatcher.Core.Models.Recommendation", b =>
+            modelBuilder.Entity("SpeedtestWatcher.Application.Recommendations.Recommendation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -98,7 +82,23 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.ToTable("recommendations", (string)null);
                 });
 
-            modelBuilder.Entity("SpeedtestWatcher.Core.Models.Speedtest", b =>
+            modelBuilder.Entity("SpeedtestWatcher.Application.Settings.ConfigEntry", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("config", (string)null);
+                });
+
+            modelBuilder.Entity("SpeedtestWatcher.Application.Speedtests.Speedtest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -113,17 +113,33 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                         .HasColumnType("REAL")
                         .HasColumnName("download");
 
+                    b.Property<long?>("DownloadBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("downloadBytes");
+
                     b.Property<string>("Error")
                         .HasColumnType("TEXT")
                         .HasColumnName("error");
+
+                    b.Property<bool?>("Healthy")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("healthy");
 
                     b.Property<double?>("Jitter")
                         .HasColumnType("REAL")
                         .HasColumnName("jitter");
 
+                    b.Property<double?>("PacketLoss")
+                        .HasColumnType("REAL")
+                        .HasColumnName("packetLoss");
+
                     b.Property<int>("Ping")
                         .HasColumnType("INTEGER")
                         .HasColumnName("ping");
+
+                    b.Property<string>("PublicIp")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("publicIp");
 
                     b.Property<string>("ResultId")
                         .HasColumnType("TEXT")
@@ -143,6 +159,25 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("serverName");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("completed")
+                        .HasColumnName("status");
+
+                    b.Property<double?>("ThresholdDownload")
+                        .HasColumnType("REAL")
+                        .HasColumnName("thresholdDownload");
+
+                    b.Property<int?>("ThresholdPing")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("thresholdPing");
+
+                    b.Property<double?>("ThresholdUpload")
+                        .HasColumnType("REAL")
+                        .HasColumnName("thresholdUpload");
+
                     b.Property<int>("Time")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
@@ -159,6 +194,10 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.Property<double>("Upload")
                         .HasColumnType("REAL")
                         .HasColumnName("upload");
+
+                    b.Property<long?>("UploadBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("uploadBytes");
 
                     b.HasKey("Id");
 

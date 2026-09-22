@@ -60,6 +60,7 @@ The message is written for people, so you can show it as it is.
 
 - Timestamps are UTC in ISO 8601, such as `2026-09-14T20:35:00Z`.
 - Speeds are in Mbps. Ping and jitter are in milliseconds, and a test's `time` is its duration in seconds.
+- `packetLoss` is a percentage, and `downloadBytes` and `uploadBytes` are the data the test itself moved. A provider that doesn't measure them leaves them `null`.
 - Failed and skipped results store `-1` for ping, download and upload. Check `status` before using the readings.
 - Settings are strings, as they are stored. `none` means unset.
 - Enums use lowercase names: status is `completed`, `failed` or `skipped`, and type is `auto` (the schedule) or `custom` (started by hand).
@@ -75,6 +76,8 @@ List the latest results, newest first:
 ```bash
 curl "http://speedtest-watcher:2003/api/speedtests?limit=20"
 ```
+
+Each result also carries `publicIp`, the address the connection check saw when the test ran. It's `null` for read-only visitors, and it's left out of exports and of the payloads sent to integrations.
 
 Filter with `status`, `type` and `healthy`, which is `true` for results that met their targets and `false` for those that missed them. For the next page, pass the `id` of the last result you received as `afterId`:
 
@@ -106,7 +109,8 @@ curl "http://speedtest-watcher:2003/api/speedtests/statistics?from=2026-09-01&to
 `from` and `to` take a date, which covers the whole day, or a date and time. They default to the last seven days. `tz` is an IANA time zone for day boundaries and the hourly averages, and defaults to UTC. The response has:
 
 - `tests`: how many ran and how many failed.
-- `ping`, `jitter`, `download`, `upload` and `time`: the lowest, average and highest value of the completed tests, or `null` when none completed.
+- `ping`, `jitter`, `download`, `upload`, `time` and `packetLoss`: the lowest, average and highest value of the completed tests, or `null` when none completed. `packetLoss` is also `null` when no test in the period measured it.
+- `dataUsedBytes`: how much data the tests in the period moved, download and upload together.
 - `consistency`: the standard deviation of each reading, and for speeds a consistency score from 0 to 100.
 - `hourlyAverages`: one entry for each hour of the day, 0 to 23.
 - `points`: chart points, oldest first. Up to 300 tests give one point each. Longer periods are averaged into at most 300 points, and `downsampled` is `true`.

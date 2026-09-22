@@ -28,5 +28,5 @@ public class PrometheusController : ControllerBase
     [Authorize(Policy = AccessPolicies.Read)]
     [ProducesResponseType<string>(StatusCodes.Status200OK, "text/plain")]
     public async Task<IActionResult> GetMetrics(CancellationToken cancellationToken) =>
-        Content(PrometheusMetrics.Format(await _results.SummarizeAsync(cancellationToken)), PrometheusMetrics.ContentType);
+        Content(PrometheusMetrics.Format(await _results.SummarizeAsync(cancellationToken), await _results.DataUsedAsync(cancellationToken)), PrometheusMetrics.ContentType);
 }

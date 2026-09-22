@@ -19,7 +19,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
   - One-off tests against any Ookla or LibreSpeed server, without changing your saved settings
 - **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
-- **Dashboard** — averages, min/max, jitter, connection stability, an hour-by-hour table, and charts with the average marked
+- **Dashboard** — averages, min/max, jitter, packet loss, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
 - **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, Apprise, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets, is skipped, or meets your targets again
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
@@ -128,7 +128,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 
 | Field | Description |
 |---|---|
-| **Test Schedule** | Every minute, every 30 minutes, every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC |
+| **Test Schedule** | Every minute, every 30 minutes, every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC. Next to the next run time is an estimate of the data that schedule will use a month, from how much your recent tests moved |
 | **Offset schedule** | Adds a random delay of 30 seconds to 5 minutes, so tests don't start at exact times |
 | **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours up to 720 (30 days). A pause ends when the app restarts |
 
@@ -171,7 +171,7 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | **Client ID / Client secret** | From the application registered with your provider. Leave the secret empty for a public client |
 | **Scopes** | Space separated. `openid` is always included |
 | **Redirect URI** | Read-only — register this with your provider |
-| **People who aren't signed in** | **No access** (sent to sign in first) or **Read-only** (can see results, but can't run tests or change settings) |
+| **People who aren't signed in** | **No access** (sent to sign in first) or **Read-only** (can see results, but can't run tests or change settings). The public IP recorded with a result is hidden from read-only visitors, and never appears in exports or the payloads sent to integrations |
 | **API Token** | A bearer token for Prometheus and scripts using the [API](#api). It's shown once, and only a hash of it is stored |
 
 ### Tab: Storage
@@ -200,6 +200,9 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | Metric | Meaning |
 |---|---|
 | `ping`, `jitter`, `download`, `upload`, `time` | Readings from the latest completed test |
+| `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla measures it |
+| `last_test_bytes` | Data the latest completed test moved, download and upload together |
+| `data_used_bytes` | Data all tests moved, one series per `period` label: `24h`, `7d`, `30d` and `stored` |
 | `healthy` | Whether that test met its targets (1 or 0) |
 | `threshold_ping`, `threshold_download`, `threshold_upload` | The targets it was judged against |
 | `last_test_timestamp_seconds` | When the latest test ran, whatever its outcome |

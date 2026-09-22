@@ -31,6 +31,26 @@ public class OoklaToolTests
     }
 
     [Fact]
+    public void ARealResultCarriesItsPacketLossAndBytes()
+    {
+        const string RealRun = """{"type":"result","timestamp":"2026-09-22T14:34:37Z","ping":{"jitter":0.026,"latency":10.501,"low":10.467,"high":10.531},"download":{"bandwidth":117881113,"bytes":903347628,"elapsed":7717,"latency":{"iqm":19.42,"low":11.555,"high":32.938,"jitter":0.902}},"upload":{"bandwidth":13707569,"bytes":88429797,"elapsed":6413,"latency":{"iqm":19.84,"low":14.753,"high":403.3,"jitter":25.045}},"packetLoss":0,"isp":"BT"}""";
+
+        var result = _tool.ParseResult(new ToolOutput(RealRun, "", 0), _automatic);
+
+        Assert.Equal(0, result.PacketLoss);
+        Assert.Equal((903347628L, 88429797L), (result.DownloadBytes, result.UploadBytes));
+    }
+
+    [Fact]
+    public void AResultWithoutPacketLossLeavesItUnmeasured()
+    {
+        var result = _tool.ParseResult(new ToolOutput(Result, "", 0), _automatic);
+
+        Assert.Null(result.PacketLoss);
+        Assert.Equal((125000000L, 62500000L), (result.DownloadBytes, result.UploadBytes));
+    }
+
+    [Fact]
     public void OutputWithoutAResultLineIsNotASuccess()
     {
         Assert.False(_tool.ParseResult(new ToolOutput("""{"type":"testStart"}""" + "\nnot json", "", 0), _automatic).Success);

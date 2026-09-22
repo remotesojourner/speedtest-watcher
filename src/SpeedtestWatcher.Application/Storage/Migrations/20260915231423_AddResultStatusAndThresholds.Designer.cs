@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedtestWatcher.Application.Storage;
 
-#nullable disable
-
 namespace SpeedtestWatcher.Application.Storage.Migrations
 {
     [DbContext(typeof(SpeedtestWatcherDbContext))]

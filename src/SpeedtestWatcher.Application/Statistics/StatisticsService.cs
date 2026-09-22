@@ -47,10 +47,12 @@ public sealed class StatisticsService
             Jitter: completed.Any(row => row.Jitter.HasValue) ? DecimalRange(completed.Where(row => row.Jitter.HasValue).Select(row => row.Jitter!.Value).ToList()) : null,
             Download: hasCompleted ? DecimalRange(completed.Select(row => row.Download).ToList()) : null,
             Upload: hasCompleted ? DecimalRange(completed.Select(row => row.Upload).ToList()) : null,
+            PacketLoss: completed.Any(row => row.PacketLoss.HasValue) ? DecimalRange(completed.Where(row => row.PacketLoss.HasValue).Select(row => row.PacketLoss!.Value).ToList()) : null,
             Time: hasCompleted ? WholeNumberRange(completed.Select(row => row.Time).ToList()) : null,
             ChartPoints: rows.Count <= MaxChartPoints ? PointPerResult(rows) : PointPerTimeBucket(rows, range.FromUtc, range.ToUtc),
             HourlyAverages: HourlyAverages(completed, range.TimeZone),
             Consistency: hasCompleted ? Consistency(completed) : new ConsistencyDto(),
+            DataUsedBytes: rows.Sum(row => (row.DownloadBytes ?? 0) + (row.UploadBytes ?? 0)),
             RawDataPoints: rows.Count,
             Downsampled: rows.Count > MaxChartPoints,
             DateRange: new DateRangeDto

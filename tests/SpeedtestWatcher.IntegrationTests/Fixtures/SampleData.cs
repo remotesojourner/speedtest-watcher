@@ -63,7 +63,8 @@ internal static class SampleData
             ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
             Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Time = 14,
             Status = TestStatus.Completed, Healthy = true, ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100,
-            Type = TestType.Auto, ResultId = "r-1", Created = new DateTime(2026, 9, 14, 8, 5, 0, DateTimeKind.Utc)
+            Type = TestType.Auto, ResultId = "r-1", PacketLoss = 0, DownloadBytes = 903347628, UploadBytes = 88429797,
+            PublicIp = "203.0.113.9", Created = new DateTime(2026, 9, 14, 8, 5, 0, DateTimeKind.Utc)
         },
         new()
         {

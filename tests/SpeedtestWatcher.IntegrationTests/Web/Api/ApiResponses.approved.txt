@@ -40,11 +40,14 @@
   {
     "created": "2026-09-15T07:00:00Z",
     "download": -1,
+    "downloadBytes": null,
     "error": "Network unreachable",
     "healthy": null,
     "id": 4,
     "jitter": null,
+    "packetLoss": null,
     "ping": -1,
+    "publicIp": null,
     "resultId": null,
     "serverHost": "speed.acme.example",
     "serverId": 12345,
@@ -55,16 +58,20 @@
     "thresholdUpload": 100,
     "time": 0,
     "type": "auto",
-    "upload": -1
+    "upload": -1,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-15T06:00:00Z",
     "download": -1,
+    "downloadBytes": null,
     "error": "Public IP 203.0.113.9 is on the skip list",
     "healthy": null,
     "id": 3,
     "jitter": null,
+    "packetLoss": null,
     "ping": -1,
+    "publicIp": null,
     "resultId": null,
     "serverHost": null,
     "serverId": 0,
@@ -75,16 +82,20 @@
     "thresholdUpload": null,
     "time": 0,
     "type": "auto",
-    "upload": -1
+    "upload": -1,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
+    "downloadBytes": null,
     "error": null,
     "healthy": false,
     "id": 2,
     "jitter": 2.75,
+    "packetLoss": null,
     "ping": 31,
+    "publicIp": null,
     "resultId": "r-2",
     "serverHost": "speed.acme.example",
     "serverId": 12345,
@@ -95,16 +106,20 @@
     "thresholdUpload": 100,
     "time": 15,
     "type": "custom",
-    "upload": 98.125
+    "upload": 98.125,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
+    "downloadBytes": 903347628,
     "error": null,
     "healthy": true,
     "id": 1,
     "jitter": 0.4,
+    "packetLoss": 0,
     "ping": 12,
+    "publicIp": "203.0.113.9",
     "resultId": "r-1",
     "serverHost": "speed.acme.example",
     "serverId": 12345,
@@ -115,7 +130,8 @@
     "thresholdUpload": 100,
     "time": 14,
     "type": "auto",
-    "upload": 110.5
+    "upload": 110.5,
+    "uploadBytes": 88429797
   }
 ]
 
@@ -124,11 +140,14 @@
 {
   "created": "2026-09-14T20:35:00Z",
   "download": 612.5,
+  "downloadBytes": null,
   "error": null,
   "healthy": false,
   "id": 2,
   "jitter": 2.75,
+  "packetLoss": null,
   "ping": 31,
+  "publicIp": null,
   "resultId": "r-2",
   "serverHost": "speed.acme.example",
   "serverId": 12345,
@@ -139,7 +158,8 @@
   "thresholdUpload": 100,
   "time": 15,
   "type": "custom",
-  "upload": 98.125
+  "upload": 98.125,
+  "uploadBytes": null
 }
 
 ### GET /api/speedtests/99
@@ -178,6 +198,7 @@
       "stdDev": 6.19
     }
   },
+  "dataUsedBytes": 991777425,
   "dateRange": {
     "days": 2,
     "from": "2026-09-14",
@@ -388,6 +409,11 @@
     "max": 2.75,
     "min": 0.4
   },
+  "packetLoss": {
+    "avg": 0,
+    "max": 0,
+    "min": 0
+  },
   "ping": {
     "avg": 22,
     "max": 31,
@@ -464,10 +490,12 @@
   {
     "created": "2026-09-15T07:00:00Z",
     "download": -1,
+    "downloadBytes": null,
     "error": "Network unreachable",
     "healthy": null,
     "id": 4,
     "jitter": null,
+    "packetLoss": null,
     "ping": -1,
     "resultId": null,
     "serverHost": "speed.acme.example",
@@ -479,15 +507,18 @@
     "thresholdUpload": 100,
     "time": 0,
     "type": "auto",
-    "upload": -1
+    "upload": -1,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-15T06:00:00Z",
     "download": -1,
+    "downloadBytes": null,
     "error": "Public IP 203.0.113.9 is on the skip list",
     "healthy": null,
     "id": 3,
     "jitter": null,
+    "packetLoss": null,
     "ping": -1,
     "resultId": null,
     "serverHost": null,
@@ -499,15 +530,18 @@
     "thresholdUpload": null,
     "time": 0,
     "type": "auto",
-    "upload": -1
+    "upload": -1,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
+    "downloadBytes": null,
     "error": null,
     "healthy": false,
     "id": 2,
     "jitter": 2.75,
+    "packetLoss": null,
     "ping": 31,
     "resultId": "r-2",
     "serverHost": "speed.acme.example",
@@ -519,15 +553,18 @@
     "thresholdUpload": 100,
     "time": 15,
     "type": "custom",
-    "upload": 98.125
+    "upload": 98.125,
+    "uploadBytes": null
   },
   {
     "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
+    "downloadBytes": 903347628,
     "error": null,
     "healthy": true,
     "id": 1,
     "jitter": 0.4,
+    "packetLoss": 0,
     "ping": 12,
     "resultId": "r-1",
     "serverHost": "speed.acme.example",
@@ -539,17 +576,18 @@
     "thresholdUpload": 100,
     "time": 14,
     "type": "auto",
-    "upload": 110.5
+    "upload": 110.5,
+    "uploadBytes": 88429797
   }
 ]
 
 ### POST /api/speedtests/export {"format":"csv"}
 200 text/csv
-id,created,status,healthy,type,ping,jitter,download,upload,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
-4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
-3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
-2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
-1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
+id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
+4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
+3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
+2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
+1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
 
 ### POST /api/speedtests/export {"format":
 400 application/json; charset=utf-8
@@ -574,6 +612,12 @@ speedtest_watcher_upload{server_id="12345",server_name="Acme Fibre",server_host=
 # HELP speedtest_watcher_time Duration of the latest completed test in seconds
 # TYPE speedtest_watcher_time gauge
 speedtest_watcher_time{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 15
+# HELP speedtest_watcher_data_used_bytes Bytes the tests in a period moved, download and upload together
+# TYPE speedtest_watcher_data_used_bytes gauge
+speedtest_watcher_data_used_bytes{period="24h"} 0
+speedtest_watcher_data_used_bytes{period="7d"} 0
+speedtest_watcher_data_used_bytes{period="30d"} 991777425
+speedtest_watcher_data_used_bytes{period="stored"} 991777425
 # HELP speedtest_watcher_healthy Whether the latest completed test met its targets (1 healthy, 0 not)
 # TYPE speedtest_watcher_healthy gauge
 speedtest_watcher_healthy{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 0

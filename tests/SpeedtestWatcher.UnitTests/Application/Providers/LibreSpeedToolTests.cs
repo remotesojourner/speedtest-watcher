@@ -34,6 +34,17 @@ public class LibreSpeedToolTests
     }
 
     [Fact]
+    public void TheBytesMovedAreRecorded()
+    {
+        const string Run = """[{"ping":18.4,"jitter":"2.35","download":240.5,"upload":45.2,"elapsed":12000,"bytes_sent":74481664,"bytes_received":266796304}]""";
+
+        var result = _tool.ParseResult(new ToolOutput(Run, "", 0), _automatic);
+
+        Assert.Equal((266796304L, 74481664L), (result.DownloadBytes, result.UploadBytes));
+        Assert.Null(result.PacketLoss);
+    }
+
+    [Fact]
     public void AServerLibreSpeedDoesNotHaveIsNamedInTheError()
     {
         var result = _tool.ParseResult(new ToolOutput("null\n", "", 0), new RunOptions("7032", null, null, "unused.json"));

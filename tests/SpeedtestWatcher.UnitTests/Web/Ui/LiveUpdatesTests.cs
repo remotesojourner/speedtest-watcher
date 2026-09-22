@@ -26,8 +26,24 @@ public sealed class LiveUpdatesTests : IDisposable
         _runState = new RunState(_events);
         _recent = new RecentResults(new ResultsService(A.Fake<ISpeedtestRepository>(), FixedAccess.Full));
         _settings = new SettingsState(new SettingsService(_store, A.Fake<IIntegrationDispatcher>(), _events, A.Fake<ISignInState>(), FixedAccess.Full));
-        _live = new LiveUpdates(_events, _status, _recent, _settings, _logger);
+        _live = new LiveUpdates(_events, _status, _recent, _settings, FixedAccess.Full, _logger);
         _live.ResultArrived += _announced.Add;
+    }
+
+    [Fact]
+    public void AReadOnlyVisitorIsNotToldThePublicIp()
+    {
+        var visitor = new LiveUpdates(_events, _status, _recent, _settings, FixedAccess.ReadOnly, _logger);
+        var announced = new List<SpeedtestDto>();
+        visitor.ResultArrived += announced.Add;
+        visitor.Start(work => work());
+        var published = new SpeedtestDto { Id = 7, PublicIp = "203.0.113.9" };
+
+        _events.PublishTestFinished(published);
+
+        Assert.Null(Assert.Single(announced).PublicIp);
+        Assert.Equal("203.0.113.9", published.PublicIp);
+        visitor.Dispose();
     }
 
     [Fact]

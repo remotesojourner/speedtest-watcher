@@ -85,6 +85,14 @@
                                            Value="@_stats.Tests.Failed.ToString(CultureInfo.CurrentCulture)" Label="failed" />
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Timer"
                                            Value="@(_stats.Time != null ? $"{_stats.Time.Avg}s" : "—")" Label="average duration" />
+                            @if (_stats.PacketLoss != null)
+                            {
+                                <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.CallSplit"
+                                               Color="@(_stats.PacketLoss.Avg > 0 ? Color.Warning : Color.Default)"
+                                               Value="@($"{_stats.PacketLoss.Avg:F2}%")" Label="avg packet loss" />
+                            }
+                            <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.DataUsage"
+                                           Value="@ByteSize.Describe(_stats.DataUsedBytes)" Label="data used" />
                         </div>
                     </SurfaceCard>
                 </MudItem>
@@ -196,6 +204,15 @@
                                         <td class="text-end">@($"{_stats.Jitter.Min:F1}")</td>
                                         <td class="text-end">@($"{_stats.Jitter.Avg:F1}")</td>
                                         <td class="text-end">@($"{_stats.Jitter.Max:F1}")</td>
+                                    </tr>
+                                }
+                                @if (_stats.PacketLoss != null)
+                                {
+                                    <tr>
+                                        <td>Packet loss <span class="sw-muted">%</span></td>
+                                        <td class="text-end">@($"{_stats.PacketLoss.Min:F2}")</td>
+                                        <td class="text-end">@($"{_stats.PacketLoss.Avg:F2}")</td>
+                                        <td class="text-end">@($"{_stats.PacketLoss.Max:F2}")</td>
                                     </tr>
                                 }
                             </tbody>

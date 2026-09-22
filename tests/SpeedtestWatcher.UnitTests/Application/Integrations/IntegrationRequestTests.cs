@@ -15,7 +15,7 @@ public partial class IntegrationRequestTests
 {
     private static readonly JsonSerializerOptions _indentedJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%missed%|%error%";
+    private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%missed%|%packet_loss%|%data_used%|%error%";
 
     private static readonly DateTime _tested = new(2026, 9, 16, 8, 5, 0);
 
@@ -23,6 +23,7 @@ public partial class IntegrationRequestTests
     {
         Id = 41, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
         Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true,
+        PacketLoss = 0, DownloadBytes = 903347628, UploadBytes = 88429797, PublicIp = "203.0.113.9",
         ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Auto, ResultId = "r-41", Time = 14, Created = _tested
     };
 

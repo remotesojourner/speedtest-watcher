@@ -129,7 +129,7 @@ public sealed partial class SpeedtestRunService
         if (!check.Proceed)
         {
             var reason = check.SkipReason ?? "Skipped";
-            await RecordSkippedAsync(type, reason, cancellationToken);
+            await RecordSkippedAsync(type, reason, check.PublicIp, cancellationToken);
             return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
         }
 
@@ -147,7 +147,7 @@ public sealed partial class SpeedtestRunService
         }
 
         var previous = result.Success ? await _results.GetLatestCompletedAsync(cancellationToken) : null;
-        var test = Record(result, type, settings.Targets);
+        var test = Record(result, type, settings.Targets, check.PublicIp);
         test.Id = await _results.CreateAsync(test, cancellationToken);
 
         if (result.Success)
@@ -170,7 +170,7 @@ public sealed partial class SpeedtestRunService
         return result;
     }
 
-    private static Speedtest Record(SpeedtestExecutionResult result, TestType type, TargetSettings targets) => new()
+    private static Speedtest Record(SpeedtestExecutionResult result, TestType type, TargetSettings targets, string? publicIp) => new()
     {
         ServerId = result.ServerId,
         ServerName = result.ServerName,
@@ -188,10 +188,14 @@ public sealed partial class SpeedtestRunService
         ThresholdPing = targets.Ping,
         ThresholdDownload = targets.Download,
         ThresholdUpload = targets.Upload,
+        PacketLoss = result.Success ? result.PacketLoss : null,
+        DownloadBytes = result.DownloadBytes,
+        UploadBytes = result.UploadBytes,
+        PublicIp = publicIp,
         Created = DateTime.UtcNow
     };
 
-    private async Task RecordSkippedAsync(TestType type, string reason, CancellationToken cancellationToken)
+    private async Task RecordSkippedAsync(TestType type, string reason, string? publicIp, CancellationToken cancellationToken)
     {
         var skipped = new Speedtest
         {
@@ -201,6 +205,7 @@ public sealed partial class SpeedtestRunService
             Status = TestStatus.Skipped,
             Error = reason,
             Type = type,
+            PublicIp = publicIp,
             Created = DateTime.UtcNow
         };
 

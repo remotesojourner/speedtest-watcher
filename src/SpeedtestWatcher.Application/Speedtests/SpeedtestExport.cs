@@ -8,7 +8,7 @@ namespace SpeedtestWatcher.Application.Speedtests;
 public static class SpeedtestExport
 {
     public const string CsvHeader =
-        "id,created,status,healthy,type,ping,jitter,download,upload,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error";
+        "id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error";
 
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
@@ -31,6 +31,9 @@ public static class SpeedtestExport
                     Number(test.Jitter),
                     Number(test.Download),
                     Number(test.Upload),
+                    Number(test.PacketLoss),
+                    Number(test.DownloadBytes),
+                    Number(test.UploadBytes),
                     Number(test.Time),
                     Number(test.ServerId),
                     Text(test.ServerName),

@@ -48,6 +48,17 @@ public sealed record StatisticsResponse
     public required ConsistencyResponse Consistency { get; init; }
 
     /// <summary>
+    /// Packet loss across the completed tests that measured it, as percentages. Only Ookla measures it.
+    /// </summary>
+    public required MetricSummaryResponse? PacketLoss { get; init; }
+
+    /// <summary>
+    /// Bytes the tests in the period moved, download and upload together, as far as the providers reported them.
+    /// </summary>
+    /// <example>991777425</example>
+    public required long DataUsedBytes { get; init; }
+
+    /// <summary>
     /// Averages of the completed tests for each hour of the day, 0 to 23, in the requested time zone.
     /// </summary>
     public required IReadOnlyList<HourlyAverageResponse> HourlyAverages { get; init; }
@@ -78,6 +89,8 @@ public sealed record StatisticsResponse
         Upload = MetricSummaryResponse.From(statistics.Upload),
         Time = MetricSummaryResponse.From(statistics.Time),
         Consistency = ConsistencyResponse.From(statistics.Consistency),
+        PacketLoss = MetricSummaryResponse.From(statistics.PacketLoss),
+        DataUsedBytes = statistics.DataUsedBytes,
         HourlyAverages = statistics.HourlyAverages.Select(HourlyAverageResponse.From).ToList(),
         Points = statistics.ChartPoints.Select(ChartPointResponse.From).ToList(),
         RawDataPoints = statistics.RawDataPoints,

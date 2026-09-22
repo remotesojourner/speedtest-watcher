@@ -162,6 +162,23 @@ internal class SpeedtestRepository : ISpeedtestRepository
         return await _db.Speedtests.CountAsync(cancellationToken);
     }
 
+    public async Task<long> SumBytesSinceAsync(DateTime? sinceUtc, CancellationToken cancellationToken = default)
+    {
+        var tests = sinceUtc is { } since ? _db.Speedtests.Where(t => t.Created >= since) : _db.Speedtests;
+        return await tests.SumAsync(t => (t.DownloadBytes ?? 0) + (t.UploadBytes ?? 0), cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<long>> RecentRunBytesAsync(int count, CancellationToken cancellationToken = default)
+    {
+        return await _db.Speedtests
+            .Where(t => t.Status == TestStatus.Completed && (t.DownloadBytes != null || t.UploadBytes != null))
+            .OrderByDescending(t => t.Created)
+            .ThenByDescending(t => t.Id)
+            .Take(count)
+            .Select(t => (t.DownloadBytes ?? 0) + (t.UploadBytes ?? 0))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<Speedtest>> ListCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
     {
         return await _db.Speedtests

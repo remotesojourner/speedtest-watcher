@@ -99,6 +99,9 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
         if (root.TryGetProperty("elapsed", out var elapsed))
             result.Time = (int)Math.Round(elapsed.GetDouble() / 1000.0);
 
+        result.DownloadBytes = JsonOutput.Number(root, "bytes_received") is { } received ? (long)received : null;
+        result.UploadBytes = JsonOutput.Number(root, "bytes_sent") is { } sent ? (long)sent : null;
+
         if (root.TryGetProperty("server", out var server))
         {
             if (server.TryGetProperty("id", out var id))

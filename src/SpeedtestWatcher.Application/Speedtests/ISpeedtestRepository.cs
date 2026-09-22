@@ -19,4 +19,6 @@ public interface ISpeedtestRepository
     Task<int> ImportTestsAsync(IEnumerable<Speedtest> tests, CancellationToken cancellationToken = default);
     Task<int> RemoveOldTestsAsync(int retentionDays, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
+    Task<long> SumBytesSinceAsync(DateTime? sinceUtc, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<long>> RecentRunBytesAsync(int count, CancellationToken cancellationToken = default);
 }

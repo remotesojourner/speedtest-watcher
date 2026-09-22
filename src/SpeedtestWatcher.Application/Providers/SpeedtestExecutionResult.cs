@@ -15,4 +15,7 @@ public class SpeedtestExecutionResult
     public string? ServerHost { get; set; }
     public string? ResultId { get; set; }
     public string? Error { get; set; }
+    public double? PacketLoss { get; set; }
+    public long? DownloadBytes { get; set; }
+    public long? UploadBytes { get; set; }
 }

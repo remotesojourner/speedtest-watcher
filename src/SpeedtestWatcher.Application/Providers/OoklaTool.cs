@@ -77,6 +77,8 @@ internal sealed partial class OoklaTool : ISpeedtestTool
                 result.Jitter = Math.Round(jitter.GetDouble(), 2);
         }
 
+        if (JsonOutput.Number(root, "packetLoss") is { } packetLoss) result.PacketLoss = Math.Round(packetLoss, 2);
+
         double downloadElapsed = 0, uploadElapsed = 0;
         if (root.TryGetProperty("download", out var download))
         {
@@ -84,6 +86,7 @@ internal sealed partial class OoklaTool : ISpeedtestTool
                 result.Download = Megabits(bandwidth.GetDouble());
             if (download.TryGetProperty("elapsed", out var elapsed))
                 downloadElapsed = elapsed.GetDouble();
+            result.DownloadBytes = Bytes(download);
         }
 
         if (root.TryGetProperty("upload", out var upload))
@@ -92,6 +95,7 @@ internal sealed partial class OoklaTool : ISpeedtestTool
                 result.Upload = Megabits(bandwidth.GetDouble());
             if (upload.TryGetProperty("elapsed", out var elapsed))
                 uploadElapsed = elapsed.GetDouble();
+            result.UploadBytes = Bytes(upload);
         }
 
         result.Time = (int)Math.Round((downloadElapsed + uploadElapsed) / 1000.0);
@@ -136,6 +140,8 @@ internal sealed partial class OoklaTool : ISpeedtestTool
 
     [GeneratedRegex(@"^(?:\w+ - )?(?<text>.+?)(?: \(\w+\))?$")]
     private static partial Regex OoklaErrorParts();
+
+    private static long? Bytes(JsonElement direction) => JsonOutput.Number(direction, "bytes") is { } bytes ? (long)bytes : null;
 
     private static bool IsResult(JsonElement element) =>
         element.ValueKind == JsonValueKind.Object

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Application.Speedtests;
@@ -13,6 +14,15 @@ public class Speedtest
     public double Download { get; set; }
     public double Upload { get; set; }
     public string? Error { get; set; }
+
+    public double? PacketLoss { get; set; }
+
+    public long? DownloadBytes { get; set; }
+
+    public long? UploadBytes { get; set; }
+
+    [JsonIgnore]
+    public string? PublicIp { get; set; }
 
     public TestStatus Status { get; set; } = TestStatus.Completed;
 

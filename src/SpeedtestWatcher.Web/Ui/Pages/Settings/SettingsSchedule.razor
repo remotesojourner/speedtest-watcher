@@ -1,5 +1,6 @@
 @using Cronos
 @inject SettingsState Settings
+@inject ResultsService Results
 @inject PauseService Pausing
 @inject StatusStateService StatusService
 @inject PreferencesService PreferencesService
@@ -30,6 +31,7 @@
             <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
                 <MudText Typo="Typo.caption" Class="sw-muted">
                     @(NextRun != null ? $"Next test: {PreferencesService.FormatDateTime(NextRun.Value)}" : "")
+                    @(_monthlyBytes is { } bytes ? $" · about {ByteSize.Describe(bytes)} a month at your recent speeds" : "")
                 </MudText>
                 <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">Cron syntax help</MudLink>
             </div>
@@ -139,6 +141,18 @@
         || _scheduleOffset != Settings.Current.Schedule.RandomOffset;
 
     private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseService.MaxResumeInHours;
+
+    private long? _monthlyBytes;
+    private string _estimatedFor = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_estimatedFor == EffectiveCron) return;
+
+        _estimatedFor = EffectiveCron;
+        _monthlyBytes = await Results.EstimateMonthlyBytesAsync(new ScheduleSettings(EffectiveCron, RandomOffset: false));
+        StateHasChanged();
+    }
 
     protected override void OnInitialized()
     {

@@ -11,6 +11,10 @@ public class SpeedtestDto
     public double Download { get; set; }
     public double Upload { get; set; }
     public string? Error { get; set; }
+    public double? PacketLoss { get; set; }
+    public long? DownloadBytes { get; set; }
+    public long? UploadBytes { get; set; }
+    public string? PublicIp { get; set; }
     public TestStatus Status { get; set; } = TestStatus.Completed;
     public bool? Healthy { get; set; }
     public int? ThresholdPing { get; set; }
@@ -20,6 +24,13 @@ public class SpeedtestDto
     public string? ResultId { get; set; }
     public int Time { get; set; }
     public string Created { get; set; } = string.Empty;
+
+    public SpeedtestDto WithoutPublicIp()
+    {
+        var copy = (SpeedtestDto)MemberwiseClone();
+        copy.PublicIp = null;
+        return copy;
+    }
 
     public static SpeedtestDto From(Speedtest test) => new()
     {
@@ -32,6 +43,10 @@ public class SpeedtestDto
         Download = test.Download,
         Upload = test.Upload,
         Error = test.Error,
+        PacketLoss = test.PacketLoss,
+        DownloadBytes = test.DownloadBytes,
+        UploadBytes = test.UploadBytes,
+        PublicIp = test.PublicIp,
         Status = test.Status,
         Healthy = test.Healthy,
         ThresholdPing = test.ThresholdPing,

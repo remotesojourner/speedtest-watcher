@@ -81,6 +81,24 @@ public sealed record TestImportRow
     public string? Error { get; init; }
 
     /// <summary>
+    /// Packet loss as a percentage.
+    /// </summary>
+    /// <example>0</example>
+    public double? PacketLoss { get; init; }
+
+    /// <summary>
+    /// Bytes downloaded during the test.
+    /// </summary>
+    /// <example>903347628</example>
+    public long? DownloadBytes { get; init; }
+
+    /// <summary>
+    /// Bytes uploaded during the test.
+    /// </summary>
+    /// <example>88429797</example>
+    public long? UploadBytes { get; init; }
+
+    /// <summary>
     /// The id of the server the test ran against.
     /// </summary>
     public int ServerId { get; init; }
@@ -115,6 +133,9 @@ public sealed record TestImportRow
         ThresholdDownload = ThresholdDownload,
         ThresholdUpload = ThresholdUpload,
         Error = Error,
+        PacketLoss = PacketLoss,
+        DownloadBytes = DownloadBytes,
+        UploadBytes = UploadBytes,
         ServerId = ServerId,
         ServerName = ServerName,
         ServerHost = ServerHost,

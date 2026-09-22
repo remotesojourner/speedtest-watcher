@@ -18,7 +18,7 @@
             @if (_storageInfo != null)
             {
                 <DataRow Label="Stored tests" Value="@_storageInfo.TestCount.ToString("N0", CultureInfo.CurrentCulture)" />
-                <DataRow Label="Database size" Value="@FormatSize(_storageInfo.Size)" />
+                <DataRow Label="Database size" Value="@ByteSize.Describe(_storageInfo.Size)" />
             }
             else if (_storageInfoFailed)
             {
@@ -334,10 +334,4 @@
         Navigation.NavigateTo("/", forceLoad: true);
     }
 
-    private static string FormatSize(long bytes) => bytes switch
-    {
-        < 1024 => $"{bytes} B",
-        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
-        _ => $"{bytes / (1024.0 * 1024.0):F1} MB"
-    };
 }

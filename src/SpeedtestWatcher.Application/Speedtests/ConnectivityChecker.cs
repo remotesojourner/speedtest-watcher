@@ -39,9 +39,9 @@ internal partial class ConnectivityChecker : IConnectivityChecker
         }
 
         if (settings.SkipIps.Count > 0 && publicIp.Length > 0 && settings.SkipIps.Contains(publicIp, StringComparer.OrdinalIgnoreCase))
-            return new PreTestCheck(false, $"Public IP {publicIp} is on the skip list");
+            return new PreTestCheck(false, $"Public IP {publicIp} is on the skip list", publicIp);
 
-        return PreTestCheck.Ok;
+        return new PreTestCheck(true, null, publicIp.Length > 0 ? publicIp : null);
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Connectivity check against {Url} failed")]

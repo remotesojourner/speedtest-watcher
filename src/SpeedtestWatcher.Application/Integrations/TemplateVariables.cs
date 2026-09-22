@@ -30,7 +30,9 @@ internal static class TemplateVariables
         ["threshold_ping"] = test.ThresholdPing?.ToString(CultureInfo.InvariantCulture) ?? "-",
         ["threshold_download"] = Decimal(test.ThresholdDownload) ?? "-",
         ["threshold_upload"] = Decimal(test.ThresholdUpload) ?? "-",
-        ["missed"] = TargetSettings.Describe(Missed(test))
+        ["missed"] = TargetSettings.Describe(Missed(test)),
+        ["packet_loss"] = Decimal(test.PacketLoss) ?? "-",
+        ["data_used"] = test.DownloadBytes + test.UploadBytes is { } bytes ? ByteSize.Describe(bytes) : "-"
     };
 
     private static IReadOnlyList<TargetKind> Missed(Speedtest test) =>

@@ -76,6 +76,31 @@ public sealed class RepositoryTests : IDisposable
         Assert.Equal(75.0, stats.Upload?.Avg);
     }
 
+    [Fact]
+    public async Task DataUsedCountsOnlyTheTestsInThePeriod()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var repo = new SpeedtestRepository(_db);
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 900, Upload = 100, DownloadBytes = 1000, UploadBytes = 100, Created = DateTime.UtcNow.AddDays(-2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 900, Upload = 100, DownloadBytes = 20, UploadBytes = 3, Created = DateTime.UtcNow }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Created = DateTime.UtcNow }, cancellationToken);
+
+        Assert.Equal(1123, await repo.SumBytesSinceAsync(null, cancellationToken));
+        Assert.Equal(23, await repo.SumBytesSinceAsync(DateTime.UtcNow.AddHours(-24), cancellationToken));
+    }
+
+    [Fact]
+    public async Task TheRecentRunsBehindAnEstimateAreTheCompletedOnesThatReportedBytes()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var repo = new SpeedtestRepository(_db);
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 900, Upload = 100, DownloadBytes = 1000, UploadBytes = 100, Created = DateTime.UtcNow.AddMinutes(-2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = 10, Download = 900, Upload = 100, Created = DateTime.UtcNow.AddMinutes(-1) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, DownloadBytes = 5, Created = DateTime.UtcNow }, cancellationToken);
+
+        Assert.Equal([1100L], await repo.RecentRunBytesAsync(10, cancellationToken));
+    }
+
     public void Dispose()
     {
         _db.Dispose();

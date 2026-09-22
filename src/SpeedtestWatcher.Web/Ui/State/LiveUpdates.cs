@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Ui.State;
@@ -9,15 +10,17 @@ public sealed partial class LiveUpdates : IDisposable
     private readonly StatusStateService _status;
     private readonly RecentResults _results;
     private readonly SettingsState _settings;
+    private readonly ICurrentAccess _access;
     private readonly ILogger<LiveUpdates> _logger;
     private Func<Func<Task>, Task>? _dispatch;
 
-    public LiveUpdates(IAppEvents events, StatusStateService status, RecentResults results, SettingsState settings, ILogger<LiveUpdates> logger)
+    public LiveUpdates(IAppEvents events, StatusStateService status, RecentResults results, SettingsState settings, ICurrentAccess access, ILogger<LiveUpdates> logger)
     {
         _events = events;
         _status = status;
         _results = results;
         _settings = settings;
+        _access = access;
         _logger = logger;
     }
 
@@ -47,8 +50,9 @@ public sealed partial class LiveUpdates : IDisposable
 
     private void OnRunStatusChanged(RunStatus status) => Dispatch(() => _status.UpdateStatus(status.Running, status.Paused));
 
-    private void OnTestFinished(SpeedtestDto result) => Dispatch(() =>
+    private void OnTestFinished(SpeedtestDto published) => Dispatch(() =>
     {
+        var result = _access.HasFullAccess ? published : published.WithoutPublicIp();
         _results.Add(result);
         _status.UpdateStatus(false, _status.Paused);
         ResultArrived?.Invoke(result);

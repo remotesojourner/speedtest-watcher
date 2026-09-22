@@ -57,6 +57,18 @@
                 <MudDivider Class="mb-3" />
             }
 
+            @if (Test.PacketLoss is { } packetLoss)
+            {
+                <DataRow Label="Packet loss" Value="@($"{packetLoss:F2}%")" />
+            }
+            @if (Test.DownloadBytes + Test.UploadBytes is { } dataUsed)
+            {
+                <DataRow Label="Data used" Value="@ByteSize.Describe(dataUsed)" />
+            }
+            @if (Access.HasFullAccess && !string.IsNullOrEmpty(Test.PublicIp))
+            {
+                <DataRow Label="Public IP" Value="@Test.PublicIp" />
+            }
             @if (MissedTargets.Count > 0)
             {
                 <DataRow Label="Missed targets" Value="@MissedTargetsText" />

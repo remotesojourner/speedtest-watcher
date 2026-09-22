@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedtestWatcher.Application.Storage;
 
-#nullable disable
-
 namespace SpeedtestWatcher.Application.Storage.Migrations
 {
     [DbContext(typeof(SpeedtestWatcherDbContext))]
@@ -112,6 +110,10 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                         .HasColumnType("REAL")
                         .HasColumnName("download");
 
+                    b.Property<long?>("DownloadBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("downloadBytes");
+
                     b.Property<string>("Error")
                         .HasColumnType("TEXT")
                         .HasColumnName("error");
@@ -124,9 +126,17 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                         .HasColumnType("REAL")
                         .HasColumnName("jitter");
 
+                    b.Property<double?>("PacketLoss")
+                        .HasColumnType("REAL")
+                        .HasColumnName("packetLoss");
+
                     b.Property<int>("Ping")
                         .HasColumnType("INTEGER")
                         .HasColumnName("ping");
+
+                    b.Property<string>("PublicIp")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("publicIp");
 
                     b.Property<string>("ResultId")
                         .HasColumnType("TEXT")
@@ -181,6 +191,10 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.Property<double>("Upload")
                         .HasColumnType("REAL")
                         .HasColumnName("upload");
+
+                    b.Property<long?>("UploadBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("uploadBytes");
 
                     b.HasKey("Id");
 
