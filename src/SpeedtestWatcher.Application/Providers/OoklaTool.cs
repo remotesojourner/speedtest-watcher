@@ -1,9 +1,10 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal sealed class OoklaTool : ISpeedtestTool
+internal sealed partial class OoklaTool : ISpeedtestTool
 {
     private const string DownloadBase = "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-";
 
@@ -42,8 +43,27 @@ internal sealed class OoklaTool : ISpeedtestTool
         return new ToolArguments(arguments);
     }
 
-    public SpeedtestExecutionResult? ParseResult(string output) =>
-        JsonOutput.FromLastLine(output, root => JsonOutput.FirstIfArray(root) is var line && IsResult(line) ? Parse(line) : null);
+    public SpeedtestExecutionResult ParseResult(ToolOutput output, RunOptions options)
+    {
+        if (JsonOutput.FromLastLine(output.Output, root => JsonOutput.FirstIfArray(root) is var line && IsResult(line) ? Parse(line) : null) is { } result)
+            return result;
+
+        var errors = output.ErrorLines.Concat(output.OutputLines).Select(ErrorMessage).OfType<string>().Distinct().ToList();
+
+        if (errors.Any(error => error.Contains("NoServersException", StringComparison.Ordinal)))
+        {
+            return ToolFailure.Because(options.ServerId is { } serverId
+                ? $"Ookla has no server {serverId}. Pick one from its server list, or check the ID on speedtest.net."
+                : "Ookla found no server to test against.");
+        }
+
+        if (options.NetworkInterface is { } networkInterface && errors.Any(error => error.Contains("Failed binding local connection end", StringComparison.Ordinal)))
+            return ToolFailure.Because($"Ookla couldn't send traffic through the network interface {networkInterface}.");
+
+        return errors.Count > 0
+            ? ToolFailure.Because($"Ookla couldn't run the test: {Readable(errors[0])}.")
+            : ToolFailure.Unrecognised(Title, output);
+    }
 
     public static SpeedtestExecutionResult Parse(JsonElement root)
     {
@@ -91,6 +111,31 @@ internal sealed class OoklaTool : ISpeedtestTool
 
         return result;
     }
+
+    private static string? ErrorMessage(string line)
+    {
+        if (PlainErrorLine().Match(line) is { Success: true } plain) return plain.Groups["message"].Value;
+        if (!line.StartsWith('{')) return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(line);
+            var root = document.RootElement;
+            return JsonOutput.Text(root, "type") == "log" && JsonOutput.Text(root, "level") == "error" ? JsonOutput.Text(root, "message") : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string Readable(string error) => OoklaErrorParts().Match(error) is { Success: true } parts ? parts.Groups["text"].Value : error;
+
+    [GeneratedRegex(@"^\[[^\]]*\] \[error\] (?<message>.+)$")]
+    private static partial Regex PlainErrorLine();
+
+    [GeneratedRegex(@"^(?:\w+ - )?(?<text>.+?)(?: \(\w+\))?$")]
+    private static partial Regex OoklaErrorParts();
 
     private static bool IsResult(JsonElement element) =>
         element.ValueKind == JsonValueKind.Object

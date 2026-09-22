@@ -6,6 +6,7 @@ namespace SpeedtestWatcher.Application.Providers;
 internal sealed class CloudflareTool : ISpeedtestTool
 {
     private const string DownloadBase = "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/";
+    private const string MetadataFailure = "Error fetching metadata: ";
     private const int DurationWhenUnreported = 30;
 
     private static readonly Dictionary<PlatformTarget, string> _downloads = new()
@@ -39,7 +40,20 @@ internal sealed class CloudflareTool : ISpeedtestTool
         return new ToolArguments(arguments);
     }
 
-    public SpeedtestExecutionResult? ParseResult(string output) => JsonOutput.FromLastLine(output, Parse);
+    public SpeedtestExecutionResult ParseResult(ToolOutput output, RunOptions options)
+    {
+        if (JsonOutput.FromLastLine(output.Output, root => IsResult(root) ? Parse(root) : null) is { } result)
+            return result;
+
+        if (output.ErrorLines.Any(line => line.StartsWith(MetadataFailure, StringComparison.Ordinal)))
+        {
+            return ToolFailure.Because(options.NetworkInterface is { } networkInterface
+                ? $"Cloudflare couldn't reach speed.cloudflare.com through the network interface {networkInterface}."
+                : "Cloudflare couldn't reach speed.cloudflare.com. Check the internet connection.");
+        }
+
+        return ToolFailure.Unrecognised(Title, output);
+    }
 
     public static SpeedtestExecutionResult Parse(JsonElement root)
     {
@@ -80,6 +94,9 @@ internal sealed class CloudflareTool : ISpeedtestTool
 
         return result;
     }
+
+    private static bool IsResult(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty("speed_measurements", out _);
 
     private static double? Jitter(List<double> latencies)
     {

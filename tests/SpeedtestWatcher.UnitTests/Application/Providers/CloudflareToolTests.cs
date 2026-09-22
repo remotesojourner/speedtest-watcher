@@ -4,12 +4,16 @@ namespace SpeedtestWatcher.UnitTests.Application.Providers;
 
 public class CloudflareToolTests
 {
+    private static readonly RunOptions _automatic = new(null, null, null, "unused.json");
+
     private readonly CloudflareTool _tool = new();
 
     [Fact]
     public void TheBestSpeedsAndAverageLatencyAreReported()
     {
-        var result = _tool.ParseResult("""{"latency_measurement":{"avg_latency_ms":14.8,"latency_measurements":[14.0,15.2,14.5,16.0]},"speed_measurements":[{"test_type":"Download","max":450.2,"median":420.0},{"test_type":"Upload","max":95.8,"median":90.0}],"elapsed":25000}""")!;
+        const string Output = """{"latency_measurement":{"avg_latency_ms":14.8,"latency_measurements":[14.0,15.2,14.5,16.0]},"speed_measurements":[{"test_type":"Download","max":450.2,"median":420.0},{"test_type":"Upload","max":95.8,"median":90.0}],"elapsed":25000}""";
+
+        var result = _tool.ParseResult(new ToolOutput(Output, "", 0), _automatic);
 
         Assert.True(result.Success);
         Assert.Equal((15, 450.2, 95.8, 25), (result.Ping, result.Download, result.Upload, result.Time));
@@ -28,5 +32,23 @@ public class CloudflareToolTests
     public void CloudflareHasNoServerChoice()
     {
         Assert.Null(_tool.Servers);
+    }
+
+    [Fact]
+    public void ACloudflareItCannotReachGivesAClearError()
+    {
+        var output = new ToolOutput("", "Error fetching metadata: error sending request for url (https://speed.cloudflare.com/cdn-cgi/trace)", 1);
+
+        Assert.Equal("Cloudflare couldn't reach speed.cloudflare.com. Check the internet connection.", _tool.ParseResult(output, _automatic).Error);
+        Assert.Equal("Cloudflare couldn't reach speed.cloudflare.com through the network interface 10.255.255.1.",
+            _tool.ParseResult(output, new RunOptions(null, null, "10.255.255.1", "unused.json")).Error);
+    }
+
+    [Fact]
+    public void RateLimitingSaysToTryAgainLater()
+    {
+        var result = _tool.ParseResult(new ToolOutput("", "Error: 429 Too Many Requests", 1), _automatic);
+
+        Assert.Equal("Cloudflare is limiting how often tests can run. Try again later.", result.Error);
     }
 }

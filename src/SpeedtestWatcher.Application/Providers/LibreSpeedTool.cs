@@ -7,6 +7,8 @@ namespace SpeedtestWatcher.Application.Providers;
 internal sealed class LibreSpeedTool : ISpeedtestTool
 {
     private const string DownloadBase = "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_";
+    private const string NoMatchingServer = "null";
+    private const string ServerListFailure = "Error when fetching server list: ";
 
     private static readonly Dictionary<PlatformTarget, string> _downloads = new()
     {
@@ -33,7 +35,7 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
 
     public ToolArguments BuildArguments(RunOptions options)
     {
-        var arguments = new List<string> { "--json", "--duration=5" };
+        var arguments = new List<string> { "--json", "--duration=5", "--no-icmp" };
 
         if (!string.IsNullOrEmpty(options.NetworkInterface))
             arguments.Add($"--source={options.NetworkInterface}");
@@ -51,8 +53,26 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
         return new ToolArguments(arguments);
     }
 
-    public SpeedtestExecutionResult? ParseResult(string output) =>
-        JsonOutput.FromLastLine(output, root => Parse(JsonOutput.FirstIfArray(root)));
+    public SpeedtestExecutionResult ParseResult(ToolOutput output, RunOptions options)
+    {
+        if (JsonOutput.FromLastLine(output.Output, root => JsonOutput.FirstIfArray(root) is var line && IsResult(line) ? Parse(line) : null) is { } result)
+            return result;
+
+        if (output.Output.Trim() == NoMatchingServer)
+        {
+            return ToolFailure.Because(options.ServerId is { } serverId
+                ? $"LibreSpeed has no server {serverId}. Pick one from its server list."
+                : "LibreSpeed found no server to test against.");
+        }
+
+        if (output.ErrorLines.FirstOrDefault(line => line.StartsWith(ServerListFailure, StringComparison.Ordinal)) is { } listFailure)
+        {
+            var through = options.NetworkInterface is { } networkInterface ? $" through the network interface {networkInterface}" : "";
+            return ToolFailure.Because($"LibreSpeed couldn't download its server list{through}: {Reason(listFailure[ServerListFailure.Length..])}");
+        }
+
+        return ToolFailure.Unrecognised(Title, output);
+    }
 
     public static SpeedtestExecutionResult Parse(JsonElement root)
     {
@@ -90,6 +110,15 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
         }
 
         return result;
+    }
+
+    private static bool IsResult(JsonElement element) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty("download", out _);
+
+    private static string Reason(string goError)
+    {
+        var innermost = goError.Split(": ")[^1].Trim().TrimEnd('.');
+        return innermost.Length == 0 ? goError : char.ToUpperInvariant(innermost[0]) + innermost[1..] + ".";
     }
 
     private static string CustomServerList(string url) => JsonSerializer.Serialize(new[]

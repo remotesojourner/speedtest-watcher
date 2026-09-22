@@ -11,7 +11,7 @@ public static class SpeedtestErrors
         ("No route to host", "The test could not be performed because there was no route to the host"),
         ("Connection refused", "The test could not be performed because the connection was rejected"),
         ("timed out", "Internet connection was unstable during the time of the test"),
-        ("Could not retrieve or read configuration", "The configuration file could not be loaded")
+        ("Could not retrieve or read configuration", "Ookla couldn't download its test configuration from speedtest.net")
     ];
 
     public static string Describe(string? error)
@@ -23,6 +23,6 @@ public static class SpeedtestErrors
             if (error.Contains(match, StringComparison.Ordinal)) return message;
         }
 
-        return $"Unknown error: {error}";
+        return error;
     }
 }

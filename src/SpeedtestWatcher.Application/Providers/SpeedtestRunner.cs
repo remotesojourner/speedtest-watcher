@@ -43,13 +43,14 @@ internal partial class SpeedtestRunner : ISpeedtestRunner
                 return new SpeedtestExecutionResult
                 {
                     Success = false,
-                    Error = $"CLI binary for {provider} not found."
+                    Error = $"The {tool.Title} command-line tool isn't installed, and it couldn't be downloaded."
                 };
             }
         }
 
         var scratchFile = Path.Combine(Path.GetTempPath(), $"speedtest_watcher_{Guid.NewGuid():N}.json");
-        var command = tool.BuildArguments(new RunOptions(serverId, customUrl, networkInterface, scratchFile));
+        var options = new RunOptions(serverId, customUrl, networkInterface, scratchFile);
+        var command = tool.BuildArguments(options);
 
         try
         {
@@ -115,41 +116,12 @@ internal partial class SpeedtestRunner : ISpeedtestRunner
                 };
             }
 
-            var stdout = stdoutBuilder.ToString().Trim();
-            var stderr = stderrBuilder.ToString().Trim();
-
-            if (!string.IsNullOrEmpty(stderr) && stderr.Contains("Too many requests", StringComparison.OrdinalIgnoreCase))
-            {
-                return new SpeedtestExecutionResult
-                {
-                    Success = false,
-                    Error = "Too many requests. Please try again later"
-                };
-            }
-
-            if (string.IsNullOrWhiteSpace(stdout))
-            {
-                return new SpeedtestExecutionResult
-                {
-                    Success = false,
-                    Error = !string.IsNullOrEmpty(stderr) ? stderr : "No output from speedtest binary"
-                };
-            }
-
-            return tool.ParseResult(stdout) ?? new SpeedtestExecutionResult
-            {
-                Success = false,
-                Error = !string.IsNullOrEmpty(stderr) ? stderr : "Failed to parse speedtest output"
-            };
+            return ReadResult(tool, new ToolOutput(stdoutBuilder.ToString(), stderrBuilder.ToString(), process.ExitCode), options);
         }
-        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException or FormatException)
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
             LogRunFailed(ex, provider);
-            return new SpeedtestExecutionResult
-            {
-                Success = false,
-                Error = ex.Message
-            };
+            return ToolFailure.Because($"{tool.Title} couldn't be started: {ex.Message}");
         }
         finally
         {
@@ -166,6 +138,22 @@ internal partial class SpeedtestRunner : ISpeedtestRunner
             }
         }
     }
+
+    private SpeedtestExecutionResult ReadResult(ISpeedtestTool tool, ToolOutput output, RunOptions options)
+    {
+        try
+        {
+            return tool.ParseResult(output, options);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or FormatException or KeyNotFoundException)
+        {
+            LogResultUnreadable(ex, tool.Provider);
+            return ToolFailure.Because($"{tool.Title} printed a result that couldn't be read.");
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The {Provider} result couldn't be read")]
+    private partial void LogResultUnreadable(Exception exception, SpeedtestProvider provider);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Spawning {Binary} with args: {Args}")]
     private partial void LogStarting(string binary, IReadOnlyList<string> args);

@@ -16,5 +16,5 @@ public interface ISpeedtestTool
 
     ToolArguments BuildArguments(RunOptions options);
 
-    SpeedtestExecutionResult? ParseResult(string output);
+    SpeedtestExecutionResult ParseResult(ToolOutput output, RunOptions options);
 }
