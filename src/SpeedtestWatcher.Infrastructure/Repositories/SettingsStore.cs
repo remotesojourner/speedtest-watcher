@@ -28,7 +28,11 @@ public class SettingsStore : ISettingsStore
             return string.IsNullOrWhiteSpace(value) || value == SettingDefinitions.Unset ? null : value.Trim();
         }
 
-        string Text(string key) => Optional(key) ?? SettingDefinitions.Find(key)!.Default;
+        string Text(string key)
+        {
+            var definition = SettingDefinitions.Find(key)!;
+            return Optional(key) is { } value && definition.ProblemWith(value) == null ? value : definition.Default;
+        }
 
         bool Flag(string key) => Text(key) == "true";
 
