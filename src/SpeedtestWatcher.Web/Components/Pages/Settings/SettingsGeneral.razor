@@ -1,6 +1,7 @@
+@using System.Data.Common
 @using System.Globalization
-@inject ApiClient Api
-@inject ConfigStateService ConfigService
+@inject RecommendationService Recommendations
+@inject SettingsState Settings
 @inject ISnackbar Snackbar
 
 <MudGrid Spacing="4">
@@ -74,42 +75,43 @@
     private string _internetCheckUrl = "https://icanhazip.com";
     private string _skipIps = "";
 
-    private bool OptimalDirty =>
-        Math.Abs(_optPing - SettingNumber.Parse(ConfigService.CurrentConfig.Ping)) > 0.0000001
-        || Math.Abs(_optDownload - SettingNumber.Parse(ConfigService.CurrentConfig.Download)) > 0.0000001
-        || Math.Abs(_optUpload - SettingNumber.Parse(ConfigService.CurrentConfig.Upload)) > 0.0000001;
+    private TargetSettings Targets => Settings.Current.Targets;
 
-    private bool CheckUrlValid =>
-        WebAddress.IsHttp(_internetCheckUrl);
+    private PreTestCheckSettings Checks => Settings.Current.PreTestChecks;
+
+    private bool OptimalDirty => Differs(_optPing, Targets.Ping) || Differs(_optDownload, Targets.Download) || Differs(_optUpload, Targets.Upload);
+
+    private bool CheckUrlValid => WebAddress.IsHttp(_internetCheckUrl);
+
+    private List<string> SkipIpList => _skipIps.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
     private bool ChecksDirty =>
-        _internetCheck != (ConfigService.CurrentConfig.InternetCheckEnabled != "false")
-        || _internetCheckUrl.Trim() != ConfiguredCheckUrl
-        || SkipIpsValue != ConfiguredSkipIps;
-
-    private string ConfiguredCheckUrl =>
-        string.IsNullOrWhiteSpace(ConfigService.CurrentConfig.InternetCheckUrl) || ConfigService.CurrentConfig.InternetCheckUrl == "none"
-            ? "https://icanhazip.com"
-            : ConfigService.CurrentConfig.InternetCheckUrl!;
-
-    private string ConfiguredSkipIps =>
-        string.IsNullOrWhiteSpace(ConfigService.CurrentConfig.SkipIps) ? "none" : ConfigService.CurrentConfig.SkipIps!;
-
-    private string SkipIpsValue => string.IsNullOrWhiteSpace(_skipIps) ? "none" : _skipIps.Trim();
+        _internetCheck != Checks.InternetCheckEnabled
+        || _internetCheckUrl.Trim() != Checks.InternetCheckUrl
+        || !SkipIpList.SequenceEqual(Checks.SkipIps);
 
     protected override async Task OnInitializedAsync()
     {
-        var cfg = ConfigService.CurrentConfig;
-        _optPing = SettingNumber.Parse(cfg.Ping);
-        _optDownload = SettingNumber.Parse(cfg.Download);
-        _optUpload = SettingNumber.Parse(cfg.Upload);
-        _internetCheck = cfg.InternetCheckEnabled != "false";
-        _internetCheckUrl = ConfiguredCheckUrl;
-        _skipIps = ConfiguredSkipIps == "none" ? "" : ConfiguredSkipIps;
+        ResetOptimalValues();
+        _internetCheck = Checks.InternetCheckEnabled;
+        _internetCheckUrl = Checks.InternetCheckUrl;
+        _skipIps = string.Join(", ", Checks.SkipIps);
 
-        var recommendation = await Api.GetAsync<Recommendation>("/api/recommendations");
-        _recommendation = recommendation.Value;
-        _recommendationUnavailable = !recommendation.Succeeded && recommendation.Status != System.Net.HttpStatusCode.NotFound;
+        try
+        {
+            _recommendation = (await Recommendations.GetAsync()).Value;
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            _recommendationUnavailable = true;
+        }
+    }
+
+    private void ResetOptimalValues()
+    {
+        _optPing = Targets.Ping ?? 0;
+        _optDownload = Targets.Download ?? 0;
+        _optUpload = Targets.Upload ?? 0;
     }
 
     private void UseRecommended()
@@ -122,28 +124,33 @@
 
     private async Task SaveOptimalValuesAsync()
     {
-        var cfg = ConfigService.CurrentConfig;
         var changes = new List<(string Key, string Value)>();
-        if (Math.Abs(_optPing - SettingNumber.Parse(cfg.Ping)) > 0.0000001) changes.Add(("ping", SettingNumber.Format(_optPing)));
-        if (Math.Abs(_optDownload - SettingNumber.Parse(cfg.Download)) > 0.0000001) changes.Add(("download", SettingNumber.Format(_optDownload)));
-        if (Math.Abs(_optUpload - SettingNumber.Parse(cfg.Upload)) > 0.0000001) changes.Add(("upload", SettingNumber.Format(_optUpload)));
-        ShowSaveResult(await ConfigService.SaveAsync([.. changes]), "Optimal values saved");
+        if (Differs(_optPing, Targets.Ping)) changes.Add(("ping", SettingNumber.Format(_optPing)));
+        if (Differs(_optDownload, Targets.Download)) changes.Add(("download", SettingNumber.Format(_optDownload)));
+        if (Differs(_optUpload, Targets.Upload)) changes.Add(("upload", SettingNumber.Format(_optUpload)));
+
+        var result = await Settings.SaveAsync([.. changes]);
+        if (result.Succeeded) ResetOptimalValues();
+        ShowSaveResult(result, "Optimal values saved");
     }
 
     private async Task SaveChecksAsync()
     {
-        var result = await ConfigService.SaveAsync(
+        var skipIps = SkipIpList;
+        var result = await Settings.SaveAsync(
             ("internetCheckEnabled", _internetCheck ? "true" : "false"),
             ("internetCheckUrl", _internetCheckUrl.Trim()),
-            ("skipIps", SkipIpsValue));
+            ("skipIps", skipIps.Count > 0 ? string.Join(", ", skipIps) : SettingDefinitions.Unset));
         ShowSaveResult(result, "Pre-test checks saved");
     }
 
-    private void ShowSaveResult(ApiResult result, string successMessage)
+    private void ShowSaveResult(OperationResult result, string successMessage)
     {
         if (result.Succeeded) Snackbar.Add(successMessage, Severity.Success);
-        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
+
+    private static bool Differs(double value, double? saved) => Math.Abs(value - (saved ?? 0)) > 0.0000001;
 
     private static string? RecommendedHint(double? value, string unit) =>
         value.HasValue ? $"Recommended: {value.Value.ToString(CultureInfo.InvariantCulture)} {unit}" : null;

@@ -1,12 +1,13 @@
-@inject ApiClient Api
-@inject ConfigStateService ConfigService
+@inject SignInService SignInService
+@inject ISignInState SignInState
+@inject SettingsState Settings
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject IDialogService DialogService
 @inject BrowserInterop Browser
 @inject ISnackbar Snackbar
 
-@if (ConfigService.CurrentConfig.AuthDisabledByEnvironment)
+@if (SignInState.DisabledByEnvironment)
 {
     <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
         <MudText Typo="Typo.body2" Class="font-weight-bold">Sign-in is switched off by DISABLE_AUTH</MudText>
@@ -103,16 +104,16 @@
             else
             {
                 <MudText Typo="Typo.body2" Class="mb-3">
-                    @(ConfigService.CurrentConfig.ApiTokenSet ? "A token is set." : "No token has been created.")
+                    @(TokenSet ? "A token is set." : "No token has been created.")
                 </MudText>
             }
 
             <div class="d-flex flex-wrap gap-2 mb-4">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Key"
                            Disabled="_tokenBusy" OnClick="CreateTokenAsync">
-                    @(ConfigService.CurrentConfig.ApiTokenSet ? "Replace token" : "Create token")
+                    @(TokenSet ? "Replace token" : "Create token")
                 </MudButton>
-                @if (ConfigService.CurrentConfig.ApiTokenSet)
+                @if (TokenSet)
                 {
                     <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="_tokenBusy" OnClick="RevokeTokenAsync">Revoke</MudButton>
                 }
@@ -141,9 +142,11 @@
     private bool _tokenBusy;
     private string? _signedInAs;
 
-    private ConfigDto Config => ConfigService.CurrentConfig;
+    private SignInSettings Saved => Settings.Current.SignIn;
 
-    private bool SecretSaved => Config.OidcClientSecretSet;
+    private bool SecretSaved => Saved.ClientSecret != null;
+
+    private bool TokenSet => Saved.ApiTokenHash != null;
 
     private string SecretHelp => SecretSaved
         ? "A secret is saved. Leave this empty to keep it."
@@ -161,11 +164,11 @@
     private bool Complete => !string.IsNullOrWhiteSpace(_authority) && !string.IsNullOrWhiteSpace(_clientId);
 
     private bool Dirty =>
-        _enabled != (Config.AuthEnabled == "true")
-        || _visitorAccess != Config.VisitorAccess
-        || _authority.Trim() != Saved(Config.OidcAuthority)
-        || _clientId.Trim() != Saved(Config.OidcClientId)
-        || NormalisedScopes != Saved(Config.OidcScopes)
+        _enabled != Saved.Enabled
+        || _visitorAccess != Saved.VisitorAccess
+        || _authority.Trim() != (Saved.Authority ?? "")
+        || _clientId.Trim() != (Saved.ClientId ?? "")
+        || NormalisedScopes != string.Join(' ', Saved.Scopes)
         || !string.IsNullOrWhiteSpace(_clientSecret)
         || _clearSecret;
 
@@ -185,11 +188,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _enabled = Config.AuthEnabled == "true";
-        _visitorAccess = Config.VisitorAccess;
-        _authority = Saved(Config.OidcAuthority);
-        _clientId = Saved(Config.OidcClientId);
-        _scopes = string.IsNullOrWhiteSpace(Saved(Config.OidcScopes)) ? "openid profile email" : Saved(Config.OidcScopes);
+        _enabled = Saved.Enabled;
+        _visitorAccess = Saved.VisitorAccess;
+        _authority = Saved.Authority ?? "";
+        _clientId = Saved.ClientId ?? "";
+        _scopes = string.Join(' ', Saved.Scopes);
 
         var state = await AuthState.GetAuthenticationStateAsync();
         if (state.User.Identity?.IsAuthenticated == true) _signedInAs = SignedInUser.DisplayName(state.User);
@@ -209,23 +212,17 @@
         };
 
         _saving = true;
-        var result = await Api.PutAsync<SaveResult>("/api/auth/settings", request);
+        var result = await SignInService.SaveAsync(request);
         _saving = false;
 
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.MessageOr("Could not save the sign-in settings"), Severity.Error);
+            Snackbar.Add(result.Message ?? "Could not save the sign-in settings", Severity.Error);
             return;
         }
 
-        var active = result.Value?.Active == true;
-        Config["authEnabled"] = _enabled ? "true" : "false";
-        Config["visitorAccess"] = _visitorAccess.ToName();
-        Config["oidcAuthority"] = string.IsNullOrWhiteSpace(_authority) ? "none" : _authority.Trim();
-        Config["oidcClientId"] = string.IsNullOrWhiteSpace(_clientId) ? "none" : _clientId.Trim();
-        Config["oidcScopes"] = NormalisedScopes;
-        Config["oidcClientSecretSet"] = !_clearSecret && (SecretSaved || !string.IsNullOrWhiteSpace(_clientSecret));
-        Config["authActive"] = active;
+        var active = result.Value;
+        await Settings.LoadAsync();
         _clientSecret = "";
         _clearSecret = false;
         _scopes = NormalisedScopes;
@@ -242,7 +239,7 @@
 
     private async Task CreateTokenAsync()
     {
-        if (Config.ApiTokenSet)
+        if (TokenSet)
         {
             var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Replace the API token",
@@ -252,17 +249,17 @@
         }
 
         _tokenBusy = true;
-        var created = await Api.PostAsync<ApiTokenResponse>("/api/auth/token");
+        var created = await SignInService.CreateTokenAsync();
         _tokenBusy = false;
 
         if (created.Value == null)
         {
-            Snackbar.Add("Could not create a token", Severity.Error);
+            Snackbar.Add(created.Message ?? "Could not create a token", Severity.Error);
             return;
         }
 
         _newToken = created.Value.Token;
-        Config["apiTokenSet"] = true;
+        await Settings.LoadAsync();
     }
 
     private async Task RevokeTokenAsync()
@@ -274,17 +271,17 @@
         if (confirmed != true) return;
 
         _tokenBusy = true;
-        var revoked = await Api.DeleteAsync("/api/auth/token");
+        var revoked = await SignInService.RevokeTokenAsync();
         _tokenBusy = false;
 
         if (!revoked.Succeeded)
         {
-            Snackbar.Add("Could not revoke the token", Severity.Error);
+            Snackbar.Add(revoked.Message ?? "Could not revoke the token", Severity.Error);
             return;
         }
 
         _newToken = null;
-        Config["apiTokenSet"] = false;
+        await Settings.LoadAsync();
         Snackbar.Add("The API token has been revoked", Severity.Success);
     }
 
@@ -295,8 +292,4 @@
     }
 
     private void SignOut() => Navigation.NavigateTo("/auth/logout", forceLoad: true);
-
-    private static string Saved(string? value) => string.IsNullOrWhiteSpace(value) || value == "none" ? "" : value;
-
-    private sealed record SaveResult(bool Active);
 }

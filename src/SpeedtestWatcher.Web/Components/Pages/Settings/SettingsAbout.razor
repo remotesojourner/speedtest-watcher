@@ -1,4 +1,4 @@
-@inject ApiClient Api
+@inject SystemInfoService SystemInfo
 
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
@@ -45,7 +45,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _version = (await Api.GetAsync<VersionInfoDto>("/api/info/version")).Value;
+        _version = await SystemInfo.GetVersionAsync();
         _versionChecked = true;
     }
 }

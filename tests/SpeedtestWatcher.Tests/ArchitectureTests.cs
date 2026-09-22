@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Reflection.Emit;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Application;
 using SpeedtestWatcher.Core.Interfaces;
@@ -39,6 +40,20 @@ public class ArchitectureTests
                 .SelectMany(constructor => constructor.GetParameters())
                 .Where(parameter => parameter.ParameterType.Assembly == Infrastructure || IsRepository(parameter.ParameterType))
                 .Select(parameter => $"{controller.Name} takes {parameter.ParameterType.Name}"))
+            .ToList();
+
+        Assert.Empty(offending);
+    }
+
+    [Fact]
+    public void Components_InjectServices_NotRepositoriesOrInfrastructure()
+    {
+        var offending = Web.GetTypes()
+            .Where(type => type.IsAssignableTo(typeof(ComponentBase)))
+            .SelectMany(component => component.GetProperties(Declared)
+                .Where(property => property.IsDefined(typeof(InjectAttribute)))
+                .Where(property => property.PropertyType.Assembly == Infrastructure || IsRepository(property.PropertyType) || property.PropertyType == typeof(HttpClient))
+                .Select(property => $"{component.Name} injects {property.PropertyType.Name}"))
             .ToList();
 
         Assert.Empty(offending);

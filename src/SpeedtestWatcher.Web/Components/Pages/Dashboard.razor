@@ -1,9 +1,12 @@
 @page "/"
+@using System.Data.Common
 @using System.Globalization
-@inject ApiClient Api
+@inject StatisticsService Statistics
+@inject PauseService Pause
+@inject ICurrentAccess Access
 @inject PreferencesService PreferencesService
-@inject ConfigStateService ConfigService
-@inject SpeedtestStateService SpeedtestService
+@inject SettingsState Settings
+@inject RecentResults RecentResults
 @inject StatusStateService StatusService
 @inject ISnackbar Snackbar
 @implements IDisposable
@@ -16,7 +19,7 @@
         {
             <MudDateRangePicker DateRange="@(new DateRange(_from, _to))" DateRangeChanged="SetCustomRangeAsync"
                                 PlaceholderStart="From" PlaceholderEnd="To" AutoClose="true"
-                                DateFormat="@FormatHelper.DatePattern(ConfigService.CurrentConfig.DateFormat)"
+                                DateFormat="@FormatHelper.DatePattern(Settings.Current.Display.DateFormat)"
                                 Variant="Variant.Outlined" Margin="Margin.Dense" Class="sw-range-picker" />
         }
         <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync!" SelectionMode="SelectionMode.SingleSelection"
@@ -35,10 +38,10 @@
     <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
         <div class="d-flex flex-wrap align-center justify-space-between gap-3">
             <span>Speedtests are currently paused.</span>
-            @if (!ConfigService.CurrentConfig.ReadOnlyVisitor)
+            @if (Access.HasFullAccess)
             {
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeAsync">
+                           StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="Resume">
                     Resume
                 </MudButton>
             }
@@ -57,15 +60,15 @@
                     <SurfaceCard Icon="@Icons.Material.Filled.Insights" Title="Overview">
                         <div class="d-flex flex-wrap justify-space-around gap-6 mb-4">
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Download"
-                                           Color="@MetricStatus.Download(_stats.Download?.Avg, ConfigService.CurrentConfig.Download)"
+                                           Color="@MetricStatus.Download(_stats.Download?.Avg, Targets.Download)"
                                            Value="@(_stats.Download != null ? $"{PreferencesService.ConvertSpeed(_stats.Download.Avg):F1}" : "—")"
                                            Label="@($"{PreferencesService.SpeedUnit} avg download")" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Upload"
-                                           Color="@MetricStatus.Upload(_stats.Upload?.Avg, ConfigService.CurrentConfig.Upload)"
+                                           Color="@MetricStatus.Upload(_stats.Upload?.Avg, Targets.Upload)"
                                            Value="@(_stats.Upload != null ? $"{PreferencesService.ConvertSpeed(_stats.Upload.Avg):F1}" : "—")"
                                            Label="@($"{PreferencesService.SpeedUnit} avg upload")" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
-                                           Color="@MetricStatus.Ping(_stats.Ping?.Avg, ConfigService.CurrentConfig.Ping)"
+                                           Color="@MetricStatus.Ping(_stats.Ping?.Avg, Targets.Ping)"
                                            Value="@(_stats.Ping != null ? $"{_stats.Ping.Avg}" : "—")"
                                            Label="ms avg ping" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.GraphicEq"
@@ -105,13 +108,13 @@
                         {
                             <div class="d-flex flex-wrap justify-space-around gap-4">
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Download"
-                                               Color="@MetricStatus.Download(Latest.Download, ConfigService.CurrentConfig.Download)"
+                                               Color="@MetricStatus.Download(Latest.Download, Targets.Download)"
                                                Value="@($"{PreferencesService.ConvertSpeed(Latest.Download):F1}")" Label="@PreferencesService.SpeedUnit" />
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Upload"
-                                               Color="@MetricStatus.Upload(Latest.Upload, ConfigService.CurrentConfig.Upload)"
+                                               Color="@MetricStatus.Upload(Latest.Upload, Targets.Upload)"
                                                Value="@($"{PreferencesService.ConvertSpeed(Latest.Upload):F1}")" Label="@PreferencesService.SpeedUnit" />
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.NetworkPing"
-                                               Color="@MetricStatus.Ping(Latest.Ping, ConfigService.CurrentConfig.Ping)"
+                                               Color="@MetricStatus.Ping(Latest.Ping, Targets.Ping)"
                                                Value="@($"{Latest.Ping}")"
                                                Label="@(Latest.Jitter is { } jitter ? $"ms ping (±{jitter:F1})" : "ms ping")" />
                             </div>
@@ -202,22 +205,22 @@
             </MudGrid>
 
             <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
-                @if (_labels.Length > 0)
+                @if (_charts.Labels.Length > 0)
                 {
                     <MudGrid Class="mb-4">
                         <MudItem xs="12" md="6" lg="4">
                             <ChartCard Title="Download Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
-                                       ChartType="ChartType.Line" ChartSeries="@_downloadSeries" ChartLabels="@_labels" ChartOptions="@_downloadOptions"
+                                       ChartType="ChartType.Line" ChartSeries="@_charts.Download" ChartLabels="@_charts.Labels" ChartOptions="@_downloadOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
                         <MudItem xs="12" md="6" lg="4">
                             <ChartCard Title="Upload Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
-                                       ChartType="ChartType.Line" ChartSeries="@_uploadSeries" ChartLabels="@_labels" ChartOptions="@_uploadOptions"
+                                       ChartType="ChartType.Line" ChartSeries="@_charts.Upload" ChartLabels="@_charts.Labels" ChartOptions="@_uploadOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
                         <MudItem xs="12" md="12" lg="4">
                             <ChartCard Title="Ping &amp; Jitter" ValueText="ms" Class="sw-chart-average"
-                                       ChartType="ChartType.Line" ChartSeries="@_pingSeries" ChartLabels="@_labels" ChartOptions="@_pingOptions"
+                                       ChartType="ChartType.Line" ChartSeries="@_charts.Ping" ChartLabels="@_charts.Labels" ChartOptions="@_pingOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
                     </MudGrid>
@@ -250,21 +253,21 @@
                                         <th scope="row" class="sw-hourly-name">Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
-                                            <td style="@CellColor(MetricStatus.Download(hour.Download, ConfigService.CurrentConfig.Download))">@SpeedCell(hour.Download)</td>
+                                            <td style="@CellColor(MetricStatus.Download(hour.Download, Targets.Download))">@SpeedCell(hour.Download)</td>
                                         }
                                     </tr>
                                     <tr>
                                         <th scope="row" class="sw-hourly-name">Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
-                                            <td style="@CellColor(MetricStatus.Upload(hour.Upload, ConfigService.CurrentConfig.Upload))">@SpeedCell(hour.Upload)</td>
+                                            <td style="@CellColor(MetricStatus.Upload(hour.Upload, Targets.Upload))">@SpeedCell(hour.Upload)</td>
                                         }
                                     </tr>
                                     <tr>
                                         <th scope="row" class="sw-hourly-name">Ping <span class="sw-muted">ms</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
-                                            <td style="@CellColor(MetricStatus.Ping(hour.Ping, ConfigService.CurrentConfig.Ping))">@(hour.Ping?.ToString(CultureInfo.CurrentCulture) ?? "—")</td>
+                                            <td style="@CellColor(MetricStatus.Ping(hour.Ping, Targets.Ping))">@(hour.Ping?.ToString(CultureInfo.CurrentCulture) ?? "—")</td>
                                         }
                                     </tr>
                                 </tbody>
@@ -306,14 +309,11 @@
     private string _range = "7d";
     private DateTime? _from;
     private DateTime? _to;
-    private StatisticsDto? _stats;
+    private SpeedtestStatistics? _stats;
     private bool _loading;
     private bool _loadFailed;
 
-    private List<ChartSeries<double>> _downloadSeries = [];
-    private List<ChartSeries<double>> _uploadSeries = [];
-    private List<ChartSeries<double>> _pingSeries = [];
-    private string[] _labels = [];
+    private DashboardCharts _charts = DashboardCharts.Empty;
     private List<FailureRow> _failures = [];
     private bool _compact;
 
@@ -321,7 +321,9 @@
     private readonly LineChartOptions _uploadOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartUpload, MetricStatus.ChartAverage] };
     private readonly LineChartOptions _pingOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartPing, MetricStatus.ChartJitter, MetricStatus.ChartAverage] };
 
-    private SpeedtestDto? Latest => SpeedtestService.LatestTest;
+    private TargetSettings Targets => Settings.Current.Targets;
+
+    private SpeedtestDto? Latest => RecentResults.Latest;
 
     private string RangeSubtitle =>
         $"{(_from ?? Today.AddDays(-7)).ToString("d MMM", CultureInfo.CurrentCulture)} – {(_to ?? Today).ToString("d MMM yyyy", CultureInfo.CurrentCulture)}";
@@ -350,11 +352,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        SpeedtestService.OnChange += OnStateChanged;
+        RecentResults.OnChange += OnStateChanged;
         StatusService.OnChange += OnStateChanged;
+        Settings.OnChange += OnStateChanged;
 
-        var configured = ConfigService.CurrentConfig.ChartRange;
-        _range = RangeOptions.Any(option => option.Id == configured) ? configured! : "7d";
+        var configured = Settings.Current.Display.ChartRange;
+        _range = RangeOptions.Any(option => option.Id == configured) ? configured : "7d";
         ApplyRange();
 
         await LoadStatisticsAsync();
@@ -406,91 +409,53 @@
         var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
         var from = (_from ?? Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
         var to = (_to ?? Today).ToString(pattern, CultureInfo.InvariantCulture);
-        var timeZone = Uri.EscapeDataString(PreferencesService.TimeZone.Id);
-        var result = await Api.GetAsync<StatisticsDto>($"/api/speedtests/statistics?from={from}&to={to}&tz={timeZone}");
-
-        _loadFailed = result.Value == null;
-        if (result.Value != null)
+        try
         {
-            _stats = result.Value;
-            BuildCharts(_stats);
+            var result = await Statistics.GetAsync(from, to, PreferencesService.TimeZone.Id);
+            _loadFailed = !result.Succeeded;
+            if (result.Value is { } statistics)
+            {
+                _stats = statistics;
+                BuildCharts(statistics);
+            }
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            _loadFailed = true;
         }
 
         _loading = false;
         StateHasChanged();
     }
 
-    private void BuildCharts(StatisticsDto stats)
+    private void BuildCharts(SpeedtestStatistics statistics)
     {
-        var points = stats.Labels
-            .Select((label, index) => (label, index))
-            .Where(p => !IsFailed(stats, p.index) && stats.Data.Download.ElementAtOrDefault(p.index) != null)
-            .ToList();
+        var beginAtZero = Settings.Current.Display.ChartBeginAtZero;
+        _charts = DashboardCharts.Build(statistics.ChartPoints, value => PreferencesService.ConvertSpeed(value), ChartLabel, beginAtZero);
 
-        var download = points.Select(p => PreferencesService.ConvertSpeed(stats.Data.Download[p.index])).ToArray();
-        var upload = points.Select(p => PreferencesService.ConvertSpeed(stats.Data.Upload.ElementAtOrDefault(p.index))).ToArray();
-        var ping = points.Select(p => (double)(stats.Data.Ping.ElementAtOrDefault(p.index) ?? 0)).ToArray();
-        var jitter = points.Select(p => stats.Data.Jitter.ElementAtOrDefault(p.index) ?? 0).ToArray();
-
-        _labels = points.Select(p => ChartLabel(p.label)).ToArray();
-        _downloadSeries =
-        [
-            new ChartSeries<double> { Name = "Download", Data = download },
-            AverageSeries(download)
-        ];
-        _uploadSeries =
-        [
-            new ChartSeries<double> { Name = "Upload", Data = upload },
-            AverageSeries(upload)
-        ];
-        _pingSeries =
-        [
-            new ChartSeries<double> { Name = "Ping", Data = ping },
-            new ChartSeries<double> { Name = "Jitter", Data = jitter },
-            AverageSeries(ping)
-        ];
-
-        var beginAtZero = ConfigService.CurrentConfig.ChartBeginAtZero == "true";
-        _downloadOptions.YAxisTicks = ChartAxisHelper.TickStep(download, beginAtZero);
-        _uploadOptions.YAxisTicks = ChartAxisHelper.TickStep(upload, beginAtZero);
-        _pingOptions.YAxisTicks = ChartAxisHelper.TickStep(ping.Concat(jitter), beginAtZero);
+        _downloadOptions.YAxisTicks = _charts.TickSteps.Download;
+        _uploadOptions.YAxisTicks = _charts.TickSteps.Upload;
+        _pingOptions.YAxisTicks = _charts.TickSteps.Ping;
 
         _downloadOptions.YAxisRequireZeroPoint = beginAtZero;
         _uploadOptions.YAxisRequireZeroPoint = beginAtZero;
         _pingOptions.YAxisRequireZeroPoint = beginAtZero;
 
-        var showMarkers = ChartAxisHelper.HasRoomForMarkers(points.Count);
-        _downloadOptions.ShowDataMarkers = showMarkers;
-        _uploadOptions.ShowDataMarkers = showMarkers;
-        _pingOptions.ShowDataMarkers = showMarkers;
+        _downloadOptions.ShowDataMarkers = _charts.ShowMarkers;
+        _uploadOptions.ShowDataMarkers = _charts.ShowMarkers;
+        _pingOptions.ShowDataMarkers = _charts.ShowMarkers;
 
-        _failures = stats.Labels
-            .Select((label, index) => (label, index))
-            .Where(p => IsFailed(stats, p.index))
-            .Select(p => new FailureRow(FormatLabelDateTime(p.label), SpeedtestErrors.Describe(stats.Errors.ElementAtOrDefault(p.index))))
-            .Reverse()
+        _failures = _charts.Failures
+            .Select(point => new FailureRow(PreferencesService.FormatDateTime(PreferencesService.ToLocal(point.Time)), SpeedtestErrors.Describe(point.Error)))
             .ToList();
     }
 
-    private static bool IsFailed(StatisticsDto stats, int index) => index < stats.Failed.Count && stats.Failed[index];
-
-    private string ChartLabel(string raw)
+    private string ChartLabel(DateTime utc)
     {
-        if (!FormatHelper.TryParseUtcTimestamp(raw, out var utc)) return raw;
-
         var local = PreferencesService.ToLocal(utc);
         var time = local.ToString(PreferencesService.TimeFormat == "12h" ? "h:mm tt" : "HH:mm", CultureInfo.InvariantCulture);
         return $"{local.ToString(FormatHelper.DayAndMonthPattern(PreferencesService.DateFormat), CultureInfo.InvariantCulture)} {time}";
     }
-
-    private string FormatLabelDateTime(string raw) =>
-        FormatHelper.TryParseUtcTimestamp(raw, out var utc) ? PreferencesService.FormatDateTime(PreferencesService.ToLocal(utc)) : raw;
-
-    private static ChartSeries<double> AverageSeries(double[] values) => new()
-    {
-        Name = "Average",
-        Data = values.Length == 0 ? [] : Enumerable.Repeat(Math.Round(values.Average(), 2), values.Length).ToArray()
-    };
 
     private string HourHeader(int hour) => PreferencesService.TimeFormat == "12h"
         ? $"{(hour % 12 == 0 ? 12 : hour % 12)}{(hour < 12 ? "a" : "p")}"
@@ -509,21 +474,21 @@
     private static Color ConsistencyColor(double pct) =>
         pct >= 90 ? Color.Success : pct >= 70 ? Color.Warning : Color.Error;
 
-    private async Task ResumeAsync()
+    private void Resume()
     {
-        if (!(await Api.PostAsync("/api/speedtests/continue")).Succeeded)
+        if (!Pause.Resume().Succeeded)
         {
             Snackbar.Add("Could not resume speedtests", Severity.Error);
             return;
         }
 
-        StatusService.UpdateStatus(StatusService.Running, false);
         Snackbar.Add("Speedtests resumed", Severity.Success);
     }
 
     public void Dispose()
     {
-        SpeedtestService.OnChange -= OnStateChanged;
+        RecentResults.OnChange -= OnStateChanged;
         StatusService.OnChange -= OnStateChanged;
+        Settings.OnChange -= OnStateChanged;
     }
 }

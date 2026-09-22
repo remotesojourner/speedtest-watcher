@@ -1,0 +1,69 @@
+@inject StatusStateService StatusService
+@inject SettingsState Settings
+@inject IEnumerable<ISpeedtestTool> Tools
+@inject SpeedtestRunService Runs
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<div class="@(CanChooseServer ? "sw-split-button sw-run-test" : "sw-run-test")">
+    <MudTooltip Text="@RunTestTooltip" Placement="Placement.Bottom">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
+                   StartIcon="@Icons.Material.Filled.Speed" Class="sw-split-main"
+                   Disabled="@Blocked" OnClick="RunAsync">
+            @(StatusService.Running ? "Running..." : "Run Test")
+        </MudButton>
+    </MudTooltip>
+    @if (CanChooseServer)
+    {
+        <MudTooltip Text="@RunOnServerTooltip" Placement="Placement.Bottom">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
+                       Class="sw-split-toggle" Disabled="@Blocked"
+                       OnClick="RunOnServerAsync" aria-label="Run on a specific server">
+                <MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" />
+            </MudButton>
+        </MudTooltip>
+    }
+</div>
+
+@code {
+    private bool Blocked => StatusService.Running || StatusService.Paused;
+
+    private SpeedtestProvider Provider => Settings.Current.Provider.Selected;
+
+    private bool CanChooseServer => Tools.Any(tool => tool.Provider == Provider && tool.SupportsServerChoice());
+
+    private string RunTestTooltip => StatusService.Paused
+        ? "Speedtests are paused. Resume them in Settings."
+        : StatusService.Running ? "Speedtest running" : "Start speedtest";
+
+    private string RunOnServerTooltip => Blocked ? RunTestTooltip : "Run on a specific server";
+
+    protected override void OnInitialized()
+    {
+        StatusService.OnChange += OnStateChanged;
+        Settings.OnChange += OnStateChanged;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task RunAsync()
+    {
+        var result = await Runs.StartManualRunAsync(null);
+        if (result.Succeeded) Snackbar.Add("Speedtest started", Severity.Success);
+        else Snackbar.Add(result.Message ?? "A speedtest can't start right now", Severity.Warning);
+    }
+
+    private async Task RunOnServerAsync()
+    {
+        var parameters = new DialogParameters<RunWithServerDialog> { { x => x.Provider, Provider } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        await DialogService.ShowAsync<RunWithServerDialog>("Run a test on a specific server", parameters, options);
+    }
+
+    public void Dispose()
+    {
+        StatusService.OnChange -= OnStateChanged;
+        Settings.OnChange -= OnStateChanged;
+    }
+}

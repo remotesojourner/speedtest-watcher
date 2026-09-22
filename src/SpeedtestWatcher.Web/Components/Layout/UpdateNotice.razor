@@ -1,0 +1,17 @@
+@inject SystemInfoService SystemInfo
+
+@if (_updateVersion != null)
+{
+    <MudTooltip Text="@($"Update available: v{_updateVersion}")" Placement="Placement.Bottom">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleUp" Color="Color.Warning"
+                       Href="@($"{ProjectInfo.RepositoryUrl}/releases/latest")" Target="_blank"
+                       aria-label="Update available" />
+    </MudTooltip>
+}
+
+@code {
+    private string? _updateVersion;
+
+    protected override async Task OnInitializedAsync() =>
+        _updateVersion = UpdateCheck.AvailableUpdate(await SystemInfo.GetVersionAsync());
+}

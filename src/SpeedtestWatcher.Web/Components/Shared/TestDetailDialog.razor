@@ -1,6 +1,7 @@
-@inject ApiClient Api
-@inject ConfigStateService ConfigService
-@inject SpeedtestStateService SpeedtestService
+@inject ResultsService Results
+@inject SettingsState Settings
+@inject RecentResults RecentResults
+@inject ICurrentAccess Access
 @inject ISnackbar Snackbar
 @inject PreferencesService PreferencesService
 
@@ -35,17 +36,17 @@
             else
             {
                 <div class="d-flex flex-wrap align-end justify-space-between gap-6 mb-5">
-                    <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, ConfigService.CurrentConfig.Download)"
+                    <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, Settings.Current.Targets.Download)"
                                    Value="@($"{PreferencesService.ConvertSpeed(Test.Download):F1}")"
                                    Unit="@PreferencesService.SpeedUnit"
                                    Label="Download speed" />
 
                     <div class="d-flex flex-wrap gap-5">
-                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, ConfigService.CurrentConfig.Upload)" Icon="@Icons.Material.Filled.Upload"
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, Settings.Current.Targets.Upload)" Icon="@Icons.Material.Filled.Upload"
                                        Value="@($"{PreferencesService.ConvertSpeed(Test.Upload):F1}")"
                                        Label="@($"{PreferencesService.SpeedUnit} upload")" />
 
-                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, ConfigService.CurrentConfig.Ping)" Icon="@Icons.Material.Filled.NetworkPing"
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, Settings.Current.Targets.Ping)" Icon="@Icons.Material.Filled.NetworkPing"
                                        Value="@($"{Test.Ping}")"
                                        Label="@($"ms ping{(Test.Jitter.HasValue ? $" (±{Test.Jitter:F1})" : "")}")" />
 
@@ -76,7 +77,7 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (Test != null && !ConfigService.CurrentConfig.ReadOnlyVisitor)
+        @if (Test != null && Access.HasFullAccess)
         {
             <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Delete"
                        Disabled="_deleting" OnClick="DeleteTestAsync">
@@ -105,7 +106,7 @@
         if (Test == null) return;
 
         _deleting = true;
-        var result = await Api.DeleteAsync($"/api/speedtests/{Test.Id}");
+        var result = await Results.DeleteAsync(Test.Id);
         _deleting = false;
 
         if (!result.Succeeded)
@@ -114,7 +115,7 @@
             return;
         }
 
-        SpeedtestService.RemoveTest(Test.Id);
+        RecentResults.Remove(Test.Id);
         Snackbar.Add("The test has been deleted", Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }

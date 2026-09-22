@@ -1,6 +1,6 @@
 @using Cronos
-@inject ApiClient Api
-@inject ConfigStateService ConfigService
+@inject SettingsState Settings
+@inject PauseService Pausing
 @inject StatusStateService StatusService
 @inject PreferencesService PreferencesService
 @inject ISnackbar Snackbar
@@ -55,7 +55,7 @@
             @if (StatusService.Paused)
             {
                 <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Speedtests are currently paused.</MudAlert>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeTestsAsync">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeTests">
                     Resume Tests
                 </MudButton>
             }
@@ -80,7 +80,7 @@
                 }
 
                 <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Pause"
-                           Disabled="@(_pauseMode == CustomMode && !CustomPauseValid)" OnClick="PauseTestsAsync">
+                           Disabled="@(_pauseMode == CustomMode && !CustomPauseValid)" OnClick="PauseTests">
                     Pause Tests
                 </MudButton>
             }
@@ -135,8 +135,8 @@
     }
 
     private bool ScheduleDirty =>
-        EffectiveCron != (ConfigService.CurrentConfig.Cron ?? "")
-        || _scheduleOffset != (ConfigService.CurrentConfig.ScheduleOffset == "true");
+        EffectiveCron != Settings.Current.Schedule.Cron
+        || _scheduleOffset != Settings.Current.Schedule.RandomOffset;
 
     private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseRequest.MaxResumeInHours;
 
@@ -144,11 +144,10 @@
     {
         StatusService.OnChange += OnStatusChanged;
 
-        var cfg = ConfigService.CurrentConfig;
-        var cron = cfg.Cron ?? "0 * * * *";
+        var cron = Settings.Current.Schedule.Cron;
         _cronMode = CronPresets.Any(p => p.Cron == cron) ? cron : CustomMode;
         _customCron = cron;
-        _scheduleOffset = cfg.ScheduleOffset == "true";
+        _scheduleOffset = Settings.Current.Schedule.RandomOffset;
     }
 
     private void SelectCron(string mode)
@@ -159,17 +158,18 @@
 
     private async Task SaveScheduleAsync()
     {
-        var result = await ConfigService.SaveAsync(("cron", EffectiveCron), ("scheduleOffset", _scheduleOffset ? "true" : "false"));
+        var result = await Settings.SaveAsync(("cron", EffectiveCron), ("scheduleOffset", _scheduleOffset ? "true" : "false"));
         if (result.Succeeded) Snackbar.Add("Schedule saved", Severity.Success);
-        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 
-    private async Task PauseTestsAsync()
+    private void PauseTests()
     {
         var hours = _pauseMode == CustomMode ? _customPauseHours : PausePresets.First(p => p.Id == _pauseMode).Hours;
-        if (!(await Api.PostAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = hours })).Succeeded)
+        var result = Pausing.Pause(hours);
+        if (!result.Succeeded)
         {
-            Snackbar.Add("Could not pause speedtests", Severity.Error);
+            Snackbar.Add(result.Message ?? "Could not pause speedtests", Severity.Error);
             return;
         }
 
@@ -177,9 +177,9 @@
         Snackbar.Add("Speedtests paused", Severity.Warning);
     }
 
-    private async Task ResumeTestsAsync()
+    private void ResumeTests()
     {
-        if (!(await Api.PostAsync("/api/speedtests/continue")).Succeeded)
+        if (!Pausing.Resume().Succeeded)
         {
             Snackbar.Add("Could not resume speedtests", Severity.Error);
             return;

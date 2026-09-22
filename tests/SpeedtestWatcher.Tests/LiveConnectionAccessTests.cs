@@ -13,27 +13,35 @@ public sealed class LiveConnectionAccessTests : IClassFixture<ReadOnlyVisitorsAp
         _noVisitors = noVisitors;
     }
 
-    [Theory]
-    [InlineData("/_blazor/negotiate?negotiateVersion=1")]
-    [InlineData("/speedtestHub/negotiate?negotiateVersion=1")]
-    public async Task ReadOnlyVisitors_CanOpenTheLiveConnections(string url)
+    private const string CircuitNegotiation = "/_blazor/negotiate?negotiateVersion=1";
+
+    [Fact]
+    public async Task ReadOnlyVisitors_CanOpenTheLiveConnection()
     {
         using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
 
-        using var response = await client.PostAsync(url, null, TestContext.Current.CancellationToken);
+        using var response = await client.PostAsync(CircuitNegotiation, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("/_blazor/negotiate?negotiateVersion=1")]
-    [InlineData("/speedtestHub/negotiate?negotiateVersion=1")]
-    public async Task VisitorsWithoutAccess_CannotOpenThem(string url)
+    [Fact]
+    public async Task VisitorsWithoutAccess_CannotOpenIt()
     {
         using var client = _noVisitors.CreateClientWithoutRedirects();
 
-        using var response = await client.PostAsync(url, null, TestContext.Current.CancellationToken);
+        using var response = await client.PostAsync(CircuitNegotiation, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task TheOldSpeedtestHub_IsGone()
+    {
+        using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
+
+        using var response = await client.PostAsync("/speedtestHub/negotiate?negotiateVersion=1", null, TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
     }
 }

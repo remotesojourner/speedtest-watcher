@@ -19,7 +19,7 @@ public class AccessPolicyTests
     [Fact]
     public void SignInOff_EveryoneHasFullAccess()
     {
-        Assert.Equal(Access.Full, AccessPolicy.Decide(AuthSnapshot.Default, signedIn: false, internalCall: false, validApiToken: false));
+        Assert.Equal(Access.Full, AccessPolicy.Decide(AuthSnapshot.Default, signedIn: false, validApiToken: false));
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class AccessPolicyTests
         var overridden = SignInOn with { DisabledByEnvironment = true };
 
         Assert.False(overridden.IsActive);
-        Assert.Equal(Access.Full, AccessPolicy.Decide(overridden, signedIn: false, internalCall: false, validApiToken: false));
+        Assert.Equal(Access.Full, AccessPolicy.Decide(overridden, signedIn: false, validApiToken: false));
     }
 
     [Fact]
@@ -37,22 +37,21 @@ public class AccessPolicyTests
         var incomplete = AuthSnapshot.Default with { Enabled = true };
 
         Assert.False(incomplete.IsActive);
-        Assert.Equal(Access.Full, AccessPolicy.Decide(incomplete, signedIn: false, internalCall: false, validApiToken: false));
+        Assert.Equal(Access.Full, AccessPolicy.Decide(incomplete, signedIn: false, validApiToken: false));
     }
 
     [Theory]
-    [InlineData(true, false, false)]
-    [InlineData(false, true, false)]
-    [InlineData(false, false, true)]
-    public void SignedInUsers_TheUisOwnCalls_AndTheApiToken_GetFullAccess(bool signedIn, bool internalCall, bool validApiToken)
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void SignedInUsers_AndTheApiToken_GetFullAccess(bool signedIn, bool validApiToken)
     {
-        Assert.Equal(Access.Full, AccessPolicy.Decide(SignInOn, signedIn, internalCall, validApiToken));
+        Assert.Equal(Access.Full, AccessPolicy.Decide(SignInOn, signedIn, validApiToken));
     }
 
     [Fact]
     public void VisitorsWithoutAccess_AreRefused()
     {
-        Assert.Equal(Access.None, AccessPolicy.Decide(SignInOn, signedIn: false, internalCall: false, validApiToken: false));
+        Assert.Equal(Access.None, AccessPolicy.Decide(SignInOn, signedIn: false, validApiToken: false));
     }
 
     [Fact]
@@ -60,7 +59,7 @@ public class AccessPolicyTests
     {
         var readOnly = SignInOn with { VisitorAccess = VisitorAccess.Read };
 
-        Assert.Equal(Access.ReadOnly, AccessPolicy.Decide(readOnly, signedIn: false, internalCall: false, validApiToken: false));
+        Assert.Equal(Access.ReadOnly, AccessPolicy.Decide(readOnly, signedIn: false, validApiToken: false));
     }
 
     [Theory]
@@ -77,7 +76,7 @@ public class AccessPolicyTests
     [Theory]
     [InlineData("/api/prometheus/metrics", true)]
     [InlineData("/_blazor/negotiate", true)]
-    [InlineData("/speedtestHub", true)]
+    [InlineData("/speedtestHub", false)]
     [InlineData("/history", false)]
     [InlineData("/", false)]
     public void ProgrammaticRequests_GetA401RatherThanARedirect(string path, bool expected)
@@ -110,18 +109,6 @@ public class AccessTokenTests
 
         context.Request.Headers.Authorization = "Basic cHJvbWV0aGV1czpzZWNyZXQ=";
         Assert.Null(BearerToken.FromRequest(context.Request));
-    }
-
-    [Fact]
-    public void InternalToken_IsDifferentForEachProcessInstance_AndMatchesOnlyItself()
-    {
-        var first = new InternalAccessToken();
-        var second = new InternalAccessToken();
-
-        Assert.NotEqual(first.Value, second.Value);
-        Assert.True(first.Matches(first.Value));
-        Assert.False(first.Matches(second.Value));
-        Assert.False(first.Matches(null));
     }
 
     [Theory]

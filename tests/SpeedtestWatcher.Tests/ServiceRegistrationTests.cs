@@ -8,6 +8,7 @@ using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Application.Storage;
 using SpeedtestWatcher.Web.Services;
+using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -34,10 +35,13 @@ public sealed class ServiceRegistrationTests : IClassFixture<SignInOffApp>
         typeof(StorageService),
         typeof(SystemInfoService),
         typeof(ICurrentAccess),
+        typeof(CircuitAccess),
+        typeof(HttpCurrentAccess),
         typeof(PreferencesService),
         typeof(StatusStateService),
-        typeof(SpeedtestStateService),
-        typeof(ConfigStateService),
+        typeof(SettingsState),
+        typeof(RecentResults),
+        typeof(LiveUpdates),
         typeof(IDialogService)
     ];
 
@@ -48,5 +52,13 @@ public sealed class ServiceRegistrationTests : IClassFixture<SignInOffApp>
         using var scope = _app.Services.CreateScope();
 
         Assert.NotNull(scope.ServiceProvider.GetRequiredService(serviceType));
+    }
+
+    [Fact]
+    public void Services_SeeTheCircuitsAccess_OnceTheLayoutStartsIt()
+    {
+        using var scope = _app.Services.CreateScope();
+
+        Assert.IsType<CurrentAccess>(scope.ServiceProvider.GetRequiredService<ICurrentAccess>());
     }
 }

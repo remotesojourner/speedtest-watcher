@@ -1,9 +1,11 @@
 @using System.Globalization
 @using System.Text
 @using System.Text.Json
-@inject ApiClient Api
-@inject ConfigStateService ConfigService
-@inject SpeedtestStateService SpeedtestService
+@inject StorageService Storage
+@inject ResultsService Results
+@inject SettingsBackupService Backup
+@inject SettingsState Settings
+@inject RecentResults RecentResults
 @inject NavigationManager Navigation
 @inject BrowserInterop Browser
 @inject ILogger<SettingsStorage> Logger
@@ -123,6 +125,8 @@
         (0, "Keep forever")
     ];
 
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
     private StorageInfoDto? _storageInfo;
     private bool _storageInfoFailed;
     private MudFileUpload<IBrowserFile>? _testsUpload;
@@ -131,22 +135,21 @@
     private int _customDays = 365;
     private bool _importing;
 
-    private int SavedRetentionDays =>
-        int.TryParse(ConfigService.CurrentConfig.RetentionDays, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days) ? days : 365;
+    private int SavedRetentionDays => Settings.Current.RetentionDays;
 
     private int? SelectedRetentionDays => _retentionChoice == CustomChoice
-        ? (_customDays is >= 0 and <= 10000 ? _customDays : null)
+        ? (_customDays is >= 0 and <= SettingDefinitions.MaxRetentionDays ? _customDays : null)
         : int.Parse(_retentionChoice, CultureInfo.InvariantCulture);
 
     private bool RetentionDirty => SelectedRetentionDays is { } days && days != SavedRetentionDays;
 
     protected override async Task OnInitializedAsync()
     {
-        ResetRetentionFromConfig();
+        ResetRetentionFromSettings();
         await LoadStorageInfoAsync();
     }
 
-    private void ResetRetentionFromConfig()
+    private void ResetRetentionFromSettings()
     {
         var days = SavedRetentionDays;
         _retentionChoice = RetentionPresets.Any(p => p.Days == days) ? days.ToString(CultureInfo.InvariantCulture) : CustomChoice;
@@ -155,30 +158,35 @@
 
     private async Task LoadStorageInfoAsync()
     {
-        var result = await Api.GetAsync<StorageInfoDto>("/api/storage");
+        var result = await Storage.GetInfoAsync();
         _storageInfo = result.Value;
-        _storageInfoFailed = result.Value == null;
+        _storageInfoFailed = !result.Succeeded;
     }
 
     private async Task SaveRetentionAsync()
     {
         if (SelectedRetentionDays is not { } days) return;
 
-        var result = await ConfigService.SaveAsync(("retentionDays", days.ToString(CultureInfo.InvariantCulture)));
+        var result = await Settings.SaveAsync(("retentionDays", days.ToString(CultureInfo.InvariantCulture)));
         if (result.Succeeded) Snackbar.Add("Retention period updated", Severity.Success);
-        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 
-    private Task ExportTestsAsync(string format) =>
-        DownloadAsync($"/api/storage/tests/history/{format}", $"speedtests.{format}");
-
-    private Task ExportConfigAsync() =>
-        DownloadAsync("/api/storage/config", "speedtest-watcher-settings.json");
-
-    private async Task DownloadAsync(string url, string fileName)
+    private async Task ExportTestsAsync(string format)
     {
-        var file = await Api.GetBytesAsync(url);
-        if (file.Value != null && await Browser.DownloadAsync(fileName, file.Value))
+        var result = await Storage.ExportResultsAsync(format);
+        await DownloadAsync(result.Value?.FileName ?? $"speedtests.{format}", result.Value?.Content);
+    }
+
+    private async Task ExportConfigAsync()
+    {
+        var result = await Backup.ExportAsync();
+        await DownloadAsync("speedtest-watcher-settings.json", result.Value is { } backup ? JsonSerializer.SerializeToUtf8Bytes(backup, WebJson) : null);
+    }
+
+    private async Task DownloadAsync(string fileName, byte[]? content)
+    {
+        if (content != null && await Browser.DownloadAsync(fileName, content))
             Snackbar.Add($"Exported {fileName}", Severity.Success);
         else
             Snackbar.Add("Export failed", Severity.Error);
@@ -186,23 +194,23 @@
 
     private async Task ImportTestsAsync(IBrowserFile? file)
     {
-        var json = await ReadJsonAsync(file, JsonValueKind.Array);
-        if (json == null)
+        var rows = Deserialize<List<SpeedtestImportRow>>(await ReadJsonAsync(file, JsonValueKind.Array));
+        if (rows == null)
         {
             Snackbar.Add("That file isn't a Speedtest Watcher test export", Severity.Error);
             return;
         }
 
-        var result = await Api.PutJsonAsync<TestImportResultDto>("/api/storage/tests/history", json);
+        var result = await Results.ImportAsync(rows);
         if (result.Value is not { } counts)
         {
-            Snackbar.Add(ImportError(result, "test"), Severity.Error);
+            Snackbar.Add(result.Message ?? "An error occurred while importing the test file", Severity.Error);
             return;
         }
 
         Snackbar.Add(TestImportSummary(counts), counts.Imported > 0 ? Severity.Success : Severity.Info);
         await LoadStorageInfoAsync();
-        await ReloadTestListAsync();
+        await RecentResults.ReloadAsync();
     }
 
     private static string TestImportSummary(TestImportResultDto counts) => (counts.Imported, counts.Skipped) switch
@@ -214,27 +222,22 @@
 
     private async Task ImportConfigAsync(IBrowserFile? file)
     {
-        var json = await ReadJsonAsync(file, JsonValueKind.Object);
-        if (json == null)
+        var backup = Deserialize<SettingsBackupDto>(await ReadJsonAsync(file, JsonValueKind.Object));
+        if (backup == null)
         {
             Snackbar.Add("That file isn't a Speedtest Watcher settings export", Severity.Error);
             return;
         }
 
-        var result = await Api.PutJsonAsync<SettingsImportResultDto>("/api/storage/config", json);
+        var result = await Backup.ImportAsync(backup);
         if (result.Value is not { } counts)
         {
-            Snackbar.Add(ImportError(result, "settings"), Severity.Error);
+            Snackbar.Add(result.Message ?? "An error occurred while importing the settings file", Severity.Error);
             return;
         }
 
-        if (!await ConfigService.ReloadAsync())
-        {
-            Snackbar.Add($"{SettingsImportSummary(counts)} Refresh the page to see them.", Severity.Warning);
-            return;
-        }
-
-        ResetRetentionFromConfig();
+        await Settings.LoadAsync();
+        ResetRetentionFromSettings();
         Snackbar.Add(SettingsImportSummary(counts), counts.Skipped > 0 ? Severity.Warning : Severity.Success);
     }
 
@@ -250,13 +253,22 @@
             : summary;
     }
 
-    private static string ImportError(ApiResult result, string exportKind) =>
-        result.Status == System.Net.HttpStatusCode.BadRequest && string.IsNullOrWhiteSpace(result.ServerMessage)
-            ? $"That file isn't a Speedtest Watcher {exportKind} export"
-            : result.MessageOr($"An error occurred while importing the {exportKind} file");
-
     private static string Count(int count, string singular, string plural) =>
         count == 1 ? $"1 {singular}" : $"{count.ToString("N0", CultureInfo.CurrentCulture)} {plural}";
+
+    private static T? Deserialize<T>(string? json) where T : class
+    {
+        if (json == null) return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(json, WebJson);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private async Task<string?> ReadJsonAsync(IBrowserFile? file, JsonValueKind expectedRoot)
     {
@@ -286,12 +298,6 @@
         }
     }
 
-    private async Task ReloadTestListAsync()
-    {
-        if (!await SpeedtestService.ReloadAsync())
-            Snackbar.Add("The tests were imported. Refresh the page to see them.", Severity.Warning);
-    }
-
     private async Task ClearHistoryAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
@@ -300,13 +306,13 @@
             yesText: "Delete all", cancelText: "Cancel");
         if (confirmed != true) return;
 
-        if (!(await Api.DeleteAsync("/api/storage/tests/history")).Succeeded)
+        if (!(await Storage.DeleteAllResultsAsync()).Succeeded)
         {
             Snackbar.Add("Could not clear the history", Severity.Error);
             return;
         }
 
-        SpeedtestService.SetTests([], false);
+        RecentResults.Clear();
         await LoadStorageInfoAsync();
         Snackbar.Add("The history has been cleared", Severity.Success);
     }
@@ -319,7 +325,7 @@
             yesText: "Reset", cancelText: "Cancel");
         if (confirmed != true) return;
 
-        if (!(await Api.DeleteAsync("/api/storage/config")).Succeeded)
+        if (!(await Storage.FactoryResetAsync()).Succeeded)
         {
             Snackbar.Add("Could not reset the settings", Severity.Error);
             return;

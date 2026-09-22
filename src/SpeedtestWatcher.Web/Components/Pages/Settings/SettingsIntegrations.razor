@@ -1,7 +1,8 @@
+@using System.Data.Common
 @using System.Globalization
 @using System.Text.Json
 @using System.Text.RegularExpressions
-@inject ApiClient Api
+@inject IntegrationService Integrations
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -132,12 +133,19 @@
     private async Task LoadAsync()
     {
         _loading = true;
-        var schemas = await Api.GetAsync<Dictionary<string, IntegrationTypeSchemaDto>>("/api/integrations");
-        var active = await Api.GetAsync<List<ActiveIntegrationDto>>("/api/integrations/active");
+        _schemas = Integrations.Schemas.ToDictionary(pair => pair.Key, pair => pair.Value);
+        IReadOnlyList<ActiveIntegrationDto> active = [];
+        try
+        {
+            active = await Integrations.ListAsync();
+            _loadFailed = false;
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            _loadFailed = true;
+        }
 
-        _loadFailed = schemas.Value == null || active.Value == null;
-        _schemas = schemas.Value ?? new();
-        _instances = (active.Value ?? [])
+        _instances = active
             .Where(a => _schemas.ContainsKey(a.Name))
             .Select(a => CreateInstance(a.Name, _schemas[a.Name], a.Id, a.DisplayName, a.Data, a.LastActivity, a.ActivityFailed, isNew: false))
             .ToList();
@@ -264,45 +272,40 @@
     {
         instance.Saving = true;
 
-        var payload = Settings(instance);
-        payload["integration_name"] = DisplayTitle(instance);
-
-        ApiResult result;
+        var settings = SettingsJson(instance);
+        (bool Succeeded, string? Message) outcome;
         if (string.IsNullOrEmpty(instance.Id))
         {
-            var created = await Api.PutAsync<JsonElement>($"/api/integrations/{instance.Name}", payload);
-            if (created.Succeeded && created.Value.TryGetProperty("id", out var id)) instance.Id = id.GetString() ?? "";
-            result = created;
+            var created = await Integrations.CreateAsync(instance.Name, DisplayTitle(instance), settings);
+            if (created.Value is { } id) instance.Id = id;
+            outcome = (created.Succeeded, created.Message);
         }
         else
         {
-            result = await Api.PatchAsync($"/api/integrations/{instance.Id}", payload);
+            var updated = await Integrations.UpdateAsync(instance.Id, DisplayTitle(instance), settings);
+            outcome = (updated.Succeeded, updated.Message);
         }
 
         instance.Saving = false;
-        if (result.Succeeded)
+        if (outcome.Succeeded)
         {
             instance.SavedSnapshot = instance.Snapshot;
             Snackbar.Add($"{DisplayTitle(instance)} saved", Severity.Success);
         }
-        else if (result.Status == null || (int)result.Status >= 500)
-        {
-            Snackbar.Add("Could not save the integration", Severity.Error);
-        }
         else
         {
-            Snackbar.Add(result.MessageOr("Could not save the integration. Check the highlighted fields."), Severity.Error);
+            Snackbar.Add(outcome.Message ?? "Could not save the integration. Check the highlighted fields.", Severity.Error);
         }
     }
+
+    private static Dictionary<string, JsonElement> SettingsJson(IntegrationInstance instance) =>
+        Settings(instance).ToDictionary(setting => setting.Key, setting => JsonSerializer.SerializeToElement(setting.Value));
 
     private async Task SendTestAsync(IntegrationInstance instance)
     {
         instance.Testing = true;
 
-        var url = string.IsNullOrEmpty(instance.Id)
-            ? $"/api/integrations/{instance.Name}/test"
-            : $"/api/integrations/{instance.Name}/test?id={Uri.EscapeDataString(instance.Id)}";
-        var result = await Api.PostAsync<IntegrationTestResultDto>(url, Settings(instance));
+        var result = await Integrations.SendTestAsync(instance.Name, SettingsJson(instance), string.IsNullOrEmpty(instance.Id) ? null : instance.Id);
 
         instance.Testing = false;
         if (result.Value is { Success: true })
@@ -315,7 +318,7 @@
         }
         else
         {
-            Snackbar.Add(result.MessageOr("Could not send the test"), Severity.Error);
+            Snackbar.Add(result.Message ?? "Could not send the test", Severity.Error);
         }
     }
 
@@ -329,7 +332,7 @@
                 yesText: "Delete", cancelText: "Cancel");
             if (confirmed != true) return;
 
-            if (!(await Api.DeleteAsync($"/api/integrations/{instance.Id}")).Succeeded)
+            if (!(await Integrations.DeleteAsync(instance.Id)).Succeeded)
             {
                 Snackbar.Add("Could not delete the integration", Severity.Error);
                 return;

@@ -1,4 +1,5 @@
-@inject ApiClient Api
+@using System.Data.Common
+@inject ResultsService Results
 @inject BrowserInterop Browser
 @inject PreferencesService PreferencesService
 @inject ISnackbar Snackbar
@@ -56,13 +57,13 @@
 
     private string ShownDescription => _shownCount is not { } count
         ? CountPlaceholder
-        : FiltersActive ? $"{Results(count)} matching the current filters" : $"No filters applied, so all {Results(count)}";
+        : FiltersActive ? $"{ResultCount(count)} matching the current filters" : $"No filters applied, so all {ResultCount(count)}";
 
     private string SelectedDescription => SelectedIds.Count == 0
         ? "Select results in the list first"
         : $"{SelectedIds.Count} selected";
 
-    private string AllDescription => _allCount is { } count ? Results(count) : CountPlaceholder;
+    private string AllDescription => _allCount is { } count ? ResultCount(count) : CountPlaceholder;
 
     private int? ExportCount => _scope switch
     {
@@ -82,13 +83,14 @@
 
     private async Task<int?> CountAsync(TestStatus? status, TestType? type, bool? healthy)
     {
-        var query = new List<string>();
-        if (status is { } wantedStatus) query.Add($"status={wantedStatus.ToName()}");
-        if (type is { } wantedType) query.Add($"type={wantedType.ToName()}");
-        if (healthy != null) query.Add($"healthy={(healthy.Value ? "true" : "false")}");
-
-        var result = await Api.GetAsync<CountResult>($"/api/speedtests/count?{string.Join("&", query)}");
-        return result.Value?.Count;
+        try
+        {
+            return await Results.CountAsync(status, type, healthy);
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private async Task ExportAsync()
@@ -101,9 +103,9 @@
         };
 
         _exporting = true;
-        var file = await Api.PostForBytesAsync("/api/speedtests/export", request);
+        var file = await Results.ExportAsync(request);
         var fileName = $"speedtests-{_scope.ToString().ToLowerInvariant()}-{PreferencesService.Now:yyyyMMdd-HHmm}.{_format}";
-        var downloaded = file.Value != null && await Browser.DownloadAsync(fileName, file.Value);
+        var downloaded = await Browser.DownloadAsync(fileName, file.Content);
         _exporting = false;
 
         if (!downloaded)
@@ -112,11 +114,9 @@
             return;
         }
 
-        Snackbar.Add($"Exported {Results(ExportCount ?? 0)}", Severity.Success);
+        Snackbar.Add($"Exported {ResultCount(ExportCount ?? 0)}", Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }
 
-    private static string Results(int count) => count == 1 ? "1 result" : $"{count} results";
-
-    private sealed record CountResult(int Count);
+    private static string ResultCount(int count) => count == 1 ? "1 result" : $"{count} results";
 }

@@ -1,10 +1,10 @@
 @page "/history"
 @using System.Globalization
-@inject SpeedtestStateService SpeedtestService
+@inject RecentResults RecentResults
+@inject ResultsService Results
 @inject StatusStateService StatusService
-@inject ConfigStateService ConfigService
+@inject SettingsState Settings
 @inject PreferencesService PreferencesService
-@inject ApiClient Api
 @inject IDialogService DialogService
 @implements IDisposable
 
@@ -85,10 +85,10 @@
     </div>
 }
 
-<StateView Loading="@(Loading && Rows.Count == 0)" Empty="@(Rows.Count == 0 && !Loading)"
+<StateView Loading="@(_list.Loading && _list.Items.Count == 0)" Empty="@(_list.Items.Count == 0 && !_list.Loading)"
            ErrorMessage="@LoadError" OnRetry="RetryLoadAsync">
     <EmptyContent>
-        @if (FiltersActive)
+        @if (_list.Filter.IsActive)
         {
             <span>No results match these filters.</span>
         }
@@ -146,7 +146,7 @@
                             {
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.NetworkPing" Size="Size.Small" Color="@MetricStatus.Ping(test.Ping, ConfigService.CurrentConfig.Ping)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.NetworkPing" Size="Size.Small" Color="@MetricStatus.Ping(test.Ping, Settings.Current.Targets.Ping)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @test.Ping ms
                                             @if (test.Jitter is { } jitter)
@@ -158,7 +158,7 @@
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="@MetricStatus.Download(test.Download, ConfigService.CurrentConfig.Download)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="@MetricStatus.Download(test.Download, Settings.Current.Targets.Download)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @($"{PreferencesService.ConvertSpeed(test.Download):F1}") @PreferencesService.SpeedUnit
                                         </MudText>
@@ -166,7 +166,7 @@
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Upload" Size="Size.Small" Color="@MetricStatus.Upload(test.Upload, ConfigService.CurrentConfig.Upload)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Upload" Size="Size.Small" Color="@MetricStatus.Upload(test.Upload, Settings.Current.Targets.Upload)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @($"{PreferencesService.ConvertSpeed(test.Upload):F1}") @PreferencesService.SpeedUnit
                                         </MudText>
@@ -179,13 +179,13 @@
             }
         </MudList>
 
-        @if (Loading)
+        @if (_list.Loading)
         {
             <div class="text-center pa-4">
                 <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
             </div>
         }
-        else if (_loadMoreFailed)
+        else if (_list.LoadMoreFailed)
         {
             <div class="d-flex flex-wrap align-center justify-center gap-3 pa-4">
                 <MudText Typo="Typo.body2" Color="Color.Error">Couldn't load more tests.</MudText>
@@ -195,7 +195,7 @@
                 </MudButton>
             </div>
         }
-        else if (HasMore)
+        else if (_list.HasMore)
         {
             <InfiniteScrollSentinel OnVisible="LoadMoreAsync" />
         }
@@ -211,8 +211,6 @@
 </StateView>
 
 @code {
-    private const int PageSize = SpeedtestStateService.PageSize;
-
     private sealed record TestGroup(string Label, List<SpeedtestDto> Tests);
 
     private sealed record FilterChoice<TValue>(TValue? Value, string Label) where TValue : struct;
@@ -239,10 +237,7 @@
         new(false, "Missed targets")
     ];
 
-    private SpeedtestDto? LatestReading =>
-        SpeedtestService.LatestTest is { Status: TestStatus.Completed } latest
-            ? latest
-            : SpeedtestService.Tests.FirstOrDefault(t => t.Status == TestStatus.Completed);
+    private PagedTestList _list = null!;
     private Timer? _timer;
     private List<double> _downloadHistory = [];
 
@@ -250,54 +245,54 @@
     private FilterChoice<TestType> _type = TypeChoices[0];
     private FilterChoice<bool> _healthy = HealthChoices[0];
 
-    private List<SpeedtestDto> _filtered = [];
-    private bool _filteredHasMore = true;
-    private bool _filteredLoading;
-
     private bool _selecting;
     private readonly HashSet<int> _selected = [];
 
-    private bool _filteredLoadFailed;
-    private bool _loadMoreFailed;
+    private SpeedtestDto? LatestReading => RecentResults.LatestCompleted;
 
-    private bool FiltersActive => _status.Value != null || _type.Value != null || _healthy.Value != null;
+    private string? LoadError => _list.LoadFailed
+        ? (_list.Filter.IsActive ? "Couldn't load the results for these filters." : "Couldn't load your tests.")
+        : null;
 
-    private string? LoadError => FiltersActive
-        ? (_filteredLoadFailed ? "Couldn't load the results for these filters." : null)
-        : (SpeedtestService.LoadFailed && SpeedtestService.Tests.Count == 0 ? "Couldn't load your tests." : null);
+    private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, Settings.Current.Targets.Ping);
+    private Color DownloadColor => MetricStatus.Download(LatestReading?.Download, Settings.Current.Targets.Download);
+    private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, Settings.Current.Targets.Upload);
 
-    private List<SpeedtestDto> Rows => FiltersActive ? _filtered : SpeedtestService.Tests;
-
-    private bool Loading => FiltersActive ? _filteredLoading : SpeedtestService.Loading;
-
-    private bool HasMore => FiltersActive ? _filteredHasMore : SpeedtestService.HasMore;
-
-    private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, ConfigService.CurrentConfig.Ping);
-    private Color DownloadColor => MetricStatus.Download(LatestReading?.Download, ConfigService.CurrentConfig.Download);
-    private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, ConfigService.CurrentConfig.Upload);
-
-    private List<TestGroup> TestGroups => Rows
+    private List<TestGroup> TestGroups => _list.Items
         .GroupBy(t => PreferencesService.ToLocal(t.Created).Date)
         .Select(g => new TestGroup(DayLabel(g.Key), g.ToList()))
         .ToList();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        SpeedtestService.OnChange += OnStateChanged;
+        _list = new PagedTestList((filter, afterId, limit) => Results.ListAsync(afterId, limit, filter.Status, filter.Type, filter.Healthy));
+        RecentResults.OnChange += OnRecentResultsChanged;
+        RecentResults.ResultAdded += OnResultAdded;
         StatusService.OnChange += OnStateChanged;
+        Settings.OnChange += OnStateChanged;
         _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 0, 10000);
         BuildDownloadHistory();
+
+        await _list.ReloadAsync(TestFilter.None);
     }
 
-    private void OnStateChanged()
+    private void OnRecentResultsChanged()
     {
         BuildDownloadHistory();
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnResultAdded(SpeedtestDto test)
+    {
+        _list.Prepend(test);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
     private void BuildDownloadHistory()
     {
-        _downloadHistory = SpeedtestService.Tests
+        _downloadHistory = RecentResults.Tests
             .Where(t => t.Status == TestStatus.Completed)
             .Take(20)
             .Reverse()
@@ -308,55 +303,37 @@
     private Task SetStatusAsync(FilterChoice<TestStatus> value)
     {
         _status = value;
-        return ReloadFilteredAsync();
+        return ReloadAsync();
     }
 
     private Task SetTypeAsync(FilterChoice<TestType> value)
     {
         _type = value;
-        return ReloadFilteredAsync();
+        return ReloadAsync();
     }
 
     private Task SetHealthAsync(FilterChoice<bool> value)
     {
         _healthy = value;
-        return ReloadFilteredAsync();
+        return ReloadAsync();
     }
 
-    private async Task ReloadFilteredAsync()
+    private async Task ReloadAsync()
     {
         _selected.Clear();
-        _loadMoreFailed = false;
-        _filteredLoadFailed = false;
-        if (!FiltersActive)
-        {
-            _filtered = [];
-            _filteredHasMore = true;
-            return;
-        }
-
-        _filteredLoading = true;
+        var loading = _list.ReloadAsync(new TestFilter(_status.Value, _type.Value, _healthy.Value));
         StateHasChanged();
-
-        var result = await Api.GetAsync<List<SpeedtestDto>>(FilterQuery(null));
-        _filtered = result.Value ?? [];
-        _filteredHasMore = result.Value?.Count >= PageSize;
-        _filteredLoadFailed = result.Value == null;
-
-        _filteredLoading = false;
-        StateHasChanged();
+        await loading;
     }
 
-    private Task RetryLoadAsync() => FiltersActive ? ReloadFilteredAsync() : SpeedtestService.ReloadAsync();
+    private Task RetryLoadAsync() => ReloadAsync();
 
-    private string FilterQuery(int? afterId)
+    private async Task LoadMoreAsync()
     {
-        var query = new List<string> { $"limit={PageSize}" };
-        if (afterId is { } id) query.Add($"afterId={id}");
-        if (_status.Value is { } status) query.Add($"status={status.ToName()}");
-        if (_type.Value is { } type) query.Add($"type={type.ToName()}");
-        if (_healthy.Value is { } healthy) query.Add($"healthy={(healthy ? "true" : "false")}");
-        return $"/api/speedtests?{string.Join("&", query)}";
+        var loading = _list.LoadMoreAsync();
+        StateHasChanged();
+        await loading;
+        StateHasChanged();
     }
 
     private void ToggleSelecting()
@@ -373,7 +350,7 @@
 
     private void SelectAllVisible()
     {
-        foreach (var test in Rows) _selected.Add(test.Id);
+        foreach (var test in _list.Items) _selected.Add(test.Id);
     }
 
     private void ClearSelection() => _selected.Clear();
@@ -424,39 +401,6 @@
         return day.ToString(day.Year == today.Year ? "dddd, d MMMM" : "dddd, d MMMM yyyy", CultureInfo.CurrentCulture);
     }
 
-    private async Task LoadMoreAsync()
-    {
-        if (!HasMore || Loading) return;
-        _loadMoreFailed = false;
-
-        if (FiltersActive)
-        {
-            _filteredLoading = true;
-            var filteredPage = await Api.GetAsync<List<SpeedtestDto>>(FilterQuery(_filtered.LastOrDefault()?.Id));
-            if (filteredPage.Value != null)
-            {
-                _filtered.AddRange(filteredPage.Value);
-                _filteredHasMore = filteredPage.Value.Count >= PageSize;
-            }
-            _loadMoreFailed = filteredPage.Value == null;
-            _filteredLoading = false;
-
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        SpeedtestService.SetLoading(true);
-        var page = await Api.GetAsync<List<SpeedtestDto>>($"/api/speedtests?limit={PageSize}&afterId={SpeedtestService.LastId}");
-        if (page.Value != null)
-        {
-            SpeedtestService.SetTests(SpeedtestService.Tests.Concat(page.Value).ToList(), page.Value.Count >= PageSize);
-        }
-        _loadMoreFailed = page.Value == null;
-        SpeedtestService.SetLoading(false);
-
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task ShowTestDetail(SpeedtestDto test)
     {
         var parameters = new DialogParameters<TestDetailDialog> { { x => x.Test, test } };
@@ -464,9 +408,9 @@
         var dialog = await DialogService.ShowAsync<TestDetailDialog>("Test Details", parameters, options);
         var result = await dialog.Result;
 
-        if (result is { Canceled: false } && FiltersActive)
+        if (result is { Canceled: false })
         {
-            _filtered.RemoveAll(t => t.Id == test.Id);
+            _list.Remove(test.Id);
             _selected.Remove(test.Id);
         }
     }
@@ -475,8 +419,10 @@
 
     public void Dispose()
     {
-        SpeedtestService.OnChange -= OnStateChanged;
+        RecentResults.OnChange -= OnRecentResultsChanged;
+        RecentResults.ResultAdded -= OnResultAdded;
         StatusService.OnChange -= OnStateChanged;
+        Settings.OnChange -= OnStateChanged;
         _timer?.Dispose();
     }
 }

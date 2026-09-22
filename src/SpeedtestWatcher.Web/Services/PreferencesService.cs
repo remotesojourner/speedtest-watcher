@@ -6,21 +6,21 @@ namespace SpeedtestWatcher.Web.Services;
 public class PreferencesService
 {
     private readonly BrowserInterop _browser;
-    private readonly ConfigStateService _config;
+    private readonly SettingsState _settings;
     private readonly ILogger<PreferencesService> _logger;
     public string TimeFormat { get; private set; } = "24h";
     public string SpeedUnit { get; private set; } = "mbps";
     public TimeZoneInfo TimeZone { get; private set; } = TimeZoneInfo.Utc;
     public event Action? OnChange;
 
-    public string DateFormat => _config.CurrentConfig.DateFormat ?? "dmy";
+    public string DateFormat => _settings.Current.Display.DateFormat;
 
     public DateTime Now => ToLocal(DateTime.UtcNow);
 
-    public PreferencesService(BrowserInterop browser, ConfigStateService config, ILogger<PreferencesService> logger)
+    public PreferencesService(BrowserInterop browser, SettingsState settings, ILogger<PreferencesService> logger)
     {
         _browser = browser;
-        _config = config;
+        _settings = settings;
         _logger = logger;
     }
 

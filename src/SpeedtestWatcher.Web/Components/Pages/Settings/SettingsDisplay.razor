@@ -1,5 +1,5 @@
 @inject PreferencesService PreferencesService
-@inject ConfigStateService ConfigService
+@inject SettingsState Settings
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="Display Preferences" FullHeight="false"
@@ -34,7 +34,7 @@
                 @foreach (var option in DateFormats)
                 {
                     <OptionCard Title="@option.Title" Description="@Example(option.Id)" Icon="@Icons.Material.Filled.CalendarMonth"
-                                Active="@(DateFormat == option.Id)" OnClick="@(() => SaveSettingAsync("dateFormat", option.Id))" />
+                                Active="@(DateFormat == option.Id)" OnClick="@(() => SaveSettingAsync("dateFormat", option.Id, DateFormat))" />
                 }
             </div>
         </MudItem>
@@ -45,7 +45,7 @@
                 @foreach (var option in ChartRanges)
                 {
                     <OptionCard Title="@option.Title" Description="@option.Description" Icon="@Icons.Material.Filled.DateRange"
-                                Active="@(ChartRange == option.Id)" OnClick="@(() => SaveSettingAsync("chartRange", option.Id))" />
+                                Active="@(ChartRange == option.Id)" OnClick="@(() => SaveSettingAsync("chartRange", option.Id, ChartRange))" />
                 }
             </div>
             <div class="d-flex align-center justify-space-between">
@@ -53,7 +53,7 @@
                     <MudText Typo="Typo.body2">Start charts at zero</MudText>
                     <MudText Typo="Typo.caption" Class="sw-muted">Off zooms in on the range your results actually cover</MudText>
                 </div>
-                <MudSwitch T="bool" Value="@BeginAtZero" ValueChanged="@(value => SaveSettingAsync("chartBeginAtZero", value ? "true" : "false"))"
+                <MudSwitch T="bool" Value="@BeginAtZero" ValueChanged="@(value => SaveSettingAsync("chartBeginAtZero", value ? "true" : "false", BeginAtZero ? "true" : "false"))"
                            Color="Color.Primary" />
             </div>
         </MudItem>
@@ -75,11 +75,11 @@
         ("30d", "Last 30 days", "A month of results")
     ];
 
-    private string DateFormat => ConfigService.CurrentConfig.DateFormat ?? "dmy";
+    private string DateFormat => Settings.Current.Display.DateFormat;
 
-    private string ChartRange => ConfigService.CurrentConfig.ChartRange ?? "7d";
+    private string ChartRange => Settings.Current.Display.ChartRange;
 
-    private bool BeginAtZero => ConfigService.CurrentConfig.ChartBeginAtZero == "true";
+    private bool BeginAtZero => Settings.Current.Display.ChartBeginAtZero;
 
     private static string Example(string dateFormat) =>
         FormatHelper.FormatDate(new DateTime(2026, 9, 16), dateFormat);
@@ -92,12 +92,12 @@
         Snackbar.Add("Preferences saved", Severity.Success);
     }
 
-    private async Task SaveSettingAsync(string key, string value)
+    private async Task SaveSettingAsync(string key, string value, string saved)
     {
-        if (ConfigService.CurrentConfig[key]?.ToString() == value) return;
+        if (value == saved) return;
 
-        var result = await ConfigService.SaveAsync((key, value));
+        var result = await Settings.SaveAsync((key, value));
         if (result.Succeeded) Snackbar.Add("Display settings saved", Severity.Success);
-        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 }

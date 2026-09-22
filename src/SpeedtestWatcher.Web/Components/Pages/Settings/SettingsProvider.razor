@@ -1,6 +1,7 @@
-@inject ApiClient Api
+@using System.Net.NetworkInformation
+@inject SystemInfoService SystemInfo
 @inject IEnumerable<ISpeedtestTool> Tools
-@inject ConfigStateService ConfigService
+@inject SettingsState Settings
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Provider" FullHeight="false"
@@ -17,7 +18,7 @@
         <MudItem xs="12" md="6">
             <MudSelect T="string" @bind-Value="_interface" Label="Network interface" Variant="Variant.Outlined" Margin="Margin.Dense"
                        HelperText="@(_interfacesUnavailable ? "Couldn't list this machine's network interfaces" : "The local address tests are sent from")">
-                <MudSelectItem T="string" Value="@("none")">Default route</MudSelectItem>
+                <MudSelectItem T="string" Value="@SettingDefinitions.Unset">Default route</MudSelectItem>
                 @foreach (var option in _interfaceOptions)
                 {
                     <MudSelectItem T="string" Value="@option.Value">@option.Label</MudSelectItem>
@@ -52,7 +53,7 @@
         {
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
-                    <MudSelect T="string" Value="@(_serverId == "none" ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
+                    <MudSelect T="string" Value="@(_serverId == SettingDefinitions.Unset ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="Choose a server"
                                Disabled="_serversLoading" HelperText="@ServerListHelp">
                         @foreach (var server in CurrentServers)
@@ -62,7 +63,7 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField T="string" Value="@(_serverId == "none" ? "" : _serverId)" ValueChanged="SetServerId"
+                    <MudTextField T="string" Value="@(_serverId == SettingDefinitions.Unset ? "" : _serverId)" ValueChanged="SetServerId"
                                   Label="Server ID" Placeholder="e.g. 12345" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
                                   Required="true" RequiredError="Enter or choose a server"
                                   Error="@(!ServerIdValid)" ErrorText="Server IDs are numbers"
@@ -147,10 +148,10 @@
     private sealed record InterfaceOption(string Value, string Label);
 
     private SpeedtestProvider _provider = SpeedtestProvider.Ookla;
-    private string _interface = "none";
+    private string _interface = SettingDefinitions.Unset;
     private ServerMode _serverMode = ServerMode.Auto;
     private ServerListMode _listMode = ServerListMode.Allow;
-    private string _serverId = "none";
+    private string _serverId = SettingDefinitions.Unset;
     private string _customId = "";
     private string _libreUrl = "";
     private bool _acceptedOokla;
@@ -182,48 +183,38 @@
 
     private bool UsingCustomUrl => _provider == SpeedtestProvider.Libre && !string.IsNullOrWhiteSpace(_libreUrl);
 
-    private bool ServerIdValid => _serverId == "none" || _serverId.All(char.IsDigit);
+    private bool ServerIdValid => _serverId == SettingDefinitions.Unset || _serverId.All(char.IsDigit);
 
     private bool CustomIdValid => string.IsNullOrWhiteSpace(_customId) || _customId.Trim().All(char.IsDigit);
 
     private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl) || WebAddress.IsHttp(_libreUrl);
 
-    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Single) || _serverId != "none";
+    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Single) || _serverId != SettingDefinitions.Unset;
 
     private bool CanSave => !_saving && ServerIdValid && SingleServerChosen && CustomIdValid && LibreUrlValid && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
 
+    private ProviderSettings Saved => Settings.Current.Provider;
+
     protected override async Task OnInitializedAsync()
     {
-        var cfg = ConfigService.CurrentConfig;
-        _provider = cfg.Provider == SpeedtestProvider.None ? SpeedtestProvider.Ookla : cfg.Provider;
-        _acceptedOokla = cfg.Provider == SpeedtestProvider.Ookla;
-        _interface = string.IsNullOrEmpty(cfg.Interface) ? "none" : cfg.Interface;
-        _libreUrl = cfg.LibreUrl is null or "none" ? "" : cfg.LibreUrl;
-        _serverMode = cfg.ServerMode;
-        _listMode = cfg.ServerListMode;
+        _provider = Saved.Selected == SpeedtestProvider.None ? SpeedtestProvider.Ookla : Saved.Selected;
+        _acceptedOokla = Saved.Selected == SpeedtestProvider.Ookla;
+        _interface = Saved.Interface ?? SettingDefinitions.Unset;
+        _libreUrl = Saved.LibreUrl ?? "";
+        _serverMode = Saved.ServerMode;
+        _listMode = Saved.ServerListMode;
         _serverId = ConfiguredServerId(_provider);
-        _serverIds[SpeedtestProvider.Ookla] = ParseIds(cfg.OoklaServerIds);
-        _serverIds[SpeedtestProvider.Libre] = ParseIds(cfg.LibreServerIds);
+        _serverIds[SpeedtestProvider.Ookla] = Saved.Ookla.ListedIds.ToList();
+        _serverIds[SpeedtestProvider.Libre] = Saved.Libre.ListedIds.ToList();
 
         await Task.WhenAll(LoadInterfacesAsync(), LoadServersAsync(_provider));
     }
 
-    private string ConfiguredServerId(SpeedtestProvider provider)
-    {
-        var value = provider == SpeedtestProvider.Libre ? ConfigService.CurrentConfig.LibreId : ConfigService.CurrentConfig.OoklaId;
-        return string.IsNullOrEmpty(value) ? "none" : value;
-    }
+    private string ConfiguredServerId(SpeedtestProvider provider) =>
+        Saved.ServersFor(provider)?.SingleId ?? SettingDefinitions.Unset;
 
-    private string ConfiguredServerIds(SpeedtestProvider provider)
-    {
-        var value = provider == SpeedtestProvider.Libre ? ConfigService.CurrentConfig.LibreServerIds : ConfigService.CurrentConfig.OoklaServerIds;
-        return string.IsNullOrEmpty(value) ? "none" : value;
-    }
-
-    private static List<string> ParseIds(string? raw) =>
-        string.IsNullOrWhiteSpace(raw) || raw == "none"
-            ? []
-            : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    private string ConfiguredServerIds(SpeedtestProvider provider) =>
+        Saved.ServersFor(provider) is { ListedIds.Count: > 0 } servers ? string.Join(",", servers.ListedIds) : SettingDefinitions.Unset;
 
     private async Task SelectProviderAsync(SpeedtestProvider provider)
     {
@@ -235,8 +226,8 @@
 
     private void SetServerId(string? value)
     {
-        _serverId = string.IsNullOrWhiteSpace(value) ? "none" : value.Trim();
-        if (_serverId != "none") _libreUrl = "";
+        _serverId = string.IsNullOrWhiteSpace(value) ? SettingDefinitions.Unset : value.Trim();
+        if (_serverId != SettingDefinitions.Unset) _libreUrl = "";
     }
 
     private void SetSelectedIds(IReadOnlyCollection<string?>? values)
@@ -268,19 +259,26 @@
     private void SetLibreUrl(string? value)
     {
         _libreUrl = value ?? "";
-        if (!string.IsNullOrWhiteSpace(_libreUrl)) _serverId = "none";
+        if (!string.IsNullOrWhiteSpace(_libreUrl)) _serverId = SettingDefinitions.Unset;
     }
 
     private async Task LoadInterfacesAsync()
     {
-        var result = await Api.GetAsync<Dictionary<string, List<string>>>("/api/info/interfaces");
-        _interfacesUnavailable = result.Value == null;
+        var interfaces = new Dictionary<string, List<string>>();
+        try
+        {
+            interfaces = await SystemInfo.GetInterfacesAsync();
+        }
+        catch (NetworkInformationException)
+        {
+            _interfacesUnavailable = true;
+        }
 
-        _interfaceOptions = (result.Value ?? new())
+        _interfaceOptions = interfaces
             .SelectMany(entry => entry.Value.Select(ip => new InterfaceOption(ip, $"{entry.Key} — {ip}")))
             .ToList();
 
-        if (_interface != "none" && _interfaceOptions.All(o => o.Value != _interface))
+        if (_interface != SettingDefinitions.Unset && _interfaceOptions.All(o => o.Value != _interface))
         {
             _interfaceOptions.Insert(0, new InterfaceOption(_interface, $"{_interface} (currently saved)"));
         }
@@ -293,7 +291,7 @@
         _serversLoading = true;
         StateHasChanged();
 
-        var result = await Api.GetAsync<List<ServerInfo>>($"/api/info/server/{provider.ToName()}");
+        var result = await SystemInfo.GetServersAsync(provider.ToName());
         if (result.Value is { } servers)
         {
             _servers[provider] = ServerLabels.NearestFirst(servers).Select(server => new ServerOption(server.Id, ServerLabels.For(server))).ToList();
@@ -311,7 +309,6 @@
     private async Task SaveAsync()
     {
         _saving = true;
-        var cfg = ConfigService.CurrentConfig;
         var changes = new List<(string Key, string Value)>();
 
         void AddIfChanged(string key, string value, string? current)
@@ -319,11 +316,11 @@
             if (value != current) changes.Add((key, value));
         }
 
-        AddIfChanged("provider", _provider.ToName(), cfg.Provider.ToName());
-        AddIfChanged("serverMode", _serverMode.ToName(), cfg.ServerMode.ToName());
+        AddIfChanged("provider", _provider.ToName(), Saved.Selected.ToName());
+        AddIfChanged("serverMode", _serverMode.ToName(), Saved.ServerMode.ToName());
         if (_serverMode == ServerMode.Random)
         {
-            AddIfChanged("serverListMode", _listMode.ToName(), cfg.ServerListMode.ToName());
+            AddIfChanged("serverListMode", _listMode.ToName(), Saved.ServerListMode.ToName());
         }
         if (SupportsServerChoice && _serverMode == ServerMode.Single)
         {
@@ -331,18 +328,18 @@
         }
         if (SupportsServerChoice && _serverMode == ServerMode.Random)
         {
-            var ids = SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : "none";
+            var ids = SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : SettingDefinitions.Unset;
             AddIfChanged(_provider == SpeedtestProvider.Libre ? "libreServerIds" : "ooklaServerIds", ids, ConfiguredServerIds(_provider));
         }
         if (_provider == SpeedtestProvider.Libre)
         {
-            AddIfChanged("libreUrl", string.IsNullOrWhiteSpace(_libreUrl) ? "none" : _libreUrl.Trim(), cfg.LibreUrl ?? "none");
+            AddIfChanged("libreUrl", string.IsNullOrWhiteSpace(_libreUrl) ? SettingDefinitions.Unset : _libreUrl.Trim(), Saved.LibreUrl ?? SettingDefinitions.Unset);
         }
-        AddIfChanged("interface", _interface, cfg.Interface ?? "none");
+        AddIfChanged("interface", _interface, Saved.Interface ?? SettingDefinitions.Unset);
 
-        var result = await ConfigService.SaveAsync([.. changes]);
+        var result = await Settings.SaveAsync([.. changes]);
         _saving = false;
         if (result.Succeeded) Snackbar.Add("The provider settings have been saved", Severity.Success);
-        else Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 }

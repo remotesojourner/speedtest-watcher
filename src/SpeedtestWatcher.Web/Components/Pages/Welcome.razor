@@ -1,5 +1,5 @@
 @page "/welcome"
-@inject ConfigStateService ConfigService
+@inject SettingsState Settings
 @inject IEnumerable<ISpeedtestTool> Tools
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -105,11 +105,11 @@
 
     protected override void OnInitialized()
     {
-        var cfg = ConfigService.CurrentConfig;
-        if (cfg.Provider != SpeedtestProvider.None) _provider = cfg.Provider;
-        _ping = SettingNumber.Parse(cfg.Ping);
-        _download = SettingNumber.Parse(cfg.Download);
-        _upload = SettingNumber.Parse(cfg.Upload);
+        var saved = Settings.Current;
+        if (saved.Provider.Selected != SpeedtestProvider.None) _provider = saved.Provider.Selected;
+        _ping = saved.Targets.Ping ?? 0;
+        _download = saved.Targets.Download ?? 0;
+        _upload = saved.Targets.Upload ?? 0;
     }
 
     private async Task ContinueAsync()
@@ -121,7 +121,7 @@
         }
 
         _saving = true;
-        var result = await ConfigService.SaveAsync(
+        var result = await Settings.SaveAsync(
             ("provider", _provider.ToName()),
             ("ping", SettingNumber.Format(_ping)),
             ("download", SettingNumber.Format(_download)),
@@ -130,7 +130,7 @@
 
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.MessageOr("Could not save your changes. Try again."), Severity.Error);
+            Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
             return;
         }
 

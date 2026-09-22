@@ -1,4 +1,5 @@
-@inject ApiClient Api
+@inject SystemInfoService SystemInfo
+@inject SpeedtestRunService Runs
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -49,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await Api.GetAsync<List<ServerInfo>>($"/api/info/server/{Provider.ToName()}");
+        var result = await SystemInfo.GetServersAsync(Provider.ToName());
         _serversUnavailable = result.Value == null;
         _servers = ServerLabels.NearestFirst(result.Value ?? []).Select(server => new ServerOption(server.Id, ServerLabels.For(server))).ToList();
         _loading = false;
@@ -58,12 +59,12 @@
     private async Task RunAsync()
     {
         _running = true;
-        var result = await Api.PostAsync($"/api/speedtests/run?serverId={Uri.EscapeDataString(_serverId.Trim())}");
+        var result = await Runs.StartManualRunAsync(_serverId.Trim());
         _running = false;
 
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.MessageOr("Could not start the speedtest"), Severity.Error);
+            Snackbar.Add(result.Message ?? "Could not start the speedtest", Severity.Error);
             return;
         }
 

@@ -6,18 +6,17 @@ namespace SpeedtestWatcher.Web.Helpers;
 
 public static class MetricStatus
 {
-    public static Color Ping(int? value, string? optimalRaw) => Resolve(value, optimalRaw, higherIsBetter: false);
+    public static Color Ping(int? value, int? target) => Resolve(value, target, higherIsBetter: false);
 
-    public static Color Download(double? value, string? optimalRaw) => Resolve(value, optimalRaw, higherIsBetter: true);
+    public static Color Download(double? value, double? target) => Resolve(value, target, higherIsBetter: true);
 
-    public static Color Upload(double? value, string? optimalRaw) => Resolve(value, optimalRaw, higherIsBetter: true);
+    public static Color Upload(double? value, double? target) => Resolve(value, target, higherIsBetter: true);
 
-    private static Color Resolve(double? value, string? optimalRaw, bool higherIsBetter)
+    private static Color Resolve(double? value, double? target, bool higherIsBetter)
     {
-        if (value == null) return Color.Default;
-        if (!double.TryParse(optimalRaw, out var optimal) || optimal <= 0) return Color.Default;
+        if (value == null || target is not > 0) return Color.Default;
 
-        return SpeedQualityHelper.GetQuality(value.Value, optimal, higherIsBetter) switch
+        return SpeedQualityHelper.GetQuality(value.Value, target.Value, higherIsBetter) switch
         {
             SpeedQuality.Green => Color.Success,
             SpeedQuality.Orange => Color.Warning,

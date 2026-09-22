@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -55,10 +54,11 @@ public static class WebServiceCollectionExtensions
 
         services.AddSingleton<AuthSettings>();
         services.AddSingleton<ISignInState>(provider => provider.GetRequiredService<AuthSettings>());
-        services.AddSingleton<InternalAccessToken>();
         services.AddSingleton<RequestAccess>();
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentAccess, HttpCurrentAccess>();
+        services.AddScoped<HttpCurrentAccess>();
+        services.AddScoped<CircuitAccess>();
+        services.AddScoped<ICurrentAccess, CurrentAccess>();
 
         services.AddAuthorization(AccessPolicies.Configure);
         services.AddSingleton<IAuthorizationHandler, AccessRequirementHandler>();
@@ -70,7 +70,6 @@ public static class WebServiceCollectionExtensions
     public static IServiceCollection AddWebApi(this IServiceCollection services)
     {
         services.AddControllers();
-        services.AddSignalR();
         return services;
     }
 
@@ -79,26 +78,18 @@ public static class WebServiceCollectionExtensions
         services.AddRazorComponents().AddInteractiveServerComponents();
         services.AddMudServices();
 
-        services.AddScoped<ApiClient>();
         services.AddScoped<BrowserInterop>();
         services.AddScoped<PreferencesService>();
         services.AddScoped<StatusStateService>();
-        services.AddScoped<SpeedtestStateService>();
-        services.AddScoped<ConfigStateService>();
-
-        services.AddScoped(provider => new HttpClient(new InternalAuthHandler(
-            provider.GetRequiredService<AuthenticationStateProvider>(),
-            provider.GetRequiredService<InternalAccessToken>()))
-        {
-            BaseAddress = new Uri($"http://127.0.0.1:{provider.GetRequiredService<IOptions<SpeedtestWatcherOptions>>().Value.Port}/")
-        });
+        services.AddScoped<SettingsState>();
+        services.AddScoped<RecentResults>();
+        services.AddScoped<LiveUpdates>();
         return services;
     }
 
     public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
     {
         services.AddHostedService<SpeedtestSchedulerService>();
-        services.AddHostedService<LiveUpdateBroadcaster>();
         services.AddHostedService<RetentionCleanupService>();
         services.AddHostedService<IntegrationTickerService>();
         services.AddHostedService<InterfaceRefreshService>();

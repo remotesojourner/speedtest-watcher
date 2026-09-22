@@ -2,11 +2,11 @@
 @page "/settings/{Section}"
 @using SpeedtestWatcher.Web.Components.Pages.Settings
 @inject NavigationManager Navigation
-@inject ConfigStateService ConfigService
+@inject ICurrentAccess Access
 
 <PageTitle>Speedtest Watcher - Settings</PageTitle>
 
-@if (ConfigService.CurrentConfig.ReadOnlyVisitor)
+@if (!Access.HasFullAccess)
 {
     <PageHeader Title="Settings" Subtitle="This instance is read-only. Display preferences are saved in this browser." />
 
@@ -77,6 +77,8 @@ else
 
     private void OnTabChanged(int index)
     {
+        if (index < 0 || index >= Sections.Length) return;
+
         _activeIndex = index;
         Navigation.NavigateTo($"/settings/{Sections[index]}");
     }

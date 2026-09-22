@@ -6,7 +6,6 @@ using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Infrastructure;
 using SpeedtestWatcher.Web.Components;
 using SpeedtestWatcher.Web.Hosting;
-using SpeedtestWatcher.Web.Hubs;
 using SpeedtestWatcher.Web.Middleware;
 using SpeedtestWatcher.Web.Services.Auth;
 
@@ -54,7 +53,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-app.MapHub<SpeedtestHub>(SpeedtestHub.HubUrl).RequireAuthorization(AccessPolicies.Read);
 app.MapControllers();
 
 app.MapRazorComponents<App>()
