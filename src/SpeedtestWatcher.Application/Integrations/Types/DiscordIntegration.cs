@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Common;
+
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class DiscordIntegration : MessageIntegration
@@ -15,7 +17,7 @@ internal sealed class DiscordIntegration : MessageIntegration
     protected override IReadOnlyList<IntegrationFieldSchemaDto> OwnFields { get; } =
     [
         new() { Name = "url", Type = "text", Required = true, Regex = @"https://.*discord\.com/api/webhooks/\d+/.+", Placeholder = "Webhook URL" },
-        new() { Name = "display_name", Type = "text", Required = false, Placeholder = "Speedtest Watcher" }
+        new() { Name = "display_name", Type = "text", Required = false, Placeholder = ProjectInfo.Name }
     ];
 
     protected override MessageTemplates Templates => MessageTemplates.DiscordMarkdown;
@@ -27,14 +29,14 @@ internal sealed class DiscordIntegration : MessageIntegration
     {
         var payload = new
         {
-            username = settings.GetString("display_name", "Speedtest Watcher"),
+            username = settings.GetString("display_name", ProjectInfo.Name),
             embeds = new[]
             {
                 new
                 {
                     description = message.Text,
                     color = Colour(message.Kind),
-                    footer = new { text = "Speedtest Watcher" },
+                    footer = new { text = ProjectInfo.Name },
                     timestamp = DateTime.UtcNow.ToString("o")
                 }
             }

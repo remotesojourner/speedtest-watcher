@@ -1,10 +1,23 @@
+@using SpeedtestWatcher.Application.Common
+@using SpeedtestWatcher.Web.Api
+@inject NavigationManager Navigation
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Speedtest Watcher</title>
+    <title>@ProjectInfo.Name</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@ProjectInfo.Name" />
+    <meta property="og:description" content="Internet speed tests on a schedule, with a live dashboard of the results." />
+    <meta property="og:image" content="@PreviewImageUrl" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="@OpenGraphController.ImageWidth" />
+    <meta property="og:image:height" content="@OpenGraphController.ImageHeight" />
+    <meta property="og:image:alt" content="The latest speed test's ping, download and upload" />
+    <meta name="twitter:card" content="summary_large_image" />
     <base href="/" />
     <link rel="icon" type="image/svg+xml" href="img/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,3 +37,7 @@
 </body>
 
 </html>
+
+@code {
+    private string PreviewImageUrl => Navigation.ToAbsoluteUri(OpenGraphController.ImagePath).ToString();
+}

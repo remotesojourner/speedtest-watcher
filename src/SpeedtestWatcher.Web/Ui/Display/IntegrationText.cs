@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Common;
+
 namespace SpeedtestWatcher.Web.Ui.Display;
 
 public static class IntegrationText
@@ -66,7 +68,7 @@ public static class IntegrationText
             ["urls"] = "discord://id/token, mailto://user:pass@example.com",
             ["key"] = "apprise",
             ["tags"] = "Optional, e.g. admin, devops or all",
-            ["title"] = "Speedtest Watcher"
+            ["title"] = ProjectInfo.Name
         },
         ["healthChecks"] = new() { ["url"] = "https://hc-ping.com/<uuid>" },
         ["ntfy"] = new()
@@ -75,7 +77,7 @@ public static class IntegrationText
             ["topic"] = "speedtest-watcher-alerts",
             ["token"] = "Optional, for protected servers",
             ["tags"] = "warning,satellite",
-            ["title"] = "Speedtest Watcher"
+            ["title"] = ProjectInfo.Name
         },
         ["webhook"] = new() { ["url"] = "https://your-server.com/hook" }
     };

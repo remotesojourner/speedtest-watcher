@@ -4,6 +4,8 @@ namespace SpeedtestWatcher.Application.Common;
 
 public static class ProjectInfo
 {
+    public const string Name = "Speedtest Watcher";
+
     private const string Owner = "remotesojourner";
 
     public const string Repository = $"{Owner}/speedtest-watcher";

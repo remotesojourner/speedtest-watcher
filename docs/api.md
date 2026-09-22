@@ -172,7 +172,7 @@ The restore answers with how many settings and integrations were restored, and h
 
 ## Prometheus and link previews
 
-`GET /api/prometheus/metrics` serves the metrics described in the [README](../README.md#prometheus-metrics). `GET /api/opengraph/image` is the PNG that chat apps show when someone shares a link to your instance.
+`GET /api/prometheus/metrics` serves the metrics described in the [README](../README.md#prometheus-metrics). `GET /api/opengraph/image` is the PNG that chat apps show when someone shares a link to your instance. Every page names it, by its full address, in its Open Graph tags.
 
 `GET /api/info/version` returns this instance's version and the latest release on GitHub. The release is checked at most every six hours, and `remote` is `0` when it couldn't be checked.
 

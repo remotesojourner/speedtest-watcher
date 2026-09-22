@@ -326,6 +326,12 @@ A skipped test didn't run at all. Either the connection check before the test fo
 
 ---
 
+### Why doesn't a shared link show a preview?
+
+When you paste a link to your instance into Slack, Discord, Teams, WhatsApp or similar, the chat service's own servers fetch the page and show the preview image with your latest ping, download and upload. So a preview only appears when those servers can reach your instance and open it: it has to be reachable from the internet, and with sign-in on, **People who aren't signed in** in **Settings → Security** has to be **Read-only**. Chat apps also keep a preview for a while, so a link shared again soon afterwards can show older results.
+
+---
+
 ### Do you plan to add new features?
 
 If I come across a new idea or receive a suggestion that fits into keeping an eye on an internet connection, I will consider adding it. No roadmap or guarantees — this project exists to solve my own needs first.
