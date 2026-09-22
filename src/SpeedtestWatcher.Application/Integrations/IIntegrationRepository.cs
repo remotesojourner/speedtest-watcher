@@ -8,6 +8,6 @@ public interface IIntegrationRepository
     Task<bool> PatchAsync(string id, string? displayName, string dataJson, CancellationToken cancellationToken = default);
     Task UpsertAsync(IntegrationData integration, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
-    Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default);
+    Task UpdateActivityAsync(string id, bool failed, CancellationToken cancellationToken = default);
     Task ClearAllAsync(CancellationToken cancellationToken = default);
 }

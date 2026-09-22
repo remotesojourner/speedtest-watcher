@@ -6,7 +6,7 @@ using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Storage;
 
-internal class RetentionCleanupService : PeriodicBackgroundService
+internal partial class RetentionCleanupService : PeriodicBackgroundService
 {
     private readonly ILogger<RetentionCleanupService> _logger;
 
@@ -25,7 +25,10 @@ internal class RetentionCleanupService : PeriodicBackgroundService
         var deleted = await services.GetRequiredService<ISpeedtestRepository>().RemoveOldTestsAsync(retentionDays, stoppingToken);
         if (deleted > 0)
         {
-            _logger.LogInformation("Pruned {Count} speedtests older than {Days} days", deleted, retentionDays);
+            LogPruned(deleted, retentionDays);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Pruned {Count} speedtests older than {Days} days")]
+    private partial void LogPruned(int count, int days);
 }

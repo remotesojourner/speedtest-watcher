@@ -10,7 +10,7 @@ namespace SpeedtestWatcher.IntegrationTests.Web.Api;
 
 public sealed class ApiResponseTests : IClassFixture<SignInOffApp>
 {
-    private static readonly (string Method, string Url, string? Body)[] Requests =
+    private static readonly (string Method, string Url, string? Body)[] _requests =
     [
         ("GET", "/api/config", null),
         ("GET", "/api/speedtests", null),
@@ -26,7 +26,7 @@ public sealed class ApiResponseTests : IClassFixture<SignInOffApp>
         ("GET", "/api/prometheus/metrics", null)
     ];
 
-    private static readonly JsonSerializerOptions ReadableJson = new()
+    private static readonly JsonSerializerOptions _readableJson = new()
     {
         WriteIndented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
@@ -40,13 +40,13 @@ public sealed class ApiResponseTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task ReadEndpoints_AnswerWithTheApprovedResponses()
+    public async Task ReadEndpointsAnswerWithTheApprovedResponses()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
         var transcript = new StringBuilder();
 
-        foreach (var (method, url, body) in Requests)
+        foreach (var (method, url, body) in _requests)
         {
             using var request = new HttpRequestMessage(new HttpMethod(method), url);
             if (body != null) request.Content = new StringContent(body, Encoding.UTF8, "application/json");
@@ -67,7 +67,7 @@ public sealed class ApiResponseTests : IClassFixture<SignInOffApp>
 
     private static string Readable(string content, string? mediaType) =>
         mediaType == "application/json"
-            ? Normalized(JsonNode.Parse(content))?.ToJsonString(ReadableJson) ?? "null"
+            ? Normalized(JsonNode.Parse(content))?.ToJsonString(_readableJson) ?? "null"
             : content.ReplaceLineEndings("\n").TrimEnd();
 
     private static JsonNode? Normalized(JsonNode? node) => node switch

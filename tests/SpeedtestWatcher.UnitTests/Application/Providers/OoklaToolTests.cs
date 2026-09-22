@@ -10,7 +10,7 @@ public class OoklaToolTests
     private readonly OoklaTool _tool = new();
 
     [Fact]
-    public void TheResultLine_IsParsed_AndProgressLinesAreIgnored()
+    public void TheResultLineIsParsedAndProgressLinesAreIgnored()
     {
         var output = string.Join('\n', """{"type":"testStart","isp":"Acme"}""", Result, """{"type":"log","message":"done"}""");
 
@@ -22,13 +22,13 @@ public class OoklaToolTests
     }
 
     [Fact]
-    public void OutputWithoutAResultLine_HasNoResult()
+    public void OutputWithoutAResultLineHasNoResult()
     {
         Assert.Null(_tool.ParseResult("""{"type":"testStart"}""" + "\nnot json"));
     }
 
     [Fact]
-    public void TheChosenServer_IsPassedToTheCli()
+    public void TheChosenServerIsPassedToTheCli()
     {
         var arguments = _tool.BuildArguments(new RunOptions("4242", null, null, "unused.json"));
 
@@ -37,14 +37,14 @@ public class OoklaToolTests
     }
 
     [Fact]
-    public void Downloads_ExistOnlyForSupportedPlatforms()
+    public void DownloadsExistOnlyForSupportedPlatforms()
     {
         Assert.EndsWith("linux-aarch64.tgz", _tool.DownloadUrl(new PlatformTarget(OSPlatform.Linux, Architecture.Arm64)));
         Assert.Null(_tool.DownloadUrl(new PlatformTarget(OSPlatform.OSX, Architecture.Arm64)));
     }
 
     [Fact]
-    public void ServerLists_AreReadIntoTypedServers()
+    public void ServerListsAreReadIntoTypedServers()
     {
         var servers = _tool.Servers!.Parse("""[{"id":"12345","name":"London","sponsor":"Acme Fibre","country":"United Kingdom","distance":4.2,"host":"speed.acme.example:8080"}]""");
 

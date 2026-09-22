@@ -17,7 +17,7 @@ public sealed class HostStartupTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task Startup_MigratesTheDatabaseToTheCurrentModel()
+    public async Task StartupMigratesTheDatabaseToTheCurrentModel()
     {
         using var scope = _app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<SpeedtestWatcherDbContext>();
@@ -27,7 +27,7 @@ public sealed class HostStartupTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public void RuntimeFiles_GoToTheConfiguredDirectories()
+    public void RuntimeFilesGoToTheConfiguredDirectories()
     {
         var options = _app.Services.GetRequiredService<IOptions<SpeedtestWatcherOptions>>().Value;
 

@@ -2,7 +2,7 @@ using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Startup;
 
-public class ErrorHandlingMiddleware
+public partial class ErrorHandlingMiddleware
 {
     public const string UnexpectedErrorMessage = "Something went wrong on the server. The details are in the Speedtest Watcher log.";
 
@@ -23,7 +23,7 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception occurred");
+            LogUnhandled(ex);
 
             if (!context.Response.HasStarted && context.Request.Path.StartsWithSegments("/api"))
             {
@@ -36,4 +36,7 @@ public class ErrorHandlingMiddleware
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unhandled exception occurred")]
+    private partial void LogUnhandled(Exception exception);
 }

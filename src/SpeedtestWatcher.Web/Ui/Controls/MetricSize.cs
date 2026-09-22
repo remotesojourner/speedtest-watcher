@@ -1,4 +1,4 @@
-namespace SpeedtestWatcher.Web.Ui.Shared.Controls;
+namespace SpeedtestWatcher.Web.Ui.Controls;
 
 public enum MetricSize
 {

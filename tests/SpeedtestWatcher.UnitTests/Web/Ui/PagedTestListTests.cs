@@ -9,7 +9,7 @@ public class PagedTestListTests
     private readonly List<(TestFilter Filter, int? AfterId, int Limit)> _requests = [];
 
     [Fact]
-    public async Task TheFirstPage_IsLoadedWithTheFilter()
+    public async Task TheFirstPageIsLoadedWithTheFilter()
     {
         var filter = new TestFilter(Status: TestStatus.Failed);
         var list = new PagedTestList(Pages(Page(100, PagedTestList.PageSize)));
@@ -23,7 +23,7 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task LoadingMore_ContinuesAfterTheLastTest_AndStopsAtAShortPage()
+    public async Task LoadingMoreContinuesAfterTheLastTestAndStopsAtAShortPage()
     {
         var list = new PagedTestList(Pages(Page(100, PagedTestList.PageSize), Page(70, 5)));
         await list.ReloadAsync(TestFilter.None);
@@ -38,10 +38,10 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task ChangingTheFilter_DiscardsAPageStillLoadingForTheOldOne()
+    public async Task ChangingTheFilterDiscardsAPageStillLoadingForTheOldOne()
     {
         var slow = new TaskCompletionSource<IReadOnlyList<SpeedtestDto>>();
-        var list = new PagedTestList((filter, _, _) => filter.IsActive ? Task.FromResult(Page(5, 2)) : slow.Task);
+        var list = new PagedTestList((filter, _, _) => filter.IsActive ? Task.FromResult<IReadOnlyList<SpeedtestDto>>(Page(5, 2)) : slow.Task);
 
         var stale = list.ReloadAsync(TestFilter.None);
         await list.ReloadAsync(new TestFilter(Healthy: false));
@@ -53,7 +53,7 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task NewResults_AreAddedOnlyWhenTheyMatchTheFilter()
+    public async Task NewResultsAreAddedOnlyWhenTheyMatchTheFilter()
     {
         var list = new PagedTestList(Pages(Page(10, 2)));
         await list.ReloadAsync(new TestFilter(Type: TestType.Custom));
@@ -66,7 +66,7 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task AFailedFirstPage_IsReportedAsALoadFailure()
+    public async Task AFailedFirstPageIsReportedAsALoadFailure()
     {
         var list = new PagedTestList((_, _, _) => throw new SqliteException("database is locked", 5));
 
@@ -78,11 +78,11 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task AFailedLaterPage_KeepsWhatWasLoaded()
+    public async Task AFailedLaterPageKeepsWhatWasLoaded()
     {
         var pages = 0;
         var list = new PagedTestList((_, _, _) => ++pages == 1
-            ? Task.FromResult(Page(100, PagedTestList.PageSize))
+            ? Task.FromResult<IReadOnlyList<SpeedtestDto>>(Page(100, PagedTestList.PageSize))
             : throw new InvalidOperationException("The database is gone"));
         await list.ReloadAsync(TestFilter.None);
 
@@ -95,7 +95,7 @@ public class PagedTestListTests
     }
 
     [Fact]
-    public async Task ADeletedTest_IsRemoved()
+    public async Task ADeletedTestIsRemoved()
     {
         var list = new PagedTestList(Pages(Page(3, 3)));
         await list.ReloadAsync(TestFilter.None);
@@ -112,6 +112,6 @@ public class PagedTestListTests
             return Task.FromResult(_requests.Count <= pages.Length ? pages[_requests.Count - 1] : []);
         };
 
-    private static IReadOnlyList<SpeedtestDto> Page(int newestId, int count) =>
+    private static List<SpeedtestDto> Page(int newestId, int count) =>
         Enumerable.Range(0, count).Select(offset => new SpeedtestDto { Id = newestId - offset }).ToList();
 }

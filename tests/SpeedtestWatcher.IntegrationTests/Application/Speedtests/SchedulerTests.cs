@@ -16,7 +16,7 @@ public sealed class SchedulerTests : IDisposable
     private ServiceProvider? _services;
 
     [Fact(Timeout = 15000)]
-    public async Task AScheduleMonthsAway_IsWaitedForInSteps_InsteadOfFailing()
+    public async Task AScheduleMonthsAwayIsWaitedForInStepsInsteadOfFailing()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var interrupted = new CancellationTokenSource();
@@ -29,7 +29,7 @@ public sealed class SchedulerTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task ANewSchedule_IsUsedStraightAway_InsteadOfAfterTheOldNextRun()
+    public async Task ANewScheduleIsUsedStraightAwayInsteadOfAfterTheOldNextRun()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new SignallingRunner();

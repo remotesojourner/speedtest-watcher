@@ -6,7 +6,7 @@ namespace SpeedtestWatcher.UnitTests.Web.SignIn;
 
 public class AccessPolicyTests
 {
-    private static readonly AuthSnapshot SignInOn = AuthSnapshot.Default with
+    private static readonly AuthSnapshot _signInOn = AuthSnapshot.Default with
     {
         Enabled = true,
         Authority = "https://auth.example.com/application/o/speedtest-watcher/",
@@ -14,22 +14,22 @@ public class AccessPolicyTests
     };
 
     [Fact]
-    public void SignInOff_EveryoneHasFullAccess()
+    public void SignInOffEveryoneHasFullAccess()
     {
         Assert.Equal(Access.Full, AccessPolicy.Decide(AuthSnapshot.Default, signedIn: false, validApiToken: false));
     }
 
     [Fact]
-    public void DisableAuth_OverridesSavedSettings()
+    public void DisableAuthOverridesSavedSettings()
     {
-        var overridden = SignInOn with { DisabledByEnvironment = true };
+        var overridden = _signInOn with { DisabledByEnvironment = true };
 
         Assert.False(overridden.IsActive);
         Assert.Equal(Access.Full, AccessPolicy.Decide(overridden, signedIn: false, validApiToken: false));
     }
 
     [Fact]
-    public void SwitchedOnWithoutAProvider_IsNotEnforced()
+    public void SwitchedOnWithoutAProviderIsNotEnforced()
     {
         var incomplete = AuthSnapshot.Default with { Enabled = true };
 
@@ -40,21 +40,21 @@ public class AccessPolicyTests
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
-    public void SignedInUsers_AndTheApiToken_GetFullAccess(bool signedIn, bool validApiToken)
+    public void SignedInUsersAndTheApiTokenGetFullAccess(bool signedIn, bool validApiToken)
     {
-        Assert.Equal(Access.Full, AccessPolicy.Decide(SignInOn, signedIn, validApiToken));
+        Assert.Equal(Access.Full, AccessPolicy.Decide(_signInOn, signedIn, validApiToken));
     }
 
     [Fact]
-    public void VisitorsWithoutAccess_AreRefused()
+    public void VisitorsWithoutAccessAreRefused()
     {
-        Assert.Equal(Access.None, AccessPolicy.Decide(SignInOn, signedIn: false, validApiToken: false));
+        Assert.Equal(Access.None, AccessPolicy.Decide(_signInOn, signedIn: false, validApiToken: false));
     }
 
     [Fact]
-    public void VisitorsWithReadAccess_AreReadOnly()
+    public void VisitorsWithReadAccessAreReadOnly()
     {
-        var readOnly = SignInOn with { VisitorAccess = VisitorAccess.Read };
+        var readOnly = _signInOn with { VisitorAccess = VisitorAccess.Read };
 
         Assert.Equal(Access.ReadOnly, AccessPolicy.Decide(readOnly, signedIn: false, validApiToken: false));
     }
@@ -65,7 +65,7 @@ public class AccessPolicyTests
     [InlineData(Access.ReadOnly, Access.ReadOnly, true)]
     [InlineData(Access.ReadOnly, Access.Full, false)]
     [InlineData(Access.None, Access.ReadOnly, false)]
-    public void ReadEndpoints_LetReadOnlyVisitorsIn_AndEverythingElseNeedsFullAccess(Access access, Access required, bool allowed)
+    public void ReadEndpointsLetReadOnlyVisitorsInAndEverythingElseNeedsFullAccess(Access access, Access required, bool allowed)
     {
         Assert.Equal(allowed, AccessPolicy.Allows(access, required));
     }
@@ -76,7 +76,7 @@ public class AccessPolicyTests
     [InlineData("/speedtestHub", false)]
     [InlineData("/history", false)]
     [InlineData("/", false)]
-    public void ProgrammaticRequests_GetA401RatherThanARedirect(string path, bool expected)
+    public void ProgrammaticRequestsGetA401RatherThanARedirect(string path, bool expected)
     {
         Assert.Equal(expected, AccessPolicy.IsProgrammatic(new PathString(path)));
     }

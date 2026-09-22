@@ -5,13 +5,13 @@ using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal class ServerListProvider : IServerListProvider
+internal partial class ServerListProvider : IServerListProvider
 {
     public static readonly TimeSpan MaxCacheAge = TimeSpan.FromDays(7);
 
-    private static readonly JsonSerializerOptions CacheFileJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static readonly JsonSerializerOptions _cacheFileJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
+    private readonly Dictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimeProvider _time;
     private readonly ILogger<ServerListProvider> _logger;
@@ -53,11 +53,11 @@ internal class ServerListProvider : IServerListProvider
         try
         {
             await using var stream = File.OpenRead(cacheFile);
-            return await JsonSerializer.DeserializeAsync<List<ServerInfo>>(stream, CacheFileJson, cancellationToken);
+            return await JsonSerializer.DeserializeAsync<List<ServerInfo>>(stream, _cacheFileJson, cancellationToken);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
-            _logger.LogInformation(ex, "The cached {Provider} server list can't be read, so it is being downloaded again", provider);
+            LogCacheUnreadable(ex, provider);
             return null;
         }
     }
@@ -72,7 +72,7 @@ internal class ServerListProvider : IServerListProvider
             using var response = await client.GetAsync(catalog.ListUrl, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("The {Provider} server list answered {Status}", provider, (int)response.StatusCode);
+                LogListRefused(provider, (int)response.StatusCode);
                 return null;
             }
 
@@ -81,7 +81,7 @@ internal class ServerListProvider : IServerListProvider
         catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or FormatException
                                    || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
-            _logger.LogWarning(ex, "Could not load {Provider} server list", provider);
+            LogListNotLoaded(ex, provider);
             return null;
         }
     }
@@ -91,11 +91,23 @@ internal class ServerListProvider : IServerListProvider
         try
         {
             Directory.CreateDirectory(_serversDir);
-            await File.WriteAllTextAsync(cacheFile, JsonSerializer.Serialize(servers, CacheFileJson), cancellationToken);
+            await File.WriteAllTextAsync(cacheFile, JsonSerializer.Serialize(servers, _cacheFileJson), cancellationToken);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.LogWarning(ex, "Could not cache the {Provider} server list", provider);
+            LogListNotCached(ex, provider);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "The cached {Provider} server list can't be read, so it is being downloaded again")]
+    private partial void LogCacheUnreadable(Exception exception, SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The {Provider} server list answered {Status}")]
+    private partial void LogListRefused(SpeedtestProvider provider, int status);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not load {Provider} server list")]
+    private partial void LogListNotLoaded(Exception exception, SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not cache the {Provider} server list")]
+    private partial void LogListNotCached(Exception exception, SpeedtestProvider provider);
 }

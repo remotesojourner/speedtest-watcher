@@ -3,7 +3,7 @@ using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 
-internal class ConnectivityChecker : IConnectivityChecker
+internal partial class ConnectivityChecker : IConnectivityChecker
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ConnectivityChecker> _logger;
@@ -34,7 +34,7 @@ internal class ConnectivityChecker : IConnectivityChecker
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or UriFormatException
                                    || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
-            _logger.LogWarning(ex, "Connectivity check against {Url} failed", url);
+            LogCheckFailed(ex, url);
             return new PreTestCheck(false, "No internet connection");
         }
 
@@ -43,4 +43,7 @@ internal class ConnectivityChecker : IConnectivityChecker
 
         return PreTestCheck.Ok;
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Connectivity check against {Url} failed")]
+    private partial void LogCheckFailed(Exception exception, string url);
 }

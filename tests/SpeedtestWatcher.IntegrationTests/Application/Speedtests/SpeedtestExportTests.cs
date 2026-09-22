@@ -5,9 +5,9 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Speedtests;
 
-public class SpeedtestExportTests : IDisposable
+public sealed class SpeedtestExportTests : IDisposable
 {
-    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions _webJson = new(JsonSerializerDefaults.Web);
 
     private readonly TestDatabase _database = new();
     private readonly SpeedtestWatcherDbContext _db;
@@ -18,7 +18,7 @@ public class SpeedtestExportTests : IDisposable
     }
 
     [Fact]
-    public void Csv_QuotesProviderText_AndDefusesSpreadsheetFormulas()
+    public void CsvQuotesProviderTextAndDefusesSpreadsheetFormulas()
     {
         var csv = SpeedtestExport.ToCsv(
         [
@@ -44,17 +44,17 @@ public class SpeedtestExportTests : IDisposable
     }
 
     [Fact]
-    public void Json_RoundTripsIntoTheShapeStorageImports()
+    public void JsonRoundTripsIntoTheShapeStorageImports()
     {
         var json = SpeedtestExport.ToJson([new Speedtest { Id = 3, Download = 100, Status = TestStatus.Skipped, Error = "on the skip list" }]);
 
-        var parsed = JsonSerializer.Deserialize<List<SpeedtestImportRow>>(json, WebJson)!;
+        var parsed = JsonSerializer.Deserialize<List<SpeedtestImportRow>>(json, _webJson)!;
         Assert.Equal("on the skip list", Assert.Single(parsed).Error);
         Assert.Equal("skipped", parsed[0].Status);
     }
 
     [Fact]
-    public async Task Repository_ListsAndCountsWhatTheFiltersMatch_OrOnlyTheGivenIds()
+    public async Task RepositoryListsAndCountsWhatTheFiltersMatchOrOnlyTheGivenIds()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);

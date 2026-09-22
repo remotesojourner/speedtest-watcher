@@ -31,7 +31,7 @@ public sealed class LiveUpdatesTests : IDisposable
     }
 
     [Fact]
-    public void AFinishedTest_IsAddedToTheRecentResults_AndAnnounced()
+    public void AFinishedTestIsAddedToTheRecentResultsAndAnnounced()
     {
         _live.Start(RunNow);
         var result = new SpeedtestDto { Id = 7, Status = TestStatus.Completed };
@@ -47,7 +47,7 @@ public sealed class LiveUpdatesTests : IDisposable
     }
 
     [Fact]
-    public void PausingAndResuming_ReachEveryTab()
+    public void PausingAndResumingReachEveryTab()
     {
         _live.Start(RunNow);
 
@@ -59,7 +59,7 @@ public sealed class LiveUpdatesTests : IDisposable
     }
 
     [Fact]
-    public void ASettingsChange_ReloadsTheSettings()
+    public void ASettingsChangeReloadsTheSettings()
     {
         _live.Start(RunNow);
         A.CallTo(() => _store.GetAsync(A<CancellationToken>._))
@@ -87,7 +87,7 @@ public sealed class LiveUpdatesTests : IDisposable
     }
 
     [Fact]
-    public void AnUpdateThatFails_IsLogged_AndLaterUpdatesStillArrive()
+    public void AnUpdateThatFailsIsLoggedAndLaterUpdatesStillArrive()
     {
         var failNext = true;
         _live.Start(work =>
@@ -105,7 +105,7 @@ public sealed class LiveUpdatesTests : IDisposable
     }
 
     [Fact]
-    public void NothingArrives_BeforeStartOrAfterDispose()
+    public void NothingArrivesBeforeStartOrAfterDispose()
     {
         _events.PublishTestStarted();
         Assert.False(_status.Running);

@@ -2,7 +2,7 @@ using Microsoft.JSInterop;
 
 namespace SpeedtestWatcher.Web.Ui.State;
 
-public sealed class BrowserInterop
+public sealed partial class BrowserInterop
 {
     private readonly IJSRuntime _js;
     private readonly ILogger<BrowserInterop> _logger;
@@ -19,9 +19,9 @@ public sealed class BrowserInterop
         {
             return await _js.InvokeAsync<string?>("speedtestWatcherInterop.getLocalStorage", key);
         }
-        catch (Exception ex) when (IsBrowserFailure(ex))
+        catch (Exception ex) when (FailureLevel(ex) is { } level)
         {
-            LogFailure(ex, $"Could not read '{key}' from the browser's storage");
+            LogReadFailed(level, ex, key);
             return null;
         }
     }
@@ -32,9 +32,9 @@ public sealed class BrowserInterop
         {
             return await _js.InvokeAsync<string?>("speedtestWatcherInterop.getTimeZone");
         }
-        catch (Exception ex) when (IsBrowserFailure(ex))
+        catch (Exception ex) when (FailureLevel(ex) is { } level)
         {
-            LogFailure(ex, "Could not read the browser's time zone");
+            LogTimeZoneFailed(level, ex);
             return null;
         }
     }
@@ -45,9 +45,9 @@ public sealed class BrowserInterop
         {
             await _js.InvokeVoidAsync("speedtestWatcherInterop.setLocalStorage", key, value);
         }
-        catch (Exception ex) when (IsBrowserFailure(ex))
+        catch (Exception ex) when (FailureLevel(ex) is { } level)
         {
-            LogFailure(ex, $"Could not save '{key}' to the browser's storage");
+            LogSaveFailed(level, ex, key);
         }
     }
 
@@ -57,9 +57,9 @@ public sealed class BrowserInterop
         {
             return await _js.InvokeAsync<bool>("speedtestWatcherInterop.copyText", text);
         }
-        catch (Exception ex) when (IsBrowserFailure(ex))
+        catch (Exception ex) when (FailureLevel(ex) is { } level)
         {
-            LogFailure(ex, "Could not copy text to the clipboard");
+            LogCopyFailed(level, ex);
             return false;
         }
     }
@@ -73,18 +73,32 @@ public sealed class BrowserInterop
             await _js.InvokeVoidAsync("speedtestWatcherInterop.downloadFileFromStream", fileName, reference);
             return true;
         }
-        catch (Exception ex) when (IsBrowserFailure(ex))
+        catch (Exception ex) when (FailureLevel(ex) is { } level)
         {
-            LogFailure(ex, $"Could not download {fileName}");
+            LogDownloadFailed(level, ex, fileName);
             return false;
         }
     }
 
-    private static bool IsBrowserFailure(Exception ex) => ex is JSException or JSDisconnectedException or TaskCanceledException;
-
-    private void LogFailure(Exception ex, string message)
+    private static LogLevel? FailureLevel(Exception ex) => ex switch
     {
-        var browserWentAway = ex is JSDisconnectedException or TaskCanceledException;
-        _logger.Log(browserWentAway ? LogLevel.Debug : LogLevel.Warning, ex, "{Message}", message);
-    }
+        JSDisconnectedException or TaskCanceledException => LogLevel.Debug,
+        JSException => LogLevel.Warning,
+        _ => null
+    };
+
+    [LoggerMessage(Message = "Could not read '{Key}' from the browser's storage")]
+    private partial void LogReadFailed(LogLevel level, Exception exception, string key);
+
+    [LoggerMessage(Message = "Could not read the browser's time zone")]
+    private partial void LogTimeZoneFailed(LogLevel level, Exception exception);
+
+    [LoggerMessage(Message = "Could not save '{Key}' to the browser's storage")]
+    private partial void LogSaveFailed(LogLevel level, Exception exception, string key);
+
+    [LoggerMessage(Message = "Could not copy text to the clipboard")]
+    private partial void LogCopyFailed(LogLevel level, Exception exception);
+
+    [LoggerMessage(Message = "Could not download {FileName}")]
+    private partial void LogDownloadFailed(LogLevel level, Exception exception, string fileName);
 }

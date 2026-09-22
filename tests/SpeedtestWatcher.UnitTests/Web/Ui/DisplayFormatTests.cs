@@ -6,7 +6,7 @@ namespace SpeedtestWatcher.UnitTests.Web.Ui;
 public class DisplayFormatTests
 {
     [Fact]
-    public void ConvertSpeed_HandlesMbpsAndMBytes()
+    public void ConvertSpeedHandlesMbpsAndMBytes()
     {
         Assert.Equal(100.0, DisplayFormat.ConvertSpeed(100.0, "mbps"));
         Assert.Equal(12.5, DisplayFormat.ConvertSpeed(100.0, "mbytes"));
@@ -14,7 +14,7 @@ public class DisplayFormatTests
     }
 
     [Fact]
-    public void ToRelativeTime_FormatsCorrectly()
+    public void ToRelativeTimeFormatsCorrectly()
     {
         var now = DateTime.UtcNow;
         Assert.Equal("Just now", DisplayFormat.ToRelativeTime(now.AddSeconds(-20)));
@@ -27,7 +27,7 @@ public class DisplayFormatTests
     [InlineData("dmy", "14/09")]
     [InlineData("mdy", "09/14")]
     [InlineData("ymd", "09-14")]
-    public void DayAndMonthPattern_FollowsTheDateFormatSetting(string dateFormat, string expected)
+    public void DayAndMonthPatternFollowsTheDateFormatSetting(string dateFormat, string expected)
     {
         Assert.Equal(expected, new DateTime(2026, 9, 14).ToString(DisplayFormat.DayAndMonthPattern(dateFormat), CultureInfo.InvariantCulture));
     }

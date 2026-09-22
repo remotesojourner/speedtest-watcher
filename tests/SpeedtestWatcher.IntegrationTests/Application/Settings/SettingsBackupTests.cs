@@ -12,11 +12,11 @@ using SpeedtestWatcher.TestSupport;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Settings;
 
-public class SettingsBackupTests : IDisposable
+public sealed class SettingsBackupTests : IDisposable
 {
     private const string DiscordData = """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false}""";
 
-    private static readonly JsonSerializerOptions ApiJson = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions _apiJson = new(JsonSerializerDefaults.Web);
 
     private readonly TestDatabase _database = new();
     private readonly AppEvents _events = new();
@@ -29,7 +29,7 @@ public class SettingsBackupTests : IDisposable
     }
 
     [Fact]
-    public async Task ABackup_RestoresSettingsIntegrationsAndRecommendations_AfterAFactoryReset()
+    public async Task ABackupRestoresSettingsIntegrationsAndRecommendationsAfterAFactoryReset()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         string integrationId;
@@ -46,7 +46,7 @@ public class SettingsBackupTests : IDisposable
         SettingsImportResultDto result;
         await using (var db = _database.NewContext())
         {
-            result = (await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!, cancellationToken)).Value!;
+            result = (await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, _apiJson)!, cancellationToken)).Value!;
         }
 
         await using var check = _database.NewContext();
@@ -62,11 +62,11 @@ public class SettingsBackupTests : IDisposable
         Assert.Equal(1, result.Integrations);
         Assert.True(result.Recommendations);
         Assert.Equal(0, result.Skipped);
-        Assert.Equal(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!.Config.Count, result.Settings);
+        Assert.Equal(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, _apiJson)!.Config.Count, result.Settings);
     }
 
     [Fact]
-    public async Task ImportingTheSameBackupTwice_DoesNotDuplicateIntegrations()
+    public async Task ImportingTheSameBackupTwiceDoesNotDuplicateIntegrations()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using (var db = _database.NewContext())
@@ -74,7 +74,7 @@ public class SettingsBackupTests : IDisposable
             await new IntegrationRepository(db).CreateAsync("discord", "Family server", DiscordData, cancellationToken);
         }
 
-        var backup = JsonSerializer.Deserialize<SettingsBackupDto>(await ExportJsonAsync(cancellationToken), ApiJson)!;
+        var backup = JsonSerializer.Deserialize<SettingsBackupDto>(await ExportJsonAsync(cancellationToken), _apiJson)!;
         await using (var db = _database.NewContext()) await Backup(db).ImportAsync(backup, cancellationToken);
         await using (var db = _database.NewContext()) await Backup(db).ImportAsync(backup, cancellationToken);
 
@@ -83,7 +83,7 @@ public class SettingsBackupTests : IDisposable
     }
 
     [Fact]
-    public async Task ABackup_NeverContainsSignInSettings()
+    public async Task ABackupNeverContainsSignInSettings()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using (var db = _database.NewContext())
@@ -94,11 +94,11 @@ public class SettingsBackupTests : IDisposable
         var backupJson = await ExportJsonAsync(cancellationToken);
 
         Assert.DoesNotContain("hunter2", backupJson);
-        Assert.DoesNotContain(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, ApiJson)!.Config, entry => SettingDefinitions.Find(entry.Key)!.IsManagedOnSecurityTab);
+        Assert.DoesNotContain(JsonSerializer.Deserialize<SettingsBackupDto>(backupJson, _apiJson)!.Config, entry => SettingDefinitions.Find(entry.Key)!.IsManagedOnSecurityTab);
     }
 
     [Fact]
-    public async Task AnImport_SkipsSignInSettings_UnknownKeys_InvalidValues_AndIntegrationsItCannotRun()
+    public async Task AnImportSkipsSignInSettingsUnknownKeysInvalidValuesAndIntegrationsItCannotRun()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var backup = new SettingsBackupDto
@@ -138,10 +138,10 @@ public class SettingsBackupTests : IDisposable
     }
 
     [Fact]
-    public async Task BackupsExportedByEarlierVersions_StillImport()
+    public async Task BackupsExportedByEarlierVersionsStillImport()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        const string earlierBackup = """
+        const string EarlierBackup = """
             {"config":[{"key":"chartRange","value":"24h"}],
              "integrations":[{"id":"b77102ac0f13","displayName":"Backup check","name":"discord","data":"{\"url\":\"https://localhost/discord.com/api/webhooks/1/x\"}","lastActivity":null,"activityFailed":false}],
              "recommendations":{"id":1,"ping":25,"download":100,"upload":50}}
@@ -149,7 +149,7 @@ public class SettingsBackupTests : IDisposable
 
         await using (var db = _database.NewContext())
         {
-            await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(earlierBackup, ApiJson)!, cancellationToken);
+            await Backup(db).ImportAsync(JsonSerializer.Deserialize<SettingsBackupDto>(EarlierBackup, _apiJson)!, cancellationToken);
         }
 
         await using var check = _database.NewContext();
@@ -161,7 +161,7 @@ public class SettingsBackupTests : IDisposable
     private async Task<string> ExportJsonAsync(CancellationToken cancellationToken)
     {
         await using var db = _database.NewContext();
-        return JsonSerializer.Serialize((await Backup(db).ExportAsync(cancellationToken)).Value, ApiJson);
+        return JsonSerializer.Serialize((await Backup(db).ExportAsync(cancellationToken)).Value, _apiJson);
     }
 
     private async Task FactoryResetAsync(CancellationToken cancellationToken)

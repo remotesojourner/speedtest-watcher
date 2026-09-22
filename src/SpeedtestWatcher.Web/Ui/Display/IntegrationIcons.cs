@@ -4,7 +4,7 @@ public static class IntegrationIcons
 {
     public const string Folder = "img/integrations";
 
-    private static readonly Dictionary<string, string> Files = new()
+    private static readonly Dictionary<string, string> _files = new()
     {
         ["discord"] = "discord.svg",
         ["telegram"] = "telegram.svg",
@@ -17,7 +17,7 @@ public static class IntegrationIcons
         ["influxdb"] = "influxdb.svg"
     };
 
-    public static IReadOnlyCollection<string> Integrations => Files.Keys;
+    public static IReadOnlyCollection<string> Integrations => _files.Keys;
 
-    public static string For(string integration) => $"{Folder}/{Files[integration]}";
+    public static string For(string integration) => $"{Folder}/{_files[integration]}";
 }

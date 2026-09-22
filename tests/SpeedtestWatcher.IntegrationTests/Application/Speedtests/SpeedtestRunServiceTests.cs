@@ -13,7 +13,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
     private ServiceProvider? _services;
 
     [Fact(Timeout = 15000)]
-    public async Task ARetryKeepsTheRun_SoACompetingRunCannotSlipIn()
+    public async Task ARetryKeepsTheRunSoACompetingRunCannotSlipIn()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
@@ -30,7 +30,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task AfterARetry_TheNextRunCanStart_AndOnlyOneRunsAtATime()
+    public async Task AfterARetryTheNextRunCanStartAndOnlyOneRunsAtATime()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
@@ -65,7 +65,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task AManualRun_HoldsTheRunBeforeAnswering_AndSavesAHandStartedResult()
+    public async Task AManualRunHoldsTheRunBeforeAnsweringAndSavesAHandStartedResult()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
@@ -90,7 +90,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task ManualRuns_NeedFullAccess()
+    public async Task ManualRunsNeedFullAccess()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();
@@ -103,7 +103,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task WhilePaused_ScheduledAndManualRunsWait_ButARunCanStillBeForced()
+    public async Task WhilePausedScheduledAndManualRunsWaitButARunCanStillBeForced()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var runner = new FailsFirstRunner();

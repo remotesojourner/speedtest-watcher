@@ -7,7 +7,7 @@ namespace SpeedtestWatcher.UnitTests.Application.Integrations;
 
 public class IntegrationSendTestTests
 {
-    private static readonly Speedtest Sample = new()
+    private static readonly Speedtest _sample = new()
     {
         Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true,
         ServerName = "Acme Fibre", Created = new DateTime(2026, 9, 16, 8, 5, 0)
@@ -22,11 +22,11 @@ public class IntegrationSendTestTests
     [InlineData("apprise", """{"url":"https://localhost/apprise","urls":"json://localhost/hook","send_finished":false}""", "941.25 Mbps")]
     [InlineData("webhook", """{"url":"https://localhost/hook","send_finished":false}""", "\"event\":\"TEST\"")]
     [InlineData("healthChecks", """{"url":"https://localhost/hc/uuid"}""", "Acme Fibre")]
-    public async Task SendTest_SendsOneSample_EvenWhenThatMessageIsTurnedOff(string name, string settings, string expectedInBody)
+    public async Task SendTestSendsOneSampleEvenWhenThatMessageIsTurnedOff(string name, string settings, string expectedInBody)
     {
         var (handler, repository, dispatcher) = Build();
 
-        var result = await dispatcher.TestAsync(name, "abc", settings, Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync(name, "abc", settings, _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Sent, result.Outcome);
         Assert.Contains(expectedInBody, Assert.Single(handler.Requests).Body);
@@ -34,22 +34,22 @@ public class IntegrationSendTestTests
     }
 
     [Fact]
-    public async Task Healthchecks_SendTest_OnlyLogs_SoTheCheckKeepsItsState()
+    public async Task HealthchecksSendTestOnlyLogsSoTheCheckKeepsItsState()
     {
         var (handler, _, dispatcher) = Build();
 
-        await dispatcher.TestAsync("healthChecks", "abc", """{"url":"https://localhost/hc/uuid/"}""", Sample, TestContext.Current.CancellationToken);
+        await dispatcher.TestAsync("healthChecks", "abc", """{"url":"https://localhost/hc/uuid/"}""", _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
     }
 
     [Fact]
-    public async Task InfluxDb_SendTest_ChecksTheBucket_WithoutWritingAPoint()
+    public async Task InfluxDbSendTestChecksTheBucketWithoutWritingAPoint()
     {
         var (handler, _, dispatcher) = Build();
         handler.ResponseBody = """{"buckets":[{"id":"1","name":"speed"}]}""";
 
-        var result = await dispatcher.TestAsync("influxdb", "abc", """{"url":"https://localhost/influx/","org":"home","bucket":"speed","token":"influx-token"}""", Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync("influxdb", "abc", """{"url":"https://localhost/influx/","org":"home","bucket":"speed","token":"influx-token"}""", _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Sent, result.Outcome);
         var request = Assert.Single(handler.Requests);
@@ -58,25 +58,25 @@ public class IntegrationSendTestTests
     }
 
     [Fact]
-    public async Task InfluxDb_SendTest_Fails_WhenTheBucketDoesNotExist()
+    public async Task InfluxDbSendTestFailsWhenTheBucketDoesNotExist()
     {
         var (handler, _, dispatcher) = Build();
         handler.ResponseBody = """{"buckets":[]}""";
 
-        var result = await dispatcher.TestAsync("influxdb", "abc", """{"url":"https://localhost/influx","org":"home","bucket":"speed","token":"t"}""", Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync("influxdb", "abc", """{"url":"https://localhost/influx","org":"home","bucket":"speed","token":"t"}""", _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Failed, result.Outcome);
         Assert.Contains("speed", result.Error);
     }
 
     [Fact]
-    public async Task SendTest_ReportsTheStatus_AndWhatTheServiceSaid()
+    public async Task SendTestReportsTheStatusAndWhatTheServiceSaid()
     {
         var (handler, _, dispatcher) = Build();
         handler.ResponseStatus = HttpStatusCode.Unauthorized;
         handler.ResponseBody = """{"error":"unauthorized","errorDescription":"you need to provide a valid access token"}""";
 
-        var result = await dispatcher.TestAsync("gotify", "abc", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA"}""", Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync("gotify", "abc", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA"}""", _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Failed, result.Outcome);
         Assert.Contains("HTTP 401", result.Error);
@@ -84,12 +84,12 @@ public class IntegrationSendTestTests
     }
 
     [Fact]
-    public async Task SendTest_ReportsWhenTheServiceCannotBeReached()
+    public async Task SendTestReportsWhenTheServiceCannotBeReached()
     {
         var (handler, _, dispatcher) = Build();
         handler.Failure = new HttpRequestException("No connection could be made because the target machine actively refused it.");
 
-        var result = await dispatcher.TestAsync("ntfy", "abc", """{"url":"https://localhost/ntfy","topic":"alerts"}""", Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync("ntfy", "abc", """{"url":"https://localhost/ntfy","topic":"alerts"}""", _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Failed, result.Outcome);
         Assert.Contains("actively refused", result.Error);
@@ -99,11 +99,11 @@ public class IntegrationSendTestTests
     [InlineData("carrierPigeon", """{"url":"https://localhost/coop"}""", "isn't a known integration type")]
     [InlineData("discord", """{"display_name":"Watcher"}""", "webhook URL is missing")]
     [InlineData("discord", """not json""", "can't be read")]
-    public async Task SendTest_ExplainsSettingsItCannotUse(string name, string settings, string expectedError)
+    public async Task SendTestExplainsSettingsItCannotUse(string name, string settings, string expectedError)
     {
         var (handler, _, dispatcher) = Build();
 
-        var result = await dispatcher.TestAsync(name, "abc", settings, Sample, TestContext.Current.CancellationToken);
+        var result = await dispatcher.TestAsync(name, "abc", settings, _sample, TestContext.Current.CancellationToken);
 
         Assert.Equal(IntegrationOutcome.Failed, result.Outcome);
         Assert.Contains(expectedError, result.Error);

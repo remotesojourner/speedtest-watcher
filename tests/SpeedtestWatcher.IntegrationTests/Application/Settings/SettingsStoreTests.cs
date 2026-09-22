@@ -7,12 +7,12 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Settings;
 
-public class SettingsStoreTests : IDisposable
+public sealed class SettingsStoreTests : IDisposable
 {
     private readonly TestDatabase _database = new();
 
     [Fact]
-    public async Task Defaults_AreInsertedForEveryDefinition_AndRetiredKeysAreDropped()
+    public async Task DefaultsAreInsertedForEveryDefinitionAndRetiredKeysAreDropped()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using (var db = _database.NewContext())
@@ -38,6 +38,8 @@ public class SettingsStoreTests : IDisposable
     [InlineData("provider", "ookla", true)]
     [InlineData("provider", "unknown", false)]
     [InlineData("serverMode", "random", true)]
+    [InlineData("serverMode", "single", true)]
+    [InlineData("serverMode", "pinned", false)]
     [InlineData("serverMode", "sideways", false)]
     [InlineData("serverListMode", "deny", true)]
     [InlineData("serverListMode", "maybe", false)]
@@ -66,13 +68,13 @@ public class SettingsStoreTests : IDisposable
     [InlineData("authEnabled", "on", false)]
     [InlineData("oidcAuthority", "none", true)]
     [InlineData("oidcAuthority", "auth.example.com", false)]
-    public void EachSetting_AcceptsOnlyValuesItCanUse(string key, string value, bool accepted)
+    public void EachSettingAcceptsOnlyValuesItCanUse(string key, string value, bool accepted)
     {
         Assert.Equal(accepted, SettingDefinitions.Find(key)!.ProblemWith(value) == null);
     }
 
     [Fact]
-    public async Task ABatch_WithOneInvalidValue_ChangesNothing()
+    public async Task ABatchWithOneInvalidValueChangesNothing()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
@@ -85,7 +87,7 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task ABatch_OfValidValues_IsSavedTogether()
+    public async Task ABatchOfValidValuesIsSavedTogether()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
@@ -102,7 +104,7 @@ public class SettingsStoreTests : IDisposable
     [InlineData("authEnabled", "true", "Sign-in settings are changed on the Security tab")]
     [InlineData("apiTokenHash", "ABC123", "Sign-in settings are changed on the Security tab")]
     [InlineData("madeUpSetting", "1", "There's no setting called madeUpSetting")]
-    public async Task GeneralSaves_RefuseSignInSettings_AndKeysThatDoNotExist(string key, string value, string expectedError)
+    public async Task GeneralSavesRefuseSignInSettingsAndKeysThatDoNotExist(string key, string value, string expectedError)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
@@ -115,7 +117,7 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task SignInSaves_RefuseOtherSettings()
+    public async Task SignInSavesRefuseOtherSettings()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
@@ -128,7 +130,7 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task TypedSettings_TurnNoneIntoNull_AndReadEveryGroup()
+    public async Task TypedSettingsTurnNoneIntoNullAndReadEveryGroup()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
@@ -153,7 +155,7 @@ public class SettingsStoreTests : IDisposable
         Assert.Equal((SpeedtestProvider.Libre, ServerMode.Random, ServerListMode.Deny), (settings.Provider.Selected, settings.Provider.ServerMode, settings.Provider.ServerListMode));
         Assert.Equal(("https://speed.example/backend/", null), (settings.Provider.LibreUrl, settings.Provider.Interface));
         Assert.Equal(["12", "34"], settings.Provider.Libre.ListedIds);
-        Assert.Null(settings.Provider.Ookla.SingleId);
+        Assert.Null(settings.Provider.Ookla.PinnedId);
         Assert.Equal((true, "https://icanhazip.com"), (settings.PreTestChecks.InternetCheckEnabled, settings.PreTestChecks.InternetCheckUrl));
         Assert.Equal(["203.0.113.9"], settings.PreTestChecks.SkipIps);
         Assert.Equal(new DisplaySettings("7d", false, "dmy"), settings.Display);
@@ -163,7 +165,7 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task ValuesStoredByHand_ThatDoNotParse_FallBackSafely()
+    public async Task ValuesStoredByHandThatDoNotParseFallBackSafely()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();

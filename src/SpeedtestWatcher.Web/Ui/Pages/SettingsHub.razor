@@ -59,7 +59,7 @@ else
 }
 
 @code {
-    private static readonly string[] Sections = ["general", "schedule", "provider", "display", "integrations", "security", "storage", "about"];
+    private static readonly string[] _sections = ["general", "schedule", "provider", "display", "integrations", "security", "storage", "about"];
 
     [Parameter] public string? Section { get; set; }
 
@@ -68,7 +68,7 @@ else
 
     protected override void OnParametersSet()
     {
-        var index = Array.IndexOf(Sections, Section?.ToLowerInvariant());
+        var index = Array.IndexOf(_sections, Section?.ToLowerInvariant());
         _activeIndex = index >= 0 ? index : 0;
     }
 
@@ -77,10 +77,10 @@ else
 
     private void OnTabChanged(int index)
     {
-        if (index < 0 || index >= Sections.Length) return;
+        if (index < 0 || index >= _sections.Length) return;
 
         _activeIndex = index;
-        Navigation.NavigateTo($"/settings/{Sections[index]}");
+        Navigation.NavigateTo($"/settings/{_sections[index]}");
     }
 
     private void SignIn()

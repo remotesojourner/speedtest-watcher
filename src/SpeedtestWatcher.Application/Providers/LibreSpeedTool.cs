@@ -8,7 +8,7 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
 {
     private const string DownloadBase = "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_";
 
-    private static readonly Dictionary<PlatformTarget, string> Downloads = new()
+    private static readonly Dictionary<PlatformTarget, string> _downloads = new()
     {
         [new(OSPlatform.Windows, Architecture.X64)] = "windows_amd64.zip",
         [new(OSPlatform.Windows, Architecture.Arm64)] = "windows_arm64.zip",
@@ -29,7 +29,7 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
 
     public ServerCatalog? Servers { get; } = new("https://librespeed.org/backend-servers/servers.php", ParseServers);
 
-    public string? DownloadUrl(PlatformTarget target) => Downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
+    public string? DownloadUrl(PlatformTarget target) => _downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
 
     public ToolArguments BuildArguments(RunOptions options)
     {
@@ -106,7 +106,7 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
         }
     });
 
-    private static IReadOnlyList<ServerInfo> ParseServers(string json)
+    private static List<ServerInfo> ParseServers(string json)
     {
         using var document = JsonDocument.Parse(json);
         if (document.RootElement.ValueKind != JsonValueKind.Array) return [];

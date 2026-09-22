@@ -4,7 +4,7 @@ using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Application.Updates;
 
-internal sealed class GitHubReleaseChecker : IReleaseChecker, IDisposable
+internal sealed partial class GitHubReleaseChecker : IReleaseChecker, IDisposable
 {
     public static readonly TimeSpan AnswerLifetime = TimeSpan.FromHours(6);
     public static readonly TimeSpan FailureLifetime = TimeSpan.FromHours(1);
@@ -54,7 +54,7 @@ internal sealed class GitHubReleaseChecker : IReleaseChecker, IDisposable
             using var response = await client.GetAsync($"https://api.github.com/repos/{ProjectInfo.Repository}/releases/latest", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("GitHub answered {Status} when checking {Repository} for a newer release", (int)response.StatusCode, ProjectInfo.Repository);
+                LogCheckRefused((int)response.StatusCode, ProjectInfo.Repository);
                 return null;
             }
 
@@ -64,8 +64,14 @@ internal sealed class GitHubReleaseChecker : IReleaseChecker, IDisposable
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
-            _logger.LogWarning(ex, "Could not check {Repository} for a newer release", ProjectInfo.Repository);
+            LogCheckFailed(ex, ProjectInfo.Repository);
             return null;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "GitHub answered {Status} when checking {Repository} for a newer release")]
+    private partial void LogCheckRefused(int status, string repository);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not check {Repository} for a newer release")]
+    private partial void LogCheckFailed(Exception exception, string repository);
 }

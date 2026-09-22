@@ -18,7 +18,7 @@ public sealed class GitHubReleaseCheckerTests : IDisposable
     }
 
     [Fact]
-    public async Task TheAnswer_IsReusedForSixHours()
+    public async Task TheAnswerIsReusedForSixHours()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
 
@@ -33,7 +33,7 @@ public sealed class GitHubReleaseCheckerTests : IDisposable
     }
 
     [Fact]
-    public async Task ARefusal_IsNotRetriedForAnHour_AndTheLastKnownVersionIsKept()
+    public async Task ARefusalIsNotRetriedForAnHourAndTheLastKnownVersionIsKept()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await _checker.GetLatestVersionAsync(cancellationToken);
@@ -53,7 +53,7 @@ public sealed class GitHubReleaseCheckerTests : IDisposable
     }
 
     [Fact]
-    public async Task ANetworkFailureBeforeAnyAnswer_GivesNoVersion()
+    public async Task ANetworkFailureBeforeAnyAnswerGivesNoVersion()
     {
         _handler.Failure = new HttpRequestException("No route to host");
 
@@ -62,7 +62,7 @@ public sealed class GitHubReleaseCheckerTests : IDisposable
     }
 
     [Fact]
-    public async Task TabsAskingAtTheSameTime_ShareOneRequest()
+    public async Task TabsAskingAtTheSameTimeShareOneRequest()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
 

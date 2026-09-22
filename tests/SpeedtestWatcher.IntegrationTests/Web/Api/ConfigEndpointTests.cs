@@ -16,7 +16,7 @@ public sealed class ConfigEndpointTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task SavingSeveralSettings_ChangesAllOfThem()
+    public async Task SavingSeveralSettingsChangesAllOfThem()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
@@ -29,7 +29,7 @@ public sealed class ConfigEndpointTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task OneInvalidValue_RejectsTheWholeBatch()
+    public async Task OneInvalidValueRejectsTheWholeBatch()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
@@ -45,7 +45,7 @@ public sealed class ConfigEndpointTests : IClassFixture<SignInOffApp>
     [InlineData("""{"authEnabled":"true"}""", "Sign-in settings are changed on the Security tab")]
     [InlineData("""{"madeUpSetting":"1"}""", "There's no setting called madeUpSetting")]
     [InlineData("{}", "You need to provide at least one setting")]
-    public async Task SignInSettings_UnknownKeys_AndEmptyBatches_AreRefused(string body, string expectedMessage)
+    public async Task SignInSettingsUnknownKeysAndEmptyBatchesAreRefused(string body, string expectedMessage)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
@@ -57,7 +57,7 @@ public sealed class ConfigEndpointTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task TheSingleKeyEndpoint_IsGone()
+    public async Task TheSingleKeyEndpointIsGone()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();

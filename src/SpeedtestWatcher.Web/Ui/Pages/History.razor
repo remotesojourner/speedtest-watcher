@@ -46,7 +46,7 @@
     <div class="d-flex flex-wrap align-center gap-2">
         <MudSelect T="FilterChoice<TestStatus>" Value="_status" ValueChanged="SetStatusAsync!" ToStringFunc="@(choice => choice?.Label)"
                    Label="Status" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in StatusChoices)
+            @foreach (var choice in _statusChoices)
             {
                 <MudSelectItem T="FilterChoice<TestStatus>" Value="choice">@choice.Label</MudSelectItem>
             }
@@ -54,7 +54,7 @@
 
         <MudSelect T="FilterChoice<TestType>" Value="_type" ValueChanged="SetTypeAsync!" ToStringFunc="@(choice => choice?.Label)"
                    Label="Started by" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in TypeChoices)
+            @foreach (var choice in _typeChoices)
             {
                 <MudSelectItem T="FilterChoice<TestType>" Value="choice">@choice.Label</MudSelectItem>
             }
@@ -62,7 +62,7 @@
 
         <MudSelect T="FilterChoice<bool>" Value="_healthy" ValueChanged="SetHealthAsync!" ToStringFunc="@(choice => choice?.Label)"
                    Label="Targets" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in HealthChoices)
+            @foreach (var choice in _healthChoices)
             {
                 <MudSelectItem T="FilterChoice<bool>" Value="choice">@choice.Label</MudSelectItem>
             }
@@ -215,7 +215,7 @@
 
     private sealed record FilterChoice<TValue>(TValue? Value, string Label) where TValue : struct;
 
-    private static readonly FilterChoice<TestStatus>[] StatusChoices =
+    private static readonly FilterChoice<TestStatus>[] _statusChoices =
     [
         new(null, "All results"),
         new(TestStatus.Completed, "Completed"),
@@ -223,14 +223,14 @@
         new(TestStatus.Skipped, "Skipped")
     ];
 
-    private static readonly FilterChoice<TestType>[] TypeChoices =
+    private static readonly FilterChoice<TestType>[] _typeChoices =
     [
         new(null, "Anything"),
         new(TestType.Auto, "Schedule"),
         new(TestType.Custom, "By hand")
     ];
 
-    private static readonly FilterChoice<bool>[] HealthChoices =
+    private static readonly FilterChoice<bool>[] _healthChoices =
     [
         new(null, "Any result"),
         new(true, "Met targets"),
@@ -241,9 +241,9 @@
     private Timer? _timer;
     private List<double> _downloadHistory = [];
 
-    private FilterChoice<TestStatus> _status = StatusChoices[0];
-    private FilterChoice<TestType> _type = TypeChoices[0];
-    private FilterChoice<bool> _healthy = HealthChoices[0];
+    private FilterChoice<TestStatus> _status = _statusChoices[0];
+    private FilterChoice<TestType> _type = _typeChoices[0];
+    private FilterChoice<bool> _healthy = _healthChoices[0];
 
     private bool _selecting;
     private readonly HashSet<int> _selected = [];

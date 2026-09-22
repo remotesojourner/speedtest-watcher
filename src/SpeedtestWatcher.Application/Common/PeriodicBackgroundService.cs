@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SpeedtestWatcher.Application.Common;
 
-internal abstract class PeriodicBackgroundService : BackgroundService
+internal abstract partial class PeriodicBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger _logger;
@@ -42,7 +42,7 @@ internal abstract class PeriodicBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "{Service} failed and runs again in {Interval}", GetType().Name, Interval);
+            LogRunFailed(ex, GetType().Name, Interval);
         }
     }
 
@@ -57,4 +57,7 @@ internal abstract class PeriodicBackgroundService : BackgroundService
             return false;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{Service} failed and runs again in {Interval}")]
+    private partial void LogRunFailed(Exception exception, string service, TimeSpan interval);
 }

@@ -3,7 +3,7 @@ using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-public sealed class ServerSelector
+public sealed partial class ServerSelector
 {
     private readonly IServerListProvider _serverLists;
     private readonly ILogger<ServerSelector> _logger;
@@ -20,7 +20,7 @@ public sealed class ServerSelector
 
         return settings.ServerMode switch
         {
-            ServerMode.Single => servers.SingleId,
+            ServerMode.Pinned => servers.PinnedId,
             ServerMode.Random => await RandomServerAsync(settings, servers, cancellationToken),
             _ => null
         };
@@ -37,10 +37,13 @@ public sealed class ServerSelector
 
         if (candidates.Count == 0)
         {
-            _logger.LogInformation("No {Provider} servers to choose from; letting the provider decide", settings.Selected);
+            LogNoServers(settings.Selected);
             return null;
         }
 
         return candidates[Random.Shared.Next(candidates.Count)];
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "No {Provider} servers to choose from; letting the provider decide")]
+    private partial void LogNoServers(SpeedtestProvider provider);
 }

@@ -46,10 +46,10 @@
             <OptionCard Title="Random" Description="A different server each test, chosen from your list" Icon="@Icons.Material.Filled.Shuffle"
                         Active="@(_serverMode == ServerMode.Random)" OnClick="@(() => _serverMode = ServerMode.Random)" />
             <OptionCard Title="Single" Description="Always test against the same server" Icon="@Icons.Material.Filled.PushPin"
-                        Active="@(_serverMode == ServerMode.Single)" OnClick="@(() => _serverMode = ServerMode.Single)" />
+                        Active="@(_serverMode == ServerMode.Pinned)" OnClick="@(() => _serverMode = ServerMode.Pinned)" />
         </div>
 
-        @if (_serverMode == ServerMode.Single)
+        @if (_serverMode == ServerMode.Pinned)
         {
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
@@ -189,9 +189,9 @@
 
     private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl) || WebAddress.IsHttp(_libreUrl);
 
-    private bool SingleServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Single) || _serverId != SettingDefinitions.Unset;
+    private bool PinnedServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Pinned) || _serverId != SettingDefinitions.Unset;
 
-    private bool CanSave => !_saving && ServerIdValid && SingleServerChosen && CustomIdValid && LibreUrlValid && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
+    private bool CanSave => !_saving && ServerIdValid && PinnedServerChosen && CustomIdValid && LibreUrlValid && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
 
     private ProviderSettings Saved => Settings.Current.Provider;
 
@@ -211,7 +211,7 @@
     }
 
     private string ConfiguredServerId(SpeedtestProvider provider) =>
-        Saved.ServersFor(provider)?.SingleId ?? SettingDefinitions.Unset;
+        Saved.ServersFor(provider)?.PinnedId ?? SettingDefinitions.Unset;
 
     private string ConfiguredServerIds(SpeedtestProvider provider) =>
         Saved.ServersFor(provider) is { ListedIds.Count: > 0 } servers ? string.Join(",", servers.ListedIds) : SettingDefinitions.Unset;
@@ -322,7 +322,7 @@
         {
             AddIfChanged("serverListMode", _listMode.ToName(), Saved.ServerListMode.ToName());
         }
-        if (SupportsServerChoice && _serverMode == ServerMode.Single)
+        if (SupportsServerChoice && _serverMode == ServerMode.Pinned)
         {
             AddIfChanged(_provider == SpeedtestProvider.Libre ? "libreId" : "ooklaId", _serverId, ConfiguredServerId(_provider));
         }

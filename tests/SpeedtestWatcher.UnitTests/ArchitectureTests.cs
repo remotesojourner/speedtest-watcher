@@ -16,29 +16,29 @@ public class ArchitectureTests
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
     private const string StorageNamespace = "SpeedtestWatcher.Application.Storage";
 
-    private static readonly Assembly ApplicationLayer = typeof(OperationResult).Assembly;
-    private static readonly Assembly Web = typeof(Program).Assembly;
-    private static readonly Assembly UnitTests = typeof(ArchitectureTests).Assembly;
-    private static readonly Type[] InputOutput = [typeof(HttpClient), typeof(IHttpClientFactory), typeof(Process)];
-    private static readonly Type[] RealParts = [typeof(DbContext), typeof(DbConnection), typeof(IHost), typeof(IHostBuilder), typeof(IHostApplicationBuilder)];
+    private static readonly Assembly _applicationLayer = typeof(OperationResult).Assembly;
+    private static readonly Assembly _web = typeof(Program).Assembly;
+    private static readonly Assembly _unitTests = typeof(ArchitectureTests).Assembly;
+    private static readonly Type[] _inputOutput = [typeof(HttpClient), typeof(IHttpClientFactory), typeof(Process)];
+    private static readonly Type[] _realParts = [typeof(DbContext), typeof(DbConnection), typeof(IHost), typeof(IHostBuilder), typeof(IHostApplicationBuilder)];
 
-    private static readonly Dictionary<short, OpCode> OpCodesByValue = typeof(OpCodes)
+    private static readonly Dictionary<short, OpCode> _opCodesByValue = typeof(OpCodes)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
         .Select(field => (OpCode)field.GetValue(null)!)
         .ToDictionary(opCode => opCode.Value);
 
     [Fact]
-    public void TheWebsiteReferencesOnlyApplication_AndApplicationKnowsNothingOfTheWeb()
+    public void TheWebsiteReferencesOnlyApplicationAndApplicationKnowsNothingOfTheWeb()
     {
-        Assert.Equal(["SpeedtestWatcher.Application"], ProjectReferences(Web));
-        Assert.Empty(ProjectReferences(ApplicationLayer));
-        Assert.DoesNotContain(ApplicationLayer.GetReferencedAssemblies(), reference => reference.Name!.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
+        Assert.Equal(["SpeedtestWatcher.Application"], ProjectReferences(_web));
+        Assert.Empty(ProjectReferences(_applicationLayer));
+        Assert.DoesNotContain(_applicationLayer.GetReferencedAssemblies(), reference => reference.Name!.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
     }
 
     [Fact]
-    public void Controllers_UseApplicationServices_NotRepositories()
+    public void ControllersUseApplicationServicesNotRepositories()
     {
-        var offending = Web.GetTypes()
+        var offending = _web.GetTypes()
             .Where(type => type.IsSubclassOf(typeof(ControllerBase)))
             .SelectMany(controller => controller.GetConstructors()
                 .SelectMany(constructor => constructor.GetParameters())
@@ -50,9 +50,9 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void Components_InjectServices_NotRepositoriesOrHttpClients()
+    public void ComponentsInjectServicesNotRepositoriesOrHttpClients()
     {
-        var offending = Web.GetTypes()
+        var offending = _web.GetTypes()
             .Where(type => type.IsAssignableTo(typeof(ComponentBase)))
             .SelectMany(component => component.GetProperties(Declared)
                 .Where(property => property.IsDefined(typeof(InjectAttribute)))
@@ -64,9 +64,9 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void InApplication_OnlyRepositoriesAndStorage_UseTheDbContext()
+    public void InApplicationOnlyRepositoriesAndStorageUseTheDbContext()
     {
-        var offending = ApplicationLayer.GetTypes()
+        var offending = _applicationLayer.GetTypes()
             .Select(type => (Type: type, Owner: Outermost(type)))
             .Where(entry => !IsRepositoryImplementation(entry.Owner) && !InStorage(entry.Owner) && !IsRegistration(entry.Owner))
             .Where(entry => TypesUsedBy(entry.Type).Any(used => used.IsAssignableTo(typeof(DbContext))))
@@ -78,12 +78,12 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void ApplicationTypesThatTalkToTheOutsideWorld_AreInternal()
+    public void ApplicationTypesThatTalkToTheOutsideWorldAreInternal()
     {
-        var offending = ApplicationLayer.GetTypes()
+        var offending = _applicationLayer.GetTypes()
             .Select(type => (Type: type, Owner: Outermost(type)))
             .Where(entry => entry.Owner.IsPublic && !IsRegistration(entry.Owner))
-            .Where(entry => TypesUsedBy(entry.Type).Any(used => InputOutput.Contains(used)))
+            .Where(entry => TypesUsedBy(entry.Type).Any(used => _inputOutput.Contains(used)))
             .Select(entry => entry.Owner.FullName)
             .Distinct()
             .ToList();
@@ -92,12 +92,12 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void UnitTests_OpenNoDatabase_AndStartNoHost()
+    public void UnitTestsOpenNoDatabaseAndStartNoHost()
     {
-        var offending = UnitTests.GetTypes()
+        var offending = _unitTests.GetTypes()
             .Select(type => (Type: type, Owner: Outermost(type)))
             .Where(entry => entry.Owner != typeof(ArchitectureTests))
-            .Where(entry => TypesUsedBy(entry.Type).Any(used => RealParts.Any(used.IsAssignableTo)))
+            .Where(entry => TypesUsedBy(entry.Type).Any(used => _realParts.Any(used.IsAssignableTo)))
             .Select(entry => entry.Owner.FullName)
             .Distinct()
             .ToList();
@@ -113,7 +113,7 @@ public class ArchitectureTests
             .ToList();
 
     private static bool IsRepository(Type type) =>
-        type.Assembly == ApplicationLayer && (type.Name.EndsWith("Repository", StringComparison.Ordinal) || type == typeof(ISettingsStore));
+        type.Assembly == _applicationLayer && (type.Name.EndsWith("Repository", StringComparison.Ordinal) || type == typeof(ISettingsStore));
 
     private static bool IsRepositoryImplementation(Type type) => type.GetInterfaces().Any(IsRepository);
 
@@ -154,7 +154,7 @@ public class ArchitectureTests
         {
             var value = il[position] == 0xFE ? (short)(0xFE00 | il[position + 1]) : il[position];
             position += il[position] == 0xFE ? 2 : 1;
-            var opCode = OpCodesByValue[value];
+            var opCode = _opCodesByValue[value];
 
             if (opCode.OperandType is OperandType.InlineMethod or OperandType.InlineField or OperandType.InlineType or OperandType.InlineTok)
             {

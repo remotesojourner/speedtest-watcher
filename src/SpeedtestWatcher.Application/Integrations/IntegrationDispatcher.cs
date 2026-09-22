@@ -3,10 +3,10 @@ using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Integrations;
 
-internal class IntegrationDispatcher : IIntegrationDispatcher
+internal partial class IntegrationDispatcher : IIntegrationDispatcher
 {
     private readonly IIntegrationRepository _repository;
-    private readonly IReadOnlyDictionary<string, IIntegration> _integrations;
+    private readonly Dictionary<string, IIntegration> _integrations;
     private readonly HeartbeatSchedule _heartbeats;
     private readonly ILogger<IntegrationDispatcher> _logger;
 
@@ -37,7 +37,7 @@ internal class IntegrationDispatcher : IIntegrationDispatcher
             var settings = IntegrationSettings.Parse(integration.Data);
             if (settings == null)
             {
-                _logger.LogWarning("Integration {Name} ({Id}) was not run because its saved settings can't be read", integration.Name, integration.Id);
+                LogUnreadableSettings(integration.Name, integration.Id);
                 await _repository.UpdateActivityAsync(integration.Id, true, cancellationToken);
                 continue;
             }
@@ -50,13 +50,13 @@ internal class IntegrationDispatcher : IIntegrationDispatcher
                 if (result.Outcome == IntegrationOutcome.NotApplicable) continue;
 
                 if (result.Outcome == IntegrationOutcome.Failed)
-                    _logger.LogWarning("Integration {Name} ({Id}) failed: {Error}", integration.Name, integration.Id, result.Error);
+                    LogIntegrationFailed(integration.Name, integration.Id, result.Error);
 
                 await _repository.UpdateActivityAsync(integration.Id, result.Outcome == IntegrationOutcome.Failed, cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
-                _logger.LogWarning(ex, "Failed to dispatch integration {Name} ({Id})", integration.Name, integration.Id);
+                LogDispatchFailed(ex, integration.Name, integration.Id);
                 await _repository.UpdateActivityAsync(integration.Id, true, cancellationToken);
             }
         }
@@ -73,7 +73,7 @@ internal class IntegrationDispatcher : IIntegrationDispatcher
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning(ex, "Sending a test for integration {Name} ({Id}) failed", name, id);
+            LogSendTestFailed(ex, name, id);
             return IntegrationResult.Failed(ex.Message);
         }
     }
@@ -84,4 +84,16 @@ internal class IntegrationDispatcher : IIntegrationDispatcher
         _integrations.TryGetValue(integration.Name, out var handler)
             ? handler.HandleAsync(integrationEvent, new IntegrationContext(integration.Id, settings), cancellationToken)
             : Task.FromResult(UnknownType(integration.Name));
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Integration {Name} ({Id}) was not run because its saved settings can't be read")]
+    private partial void LogUnreadableSettings(string name, string id);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Integration {Name} ({Id}) failed: {Error}")]
+    private partial void LogIntegrationFailed(string name, string id, string? error);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to dispatch integration {Name} ({Id})")]
+    private partial void LogDispatchFailed(Exception exception, string name, string id);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Sending a test for integration {Name} ({Id}) failed")]
+    private partial void LogSendTestFailed(Exception exception, string name, string id);
 }

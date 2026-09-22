@@ -35,7 +35,7 @@
         <SurfaceCard Icon="@Icons.Material.Filled.History" Title="Data Retention"
                      Description="How long results are kept before they're deleted automatically.">
             <MudSelect T="string" @bind-Value="_retentionChoice" Label="Keep speedtests for" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3">
-                @foreach (var preset in RetentionPresets)
+                @foreach (var preset in _retentionPresets)
                 {
                     <MudSelectItem T="string" Value="@preset.Days.ToString(CultureInfo.InvariantCulture)">@preset.Label</MudSelectItem>
                 }
@@ -115,7 +115,7 @@
     private const string CustomChoice = "custom";
     private const long MaxImportBytes = 50 * 1024 * 1024;
 
-    private static readonly (int Days, string Label)[] RetentionPresets =
+    private static readonly (int Days, string Label)[] _retentionPresets =
     [
         (7, "7 days"),
         (30, "30 days"),
@@ -125,7 +125,7 @@
         (0, "Keep forever")
     ];
 
-    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions _webJson = new(JsonSerializerDefaults.Web);
 
     private StorageInfoDto? _storageInfo;
     private bool _storageInfoFailed;
@@ -152,7 +152,7 @@
     private void ResetRetentionFromSettings()
     {
         var days = SavedRetentionDays;
-        _retentionChoice = RetentionPresets.Any(p => p.Days == days) ? days.ToString(CultureInfo.InvariantCulture) : CustomChoice;
+        _retentionChoice = _retentionPresets.Any(p => p.Days == days) ? days.ToString(CultureInfo.InvariantCulture) : CustomChoice;
         _customDays = days;
     }
 
@@ -181,7 +181,7 @@
     private async Task ExportConfigAsync()
     {
         var result = await Backup.ExportAsync();
-        await DownloadAsync("speedtest-watcher-settings.json", result.Value is { } backup ? JsonSerializer.SerializeToUtf8Bytes(backup, WebJson) : null);
+        await DownloadAsync("speedtest-watcher-settings.json", result.Value is { } backup ? JsonSerializer.SerializeToUtf8Bytes(backup, _webJson) : null);
     }
 
     private async Task DownloadAsync(string fileName, byte[]? content)
@@ -262,7 +262,7 @@
 
         try
         {
-            return JsonSerializer.Deserialize<T>(json, WebJson);
+            return JsonSerializer.Deserialize<T>(json, _webJson);
         }
         catch (JsonException)
         {

@@ -13,7 +13,7 @@ public class BackgroundServiceShutdownTests
     [InlineData(typeof(RetentionCleanupService))]
     [InlineData(typeof(IntegrationTickerService))]
     [InlineData(typeof(InterfaceRefreshService))]
-    public async Task StoppingTheHost_EndsTheLoopWithoutThrowing(Type serviceType)
+    public async Task StoppingTheHostEndsTheLoopWithoutThrowing(Type serviceType)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var warnings = new WarningSignal();

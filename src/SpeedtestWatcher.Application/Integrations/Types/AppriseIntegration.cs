@@ -5,7 +5,7 @@ namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class AppriseIntegration : MessageIntegration
 {
-    private static readonly string[] ProblemLevels = ["WARNING", "ERROR", "CRITICAL"];
+    private static readonly string[] _problemLevels = ["WARNING", "ERROR", "CRITICAL"];
 
     public AppriseIntegration(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
     {
@@ -114,7 +114,7 @@ internal sealed class AppriseIntegration : MessageIntegration
 
         private static string? Problem(JsonElement logEntry) =>
             logEntry.ValueKind == JsonValueKind.Array && logEntry.GetArrayLength() == 3
-            && logEntry[0].ValueKind == JsonValueKind.String && ProblemLevels.Contains(logEntry[0].GetString())
+            && logEntry[0].ValueKind == JsonValueKind.String && _problemLevels.Contains(logEntry[0].GetString())
             && logEntry[2].ValueKind == JsonValueKind.String
                 ? logEntry[2].GetString()
                 : null;

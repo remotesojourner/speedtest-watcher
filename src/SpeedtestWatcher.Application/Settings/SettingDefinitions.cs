@@ -58,9 +58,9 @@ public static partial class SettingDefinitions
 
     public static IReadOnlyList<string> ObsoleteKeys { get; } = ["password", "passwordLevel"];
 
-    private static readonly FrozenDictionary<string, SettingDefinition> ByKey = All.ToFrozenDictionary(definition => definition.Key);
+    private static readonly FrozenDictionary<string, SettingDefinition> _byKey = All.ToFrozenDictionary(definition => definition.Key);
 
-    public static SettingDefinition? Find(string key) => ByKey.GetValueOrDefault(key);
+    public static SettingDefinition? Find(string key) => _byKey.GetValueOrDefault(key);
 
     private static string? Number(string value) => NumberPattern().IsMatch(value) ? null : NumberNeeded;
 

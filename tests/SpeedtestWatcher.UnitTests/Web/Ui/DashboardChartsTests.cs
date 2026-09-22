@@ -6,10 +6,10 @@ namespace SpeedtestWatcher.UnitTests.Web.Ui;
 
 public class DashboardChartsTests
 {
-    private static readonly DateTime Start = new(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _start = new(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc);
 
     [Fact]
-    public void Readings_BecomeSeriesWithAnAverage_InTheChosenUnit()
+    public void ReadingsBecomeSeriesWithAnAverageInTheChosenUnit()
     {
         var charts = Build([Reading(0, download: 100, upload: 20, ping: 10, jitter: 2), Reading(1, download: 200, upload: 40, ping: 30, jitter: 4)],
             convertSpeed: mbps => mbps / 8);
@@ -25,7 +25,7 @@ public class DashboardChartsTests
     }
 
     [Fact]
-    public void FailedTests_AreLeftOutOfTheCharts_AndListedNewestFirst()
+    public void FailedTestsAreLeftOutOfTheChartsAndListedNewestFirst()
     {
         var charts = Build([Failure(0, "no-internet"), Reading(1, download: 100), Failure(2, "timeout"), Reading(3, download: null)]);
 
@@ -34,7 +34,7 @@ public class DashboardChartsTests
     }
 
     [Fact]
-    public void TickSteps_FollowTheRangeOfEachChart_WithJitterOnThePingChart()
+    public void TickStepsFollowTheRangeOfEachChartWithJitterOnThePingChart()
     {
         var points = new[] { Reading(0, download: 100, upload: 10, ping: 10, jitter: 2), Reading(1, download: 900, upload: 50, ping: 12, jitter: 3) };
 
@@ -48,7 +48,7 @@ public class DashboardChartsTests
     [Theory]
     [InlineData(30, true)]
     [InlineData(31, false)]
-    public void Markers_AreShownOnlyWhileThereIsRoomForThem(int readings, bool shown)
+    public void MarkersAreShownOnlyWhileThereIsRoomForThem(int readings, bool shown)
     {
         var charts = Build(Enumerable.Range(0, readings).Select(hour => Reading(hour, download: 100)).ToList());
 
@@ -56,7 +56,7 @@ public class DashboardChartsTests
     }
 
     [Fact]
-    public void NoReadings_GiveEmptyCharts()
+    public void NoReadingsGiveEmptyCharts()
     {
         var charts = Build([Failure(0, "timeout")]);
 
@@ -69,8 +69,8 @@ public class DashboardChartsTests
         DashboardCharts.Build(points, convertSpeed ?? (mbps => mbps), time => time.ToString("HH:mm", CultureInfo.InvariantCulture), beginAtZero);
 
     private static ChartPoint Reading(int hour, double? download, double upload = 10, int ping = 10, double jitter = 1) =>
-        new(Start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, Duration: 20);
+        new(_start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, Duration: 20);
 
     private static ChartPoint Failure(int hour, string error) =>
-        new(Start.AddHours(hour), Failed: true, error, null, null, null, null, null);
+        new(_start.AddHours(hour), Failed: true, error, null, null, null, null, null);
 }

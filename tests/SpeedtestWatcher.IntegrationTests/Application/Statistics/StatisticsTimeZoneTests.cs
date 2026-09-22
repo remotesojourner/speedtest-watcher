@@ -7,8 +7,8 @@ namespace SpeedtestWatcher.IntegrationTests.Application.Statistics;
 
 public sealed class StatisticsTimeZoneTests : IDisposable
 {
-    private static readonly DateTime MorningUtc = new(2026, 9, 14, 8, 5, 0, DateTimeKind.Utc);
-    private static readonly DateTime EveningUtc = new(2026, 9, 14, 20, 35, 0, DateTimeKind.Utc);
+    private static readonly DateTime _morningUtc = new(2026, 9, 14, 8, 5, 0, DateTimeKind.Utc);
+    private static readonly DateTime _eveningUtc = new(2026, 9, 14, 20, 35, 0, DateTimeKind.Utc);
 
     private readonly TestDatabase _database = new();
     private readonly SpeedtestWatcherDbContext _db;
@@ -24,7 +24,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
     [InlineData("UTC", 8, 20)]
     [InlineData("America/New_York", 4, 16)]
     [InlineData("Asia/Kolkata", 13, 2)]
-    public async Task HourlyAverages_UseTheHoursOfTheRequestedTimeZone(string zone, int morningHour, int eveningHour)
+    public async Task HourlyAveragesUseTheHoursOfTheRequestedTimeZone(string zone, int morningHour, int eveningHour)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
@@ -38,7 +38,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
     [InlineData("UTC", 2)]
     [InlineData("Asia/Tokyo", 1)]
     [InlineData("America/Los_Angeles", 2)]
-    public async Task ADayRange_StartsAndEndsAtMidnightInTheRequestedTimeZone(string zone, int expectedResults)
+    public async Task ADayRangeStartsAndEndsAtMidnightInTheRequestedTimeZone(string zone, int expectedResults)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
@@ -49,7 +49,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
     }
 
     [Fact]
-    public async Task ATimeWithoutAnOffset_IsReadInTheRequestedTimeZone()
+    public async Task ATimeWithoutAnOffsetIsReadInTheRequestedTimeZone()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
@@ -60,7 +60,7 @@ public sealed class StatisticsTimeZoneTests : IDisposable
     }
 
     [Fact]
-    public async Task ATimeWithAnOffset_IsReadAsThatExactMoment()
+    public async Task ATimeWithAnOffsetIsReadAsThatExactMoment()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await SeedAsync(cancellationToken);
@@ -78,8 +78,8 @@ public sealed class StatisticsTimeZoneTests : IDisposable
 
     private async Task SeedAsync(CancellationToken cancellationToken)
     {
-        await _repository.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = MorningUtc }, cancellationToken);
-        await _repository.CreateAsync(new Speedtest { Ping = 20, Download = 200, Upload = 60, Created = EveningUtc }, cancellationToken);
+        await _repository.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = _morningUtc }, cancellationToken);
+        await _repository.CreateAsync(new Speedtest { Ping = 20, Download = 200, Upload = 60, Created = _eveningUtc }, cancellationToken);
     }
 
     private async Task<SpeedtestStatistics> StatisticsAsync(string from, string to, string zone, CancellationToken cancellationToken)

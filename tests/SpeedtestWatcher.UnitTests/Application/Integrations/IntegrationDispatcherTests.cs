@@ -11,13 +11,13 @@ namespace SpeedtestWatcher.UnitTests.Application.Integrations;
 
 public class IntegrationDispatcherTests
 {
-    private static readonly Speedtest SkippedTest = new()
+    private static readonly Speedtest _skippedTest = new()
     {
         Status = TestStatus.Skipped,
         Error = "Public IP 203.0.113.9 is on the skip list"
     };
 
-    private static readonly Dictionary<string, string> MinimalConfigs = new()
+    private static readonly Dictionary<string, string> _minimalConfigs = new()
     {
         ["discord"] = """{"url":"https://localhost/discord.com/api/webhooks/1/x"}""",
         ["telegram"] = """{"token":"1:abc","chat_id":"42"}""",
@@ -34,42 +34,42 @@ public class IntegrationDispatcherTests
     [InlineData("ntfy")]
     [InlineData("pushover")]
     [InlineData("webhook")]
-    public async Task SkippedTest_IsSentToEveryNotificationIntegration_ByDefault(string name)
+    public async Task SkippedTestIsSentToEveryNotificationIntegrationByDefault(string name)
     {
-        var (handler, dispatcher) = Build((name, MinimalConfigs[name]));
+        var (handler, dispatcher) = Build((name, _minimalConfigs[name]));
 
-        await dispatcher.PublishAsync(new TestSkipped(SkippedTest), TestContext.Current.CancellationToken);
+        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
 
         var request = Assert.Single(handler.Requests);
         Assert.Contains(name == "webhook" ? "TEST_SKIPPED" : "skip list", request.Body);
     }
 
     [Fact]
-    public async Task SkippedTest_IsNotSent_WhenTurnedOff()
+    public async Task SkippedTestIsNotSentWhenTurnedOff()
     {
         var (handler, dispatcher) = Build(("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false}"""));
 
-        await dispatcher.PublishAsync(new TestSkipped(SkippedTest), TestContext.Current.CancellationToken);
+        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
 
         Assert.Empty(handler.Requests);
     }
 
     [Fact]
-    public async Task SkippedTest_UsesTheCustomMessage()
+    public async Task SkippedTestUsesTheCustomMessage()
     {
         var (handler, dispatcher) = Build(("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","skipped_message":"Sat out: %error%"}"""));
 
-        await dispatcher.PublishAsync(new TestSkipped(SkippedTest), TestContext.Current.CancellationToken);
+        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
 
         Assert.Contains("Sat out: Public IP 203.0.113.9 is on the skip list", Assert.Single(handler.Requests).Body);
     }
 
     [Fact]
-    public async Task SkippedTest_IsLoggedInHealthchecks_WithoutSignallingSuccess()
+    public async Task SkippedTestIsLoggedInHealthchecksWithoutSignallingSuccess()
     {
         var (handler, dispatcher) = Build(("healthChecks", """{"url":"https://localhost/hc/uuid"}"""));
 
-        await dispatcher.PublishAsync(new TestSkipped(SkippedTest), TestContext.Current.CancellationToken);
+        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
 
         Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
     }
@@ -78,9 +78,9 @@ public class IntegrationDispatcherTests
     [InlineData("finished", "A speedtest is finished", 4572762)]
     [InlineData("failed", "A speedtest has failed", 12993861)]
     [InlineData("missed targets", "A speedtest missed your targets", 16098851)]
-    public async Task Discord_StillSendsEachExistingAlert(string outcome, string heading, int color)
+    public async Task DiscordStillSendsEachExistingAlert(string outcome, string heading, int color)
     {
-        var (handler, dispatcher) = Build(("discord", MinimalConfigs["discord"]));
+        var (handler, dispatcher) = Build(("discord", _minimalConfigs["discord"]));
         var result = new Speedtest { Ping = 12, Download = 900, Upload = 100, Error = "Network unreachable" };
         IntegrationEvent integrationEvent = outcome switch
         {
@@ -97,7 +97,7 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task UnreadableSettings_AreNotSent_AndTheFailureIsLogged()
+    public async Task UnreadableSettingsAreNotSentAndTheFailureIsLogged()
     {
         var handler = new RecordingHandler();
         var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = "{\"url\": " }]);
@@ -112,10 +112,10 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task FailedDeliveries_AreLogged_WithTheReason()
+    public async Task FailedDeliveriesAreLoggedWithTheReason()
     {
         var handler = new RecordingHandler { ResponseStatus = HttpStatusCode.InternalServerError, ResponseBody = "upstream exploded" };
-        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = MinimalConfigs["discord"] }]);
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = _minimalConfigs["discord"] }]);
         var logger = new RecordingLogger<IntegrationDispatcher>();
         var dispatcher = TestIntegrations.Dispatcher(repository, handler, logger);
 
@@ -126,7 +126,7 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task AnIntegrationSavedFromTheSettingsForm_SendsTheDefaultMessage_NotABlankOne()
+    public async Task AnIntegrationSavedFromTheSettingsFormSendsTheDefaultMessageNotABlankOne()
     {
         var (handler, dispatcher) = Build(("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"","send_finished":true,"finished_message":""}"""));
 
@@ -138,7 +138,7 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task Numbers_UseADotAsTheDecimalSeparator_WhateverTheServerLanguage()
+    public async Task NumbersUseADotAsTheDecimalSeparatorWhateverTheServerLanguage()
     {
         var previousCulture = CultureInfo.CurrentCulture;
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
@@ -164,7 +164,7 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task FailureMessagesAndWebhooks_IncludeTheFailedResult()
+    public async Task FailureMessagesAndWebhooksIncludeTheFailedResult()
     {
         var (handler, dispatcher) = Build(
             ("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","error_message":"%server%: %error%"}"""),
@@ -178,11 +178,11 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task LastRun_OnlyChanges_WhenAnIntegrationSendsSomethingOrFails()
+    public async Task LastRunOnlyChangesWhenAnIntegrationSendsSomethingOrFails()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHandler();
-        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = MinimalConfigs["discord"] }]);
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = _minimalConfigs["discord"] }]);
         var dispatcher = TestIntegrations.Dispatcher(repository, handler);
 
         await dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), cancellationToken);
@@ -199,7 +199,7 @@ public class IntegrationDispatcherTests
     [Theory]
     [InlineData(5, 1)]
     [InlineData(1, 2)]
-    public async Task TheHeartbeatInterval_IsKept_EvenThoughEveryMinuteUsesANewScope(int intervalMinutes, int expectedPings)
+    public async Task TheHeartbeatIntervalIsKeptEvenThoughEveryMinuteUsesANewScope(int intervalMinutes, int expectedPings)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHandler();
@@ -221,7 +221,7 @@ public class IntegrationDispatcherTests
     }
 
     [Fact]
-    public async Task InfluxDb_StampsThePointWithTheTestTime_AndAddsTheConfiguredTags()
+    public async Task InfluxDbStampsThePointWithTheTestTimeAndAddsTheConfiguredTags()
     {
         var tested = new DateTime(2026, 9, 16, 8, 5, 0);
         var (handler, dispatcher) = Build(("influxdb", """{"url":"https://localhost/influx","org":"home","bucket":"speed","token":"t","host":"living room","tags":"env=prod, site=home office"}"""));

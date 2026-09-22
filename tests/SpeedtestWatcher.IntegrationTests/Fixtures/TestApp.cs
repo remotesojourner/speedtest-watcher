@@ -36,6 +36,7 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         await base.DisposeAsync();
         SqliteConnection.ClearAllPools();
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        GC.SuppressFinalize(this);
     }
 
     protected abstract Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken);

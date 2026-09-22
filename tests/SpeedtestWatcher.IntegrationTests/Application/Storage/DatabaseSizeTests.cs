@@ -5,14 +5,14 @@ using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Storage;
 
-public class DatabaseSizeTests : IDisposable
+public sealed class DatabaseSizeTests : IDisposable
 {
     private const int ResultCount = 2000;
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"speedtest-watcher-tests-{Guid.NewGuid():N}");
 
     [Fact]
-    public async Task DatabaseSize_CountsResultsThatAreStillInTheWriteAheadLog()
+    public async Task DatabaseSizeCountsResultsThatAreStillInTheWriteAheadLog()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         Directory.CreateDirectory(_folder);

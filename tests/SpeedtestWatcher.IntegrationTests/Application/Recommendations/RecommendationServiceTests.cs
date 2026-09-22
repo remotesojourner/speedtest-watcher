@@ -22,7 +22,7 @@ public sealed class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task TheRecommendation_IsTheBestOfTheLastTenCompletedTests_AndOnlyChangesAreReported()
+    public async Task TheRecommendationIsTheBestOfTheLastTenCompletedTestsAndOnlyChangesAreReported()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         for (var i = 1; i <= 10; i++)
@@ -37,7 +37,7 @@ public sealed class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task NothingIsSaved_BeforeTenTestsHaveCompleted()
+    public async Task NothingIsSavedBeforeTenTestsHaveCompleted()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         for (var i = 1; i < RecommendationService.CompletedTestsNeeded; i++)
@@ -50,7 +50,7 @@ public sealed class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ThePlaceholderOfEarlierVersions_IsRemoved_WhileFewerThanTenTestsHaveCompleted()
+    public async Task ThePlaceholderOfEarlierVersionsIsRemovedWhileFewerThanTenTestsHaveCompleted()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await _results.CreateAsync(new Speedtest { Ping = 10, Download = 100, Upload = 50, Created = DateTime.UtcNow }, cancellationToken);
@@ -62,7 +62,7 @@ public sealed class RecommendationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RealRecommendationsThatMatchThePlaceholder_AreKept()
+    public async Task RealRecommendationsThatMatchThePlaceholderAreKept()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         for (var i = 0; i < RecommendationService.CompletedTestsNeeded; i++)

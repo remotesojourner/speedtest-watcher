@@ -51,7 +51,7 @@
                 <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Accept Ookla's terms</MudText>
                 <MudText Typo="Typo.body2" Class="sw-muted mb-4">Ookla requires you to accept its terms before Speedtest Watcher can run tests with it.</MudText>
                 <div class="sw-option-list mb-4">
-                    @foreach (var document in LicenseDocuments)
+                    @foreach (var document in _licenseDocuments)
                     {
                         <MudLink Href="@document.Url" Target="_blank" Class="sw-option" Underline="Underline.None">
                             <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="sw-option-icon" />
@@ -76,7 +76,7 @@
 @code {
     private enum WelcomeStep { Greeting, Provider, OptimalValues, License }
 
-    private static readonly (string Title, string Url)[] LicenseDocuments =
+    private static readonly (string Title, string Url)[] _licenseDocuments =
     [
         ("Ookla Terms of Service", OoklaTerms.TermsOfServiceUrl),
         ("Ookla End User License Agreement", OoklaTerms.EulaUrl),

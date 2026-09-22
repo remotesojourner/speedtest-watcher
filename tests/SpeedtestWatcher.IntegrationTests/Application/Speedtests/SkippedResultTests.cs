@@ -6,7 +6,7 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Speedtests;
 
-public class SkippedResultTests : IDisposable
+public sealed class SkippedResultTests : IDisposable
 {
     private readonly TestDatabase _database = new();
     private readonly SpeedtestWatcherDbContext _db;
@@ -17,7 +17,7 @@ public class SkippedResultTests : IDisposable
     }
 
     [Fact]
-    public async Task GetStatistics_CountsOnlyRealFailures_AndIgnoresSkippedTests()
+    public async Task GetStatisticsCountsOnlyRealFailuresAndIgnoresSkippedTests()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
@@ -42,7 +42,7 @@ public class SkippedResultTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLatestCompleted_LooksPastFailedAndSkippedResults()
+    public async Task GetLatestCompletedLooksPastFailedAndSkippedResults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
@@ -60,7 +60,7 @@ public class SkippedResultTests : IDisposable
     }
 
     [Fact]
-    public async Task ListTests_FiltersByStatus()
+    public async Task ListTestsFiltersByStatus()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);

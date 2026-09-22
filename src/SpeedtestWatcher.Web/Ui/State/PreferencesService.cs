@@ -4,7 +4,7 @@ using SpeedtestWatcher.Web.Ui.Display;
 
 namespace SpeedtestWatcher.Web.Ui.State;
 
-public class PreferencesService
+public partial class PreferencesService
 {
     private readonly BrowserInterop _browser;
     private readonly SettingsState _settings;
@@ -33,7 +33,7 @@ public class PreferencesService
         if (await _browser.GetTimeZoneAsync() is { } browserTimeZone)
         {
             if (TimeZones.TryFindTimeZone(browserTimeZone, out var timeZone)) TimeZone = timeZone;
-            else _logger.LogWarning("The browser's time zone {TimeZone} isn't known on this server, so times are shown in UTC", browserTimeZone);
+            else LogUnknownTimeZone(browserTimeZone);
         }
         OnChange?.Invoke();
     }
@@ -63,8 +63,14 @@ public class PreferencesService
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "The display preferences saved in this browser can't be read, so the defaults are used");
+            LogPreferencesUnreadable(ex);
             return new();
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The browser's time zone {TimeZone} isn't known on this server, so times are shown in UTC")]
+    private partial void LogUnknownTimeZone(string timeZone);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The display preferences saved in this browser can't be read, so the defaults are used")]
+    private partial void LogPreferencesUnreadable(Exception exception);
 }

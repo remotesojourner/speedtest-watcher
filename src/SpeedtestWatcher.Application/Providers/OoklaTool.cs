@@ -7,7 +7,7 @@ internal sealed class OoklaTool : ISpeedtestTool
 {
     private const string DownloadBase = "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-";
 
-    private static readonly Dictionary<PlatformTarget, string> Downloads = new()
+    private static readonly Dictionary<PlatformTarget, string> _downloads = new()
     {
         [new(OSPlatform.Windows, Architecture.X64)] = "win64.zip",
         [new(OSPlatform.OSX, Architecture.X64)] = "macosx-x86_64.tgz",
@@ -27,7 +27,7 @@ internal sealed class OoklaTool : ISpeedtestTool
 
     public ServerCatalog? Servers { get; } = new("https://www.speedtest.net/api/js/servers?limit=20", ParseServers);
 
-    public string? DownloadUrl(PlatformTarget target) => Downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
+    public string? DownloadUrl(PlatformTarget target) => _downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
 
     public ToolArguments BuildArguments(RunOptions options)
     {
@@ -100,7 +100,7 @@ internal sealed class OoklaTool : ISpeedtestTool
 
     private static double Megabits(double bytesPerSecond) => Math.Round(bytesPerSecond / 1250.0, 2) / 100.0;
 
-    private static IReadOnlyList<ServerInfo> ParseServers(string json)
+    private static List<ServerInfo> ParseServers(string json)
     {
         using var document = JsonDocument.Parse(json);
         if (document.RootElement.ValueKind != JsonValueKind.Array) return [];

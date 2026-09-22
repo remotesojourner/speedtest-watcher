@@ -4,7 +4,7 @@ namespace SpeedtestWatcher.IntegrationTests.Browser;
 
 internal sealed class FixedServerList : IServerListProvider
 {
-    private static readonly IReadOnlyList<ServerInfo> Servers =
+    private static readonly IReadOnlyList<ServerInfo> _servers =
     [
         new("101", "London", "Test Fibre", "United Kingdom", 4.2, "london.test.example:8080"),
         new("102", "Leeds", "Test Fibre", "United Kingdom", 270.1, "leeds.test.example:8080"),
@@ -12,5 +12,5 @@ internal sealed class FixedServerList : IServerListProvider
     ];
 
     public Task<IReadOnlyList<ServerInfo>?> GetServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default) =>
-        Task.FromResult(provider == SpeedtestProvider.Cloudflare ? null : Servers);
+        Task.FromResult(provider == SpeedtestProvider.Cloudflare ? null : _servers);
 }

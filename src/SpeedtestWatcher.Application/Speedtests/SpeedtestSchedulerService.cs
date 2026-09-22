@@ -7,7 +7,7 @@ using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 
-internal sealed class SpeedtestSchedulerService : BackgroundService
+internal sealed partial class SpeedtestSchedulerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopes;
     private readonly IAppEvents _events;
@@ -41,7 +41,7 @@ internal sealed class SpeedtestSchedulerService : BackgroundService
                 }
                 catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogError(ex, "Error in speedtest scheduler loop");
+                    LogLoopFailed(ex);
                     await BackgroundDelay.WaitAsync(TimeSpan.FromMinutes(1), stoppingToken);
                 }
             }
@@ -67,7 +67,7 @@ internal sealed class SpeedtestSchedulerService : BackgroundService
         if ((await ReadScheduleAsync(stoppingToken)).RandomOffset)
         {
             var offset = TimeSpan.FromSeconds(Random.Shared.Next(30, 300));
-            _logger.LogInformation("Applying random schedule offset of {Seconds}s", offset.TotalSeconds);
+            LogOffset(offset.TotalSeconds);
             await Task.Delay(offset, _time, stoppingToken);
         }
 
@@ -90,4 +90,10 @@ internal sealed class SpeedtestSchedulerService : BackgroundService
         using var scope = _scopes.CreateScope();
         await scope.ServiceProvider.GetRequiredService<SpeedtestRunService>().RunAsync(TestType.Auto, cancellationToken: stoppingToken);
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Error in speedtest scheduler loop")]
+    private partial void LogLoopFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Applying random schedule offset of {Seconds}s")]
+    private partial void LogOffset(double seconds);
 }

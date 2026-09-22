@@ -59,7 +59,7 @@ public sealed class ServiceRegistrationTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public void Services_SeeTheCircuitsAccess_OnceTheLayoutStartsIt()
+    public void ServicesSeeTheCircuitsAccessOnceTheLayoutStartsIt()
     {
         using var scope = _app.Services.CreateScope();
 

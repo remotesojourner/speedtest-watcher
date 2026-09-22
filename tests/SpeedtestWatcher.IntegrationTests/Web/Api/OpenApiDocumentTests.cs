@@ -9,7 +9,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
 {
     private const string ApprovedSpec = "../../../../docs/openapi.json";
 
-    private static readonly HashSet<string> ReasonPhrases = Enum.GetValues<HttpStatusCode>()
+    private static readonly HashSet<string> _reasonPhrases = Enum.GetValues<HttpStatusCode>()
         .Select(code => ReasonPhrase((int)code))
         .Append("OK")
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -22,13 +22,13 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task TheSpec_MatchesTheApprovedDocument()
+    public async Task TheSpecMatchesTheApprovedDocument()
     {
         AssertMatchesApproved(ApprovedSpec, (await SpecTextAsync()).ReplaceLineEndings("\n").TrimEnd() + "\n");
     }
 
     [Fact]
-    public async Task EveryOperation_HasASummaryATagAndItsAccessLevel()
+    public async Task EveryOperationHasASummaryATagAndItsAccessLevel()
     {
         var problems = Operations(await SpecAsync())
             .SelectMany(operation => OperationProblems(operation.Key, operation.Operation))
@@ -38,7 +38,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task EveryResponse_IsDescribed_AndEveryOperationDocumentsHowItFails()
+    public async Task EveryResponseIsDescribedAndEveryOperationDocumentsHowItFails()
     {
         var problems = Operations(await SpecAsync())
             .SelectMany(operation => ResponseProblems(operation.Key, operation.Operation))
@@ -48,7 +48,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task TheSpecsAccessLevels_MatchTheEnforcedPolicies()
+    public async Task TheSpecsAccessLevelsMatchTheEnforcedPolicies()
     {
         var readable = Operations(await SpecAsync())
             .Where(operation => (string?)operation.Operation["x-access"] == "read")
@@ -59,7 +59,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task EveryContractTypeAndProperty_IsDescribed()
+    public async Task EveryContractTypeAndPropertyIsDescribed()
     {
         var schemas = (await SpecAsync())["components"]!["schemas"]!.AsObject();
         var problems = new List<string>();
@@ -78,7 +78,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task TheSpec_CoversEveryApiEndpoint()
+    public async Task TheSpecCoversEveryApiEndpoint()
     {
         var documented = Operations(await SpecAsync()).Select(operation => operation.Key).Order(StringComparer.Ordinal);
         var endpoints = ApiAccessTests.VisitorEndpoints.Concat(ApiAccessTests.FullAccessEndpoints).Select(RouteWithoutConstraints).Order(StringComparer.Ordinal);
@@ -125,7 +125,7 @@ public sealed class OpenApiDocumentTests : IClassFixture<SignInOffApp>
 
         foreach (var (status, response) in responses)
         {
-            if ((string?)response!["description"] is not { } description || ReasonPhrases.Contains(description))
+            if ((string?)response!["description"] is not { } description || _reasonPhrases.Contains(description))
                 yield return $"{key} {status} has no written description";
         }
     }

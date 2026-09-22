@@ -31,7 +31,7 @@ public sealed class ServerListProviderTests : IDisposable
     private string CacheFile => Path.Combine(_dataDirectory, "servers", "ookla.json");
 
     [Fact]
-    public async Task AFreshCache_IsUsedWithoutDownloading()
+    public async Task AFreshCacheIsUsedWithoutDownloading()
     {
         WriteCache(CachedList, age: TimeSpan.FromDays(6));
 
@@ -42,7 +42,7 @@ public sealed class ServerListProviderTests : IDisposable
     }
 
     [Fact]
-    public async Task ACacheOlderThanAWeek_IsDownloadedAgain()
+    public async Task ACacheOlderThanAWeekIsDownloadedAgain()
     {
         WriteCache(CachedList, age: TimeSpan.FromDays(8));
 
@@ -53,7 +53,7 @@ public sealed class ServerListProviderTests : IDisposable
     }
 
     [Fact]
-    public async Task WhenTheDownloadFails_TheOldListIsStillUsed()
+    public async Task WhenTheDownloadFailsTheOldListIsStillUsed()
     {
         WriteCache(CachedList, age: TimeSpan.FromDays(30));
         _handler.Failure = new HttpRequestException("offline");
@@ -64,7 +64,7 @@ public sealed class ServerListProviderTests : IDisposable
     }
 
     [Fact]
-    public async Task ACacheInTheFormatOfEarlierVersions_IsReplaced()
+    public async Task ACacheInTheFormatOfEarlierVersionsIsReplaced()
     {
         WriteCache("""{"1":{"name":"London","sponsor":"Old Fibre"}}""", age: TimeSpan.Zero);
 
@@ -75,7 +75,7 @@ public sealed class ServerListProviderTests : IDisposable
     }
 
     [Fact]
-    public async Task ProvidersWithoutServerChoice_HaveNoList()
+    public async Task ProvidersWithoutServerChoiceHaveNoList()
     {
         Assert.Null(await _provider.GetServersAsync(SpeedtestProvider.Cloudflare, TestContext.Current.CancellationToken));
         Assert.Null(await _provider.GetServersAsync(SpeedtestProvider.None, TestContext.Current.CancellationToken));

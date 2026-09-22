@@ -8,5 +8,7 @@ public enum ServerMode
 {
     Auto,
     Random,
-    Single
+
+    [JsonStringEnumMemberName("single")]
+    Pinned
 }

@@ -13,42 +13,42 @@ namespace SpeedtestWatcher.UnitTests.Application.Integrations;
 
 public partial class IntegrationRequestTests
 {
-    private static readonly JsonSerializerOptions IndentedJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static readonly JsonSerializerOptions _indentedJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%error%";
 
-    private static readonly DateTime Tested = new(2026, 9, 16, 8, 5, 0);
+    private static readonly DateTime _tested = new(2026, 9, 16, 8, 5, 0);
 
-    private static readonly Speedtest Healthy = new()
+    private static readonly Speedtest _healthy = new()
     {
         Id = 41, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
         Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true,
-        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Auto, ResultId = "r-41", Time = 14, Created = Tested
+        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Auto, ResultId = "r-41", Time = 14, Created = _tested
     };
 
-    private static readonly Speedtest Unhealthy = new()
+    private static readonly Speedtest _unhealthy = new()
     {
         Id = 42, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
         Ping = 31, Jitter = 2.75, Download = 612.5, Upload = 98.125, Status = TestStatus.Completed, Healthy = false,
-        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Custom, ResultId = "r-42", Time = 15, Created = Tested.AddHours(1)
+        ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100, Type = TestType.Custom, ResultId = "r-42", Time = 15, Created = _tested.AddHours(1)
     };
 
-    private static readonly Speedtest Failed = new()
+    private static readonly Speedtest _failed = new()
     {
         Id = 44, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
         Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Type = TestType.Auto,
-        Error = "Network unreachable", Created = Tested.AddHours(3)
+        Error = "Network unreachable", Created = _tested.AddHours(3)
     };
 
-    private static readonly Speedtest Skipped = new()
+    private static readonly Speedtest _skipped = new()
     {
         Id = 43, Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Skipped, Type = TestType.Auto,
-        Error = "Public IP 203.0.113.9 is on the skip list", Created = Tested.AddHours(2)
+        Error = "Public IP 203.0.113.9 is on the skip list", Created = _tested.AddHours(2)
     };
 
-    private static readonly Recommendation Recommendation = new() { Id = 1, Ping = 10, Download = 950.5, Upload = 115.25 };
+    private static readonly Recommendation _recommendation = new() { Id = 1, Ping = 10, Download = 950.5, Upload = 115.25 };
 
-    private static readonly (string Scenario, string Name, string Settings)[] Scenarios =
+    private static readonly (string Scenario, string Name, string Settings)[] _scenarios =
     [
         ("discord", "discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"Watcher"}"""),
         ("discord with every template variable", "discord", $$"""{"url":"https://localhost/discord.com/api/webhooks/1/x","finished_message":"{{AllVariables}}","error_message":"{{AllVariables}}","unhealthy_message":"{{AllVariables}}","skipped_message":"{{AllVariables}}"}"""),
@@ -79,7 +79,7 @@ public partial class IntegrationRequestTests
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         try
         {
-            foreach (var (scenario, name, settings) in Scenarios)
+            foreach (var (scenario, name, settings) in _scenarios)
             {
                 foreach (var (eventName, publish) in Events())
                 {
@@ -95,7 +95,7 @@ public partial class IntegrationRequestTests
                 var testHandler = new RecordingHandler { ResponseBody = """{"buckets":[{"name":"speed"}]}""" };
                 var testRepository = new InMemoryIntegrations([]);
                 var result = await TestIntegrations.Dispatcher(testRepository, testHandler)
-                    .TestAsync(name, "abc123", settings, Healthy, TestContext.Current.CancellationToken);
+                    .TestAsync(name, "abc123", settings, _healthy, TestContext.Current.CancellationToken);
 
                 Record(transcript, $"{scenario} · send test", $"result: {TestResult(result)}, activity: {Activity(testRepository.ActivityErrors)}", testHandler);
             }
@@ -113,7 +113,7 @@ public partial class IntegrationRequestTests
     {
         var dispatcher = TestIntegrations.Dispatcher(new InMemoryIntegrations([]), new RecordingHandler());
 
-        var schemas = JsonSerializer.Serialize(dispatcher.Schemas, IndentedJson);
+        var schemas = JsonSerializer.Serialize(dispatcher.Schemas, _indentedJson);
 
         AssertMatchesApproved("IntegrationSchemas.approved.json", schemas + "\n");
     }
@@ -121,11 +121,11 @@ public partial class IntegrationRequestTests
     private static IEnumerable<(string Name, Func<IntegrationDispatcher, CancellationToken, Task> Publish)> Events() =>
     [
         ("test started", (dispatcher, ct) => dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), ct)),
-        ("test finished", (dispatcher, ct) => dispatcher.PublishAsync(new TestFinished(Healthy), ct)),
-        ("test missed targets", (dispatcher, ct) => dispatcher.PublishAsync(new TestUnhealthy(Unhealthy), ct)),
-        ("test failed", (dispatcher, ct) => dispatcher.PublishAsync(new TestFailed(Failed), ct)),
-        ("test skipped", (dispatcher, ct) => dispatcher.PublishAsync(new TestSkipped(Skipped), ct)),
-        ("recommendations updated", (dispatcher, ct) => dispatcher.PublishAsync(new RecommendationsUpdated(Recommendation), ct)),
+        ("test finished", (dispatcher, ct) => dispatcher.PublishAsync(new TestFinished(_healthy), ct)),
+        ("test missed targets", (dispatcher, ct) => dispatcher.PublishAsync(new TestUnhealthy(_unhealthy), ct)),
+        ("test failed", (dispatcher, ct) => dispatcher.PublishAsync(new TestFailed(_failed), ct)),
+        ("test skipped", (dispatcher, ct) => dispatcher.PublishAsync(new TestSkipped(_skipped), ct)),
+        ("recommendations updated", (dispatcher, ct) => dispatcher.PublishAsync(new RecommendationsUpdated(_recommendation), ct)),
         ("config updated", (dispatcher, ct) => dispatcher.PublishAsync(new ConfigUpdated("cron", "0 * * * *"), ct)),
         ("heartbeat", (dispatcher, ct) => dispatcher.PublishAsync(new Heartbeat(), ct))
     ];

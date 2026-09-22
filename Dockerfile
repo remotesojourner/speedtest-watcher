@@ -1,16 +1,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG TARGETARCH
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
 COPY src/SpeedtestWatcher.Application/SpeedtestWatcher.Application.csproj src/SpeedtestWatcher.Application/
 COPY src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj src/SpeedtestWatcher.Web/
 
-RUN dotnet restore src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj
+RUN dotnet restore src/SpeedtestWatcher.Web/SpeedtestWatcher.Web.csproj -a $TARGETARCH
 
 COPY . .
 WORKDIR /src/src/SpeedtestWatcher.Web
 ARG VERSION
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false ${VERSION:+/p:Version=$VERSION}
+RUN dotnet publish -c Release -a $TARGETARCH --no-restore -o /app/publish /p:UseAppHost=false ${VERSION:+/p:Version=$VERSION}
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

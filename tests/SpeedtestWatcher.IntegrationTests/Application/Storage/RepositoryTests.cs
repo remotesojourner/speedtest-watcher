@@ -6,7 +6,7 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Storage;
 
-public class RepositoryTests : IDisposable
+public sealed class RepositoryTests : IDisposable
 {
     private readonly TestDatabase _database = new();
     private readonly SpeedtestWatcherDbContext _db;
@@ -17,7 +17,7 @@ public class RepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task SpeedtestRepository_CreateAndList_WorksWithPagination()
+    public async Task SpeedtestRepositoryCreateAndListWorksWithPagination()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);
@@ -44,7 +44,7 @@ public class RepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task SpeedtestRepository_GetStatistics_AggregatesAccurately()
+    public async Task SpeedtestRepositoryGetStatisticsAggregatesAccurately()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var repo = new SpeedtestRepository(_db);

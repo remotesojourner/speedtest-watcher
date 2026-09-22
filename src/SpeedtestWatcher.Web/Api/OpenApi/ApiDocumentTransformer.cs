@@ -24,7 +24,7 @@ public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
     private const string SecuritySchemeDescription =
         "An API token (`swt_…`) from **Settings → Security → API Token**. It's needed only while sign-in is on, and read operations don't need it when people who aren't signed in have read-only access.";
 
-    private static readonly (string Name, string Description)[] Tags =
+    private static readonly (string Name, string Description)[] _tags =
     [
         ("Speedtests", "Stored results and statistics, and running and pausing tests."),
         ("Settings", "Reading and changing settings."),
@@ -67,7 +67,7 @@ public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
             .SelectMany(operation => operation.Tags?.AsEnumerable() ?? [])
             .Select(tag => tag.Name)
             .ToHashSet(StringComparer.Ordinal);
-        document.Tags = new HashSet<OpenApiTag>(Tags
+        document.Tags = new HashSet<OpenApiTag>(_tags
             .Where(tag => used.Contains(tag.Name))
             .Select(tag => new OpenApiTag { Name = tag.Name, Description = tag.Description }));
 

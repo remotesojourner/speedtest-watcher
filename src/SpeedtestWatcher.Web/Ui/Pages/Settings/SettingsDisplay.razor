@@ -31,7 +31,7 @@
         <MudItem xs="12" md="6">
             <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Date format</MudText>
             <div class="sw-option-list">
-                @foreach (var option in DateFormats)
+                @foreach (var option in _dateFormats)
                 {
                     <OptionCard Title="@option.Title" Description="@Example(option.Id)" Icon="@Icons.Material.Filled.CalendarMonth"
                                 Active="@(DateFormat == option.Id)" OnClick="@(() => SaveSettingAsync("dateFormat", option.Id, DateFormat))" />
@@ -42,7 +42,7 @@
         <MudItem xs="12" md="6">
             <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Dashboard charts</MudText>
             <div class="sw-option-list mb-3">
-                @foreach (var option in ChartRanges)
+                @foreach (var option in _chartRanges)
                 {
                     <OptionCard Title="@option.Title" Description="@option.Description" Icon="@Icons.Material.Filled.DateRange"
                                 Active="@(ChartRange == option.Id)" OnClick="@(() => SaveSettingAsync("chartRange", option.Id, ChartRange))" />
@@ -61,14 +61,14 @@
 </SurfaceCard>
 
 @code {
-    private static readonly (string Id, string Title)[] DateFormats =
+    private static readonly (string Id, string Title)[] _dateFormats =
     [
         ("dmy", "Day first"),
         ("mdy", "Month first"),
         ("ymd", "Year first")
     ];
 
-    private static readonly (string Id, string Title, string Description)[] ChartRanges =
+    private static readonly (string Id, string Title, string Description)[] _chartRanges =
     [
         ("24h", "Last 24 hours", "Opens the dashboard on today's results"),
         ("7d", "Last 7 days", "A week of results"),

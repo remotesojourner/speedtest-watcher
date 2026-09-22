@@ -15,7 +15,7 @@ public class SpeedQualityHelperTests
     [InlineData(30, 25, false, SpeedQuality.Green)]
     [InlineData(33, 25, false, SpeedQuality.Orange)]
     [InlineData(45, 25, false, SpeedQuality.Red)]
-    public void GetQuality_ComparesAReadingWithItsTarget(double current, double optimal, bool higherIsBetter, SpeedQuality expected)
+    public void GetQualityComparesAReadingWithItsTarget(double current, double optimal, bool higherIsBetter, SpeedQuality expected)
     {
         var quality = SpeedQualityHelper.GetQuality(current, optimal, higherIsBetter);
         Assert.Equal(expected, quality);

@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace SpeedtestWatcher.Web.SignIn;
 
-public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptions>
+public sealed partial class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptions>
 {
     private readonly AuthSettings _settings;
     private readonly ILogger<OidcOptionsSetup> _logger;
@@ -46,7 +46,7 @@ public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptio
 
         options.Events.OnRemoteFailure = context =>
         {
-            _logger.LogWarning(context.Failure, "Sign-in with the OpenID Connect provider failed");
+            LogSignInFailed(context.Failure);
             context.Response.Redirect($"/auth/failed?reason={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
             context.HandleResponse();
             return Task.CompletedTask;
@@ -54,4 +54,7 @@ public sealed class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConnectOptio
     }
 
     public void Configure(OpenIdConnectOptions options) => Configure(Options.DefaultName, options);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Sign-in with the OpenID Connect provider failed")]
+    private partial void LogSignInFailed(Exception? exception);
 }

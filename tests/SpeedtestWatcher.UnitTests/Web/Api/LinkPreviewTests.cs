@@ -17,7 +17,7 @@ public sealed class LinkPreviewTests
     }
 
     [Fact]
-    public void BeforeAnyTestHasCompleted_ThePreviewShowsNoReadings()
+    public void BeforeAnyTestHasCompletedThePreviewShowsNoReadings()
     {
         var preview = LinkPreview.For(null);
 

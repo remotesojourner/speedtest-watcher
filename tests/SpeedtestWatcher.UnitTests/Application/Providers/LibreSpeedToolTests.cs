@@ -7,7 +7,7 @@ public class LibreSpeedToolTests
     private readonly LibreSpeedTool _tool = new();
 
     [Fact]
-    public void AResultWrappedInAnArray_IsParsed()
+    public void AResultWrappedInAnArrayIsParsed()
     {
         var result = _tool.ParseResult("""[{"ping":18.4,"jitter":"2.35","download":240.5,"upload":45.2,"elapsed":12000,"server":{"id":5,"name":"Local Libre","url":"http://speed.local"}}]""")!;
 
@@ -17,7 +17,7 @@ public class LibreSpeedToolTests
     }
 
     [Fact]
-    public void ACustomServer_IsWrittenToTheScratchFile_AndUsedInsteadOfTheServerId()
+    public void ACustomServerIsWrittenToTheScratchFileAndUsedInsteadOfTheServerId()
     {
         var arguments = _tool.BuildArguments(new RunOptions("7", "https://speed.example/backend/", "192.168.1.20", "custom.json"));
 
@@ -26,7 +26,7 @@ public class LibreSpeedToolTests
     }
 
     [Fact]
-    public void AChosenServer_IsPassedToTheCli()
+    public void AChosenServerIsPassedToTheCli()
     {
         Assert.Equal(["--json", "--duration=5", "--server=7"], _tool.BuildArguments(new RunOptions("7", null, null, "unused.json")).Arguments);
     }

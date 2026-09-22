@@ -15,7 +15,7 @@ public sealed class ReadOnlyVisitorTests : BrowserTest, IClassFixture<BrowserApp
     }
 
     [Fact]
-    public async Task TheDashboard_OffersSignIn_InsteadOfTheRunButton()
+    public async Task TheDashboardOffersSignInInsteadOfTheRunButton()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var page = await browser.NewPageAsync();
@@ -29,7 +29,7 @@ public sealed class ReadOnlyVisitorTests : BrowserTest, IClassFixture<BrowserApp
     }
 
     [Fact]
-    public async Task AResultsDetails_HaveNoDeleteButton()
+    public async Task AResultsDetailsHaveNoDeleteButton()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var page = await browser.NewPageAsync();
@@ -43,7 +43,7 @@ public sealed class ReadOnlyVisitorTests : BrowserTest, IClassFixture<BrowserApp
     }
 
     [Fact]
-    public async Task Settings_ShowOnlyTheReadOnlyView()
+    public async Task SettingsShowOnlyTheReadOnlyView()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var page = await browser.NewPageAsync();

@@ -2,7 +2,7 @@ namespace SpeedtestWatcher.Web.Ui.Display;
 
 public static class IntegrationText
 {
-    private static readonly Dictionary<string, string> CommonLabels = new()
+    private static readonly Dictionary<string, string> _commonLabels = new()
     {
         ["url"] = "Server URL",
         ["token"] = "Token",
@@ -21,7 +21,7 @@ public static class IntegrationText
         ["interval"] = "Interval (minutes)"
     };
 
-    private static readonly Dictionary<string, Dictionary<string, string>> Labels = new()
+    private static readonly Dictionary<string, Dictionary<string, string>> _labels = new()
     {
         ["discord"] = new() { ["url"] = "Webhook URL" },
         ["telegram"] = new() { ["token"] = "Bot token", ["chat_id"] = "Chat ID" },
@@ -49,7 +49,7 @@ public static class IntegrationText
         }
     };
 
-    private static readonly Dictionary<string, string> CommonPlaceholders = new()
+    private static readonly Dictionary<string, string> _commonPlaceholders = new()
     {
         ["finished_message"] = "%year%-%month%-%day% %hour%:%minute% — %ping% ms, %download% Mbps, %upload% Mbps",
         ["unhealthy_message"] = "%download% Mbps down, %upload% Mbps up, %ping% ms — targets %threshold_download%/%threshold_upload%/%threshold_ping%",
@@ -57,7 +57,7 @@ public static class IntegrationText
         ["error_message"] = "[%year%-%month%-%day% %hour%:%minute%] Error: %error%"
     };
 
-    private static readonly Dictionary<string, Dictionary<string, string>> Placeholders = new()
+    private static readonly Dictionary<string, Dictionary<string, string>> _placeholders = new()
     {
         ["discord"] = new() { ["url"] = "https://discord.com/api/webhooks/...", ["display_name"] = "Speedtest Watcher Notification" },
         ["apprise"] = new()
@@ -82,15 +82,15 @@ public static class IntegrationText
 
     public static string Label(string integration, string field)
     {
-        if (Labels.TryGetValue(integration, out var own) && own.TryGetValue(field, out var label)) return label;
-        if (CommonLabels.TryGetValue(field, out var common)) return common;
+        if (_labels.TryGetValue(integration, out var own) && own.TryGetValue(field, out var label)) return label;
+        if (_commonLabels.TryGetValue(field, out var common)) return common;
         return Humanize(field);
     }
 
     public static string? Placeholder(string integration, string field, string? schemaPlaceholder)
     {
-        if (Placeholders.TryGetValue(integration, out var own) && own.TryGetValue(field, out var placeholder)) return placeholder;
-        if (CommonPlaceholders.TryGetValue(field, out var common)) return common;
+        if (_placeholders.TryGetValue(integration, out var own) && own.TryGetValue(field, out var placeholder)) return placeholder;
+        if (_commonPlaceholders.TryGetValue(field, out var common)) return common;
         return schemaPlaceholder;
     }
 

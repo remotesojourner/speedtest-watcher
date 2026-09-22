@@ -4,14 +4,14 @@ namespace SpeedtestWatcher.UnitTests.Web.Ui;
 
 public class ChartAxisHelperTests
 {
-    private static readonly string[] TenLabels = Enumerable.Range(0, 10).Select(i => $"L{i}").ToArray();
+    private static readonly string[] _tenLabels = Enumerable.Range(0, 10).Select(i => $"L{i}").ToArray();
 
     [Fact]
-    public void ThinLabels_KeepsFirstLastAndAtMostMax()
+    public void ThinLabelsKeepsFirstLastAndAtMostMax()
     {
-        var thinned = ChartAxisHelper.ThinLabels(TenLabels, 3);
+        var thinned = ChartAxisHelper.ThinLabels(_tenLabels, 3);
 
-        Assert.Equal(TenLabels.Length, thinned.Length);
+        Assert.Equal(_tenLabels.Length, thinned.Length);
         Assert.Equal(3, thinned.Count(label => label != ""));
         Assert.Equal("L0", thinned[0]);
         Assert.Equal("L9", thinned[^1]);
@@ -21,15 +21,15 @@ public class ChartAxisHelperTests
     [InlineData(0)]
     [InlineData(10)]
     [InlineData(20)]
-    public void ThinLabels_ReturnsEveryLabelWhenNoThinningNeeded(int max)
+    public void ThinLabelsReturnsEveryLabelWhenNoThinningNeeded(int max)
     {
-        Assert.Equal(TenLabels, ChartAxisHelper.ThinLabels(TenLabels, max));
+        Assert.Equal(_tenLabels, ChartAxisHelper.ThinLabels(_tenLabels, max));
     }
 
     [Fact]
-    public void ThinLabels_MaxOfOneStillKeepsBothEnds()
+    public void ThinLabelsMaxOfOneStillKeepsBothEnds()
     {
-        var thinned = ChartAxisHelper.ThinLabels(TenLabels, 1);
+        var thinned = ChartAxisHelper.ThinLabels(_tenLabels, 1);
 
         Assert.Equal("L0", thinned[0]);
         Assert.Equal("L9", thinned[^1]);
@@ -42,7 +42,7 @@ public class ChartAxisHelperTests
     [InlineData(new double[] { 0, 960 }, 500)]
     [InlineData(new double[] { 42 }, 1)]
     [InlineData(new double[0], 1)]
-    public void TickStep_SplitsRangeIntoNiceSteps(double[] values, int expected)
+    public void TickStepSplitsRangeIntoNiceSteps(double[] values, int expected)
     {
         Assert.Equal(expected, ChartAxisHelper.TickStep(values));
     }
@@ -53,7 +53,7 @@ public class ChartAxisHelperTests
     [InlineData(30, true)]
     [InlineData(31, false)]
     [InlineData(168, false)]
-    public void HasRoomForMarkers_OnlyWhilePointsStayApart(int pointCount, bool expected)
+    public void HasRoomForMarkersOnlyWhilePointsStayApart(int pointCount, bool expected)
     {
         Assert.Equal(expected, ChartAxisHelper.HasRoomForMarkers(pointCount));
     }
@@ -62,7 +62,7 @@ public class ChartAxisHelperTests
     [InlineData(new[] { 940.3, 961.6 })]
     [InlineData(new[] { 108.2, 112.4 })]
     [InlineData(new[] { 11.0, 14.0 })]
-    public void TickStep_WhenTheAxisBeginsAtZero_KeepsTheWholeAxisToAFewTicks(double[] values)
+    public void TickStepWhenTheAxisBeginsAtZeroKeepsTheWholeAxisToAFewTicks(double[] values)
     {
         var step = ChartAxisHelper.TickStep(values, beginAtZero: true);
 

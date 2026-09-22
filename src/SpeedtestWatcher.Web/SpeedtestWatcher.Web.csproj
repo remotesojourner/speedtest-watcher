@@ -14,7 +14,7 @@
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="SkiaSharp" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
   </ItemGroup>
 
   <ItemGroup>

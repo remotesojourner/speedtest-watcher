@@ -6,7 +6,7 @@ namespace SpeedtestWatcher.IntegrationTests.Browser;
 [Trait("Category", "Browser")]
 public sealed class PageLayoutTests : BrowserTest, IClassFixture<BrowserAppWithResults>
 {
-    private static readonly (string Path, string Name, string Landmark)[] Pages =
+    private static readonly (string Path, string Name, string Landmark)[] _pages =
     [
         ("/", "dashboard", "Overview"),
         ("/history", "history", "Recent Tests"),
@@ -38,14 +38,14 @@ public sealed class PageLayoutTests : BrowserTest, IClassFixture<BrowserAppWithR
 
     [Theory]
     [MemberData(nameof(Views))]
-    public async Task EveryPage_RendersWhole_WithoutScrollingSideways(BrowserTheme theme, int width)
+    public async Task EveryPageRendersWholeWithoutScrollingSideways(BrowserTheme theme, int width)
     {
         await using var browser = await OpenBrowserAsync(_app, theme, width);
         var page = await browser.NewPageAsync();
         Directory.CreateDirectory(ScreenshotFolder);
         var problems = new List<string>();
 
-        foreach (var (path, name, landmark) in Pages)
+        foreach (var (path, name, landmark) in _pages)
         {
             await page.GotoAsync(path);
             await Expect(page.GetByText(landmark).First).ToBeVisibleAsync();

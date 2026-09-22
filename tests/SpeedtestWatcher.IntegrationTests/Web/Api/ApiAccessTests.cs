@@ -13,7 +13,7 @@ namespace SpeedtestWatcher.IntegrationTests.Web.Api;
 
 public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>, IClassFixture<NoVisitorsApp>
 {
-    internal static readonly string[] VisitorEndpoints =
+    internal static IReadOnlyList<string> VisitorEndpoints { get; } =
     [
         "GET /api/config",
         "GET /api/opengraph/image",
@@ -25,7 +25,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
         "POST /api/speedtests/export"
     ];
 
-    internal static readonly string[] FullAccessEndpoints =
+    internal static IReadOnlyList<string> FullAccessEndpoints { get; } =
     [
         "DELETE /api/speedtests/{id:int}",
         "DELETE /api/storage/tests/history",
@@ -43,9 +43,9 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
         "PUT /api/storage/tests/history"
     ];
 
-    private static readonly string[] DocumentationPages = ["/api/openapi/v1.json", "/api/docs/"];
+    private static readonly string[] _documentationPages = ["/api/openapi/v1.json", "/api/docs/"];
 
-    private static readonly Dictionary<string, string> SampleRouteValues = new()
+    private static readonly Dictionary<string, string> _sampleRouteValues = new()
     {
         ["id:int"] = "1"
     };
@@ -63,7 +63,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     public static TheoryData<string> FullAccessOnly => new(FullAccessEndpoints);
 
-    public static TheoryData<string> Documentation => new(DocumentationPages);
+    public static TheoryData<string> Documentation => new(_documentationPages);
 
     public static TheoryData<string> FullAccessReadsAndAHarmlessWrite =>
         new(FullAccessEndpoints.Where(endpoint => endpoint.StartsWith("GET ", StringComparison.Ordinal)).Append("POST /api/speedtests/continue"));
@@ -79,7 +79,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     [Theory]
     [MemberData(nameof(ReadableByVisitors))]
-    public async Task ReadOnlyVisitors_CanUseTheReadEndpoints(string endpoint)
+    public async Task ReadOnlyVisitorsCanUseTheReadEndpoints(string endpoint)
     {
         using var response = await SendAsync(_readOnlyVisitors, endpoint);
 
@@ -89,7 +89,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     [Theory]
     [MemberData(nameof(FullAccessOnly))]
-    public async Task ReadOnlyVisitors_AreRefusedEverythingElse(string endpoint)
+    public async Task ReadOnlyVisitorsAreRefusedEverythingElse(string endpoint)
     {
         using var response = await SendAsync(_readOnlyVisitors, endpoint);
 
@@ -99,7 +99,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     [Theory]
     [MemberData(nameof(ReadableByVisitors))]
     [MemberData(nameof(FullAccessOnly))]
-    public async Task VisitorsWithoutAccess_AreRefusedEveryEndpoint(string endpoint)
+    public async Task VisitorsWithoutAccessAreRefusedEveryEndpoint(string endpoint)
     {
         using var response = await SendAsync(_noVisitors, endpoint);
 
@@ -109,7 +109,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     [Theory]
     [MemberData(nameof(FullAccessReadsAndAHarmlessWrite))]
-    public async Task TheApiToken_GivesFullAccess(string endpoint)
+    public async Task TheApiTokenGivesFullAccess(string endpoint)
     {
         using var response = await SendAsync(_readOnlyVisitors, endpoint, _readOnlyVisitors.Token);
 
@@ -118,7 +118,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     [Theory]
     [MemberData(nameof(Documentation))]
-    public async Task TheSpecAndTheReferencePage_AreOpenToReadOnlyVisitors(string path)
+    public async Task TheSpecAndTheReferencePageAreOpenToReadOnlyVisitors(string path)
     {
         using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
 
@@ -129,7 +129,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     [Theory]
     [MemberData(nameof(Documentation))]
-    public async Task TheSpecAndTheReferencePage_RefuseVisitorsWithoutAccess(string path)
+    public async Task TheSpecAndTheReferencePageRefuseVisitorsWithoutAccess(string path)
     {
         using var client = _noVisitors.CreateClientWithoutRedirects();
 
@@ -140,7 +140,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     }
 
     [Fact]
-    public async Task AWrongApiToken_IsRefused()
+    public async Task AWrongApiTokenIsRefused()
     {
         using var response = await SendAsync(_readOnlyVisitors, "GET /api/storage", "swt_not-the-token");
 
@@ -163,7 +163,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
         var action = ApiEndpoints(app)[endpoint];
         var (method, route) = (endpoint[..endpoint.IndexOf(' ')], endpoint[(endpoint.IndexOf(' ') + 1)..]);
 
-        using var request = new HttpRequestMessage(new HttpMethod(method), RouteParameter().Replace(route, parameter => SampleRouteValues[parameter.Groups[1].Value]));
+        using var request = new HttpRequestMessage(new HttpMethod(method), RouteParameter().Replace(route, parameter => _sampleRouteValues[parameter.Groups[1].Value]));
         if (BodyType(action) is { } bodyType)
             request.Content = new StringContent(IsList(bodyType) ? "[]" : "{}", Encoding.UTF8, "application/json");
         if (bearerToken != null)

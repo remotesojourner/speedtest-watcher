@@ -25,7 +25,7 @@
         <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync!" SelectionMode="SelectionMode.SingleSelection"
                         Color="Color.Primary" Size="Size.Small" Outlined="true" Delimiters="true" CheckMark="false"
                         SelectedClass="sw-range-selected" Class="sw-range-toggle">
-            @foreach (var option in RangeOptions)
+            @foreach (var option in _rangeOptions)
             {
                 <MudToggleItem Value="@option.Id" Text="@option.Title" />
             }
@@ -298,7 +298,7 @@
 
     private const string CustomRange = "custom";
 
-    private static readonly (string Id, string Title)[] RangeOptions =
+    private static readonly (string Id, string Title)[] _rangeOptions =
     [
         ("24h", "24h"),
         ("7d", "7 days"),
@@ -357,7 +357,7 @@
         Settings.OnChange += OnStateChanged;
 
         var configured = Settings.Current.Display.ChartRange;
-        _range = RangeOptions.Any(option => option.Id == configured) ? configured : "7d";
+        _range = _rangeOptions.Any(option => option.Id == configured) ? configured : "7d";
         ApplyRange();
 
         await LoadStatisticsAsync();

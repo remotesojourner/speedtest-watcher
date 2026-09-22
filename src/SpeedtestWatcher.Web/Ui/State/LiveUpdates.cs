@@ -3,7 +3,7 @@ using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Ui.State;
 
-public sealed class LiveUpdates : IDisposable
+public sealed partial class LiveUpdates : IDisposable
 {
     private readonly IAppEvents _events;
     private readonly StatusStateService _status;
@@ -75,7 +75,10 @@ public sealed class LiveUpdates : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "A live update couldn't be applied to this browser tab");
+            LogUpdateFailed(ex);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "A live update couldn't be applied to this browser tab")]
+    private partial void LogUpdateFailed(Exception exception);
 }

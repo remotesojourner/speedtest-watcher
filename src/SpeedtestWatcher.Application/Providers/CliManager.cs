@@ -6,7 +6,7 @@ using SpeedtestWatcher.Application.Common;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal class CliManager : ICliManager
+internal partial class CliManager : ICliManager
 {
     private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -35,14 +35,14 @@ internal class CliManager : ICliManager
         {
             try
             {
-                _logger.LogInformation("Downloading speedtest CLI for {Provider}...", tool.Provider);
+                LogDownloading(tool.Provider);
                 await DownloadBinaryAsync(tool, cancellationToken);
-                _logger.LogInformation("Successfully installed {Provider} CLI", tool.Provider);
+                LogInstalled(tool.Provider);
             }
             catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException
                                        || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
             {
-                _logger.LogWarning(ex, "Failed to download binary for {Provider}", tool.Provider);
+                LogDownloadFailed(ex, tool.Provider);
             }
         }
     }
@@ -55,7 +55,7 @@ internal class CliManager : ICliManager
         var url = tool.DownloadUrl(PlatformTarget.Current);
         if (string.IsNullOrEmpty(url))
         {
-            _logger.LogWarning("No compatible binary URL found for {Provider} on this platform", tool.Provider);
+            LogNoBinaryForPlatform(tool.Provider);
             return;
         }
 
@@ -84,7 +84,7 @@ internal class CliManager : ICliManager
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    _logger.LogWarning(ex, "Could not delete the downloaded file {Path}", tempFile);
+                    LogDownloadNotDeleted(ex, tempFile);
                 }
             }
         }
@@ -143,8 +143,26 @@ internal class CliManager : ICliManager
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
             {
-                _logger.LogDebug(ex, "Failed to set unix file mode on {Path}", path);
+                LogFileModeNotSet(ex, path);
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Downloading speedtest CLI for {Provider}...")]
+    private partial void LogDownloading(SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Successfully installed {Provider} CLI")]
+    private partial void LogInstalled(SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to download binary for {Provider}")]
+    private partial void LogDownloadFailed(Exception exception, SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "No compatible binary URL found for {Provider} on this platform")]
+    private partial void LogNoBinaryForPlatform(SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not delete the downloaded file {Path}")]
+    private partial void LogDownloadNotDeleted(Exception exception, string path);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Failed to set unix file mode on {Path}")]
+    private partial void LogFileModeNotSet(Exception exception, string path);
 }

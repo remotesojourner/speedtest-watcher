@@ -13,7 +13,7 @@ public sealed class ErrorHandlingMiddlewareTests
     private readonly RecordingLogger<ErrorHandlingMiddleware> _logger = new();
 
     [Fact]
-    public async Task AnUnexpectedApiError_AnswersWithAGenericMessage_AndLogsTheDetails()
+    public async Task AnUnexpectedApiErrorAnswersWithAGenericMessageAndLogsTheDetails()
     {
         var context = Request("/api/storage");
         var middleware = new ErrorHandlingMiddleware(_ => throw new InvalidOperationException(InternalDetail), _logger);
@@ -28,7 +28,7 @@ public sealed class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task AnUnexpectedPageError_IsLeftToTheErrorPage()
+    public async Task AnUnexpectedPageErrorIsLeftToTheErrorPage()
     {
         var middleware = new ErrorHandlingMiddleware(_ => throw new InvalidOperationException(InternalDetail), _logger);
 

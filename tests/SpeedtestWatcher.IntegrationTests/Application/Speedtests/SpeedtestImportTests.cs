@@ -5,15 +5,15 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Speedtests;
 
-public class SpeedtestImportTests : IDisposable
+public sealed class SpeedtestImportTests : IDisposable
 {
-    private static readonly JsonSerializerOptions ApiJson = new(JsonSerializerDefaults.Web);
-    private static readonly DateTime Morning = new(2026, 9, 16, 8, 5, 12, 345);
+    private static readonly JsonSerializerOptions _apiJson = new(JsonSerializerDefaults.Web);
+    private static readonly DateTime _morning = new(2026, 9, 16, 8, 5, 12, 345);
 
     private readonly List<TestDatabase> _databases = [];
 
     [Fact]
-    public async Task ImportingAnExportIntoTheSameDatabase_AddsNothing_AndKeepsEveryResult()
+    public async Task ImportingAnExportIntoTheSameDatabaseAddsNothingAndKeepsEveryResult()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var database = NewDatabase();
@@ -28,7 +28,7 @@ public class SpeedtestImportTests : IDisposable
     }
 
     [Fact]
-    public async Task ImportingIntoAnotherDatabase_WhoseIdsOverlap_RestoresEveryField()
+    public async Task ImportingIntoAnotherDatabaseWhoseIdsOverlapRestoresEveryField()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var source = NewDatabase();
@@ -38,7 +38,7 @@ public class SpeedtestImportTests : IDisposable
         var target = NewDatabase();
         await using (var db = target.NewContext())
         {
-            await new SpeedtestRepository(db).CreateAsync(new Speedtest { Download = 1, Created = Morning.AddDays(-30) }, cancellationToken);
+            await new SpeedtestRepository(db).CreateAsync(new Speedtest { Download = 1, Created = _morning.AddDays(-30) }, cancellationToken);
         }
 
         await using (var db = target.NewContext())
@@ -51,7 +51,7 @@ public class SpeedtestImportTests : IDisposable
         Assert.Equal(4, restored.Count);
 
         var healthy = restored.Single(t => t.Status == TestStatus.Completed && t.Download > 1);
-        Assert.Equal(Morning, healthy.Created);
+        Assert.Equal(_morning, healthy.Created);
         Assert.Equal((12, 941.25, 110.5, 0.75), (healthy.Ping, healthy.Download, healthy.Upload, healthy.Jitter!.Value));
         Assert.Equal((true, 25, 100.0, 50.0), (healthy.Healthy!.Value, healthy.ThresholdPing!.Value, healthy.ThresholdDownload!.Value, healthy.ThresholdUpload!.Value));
         Assert.Equal((TestType.Custom, "Acme Fibre", "speed.acme.example", "r-1"), (healthy.Type, healthy.ServerName, healthy.ServerHost, healthy.ResultId));
@@ -61,7 +61,7 @@ public class SpeedtestImportTests : IDisposable
     }
 
     [Fact]
-    public async Task ImportingTheSameFileTwice_AddsItsResultsOnce()
+    public async Task ImportingTheSameFileTwiceAddsItsResultsOnce()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var source = NewDatabase();
@@ -82,7 +82,7 @@ public class SpeedtestImportTests : IDisposable
     }
 
     [Fact]
-    public async Task AResultListedTwiceInOneFile_IsImportedOnce()
+    public async Task AResultListedTwiceInOneFileIsImportedOnce()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var source = NewDatabase();
@@ -97,7 +97,7 @@ public class SpeedtestImportTests : IDisposable
     }
 
     [Fact]
-    public async Task ExportsWithPascalCaseNames_FromEarlierVersions_StillImport()
+    public async Task ExportsWithPascalCaseNamesFromEarlierVersionsStillImport()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var source = NewDatabase();
@@ -117,7 +117,7 @@ public class SpeedtestImportTests : IDisposable
     [InlineData("paused", null, "cron", TestStatus.Completed, TestType.Auto)]
     [InlineData(null, "Network unreachable", null, TestStatus.Failed, TestType.Auto)]
     [InlineData("SKIPPED", "On the skip list", "Custom", TestStatus.Skipped, TestType.Custom)]
-    public void StatusesAndTypesItDoesNotKnow_FallBackToWhatTheRowSuggests(
+    public void StatusesAndTypesItDoesNotKnowFallBackToWhatTheRowSuggests(
         string? status, string? error, string? type, TestStatus expectedStatus, TestType expectedType)
     {
         var row = new SpeedtestImportRow { Status = status, Error = error, Type = type }.ToSpeedtest();
@@ -126,7 +126,7 @@ public class SpeedtestImportTests : IDisposable
     }
 
     private static List<Speedtest> Parse(string json) =>
-        JsonSerializer.Deserialize<List<SpeedtestImportRow>>(json, ApiJson)!.Select(row => row.ToSpeedtest()).ToList();
+        JsonSerializer.Deserialize<List<SpeedtestImportRow>>(json, _apiJson)!.Select(row => row.ToSpeedtest()).ToList();
 
     private static async Task<string> ExportAsync(TestDatabase database, CancellationToken cancellationToken)
     {
@@ -143,10 +143,10 @@ public class SpeedtestImportTests : IDisposable
             Ping = 12, Jitter = 0.75, Download = 941.25, Upload = 110.5, Healthy = true,
             ThresholdPing = 25, ThresholdDownload = 100, ThresholdUpload = 50,
             Type = TestType.Custom, ServerName = "Acme Fibre", ServerHost = "speed.acme.example", ResultId = "r-1", Time = 14,
-            Created = Morning
+            Created = _morning
         }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Error = "Network unreachable", Created = Morning.AddHours(1) }, cancellationToken);
-        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Skipped, Error = "Public IP 203.0.113.9 is on the skip list", Created = Morning.AddHours(2) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Failed, Error = "Network unreachable", Created = _morning.AddHours(1) }, cancellationToken);
+        await repo.CreateAsync(new Speedtest { Ping = -1, Download = -1, Upload = -1, Status = TestStatus.Skipped, Error = "Public IP 203.0.113.9 is on the skip list", Created = _morning.AddHours(2) }, cancellationToken);
     }
 
     private TestDatabase NewDatabase()

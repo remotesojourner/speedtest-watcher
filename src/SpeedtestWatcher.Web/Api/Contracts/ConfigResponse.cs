@@ -9,7 +9,7 @@ namespace SpeedtestWatcher.Web.Api.Contracts;
 /// </summary>
 public sealed class ConfigResponse
 {
-    private static readonly string[] Flags = ["viewMode", "authActive", "authDisabledByEnv", "oidcClientSecretSet", "apiTokenSet"];
+    private static readonly string[] _flags = ["viewMode", "authActive", "authDisabledByEnv", "oidcClientSecretSet", "apiTokenSet"];
 
     /// <summary>
     /// The caller has read-only access.
@@ -49,7 +49,7 @@ public sealed class ConfigResponse
         OidcClientSecretSet = Flag(config, "oidcClientSecretSet"),
         ApiTokenSet = Flag(config, "apiTokenSet"),
         Settings = config
-            .Where(entry => !Flags.Contains(entry.Key))
+            .Where(entry => !_flags.Contains(entry.Key))
             .ToDictionary(entry => entry.Key, entry => JsonSerializer.SerializeToElement(entry.Value?.ToString()))
     };
 

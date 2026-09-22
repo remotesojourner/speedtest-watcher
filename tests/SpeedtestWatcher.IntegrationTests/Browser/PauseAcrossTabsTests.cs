@@ -15,7 +15,7 @@ public sealed class PauseAcrossTabsTests : BrowserTest, IClassFixture<BrowserApp
     }
 
     [Fact]
-    public async Task PausingInOneTab_ShowsInAnother_AndResumingThereClearsBoth()
+    public async Task PausingInOneTabShowsInAnotherAndResumingThereClearsBoth()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var schedule = await browser.NewPageAsync();

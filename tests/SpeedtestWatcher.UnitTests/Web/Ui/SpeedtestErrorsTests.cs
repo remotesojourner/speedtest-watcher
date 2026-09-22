@@ -10,7 +10,7 @@ public class SpeedtestErrorsTests
     [InlineData("spawn speedtest permission denied", "Speedtest Watcher has no permission to start this test")]
     [InlineData("socket: Connection refused", "The test could not be performed because the connection was rejected")]
     [InlineData("request timed out", "Internet connection was unstable during the time of the test")]
-    public void Describe_MapsKnownProviderErrors(string raw, string expected)
+    public void DescribeMapsKnownProviderErrors(string raw, string expected)
     {
         Assert.Equal(expected, SpeedtestErrors.Describe(raw));
     }
@@ -19,13 +19,13 @@ public class SpeedtestErrorsTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Describe_MissingErrorIsUnknown(string? raw)
+    public void DescribeMissingErrorIsUnknown(string? raw)
     {
         Assert.Equal("Unknown error", SpeedtestErrors.Describe(raw));
     }
 
     [Fact]
-    public void Describe_UnrecognisedErrorKeepsTheRawText()
+    public void DescribeUnrecognisedErrorKeepsTheRawText()
     {
         Assert.Equal("Unknown error: disk full", SpeedtestErrors.Describe("disk full"));
     }

@@ -10,9 +10,9 @@ public static class SpeedtestExport
     public const string CsvHeader =
         "id,created,status,healthy,type,ping,jitter,download,upload,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error";
 
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    public static string ToJson(IEnumerable<Speedtest> tests) => JsonSerializer.Serialize(tests, JsonOptions);
+    public static string ToJson(IEnumerable<Speedtest> tests) => JsonSerializer.Serialize(tests, _jsonOptions);
 
     public static string ToCsv(IEnumerable<Speedtest> tests)
     {

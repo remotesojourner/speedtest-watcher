@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal class SpeedtestRunner : ISpeedtestRunner
+internal partial class SpeedtestRunner : ISpeedtestRunner
 {
-    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestTool> _tools;
+    private readonly Dictionary<SpeedtestProvider, ISpeedtestTool> _tools;
     private readonly ICliManager _cliManager;
     private readonly ILogger<SpeedtestRunner> _logger;
 
@@ -68,7 +68,7 @@ internal class SpeedtestRunner : ISpeedtestRunner
             foreach (var argument in command.Arguments)
                 psi.ArgumentList.Add(argument);
 
-            _logger.LogInformation("Spawning {Binary} with args: {Args}", binaryPath, string.Join(" ", command.Arguments));
+            LogStarting(binaryPath, command.Arguments);
 
             using var process = new Process();
             process.StartInfo = psi;
@@ -105,7 +105,7 @@ internal class SpeedtestRunner : ISpeedtestRunner
                     }
                     catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
                     {
-                        _logger.LogWarning(ex, "Could not stop the {Provider} speedtest process", provider);
+                        LogProcessNotStopped(ex, provider);
                     }
                 }
                 return new SpeedtestExecutionResult
@@ -144,7 +144,7 @@ internal class SpeedtestRunner : ISpeedtestRunner
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException or FormatException)
         {
-            _logger.LogError(ex, "Error running speedtest for {Provider}", provider);
+            LogRunFailed(ex, provider);
             return new SpeedtestExecutionResult
             {
                 Success = false,
@@ -161,9 +161,21 @@ internal class SpeedtestRunner : ISpeedtestRunner
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    _logger.LogWarning(ex, "Could not delete the temporary speedtest config {Path}", scratchFile);
+                    LogConfigNotDeleted(ex, scratchFile);
                 }
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Spawning {Binary} with args: {Args}")]
+    private partial void LogStarting(string binary, IReadOnlyList<string> args);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not stop the {Provider} speedtest process")]
+    private partial void LogProcessNotStopped(Exception exception, SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Error running speedtest for {Provider}")]
+    private partial void LogRunFailed(Exception exception, SpeedtestProvider provider);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not delete the temporary speedtest config {Path}")]
+    private partial void LogConfigNotDeleted(Exception exception, string path);
 }

@@ -5,7 +5,7 @@ namespace SpeedtestWatcher.UnitTests.Application.Integrations;
 public class TemplateHelperTests
 {
     [Fact]
-    public void ReplaceVariables_FillsEveryPlaceholder()
+    public void ReplaceVariablesFillsEveryPlaceholder()
     {
         var vars = new Dictionary<string, string>
         {

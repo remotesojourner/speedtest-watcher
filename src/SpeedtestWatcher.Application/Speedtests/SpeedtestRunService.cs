@@ -10,7 +10,7 @@ using SpeedtestWatcher.Application.SignIn;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 
-public sealed class SpeedtestRunService
+public sealed partial class SpeedtestRunService
 {
     public const string AlreadyRunning = "Speedtest is already running";
 
@@ -62,7 +62,7 @@ public sealed class SpeedtestRunService
     {
         if (type == TestType.Auto && _state.IsPaused)
         {
-            _logger.LogInformation("Speedtest skipped because tests are paused");
+            LogSkippedWhilePaused();
             return Failure("Speedtest is paused");
         }
 
@@ -96,7 +96,7 @@ public sealed class SpeedtestRunService
         }
         catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
         {
-            _logger.LogError(ex, "The manual speedtest could not start");
+            LogManualRunFailed(ex);
             _state.FinishRun();
         }
     }
@@ -110,7 +110,7 @@ public sealed class SpeedtestRunService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error running speedtest");
+            LogRunCrashed(ex);
             return Failure(ex.Message);
         }
         finally
@@ -141,7 +141,7 @@ public sealed class SpeedtestRunService
         var result = await _runner.RunTestAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
         if (!result.Success)
         {
-            _logger.LogWarning("Speedtest failed ({Error}). Retrying once...", result.Error);
+            LogRetrying(result.Error);
             serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
             result = await _runner.RunTestAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
         }
@@ -202,11 +202,26 @@ public sealed class SpeedtestRunService
         };
 
         skipped.Id = await _results.CreateAsync(skipped, cancellationToken);
-        _logger.LogInformation("Speedtest skipped: {Reason}", reason);
+        LogSkipped(reason);
 
         await _dispatcher.PublishAsync(new TestSkipped(skipped), cancellationToken);
         _events.PublishTestFinished(SpeedtestDto.From(skipped));
     }
 
     private static SpeedtestExecutionResult Failure(string error) => new() { Success = false, Error = error };
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Speedtest skipped because tests are paused")]
+    private partial void LogSkippedWhilePaused();
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The manual speedtest could not start")]
+    private partial void LogManualRunFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unexpected error running speedtest")]
+    private partial void LogRunCrashed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speedtest failed ({Error}). Retrying once...")]
+    private partial void LogRetrying(string? error);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Speedtest skipped: {Reason}")]
+    private partial void LogSkipped(string reason);
 }

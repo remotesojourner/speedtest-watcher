@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal class CliDownloadService : BackgroundService
+internal partial class CliDownloadService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<CliDownloadService> _logger;
@@ -25,7 +25,10 @@ internal class CliDownloadService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to download CLI binaries during startup");
+            LogDownloadFailed(ex);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to download CLI binaries during startup")]
+    private partial void LogDownloadFailed(Exception exception);
 }

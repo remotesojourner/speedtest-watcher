@@ -89,13 +89,13 @@ internal class IntegrationRepository : IIntegrationRepository
         return true;
     }
 
-    public async Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default)
+    public async Task UpdateActivityAsync(string id, bool failed, CancellationToken cancellationToken = default)
     {
         var entity = await _db.Integrations.FindAsync([id], cancellationToken);
         if (entity != null)
         {
             entity.LastActivity = DateTime.UtcNow;
-            entity.ActivityFailed = error;
+            entity.ActivityFailed = failed;
             await _db.SaveChangesAsync(cancellationToken);
         }
     }

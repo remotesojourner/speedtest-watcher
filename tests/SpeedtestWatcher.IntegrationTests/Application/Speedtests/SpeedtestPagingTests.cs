@@ -6,7 +6,7 @@ namespace SpeedtestWatcher.IntegrationTests.Application.Speedtests;
 
 public sealed class SpeedtestPagingTests : IDisposable
 {
-    private static readonly DateTime September10 = new(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _september10 = new(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
 
     private readonly TestDatabase _database = new();
     private readonly SpeedtestWatcherDbContext _db;
@@ -19,28 +19,28 @@ public sealed class SpeedtestPagingTests : IDisposable
     }
 
     [Fact]
-    public async Task ImportedOlderResults_ArePagedAfterTheNewerOnes_EvenThoughTheirIdsAreHigher()
+    public async Task ImportedOlderResultsArePagedAfterTheNewerOnesEvenThoughTheirIdsAreHigher()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         foreach (var daysAgo in new[] { 2, 1, 0 })
-            await _repository.CreateAsync(Result(September10.AddDays(-daysAgo)), cancellationToken);
-        await _repository.ImportTestsAsync([Result(September10.AddDays(-9)), Result(September10.AddDays(-8)), Result(September10.AddDays(-7))], cancellationToken);
+            await _repository.CreateAsync(Result(_september10.AddDays(-daysAgo)), cancellationToken);
+        await _repository.ImportTestsAsync([Result(_september10.AddDays(-9)), Result(_september10.AddDays(-8)), Result(_september10.AddDays(-7))], cancellationToken);
 
         var firstPage = await _repository.ListTestsAsync(null, 3, cancellationToken: cancellationToken);
         var secondPage = await _repository.ListTestsAsync(firstPage[^1].Id, 3, cancellationToken: cancellationToken);
         var thirdPage = await _repository.ListTestsAsync(secondPage[^1].Id, 3, cancellationToken: cancellationToken);
 
-        Assert.Equal([September10, September10.AddDays(-1), September10.AddDays(-2)], firstPage.Select(Created));
-        Assert.Equal([September10.AddDays(-7), September10.AddDays(-8), September10.AddDays(-9)], secondPage.Select(Created));
+        Assert.Equal([_september10, _september10.AddDays(-1), _september10.AddDays(-2)], firstPage.Select(Created));
+        Assert.Equal([_september10.AddDays(-7), _september10.AddDays(-8), _september10.AddDays(-9)], secondPage.Select(Created));
         Assert.Empty(thirdPage);
     }
 
     [Fact]
-    public async Task ResultsCreatedAtTheSameMoment_AppearExactlyOnceAcrossPages()
+    public async Task ResultsCreatedAtTheSameMomentAppearExactlyOnceAcrossPages()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         for (var i = 0; i < 5; i++)
-            await _repository.CreateAsync(Result(September10), cancellationToken);
+            await _repository.CreateAsync(Result(_september10), cancellationToken);
 
         var firstPage = await _repository.ListTestsAsync(null, 2, cancellationToken: cancellationToken);
         var secondPage = await _repository.ListTestsAsync(firstPage[^1].Id, 2, cancellationToken: cancellationToken);
@@ -50,10 +50,10 @@ public sealed class SpeedtestPagingTests : IDisposable
     }
 
     [Fact]
-    public async Task PagingFromAResultThatNoLongerExists_ReturnsNothing()
+    public async Task PagingFromAResultThatNoLongerExistsReturnsNothing()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await _repository.CreateAsync(Result(September10), cancellationToken);
+        await _repository.CreateAsync(Result(_september10), cancellationToken);
 
         Assert.Empty(await _repository.ListTestsAsync(99, 10, cancellationToken: cancellationToken));
     }

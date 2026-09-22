@@ -8,7 +8,7 @@ namespace SpeedtestWatcher.Application.Integrations;
 internal abstract class HttpIntegration : IIntegration
 {
     private const int ReplyExcerptLength = 200;
-    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan _requestTimeout = TimeSpan.FromSeconds(15);
 
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -31,7 +31,7 @@ internal abstract class HttpIntegration : IIntegration
         Func<HttpStatusCode, string, IntegrationResult?>? judgeReply = null)
     {
         using var client = _httpClientFactory.CreateClient();
-        client.Timeout = RequestTimeout;
+        client.Timeout = _requestTimeout;
         try
         {
             using (request)
@@ -49,7 +49,7 @@ internal abstract class HttpIntegration : IIntegration
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return IntegrationResult.Failed($"{Schema.Title} didn't answer within {RequestTimeout.TotalSeconds:F0} seconds");
+            return IntegrationResult.Failed($"{Schema.Title} didn't answer within {_requestTimeout.TotalSeconds:F0} seconds");
         }
     }
 

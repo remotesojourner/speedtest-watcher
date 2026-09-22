@@ -7,13 +7,13 @@ using SpeedtestWatcher.IntegrationTests.Fixtures;
 
 namespace SpeedtestWatcher.IntegrationTests.Application.Recommendations;
 
-public class RecommendationsUpdatedTests : IDisposable
+public sealed class RecommendationsUpdatedTests : IDisposable
 {
     private readonly TestDatabase _database = new();
     private ServiceProvider? _services;
 
     [Fact(Timeout = 15000)]
-    public async Task CompletedTestsBeforeTheTenth_StoreNoRecommendation()
+    public async Task CompletedTestsBeforeTheTenthStoreNoRecommendation()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var scheduler = await BuildSchedulerAsync(new RecordingDispatcher(), cancellationToken);
@@ -29,7 +29,7 @@ public class RecommendationsUpdatedTests : IDisposable
     }
 
     [Fact(Timeout = 15000)]
-    public async Task TheTenthCompletedTest_PublishesTheNewRecommendations_AndUnchangedValuesPublishNothing()
+    public async Task TheTenthCompletedTestPublishesTheNewRecommendationsAndUnchangedValuesPublishNothing()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var published = new RecordingDispatcher();
@@ -71,7 +71,7 @@ public class RecommendationsUpdatedTests : IDisposable
         private readonly object _gate = new();
         private readonly List<IntegrationEvent> _events = [];
 
-        public IReadOnlyList<IntegrationEvent> Events
+        public List<IntegrationEvent> Events
         {
             get
             {

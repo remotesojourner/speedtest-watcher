@@ -8,7 +8,7 @@ internal sealed class CloudflareTool : ISpeedtestTool
     private const string DownloadBase = "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/";
     private const int DurationWhenUnreported = 30;
 
-    private static readonly Dictionary<PlatformTarget, string> Downloads = new()
+    private static readonly Dictionary<PlatformTarget, string> _downloads = new()
     {
         [new(OSPlatform.Windows, Architecture.X64)] = "cfspeedtest-x86_64-pc-windows-msvc.zip",
         [new(OSPlatform.OSX, Architecture.X64)] = "cfspeedtest-x86_64-apple-darwin.tar.gz",
@@ -27,7 +27,7 @@ internal sealed class CloudflareTool : ISpeedtestTool
 
     public ServerCatalog? Servers => null;
 
-    public string? DownloadUrl(PlatformTarget target) => Downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
+    public string? DownloadUrl(PlatformTarget target) => _downloads.TryGetValue(target, out var file) ? DownloadBase + file : null;
 
     public ToolArguments BuildArguments(RunOptions options)
     {
@@ -81,7 +81,7 @@ internal sealed class CloudflareTool : ISpeedtestTool
         return result;
     }
 
-    private static double? Jitter(IList<double> latencies)
+    private static double? Jitter(List<double> latencies)
     {
         if (latencies.Count < 2) return null;
 

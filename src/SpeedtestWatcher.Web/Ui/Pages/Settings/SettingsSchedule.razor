@@ -11,7 +11,7 @@
         <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="Test Schedule"
                      Description="How often Speedtest Watcher runs a speedtest automatically. Cron expressions run in UTC.">
             <div class="sw-option-list mb-3">
-                @foreach (var preset in CronPresets)
+                @foreach (var preset in _cronPresets)
                 {
                     <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
                                 Active="@(_cronMode == preset.Cron)" OnClick="@(() => SelectCron(preset.Cron))" />
@@ -62,7 +62,7 @@
             else
             {
                 <div class="sw-option-list mb-3">
-                    @foreach (var preset in PausePresets)
+                    @foreach (var preset in _pausePresets)
                     {
                         <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
                                     Active="@(_pauseMode == preset.Id)" OnClick="@(() => _pauseMode = preset.Id)" />
@@ -91,7 +91,7 @@
 @code {
     private const string CustomMode = "custom";
 
-    private static readonly (string Cron, string Title, string Description, string Icon)[] CronPresets =
+    private static readonly (string Cron, string Title, string Description, string Icon)[] _cronPresets =
     [
         ("* * * * *", "Continuous", "Every minute — high resource usage", Icons.Material.Filled.Bolt),
         ("0,30 * * * *", "Very often", "Every 30 minutes", Icons.Material.Filled.Speed),
@@ -100,7 +100,7 @@
         ("0 0,6,12,18 * * *", "Very rarely", "Every 6 hours", Icons.Material.Filled.Spa)
     ];
 
-    private static readonly (string Id, double? Hours, string Title, string Description, string Icon)[] PausePresets =
+    private static readonly (string Id, double? Hours, string Title, string Description, string Icon)[] _pausePresets =
     [
         ("manual", null, "Pause indefinitely", "Until you resume manually", Icons.Material.Filled.AllInclusive),
         ("short", 1, "Short break", "Pause for 1 hour", Icons.Material.Filled.Coffee),
@@ -145,7 +145,7 @@
         StatusService.OnChange += OnStatusChanged;
 
         var cron = Settings.Current.Schedule.Cron;
-        _cronMode = CronPresets.Any(p => p.Cron == cron) ? cron : CustomMode;
+        _cronMode = _cronPresets.Any(p => p.Cron == cron) ? cron : CustomMode;
         _customCron = cron;
         _scheduleOffset = Settings.Current.Schedule.RandomOffset;
     }
@@ -165,7 +165,7 @@
 
     private void PauseTests()
     {
-        var hours = _pauseMode == CustomMode ? _customPauseHours : PausePresets.First(p => p.Id == _pauseMode).Hours;
+        var hours = _pauseMode == CustomMode ? _customPauseHours : _pausePresets.First(p => p.Id == _pauseMode).Hours;
         var result = Pausing.Pause(hours);
         if (!result.Succeeded)
         {

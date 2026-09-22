@@ -2,7 +2,7 @@ namespace SpeedtestWatcher.Web.Ui.Display;
 
 public static class SpeedtestErrors
 {
-    private static readonly (string Match, string Message)[] Known =
+    private static readonly (string Match, string Message)[] _known =
     [
         ("Network unreachable", "Internet connection was unstable during the time of the test"),
         ("Timeout occurred in connect", "The test took too long and was canceled"),
@@ -18,7 +18,7 @@ public static class SpeedtestErrors
     {
         if (string.IsNullOrWhiteSpace(error)) return "Unknown error";
 
-        foreach (var (match, message) in Known)
+        foreach (var (match, message) in _known)
         {
             if (error.Contains(match, StringComparison.Ordinal)) return message;
         }

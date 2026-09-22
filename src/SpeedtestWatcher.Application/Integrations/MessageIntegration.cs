@@ -14,7 +14,7 @@ internal sealed record OutgoingMessage(MessageKind Kind, string Text);
 
 internal abstract class MessageIntegration : HttpIntegration
 {
-    private static readonly IReadOnlyList<IntegrationFieldSchemaDto> MessageFields =
+    private static readonly IReadOnlyList<IntegrationFieldSchemaDto> _messageFields =
     [
         new() { Name = "send_finished", Type = "boolean", Required = false, Default = true },
         new() { Name = "finished_message", Type = "textarea", Required = false },
@@ -43,7 +43,7 @@ internal abstract class MessageIntegration : HttpIntegration
         Name = Name,
         Title = Title,
         Description = Description,
-        Fields = [.. OwnFields, .. MessageFields]
+        Fields = [.. OwnFields, .. _messageFields]
     };
 
     public override async Task<IntegrationResult> HandleAsync(IntegrationEvent integrationEvent, IntegrationContext context, CancellationToken cancellationToken)

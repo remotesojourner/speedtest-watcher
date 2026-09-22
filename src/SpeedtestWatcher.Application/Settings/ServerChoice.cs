@@ -1,3 +1,3 @@
 namespace SpeedtestWatcher.Application.Settings;
 
-public sealed record ServerChoice(string? SingleId, IReadOnlyList<string> ListedIds);
+public sealed record ServerChoice(string? PinnedId, IReadOnlyList<string> ListedIds);

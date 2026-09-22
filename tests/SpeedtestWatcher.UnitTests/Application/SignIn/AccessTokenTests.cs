@@ -7,7 +7,7 @@ namespace SpeedtestWatcher.UnitTests.Application.SignIn;
 public class AccessTokenTests
 {
     [Fact]
-    public void ApiToken_MatchesOnlyItsOwnHash()
+    public void ApiTokenMatchesOnlyItsOwnHash()
     {
         var token = ApiToken.Generate();
         var hash = ApiToken.Hash(token);
@@ -20,7 +20,7 @@ public class AccessTokenTests
     }
 
     [Fact]
-    public void ApiToken_IsReadFromABearerHeader()
+    public void ApiTokenIsReadFromABearerHeader()
     {
         var context = new DefaultHttpContext();
         context.Request.Headers.Authorization = "Bearer swt_abc";
@@ -34,7 +34,7 @@ public class AccessTokenTests
     [InlineData("profile email", new[] { "openid", "profile", "email" })]
     [InlineData("openid,email openid", new[] { "openid", "email" })]
     [InlineData("", new[] { "openid" })]
-    public void Scopes_AlwaysIncludeOpenId_WithoutDuplicates(string raw, string[] expected)
+    public void ScopesAlwaysIncludeOpenIdWithoutDuplicates(string raw, string[] expected)
     {
         Assert.Equal(expected, SignInSettings.ParseScopes(raw));
     }

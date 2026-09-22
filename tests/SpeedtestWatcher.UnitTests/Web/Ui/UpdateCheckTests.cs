@@ -20,7 +20,7 @@ public sealed class UpdateCheckTests
     }
 
     [Fact]
-    public void NoUpdateIsOffered_WhenTheCheckFailed()
+    public void NoUpdateIsOfferedWhenTheCheckFailed()
     {
         Assert.Null(UpdateCheck.AvailableUpdate(null));
     }

@@ -8,9 +8,9 @@ internal sealed class InMemoryIntegrations(List<IntegrationData> items) : IInteg
 
     public Task<List<IntegrationData>> ListAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(items);
 
-    public Task UpdateActivityAsync(string id, bool error, CancellationToken cancellationToken = default)
+    public Task UpdateActivityAsync(string id, bool failed, CancellationToken cancellationToken = default)
     {
-        ActivityErrors.Add(error);
+        ActivityErrors.Add(failed);
         return Task.CompletedTask;
     }
 

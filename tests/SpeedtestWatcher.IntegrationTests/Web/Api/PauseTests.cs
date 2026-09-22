@@ -15,7 +15,7 @@ public sealed class PauseTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task APauseLongerThan30Days_IsRefused_AndTestsKeepRunning()
+    public async Task APauseLongerThan30DaysIsRefusedAndTestsKeepRunning()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
@@ -28,7 +28,7 @@ public sealed class PauseTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task APauseOf30Days_IsAccepted()
+    public async Task APauseOf30DaysIsAccepted()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();

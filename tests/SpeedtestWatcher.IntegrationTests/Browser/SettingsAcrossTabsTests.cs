@@ -15,7 +15,7 @@ public sealed class SettingsAcrossTabsTests : BrowserTest, IClassFixture<Browser
     }
 
     [Fact]
-    public async Task ChangingTheProviderInOneTab_ChangesTheRunButtonInAnother()
+    public async Task ChangingTheProviderInOneTabChangesTheRunButtonInAnother()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var provider = await browser.NewPageAsync();

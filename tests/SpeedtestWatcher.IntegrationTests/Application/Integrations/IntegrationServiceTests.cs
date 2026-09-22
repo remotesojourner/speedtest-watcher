@@ -27,7 +27,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SendTest_UsesTheLatestCompletedResult_WithoutSavingAnything()
+    public async Task SendTestUsesTheLatestCompletedResultWithoutSavingAnything()
     {
         A.CallTo(() => _speedtests.GetLatestCompletedAsync(A<CancellationToken>._))
             .Returns(new Speedtest { ServerName = "Acme Fibre", Ping = 12, Download = 941.25, Upload = 110.5 });
@@ -40,7 +40,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SendTest_UsesSampleValues_BeforeAnyTestHasCompleted()
+    public async Task SendTestUsesSampleValuesBeforeAnyTestHasCompleted()
     {
         A.CallTo(() => _speedtests.GetLatestCompletedAsync(A<CancellationToken>._)).Returns((Speedtest?)null);
 
@@ -51,7 +51,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SendTest_AnswersWithTheReason_WhenTheServiceRefusesIt()
+    public async Task SendTestAnswersWithTheReasonWhenTheServiceRefusesIt()
     {
         _handler.ResponseStatus = HttpStatusCode.NotFound;
         _handler.ResponseBody = "Unknown Webhook";
@@ -63,7 +63,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SendTest_IsRefused_WithoutFullAccess()
+    public async Task SendTestIsRefusedWithoutFullAccess()
     {
         var result = await Service(FixedAccess.ReadOnly).SendTestAsync("webhook", Settings(WebhookSettings), null, TestContext.Current.CancellationToken);
 
@@ -72,7 +72,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SendTest_ForAnUnknownType_IsNotFound()
+    public async Task SendTestForAnUnknownTypeIsNotFound()
     {
         var result = await Service().SendTestAsync("carrierPigeon", Settings(WebhookSettings), null, TestContext.Current.CancellationToken);
 
@@ -81,7 +81,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Create_StoresTheDisplayNameApartFromTheSettings()
+    public async Task CreateStoresTheDisplayNameApartFromTheSettings()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
 
@@ -98,7 +98,7 @@ public sealed class IntegrationServiceTests : IDisposable
     [InlineData("""{"url":"https://localhost/hook","interval":"soon"}""", "interval needs to be a whole number")]
     [InlineData("""{"url":"https://localhost/hook","send_finished":"yes"}""", "send_finished needs to be true or false")]
     [InlineData("""{"url":"https://localhost/hook","carrier":"pigeon"}""", "carrier isn't a setting of the Webhook integration")]
-    public async Task Create_RefusesSettingsTheTypeCannotUse(string settings, string expectedProblem)
+    public async Task CreateRefusesSettingsTheTypeCannotUse(string settings, string expectedProblem)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
 
@@ -109,7 +109,7 @@ public sealed class IntegrationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Update_ChecksTheSettingsItWouldSave()
+    public async Task UpdateChecksTheSettingsItWouldSave()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var service = Service();

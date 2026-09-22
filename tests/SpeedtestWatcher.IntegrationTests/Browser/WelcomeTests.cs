@@ -16,7 +16,7 @@ public sealed class WelcomeTests : BrowserTest, IClassFixture<BrowserAppWithoutP
     }
 
     [Fact]
-    public async Task TheWelcomeSteps_SaveTheProviderAndTheTargets()
+    public async Task TheWelcomeStepsSaveTheProviderAndTheTargets()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var page = await browser.NewPageAsync();

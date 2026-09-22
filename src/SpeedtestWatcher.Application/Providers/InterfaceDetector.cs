@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SpeedtestWatcher.Application.Providers;
 
-internal sealed class InterfaceDetector : INetworkInterfaceDetector, IDisposable
+internal sealed partial class InterfaceDetector : INetworkInterfaceDetector, IDisposable
 {
     private readonly ILogger<InterfaceDetector> _logger;
     private Dictionary<string, List<string>> _cachedInterfaces = new();
@@ -64,7 +64,7 @@ internal sealed class InterfaceDetector : INetworkInterfaceDetector, IDisposable
 
             _cachedInterfaces = result;
             _lastScan = DateTime.UtcNow;
-            _logger.LogInformation("Detected {Count} active network interfaces", result.Count);
+            LogInterfacesDetected(result.Count);
             return result;
         }
         finally
@@ -74,4 +74,7 @@ internal sealed class InterfaceDetector : INetworkInterfaceDetector, IDisposable
     }
 
     public void Dispose() => _lock.Dispose();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Detected {Count} active network interfaces")]
+    private partial void LogInterfacesDetected(int count);
 }

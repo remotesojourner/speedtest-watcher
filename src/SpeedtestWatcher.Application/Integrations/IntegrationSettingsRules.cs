@@ -9,7 +9,7 @@ public static class IntegrationSettingsRules
     private const int MaxTextLength = 255;
     private const int MaxTextareaLength = 2000;
 
-    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
+    private static readonly TimeSpan _regexTimeout = TimeSpan.FromMilliseconds(200);
 
     public static string? ProblemWith(IntegrationTypeSchemaDto schema, IReadOnlyDictionary<string, JsonElement> settings, IEnumerable<string> changedKeys)
     {
@@ -61,7 +61,7 @@ public static class IntegrationSettingsRules
 
         try
         {
-            return Regex.IsMatch(text, pattern, RegexOptions.None, RegexTimeout);
+            return Regex.IsMatch(text, pattern, RegexOptions.None, _regexTimeout);
         }
         catch (Exception ex) when (ex is ArgumentException or RegexMatchTimeoutException)
         {

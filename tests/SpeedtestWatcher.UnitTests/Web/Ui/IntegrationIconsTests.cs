@@ -7,7 +7,7 @@ namespace SpeedtestWatcher.UnitTests.Web.Ui;
 public class IntegrationIconsTests
 {
     [Fact]
-    public void EveryIntegrationType_HasAnIcon_AndEveryIconFileIsUsed()
+    public void EveryIntegrationTypeHasAnIconAndEveryIconFileIsUsed()
     {
         var types = TestIntegrations.Dispatcher(new InMemoryIntegrations([]), new RecordingHandler()).Schemas.Keys;
         var webRoot = WebRoot();

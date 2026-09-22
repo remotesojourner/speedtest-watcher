@@ -15,7 +15,7 @@ public sealed class ManualRunTests : BrowserTest, IClassFixture<BrowserAppWithRe
     }
 
     [Fact]
-    public async Task AManualRun_ShowsAsRunningInAnotherTab_AndItsResultArrivesThereLive()
+    public async Task AManualRunShowsAsRunningInAnotherTabAndItsResultArrivesThereLive()
     {
         await using var browser = await OpenBrowserAsync(_app);
         var dashboard = await browser.NewPageAsync();

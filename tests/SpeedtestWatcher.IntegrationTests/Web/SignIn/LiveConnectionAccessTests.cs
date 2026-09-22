@@ -17,7 +17,7 @@ public sealed class LiveConnectionAccessTests : IClassFixture<ReadOnlyVisitorsAp
     private const string CircuitNegotiation = "/_blazor/negotiate?negotiateVersion=1";
 
     [Fact]
-    public async Task ReadOnlyVisitors_CanOpenTheLiveConnection()
+    public async Task ReadOnlyVisitorsCanOpenTheLiveConnection()
     {
         using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
 
@@ -27,7 +27,7 @@ public sealed class LiveConnectionAccessTests : IClassFixture<ReadOnlyVisitorsAp
     }
 
     [Fact]
-    public async Task VisitorsWithoutAccess_CannotOpenIt()
+    public async Task VisitorsWithoutAccessCannotOpenIt()
     {
         using var client = _noVisitors.CreateClientWithoutRedirects();
 
@@ -37,7 +37,7 @@ public sealed class LiveConnectionAccessTests : IClassFixture<ReadOnlyVisitorsAp
     }
 
     [Fact]
-    public async Task TheOldSpeedtestHub_IsGone()
+    public async Task TheOldSpeedtestHubIsGone()
     {
         using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
 
