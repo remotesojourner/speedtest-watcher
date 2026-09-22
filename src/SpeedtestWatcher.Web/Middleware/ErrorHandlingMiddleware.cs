@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Web.Api.Contracts;
+
 namespace SpeedtestWatcher.Web.Middleware;
 
 public class ErrorHandlingMiddleware
@@ -26,7 +28,7 @@ public class ErrorHandlingMiddleware
             if (!context.Response.HasStarted && context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                await context.Response.WriteAsJsonAsync(new { message = UnexpectedErrorMessage });
+                await context.Response.WriteAsJsonAsync(new ErrorResponse { Message = UnexpectedErrorMessage });
             }
             else
             {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Services.Auth;
 
@@ -19,7 +20,7 @@ public sealed class AccessDeniedResponder : IAuthorizationMiddlewareResultHandle
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.Headers.WWWAuthenticate = "Bearer";
-            await context.Response.WriteAsJsonAsync(new { message = OperationResult.DeniedMessage });
+            await context.Response.WriteAsJsonAsync(new ErrorResponse { Message = OperationResult.DeniedMessage });
             return;
         }
 

@@ -172,7 +172,7 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | **Scopes** | Space separated. `openid` is always included |
 | **Redirect URI** | Read-only — register this with your provider |
 | **People who aren't signed in** | **No access** (sent to sign in first) or **Read-only** (can see results, but can't run tests or change settings) |
-| **API Token** | A bearer token for Prometheus and scripts. It's shown once, and only a hash of it is stored |
+| **API Token** | A bearer token for Prometheus and scripts using the [API](#api). It's shown once, and only a hash of it is stored |
 
 ### Tab: Storage
 
@@ -183,6 +183,13 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | **Speedtest Results** | Export results as CSV or JSON, or import a JSON export. Results that are already stored are skipped, so importing the same file twice is safe |
 | **Settings Backup** | Export or import settings, integrations and recommendations as a JSON file. Sign-in settings are never included, and anything in a backup that isn't valid is skipped |
 | **Danger Zone** | **Clear history** deletes every result; **Factory reset** returns settings to their defaults and deletes integrations and recommendations |
+
+### Tab: About
+
+| Field | Description |
+|---|---|
+| **Version** | The running version. When GitHub has a newer release, an update notice appears here and an icon in the header. The check needs internet access and runs at most every six hours |
+| **Links** | The GitHub repository, the release notes, the issue tracker and the sponsor page |
 
 ---
 
