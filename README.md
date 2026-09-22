@@ -263,6 +263,14 @@ The tests use xUnit v3, so run the test project directly:
 dotnet run --project tests/SpeedtestWatcher.Tests
 ```
 
+The browser tests drive the app in Chromium with [Playwright](https://playwright.dev/dotnet/). Install Chromium once after building, or they're skipped:
+
+```bash
+pwsh tests/SpeedtestWatcher.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
+```
+
+To leave them out, add `-- -trait- "Category=Browser"` to the test command.
+
 ### Database migrations
 
 EF Core migrations are applied automatically on startup. To add a new migration during development:
@@ -293,7 +301,7 @@ docker compose up -d --build
 | Speed tests | Ookla Speedtest CLI, LibreSpeed CLI, cfspeedtest |
 | Link-preview image | [SkiaSharp](https://github.com/mono/SkiaSharp) |
 | Integration icons | [Dashboard Icons](https://github.com/homarr-labs/dashboard-icons) (Apache License 2.0) |
-| Tests | xUnit v3, FakeItEasy |
+| Tests | xUnit v3, FakeItEasy, Playwright for the browser tests |
 | Containers | Docker + Docker Compose |
 
 ---

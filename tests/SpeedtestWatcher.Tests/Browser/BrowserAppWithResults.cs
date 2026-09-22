@@ -1,10 +1,10 @@
-namespace SpeedtestWatcher.Tests;
+namespace SpeedtestWatcher.Tests.Browser;
 
-public sealed class SignInOffApp : TestApp
+public sealed class BrowserAppWithResults : BrowserApp
 {
     protected override async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         await SampleData.ChooseOoklaAsync(services, cancellationToken);
-        await SampleData.SeedResultsAsync(services, cancellationToken);
+        await SampleData.SeedRecentResultsAsync(services, cancellationToken);
     }
 }

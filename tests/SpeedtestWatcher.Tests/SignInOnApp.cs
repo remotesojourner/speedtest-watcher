@@ -1,7 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.Core.Enums;
 using SpeedtestWatcher.Core.Helpers;
-using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Tests;
 
@@ -13,15 +11,7 @@ public abstract class SignInOnApp : TestApp
 
     protected override async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
-        var settings = services.GetRequiredService<ISettingsStore>();
-        await settings.SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla" }, cancellationToken);
-        await settings.SaveSignInAsync(new Dictionary<string, string>
-        {
-            ["authEnabled"] = "true",
-            ["oidcAuthority"] = "https://localhost/identity-provider",
-            ["oidcClientId"] = "speedtest-watcher",
-            ["visitorAccess"] = VisitorAccess.ToName(),
-            ["apiTokenHash"] = ApiToken.Hash(Token)
-        }, cancellationToken);
+        await SampleData.ChooseOoklaAsync(services, cancellationToken);
+        await SampleData.TurnSignInOnAsync(services, VisitorAccess, Token, cancellationToken);
     }
 }
