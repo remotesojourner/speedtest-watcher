@@ -26,6 +26,7 @@ internal sealed class WebhookIntegration : HttpIntegration
             new() { Name = "send_failed", Type = "boolean", Required = false, Default = true },
             new() { Name = "send_recommendations", Type = "boolean", Required = false, Default = false },
             new() { Name = "send_unhealthy", Type = "boolean", Required = false, Default = true },
+            new() { Name = HealthyAgainToggle.Key, Type = "boolean", Required = false, Default = true },
             new() { Name = "send_skipped", Type = "boolean", Required = false, Default = true },
             new() { Name = "send_config_updates", Type = "boolean", Required = false, Default = false },
             new() { Name = "interval", Type = "number", Required = false, Default = 1 }
@@ -53,6 +54,7 @@ internal sealed class WebhookIntegration : HttpIntegration
             TestFinished when settings.GetBool("send_finished", true) => "TEST_FINISHED",
             TestFailed when settings.GetBool("send_failed", true) => "TEST_FAILED",
             TestUnhealthy when settings.GetBool("send_unhealthy", true) => "TEST_UNHEALTHY",
+            TestHealthyAgain when settings.GetBool(HealthyAgainToggle.Key, true) => "TEST_HEALTHY_AGAIN",
             TestSkipped when settings.GetBool("send_skipped", true) => "TEST_SKIPPED",
             RecommendationsUpdated when settings.GetBool("send_recommendations") => "RECOMMENDATIONS_UPDATED",
             ConfigUpdated when settings.GetBool("send_config_updates") => "CONFIG_UPDATED",

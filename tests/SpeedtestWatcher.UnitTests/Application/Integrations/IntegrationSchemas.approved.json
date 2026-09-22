@@ -77,6 +77,24 @@
         "default": null
       },
       {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
         "name": "send_skipped",
         "type": "boolean",
         "description": "",
@@ -166,6 +184,24 @@
       },
       {
         "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -272,6 +308,24 @@
       },
       {
         "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -422,6 +476,24 @@
         "default": null
       },
       {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
         "name": "send_skipped",
         "type": "boolean",
         "description": "",
@@ -511,6 +583,24 @@
       },
       {
         "name": "unhealthy_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -643,6 +733,24 @@
         "default": null
       },
       {
+        "name": "send_healthy_again",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "healthy_again_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
         "name": "send_skipped",
         "type": "boolean",
         "description": "",
@@ -723,6 +831,15 @@
       },
       {
         "name": "send_unhealthy",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_healthy_again",
         "type": "boolean",
         "description": "",
         "regex": null,

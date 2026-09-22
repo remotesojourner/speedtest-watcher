@@ -15,7 +15,7 @@ public partial class IntegrationRequestTests
 {
     private static readonly JsonSerializerOptions _indentedJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%error%";
+    private const string AllVariables = "%ping%|%jitter%|%download%|%upload%|%status%|%healthy%|%server%|%threshold_ping%|%threshold_download%|%threshold_upload%|%missed%|%error%";
 
     private static readonly DateTime _tested = new(2026, 9, 16, 8, 5, 0);
 
@@ -51,19 +51,19 @@ public partial class IntegrationRequestTests
     private static readonly (string Scenario, string Name, string Settings)[] _scenarios =
     [
         ("discord", "discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"Watcher"}"""),
-        ("discord with every template variable", "discord", $$"""{"url":"https://localhost/discord.com/api/webhooks/1/x","finished_message":"{{AllVariables}}","error_message":"{{AllVariables}}","unhealthy_message":"{{AllVariables}}","skipped_message":"{{AllVariables}}"}"""),
+        ("discord with every template variable", "discord", $$"""{"url":"https://localhost/discord.com/api/webhooks/1/x","finished_message":"{{AllVariables}}","error_message":"{{AllVariables}}","unhealthy_message":"{{AllVariables}}","healthy_again_message":"{{AllVariables}}","skipped_message":"{{AllVariables}}"}"""),
         ("discord without a url", "discord", """{"display_name":"Watcher"}"""),
-        ("discord saved from the settings form", "discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_skipped":true,"skipped_message":""}"""),
-        ("ntfy saved from the settings form", "ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","token":"","title":"","tags":"","priority":"","error_priority":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_skipped":true,"skipped_message":""}"""),
+        ("discord saved from the settings form", "discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_healthy_again":true,"healthy_again_message":"","send_skipped":true,"skipped_message":""}"""),
+        ("ntfy saved from the settings form", "ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","token":"","title":"","tags":"","priority":"","error_priority":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_healthy_again":true,"healthy_again_message":"","send_skipped":true,"skipped_message":""}"""),
         ("telegram", "telegram", """{"token":"1:abc","chat_id":"42"}"""),
         ("gotify", "gotify", """{"url":"https://localhost/gotify/","key":"AAAAAAAAAAAAAAA","priority":"4"}"""),
-        ("gotify with every message turned off", "gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false,"send_failed":false,"send_unhealthy":false,"send_skipped":false}"""),
+        ("gotify with every message turned off", "gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false,"send_failed":false,"send_unhealthy":false,"send_healthy_again":false,"send_skipped":false}"""),
         ("ntfy", "ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","token":"tk_1","title":"Speedtest","tags":"warning","priority":"2","error_priority":"4"}"""),
         ("pushover", "pushover", """{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user_key":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}"""),
         ("apprise with urls", "apprise", """{"url":"https://localhost/apprise/","urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest"}"""),
         ("apprise with a config key and tags", "apprise", """{"url":"https://localhost/apprise","key":"home","tags":"admin, devops"}"""),
         ("apprise with urls and a config key", "apprise", """{"url":"https://localhost/apprise","urls":"json://localhost/hook","key":"home"}"""),
-        ("apprise saved from the settings form", "apprise", """{"url":"https://localhost/apprise","urls":"","key":"home","tags":"","title":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_skipped":false,"skipped_message":""}"""),
+        ("apprise saved from the settings form", "apprise", """{"url":"https://localhost/apprise","urls":"","key":"home","tags":"","title":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_healthy_again":true,"healthy_again_message":"","send_skipped":false,"skipped_message":""}"""),
         ("webhook", "webhook", """{"url":"https://localhost/hook","send_started":true,"send_alive":true,"send_recommendations":true,"send_config_updates":true}"""),
         ("healthChecks", "healthChecks", """{"url":"https://localhost/hc/uuid/"}"""),
         ("influxdb", "influxdb", """{"url":"https://localhost/influx/","org":"home","bucket":"speed","token":"influx-token","host":"watcher"}"""),
@@ -123,6 +123,7 @@ public partial class IntegrationRequestTests
         ("test started", (dispatcher, ct) => dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), ct)),
         ("test finished", (dispatcher, ct) => dispatcher.PublishAsync(new TestFinished(_healthy), ct)),
         ("test missed targets", (dispatcher, ct) => dispatcher.PublishAsync(new TestUnhealthy(_unhealthy), ct)),
+        ("test met targets again", (dispatcher, ct) => dispatcher.PublishAsync(new TestHealthyAgain(_healthy), ct)),
         ("test failed", (dispatcher, ct) => dispatcher.PublishAsync(new TestFailed(_failed), ct)),
         ("test skipped", (dispatcher, ct) => dispatcher.PublishAsync(new TestSkipped(_skipped), ct)),
         ("recommendations updated", (dispatcher, ct) => dispatcher.PublishAsync(new RecommendationsUpdated(_recommendation), ct)),

@@ -47,7 +47,7 @@ internal sealed class DiscordIntegration : MessageIntegration
 
     private static int Colour(MessageKind kind) => kind switch
     {
-        MessageKind.Finished => 4572762,
+        MessageKind.Finished or MessageKind.HealthyAgain => 4572762,
         MessageKind.Failed => 12993861,
         MessageKind.Unhealthy => 16098851,
         _ => 9807270

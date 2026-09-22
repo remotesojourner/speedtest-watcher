@@ -72,8 +72,11 @@ public sealed class SettingsBackupService
 
         foreach (var integration in backup.Integrations)
         {
-            if (_dispatcher.Schemas.ContainsKey(integration.Name) && IsJsonObject(integration.Data))
+            if (_dispatcher.Schemas.TryGetValue(integration.Name, out var schema) && IsJsonObject(integration.Data))
             {
+                if (schema.Fields.Any(field => field.Name == HealthyAgainToggle.Key))
+                    integration.Data = HealthyAgainToggle.FollowUnhealthy(integration.Data);
+
                 await _integrations.UpsertAsync(integration, cancellationToken);
                 result.Integrations++;
             }

@@ -7,6 +7,7 @@ public enum MessageKind
     Finished,
     Failed,
     Unhealthy,
+    HealthyAgain,
     Skipped
 }
 
@@ -22,6 +23,8 @@ internal abstract class MessageIntegration : HttpIntegration
         new() { Name = "error_message", Type = "textarea", Required = false },
         new() { Name = "send_unhealthy", Type = "boolean", Required = false, Default = true },
         new() { Name = "unhealthy_message", Type = "textarea", Required = false },
+        new() { Name = HealthyAgainToggle.Key, Type = "boolean", Required = false, Default = true },
+        new() { Name = "healthy_again_message", Type = "textarea", Required = false },
         new() { Name = "send_skipped", Type = "boolean", Required = false, Default = true },
         new() { Name = "skipped_message", Type = "textarea", Required = false }
     ];
@@ -55,6 +58,7 @@ internal abstract class MessageIntegration : HttpIntegration
             TestFinished => MessageKind.Finished,
             TestFailed => MessageKind.Failed,
             TestUnhealthy => MessageKind.Unhealthy,
+            TestHealthyAgain => MessageKind.HealthyAgain,
             TestSkipped => MessageKind.Skipped,
             _ => null
         };
@@ -86,6 +90,7 @@ internal abstract class MessageIntegration : HttpIntegration
         MessageKind.Finished => "send_finished",
         MessageKind.Failed => "send_failed",
         MessageKind.Unhealthy => "send_unhealthy",
+        MessageKind.HealthyAgain => HealthyAgainToggle.Key,
         _ => "send_skipped"
     };
 
@@ -94,6 +99,7 @@ internal abstract class MessageIntegration : HttpIntegration
         MessageKind.Finished => "finished_message",
         MessageKind.Failed => "error_message",
         MessageKind.Unhealthy => "unhealthy_message",
+        MessageKind.HealthyAgain => "healthy_again_message",
         _ => "skipped_message"
     };
 }

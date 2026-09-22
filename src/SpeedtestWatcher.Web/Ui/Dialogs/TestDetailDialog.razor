@@ -1,5 +1,4 @@
 @inject ResultsService Results
-@inject SettingsState Settings
 @inject RecentResults RecentResults
 @inject ICurrentAccess Access
 @inject ISnackbar Snackbar
@@ -36,17 +35,17 @@
             else
             {
                 <div class="d-flex flex-wrap align-end justify-space-between gap-6 mb-5">
-                    <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, Settings.Current.Targets.Download)"
+                    <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, Test.ThresholdDownload)"
                                    Value="@($"{PreferencesService.ConvertSpeed(Test.Download):F1}")"
                                    Unit="@PreferencesService.SpeedUnit"
                                    Label="Download speed" />
 
                     <div class="d-flex flex-wrap gap-5">
-                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, Settings.Current.Targets.Upload)" Icon="@Icons.Material.Filled.Upload"
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, Test.ThresholdUpload)" Icon="@Icons.Material.Filled.Upload"
                                        Value="@($"{PreferencesService.ConvertSpeed(Test.Upload):F1}")"
                                        Label="@($"{PreferencesService.SpeedUnit} upload")" />
 
-                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, Settings.Current.Targets.Ping)" Icon="@Icons.Material.Filled.NetworkPing"
+                        <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, Test.ThresholdPing)" Icon="@Icons.Material.Filled.NetworkPing"
                                        Value="@($"{Test.Ping}")"
                                        Label="@($"ms ping{(Test.Jitter.HasValue ? $" (±{Test.Jitter:F1})" : "")}")" />
 
@@ -58,6 +57,10 @@
                 <MudDivider Class="mb-3" />
             }
 
+            @if (MissedTargets.Count > 0)
+            {
+                <DataRow Label="Missed targets" Value="@MissedTargetsText" />
+            }
             <DataRow Label="Time" Value="@PreferencesService.FormatDateTime(PreferencesService.ToLocal(Test.Created))" />
             <DataRow Label="Started">
                 <MudChip T="string" Size="Size.Small" Color="@(IsManual ? Color.Info : Color.Default)">
@@ -100,6 +103,14 @@
     private bool IsSkipped => Test?.Status == TestStatus.Skipped;
 
     private bool IsFailed => !IsSkipped && !string.IsNullOrEmpty(Test?.Error);
+
+    private IReadOnlyList<TargetKind> MissedTargets => Test is { Status: TestStatus.Completed } test
+        ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload).Missed(test.Ping, test.Download, test.Upload)
+        : [];
+
+    private string MissedTargetsText => TargetSettings.Describe(MissedTargets) is { Length: > 0 } text
+        ? char.ToUpperInvariant(text[0]) + text[1..]
+        : "";
 
     private async Task DeleteTestAsync()
     {

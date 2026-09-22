@@ -12,6 +12,8 @@ public static class IntegrationText
         ["send_failed"] = "Send error messages",
         ["send_unhealthy"] = "Send alerts when a test misses your targets",
         ["unhealthy_message"] = "Target missed message",
+        ["send_healthy_again"] = "Send a message when tests meet your targets again",
+        ["healthy_again_message"] = "Targets met again message",
         ["send_skipped"] = "Send alerts when a test is skipped",
         ["skipped_message"] = "Skipped message",
         ["send_finished"] = "Send finished messages",
@@ -45,6 +47,7 @@ public static class IntegrationText
             ["send_alive"] = "Send keep-alive messages",
             ["send_recommendations"] = "Send recommendations",
             ["send_unhealthy"] = "Send target-missed alerts",
+            ["send_healthy_again"] = "Send targets-met-again messages",
             ["send_skipped"] = "Send skipped-test messages",
             ["send_config_updates"] = "Send configuration updates",
             ["interval"] = "Keep-alive interval (minutes)"
@@ -55,6 +58,7 @@ public static class IntegrationText
     {
         ["finished_message"] = "%year%-%month%-%day% %hour%:%minute% — %ping% ms, %download% Mbps, %upload% Mbps",
         ["unhealthy_message"] = "%download% Mbps down, %upload% Mbps up, %ping% ms — targets %threshold_download%/%threshold_upload%/%threshold_ping%",
+        ["healthy_again_message"] = "Back within your targets: %download% Mbps down, %upload% Mbps up, %ping% ms",
         ["skipped_message"] = "[%year%-%month%-%day% %hour%:%minute%] Skipped: %error%",
         ["error_message"] = "[%year%-%month%-%day% %hour%:%minute%] Error: %error%"
     };

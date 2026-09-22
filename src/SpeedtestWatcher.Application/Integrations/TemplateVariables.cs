@@ -1,5 +1,6 @@
 using System.Globalization;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Integrations;
@@ -10,6 +11,7 @@ internal static class TemplateVariables
     {
         TestFinished finished => From(finished.Result),
         TestUnhealthy unhealthy => From(unhealthy.Result),
+        TestHealthyAgain healthyAgain => From(healthyAgain.Result),
         TestFailed failed => From(failed.Result),
         TestSkipped skipped => From(skipped.Result),
         _ => new(StringComparer.OrdinalIgnoreCase)
@@ -27,8 +29,14 @@ internal static class TemplateVariables
         ["server"] = test.ServerName ?? string.Empty,
         ["threshold_ping"] = test.ThresholdPing?.ToString(CultureInfo.InvariantCulture) ?? "-",
         ["threshold_download"] = Decimal(test.ThresholdDownload) ?? "-",
-        ["threshold_upload"] = Decimal(test.ThresholdUpload) ?? "-"
+        ["threshold_upload"] = Decimal(test.ThresholdUpload) ?? "-",
+        ["missed"] = TargetSettings.Describe(Missed(test))
     };
+
+    private static IReadOnlyList<TargetKind> Missed(Speedtest test) =>
+        test.Status == TestStatus.Completed
+            ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload).Missed(test.Ping, test.Download, test.Upload)
+            : [];
 
     private static string? Decimal(double? value) => value?.ToString("F2", CultureInfo.InvariantCulture);
 }

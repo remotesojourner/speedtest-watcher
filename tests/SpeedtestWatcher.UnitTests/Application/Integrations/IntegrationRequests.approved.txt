@@ -11,9 +11,16 @@ Content-Type: application/json; charset=utf-8
 ## discord · test missed targets
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 404
+Content-Length: 434
 Content-Type: application/json; charset=utf-8
-{"username":"Watcher","embeds":[{"description":":warning: **A speedtest missed your targets**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Watcher","embeds":[{"description":":warning: **A speedtest missed your targets for ping, download and upload**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · test met targets again
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 423
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":white_check_mark: **Speedtests are meeting your targets again**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps (target 100.00 Mbps)","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord · test failed
 activity: sent
@@ -51,30 +58,37 @@ activity: unchanged
 ## discord with every template variable · test finished
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 223
+Content-Length: 224
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test missed targets
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 222
+Content-Length: 248
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"31|2.75|612.50|98.12|completed|no|Acme Fibre|25|900.00|100.00|","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"31|2.75|612.50|98.12|completed|no|Acme Fibre|25|900.00|100.00|ping, download and upload|","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · test met targets again
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 224
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test failed
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 228
+Content-Length: 229
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|failed|unknown|Acme Fibre|-|-|-|Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|failed|unknown|Acme Fibre|-|-|-||Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test skipped
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 240
+Content-Length: 241
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-|Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-||Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · recommendations updated
 activity: unchanged
@@ -88,9 +102,9 @@ activity: unchanged
 ## discord with every template variable · send test
 result: sent, activity: unchanged
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 223
+Content-Length: 224
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord without a url · test started
 activity: failed
@@ -99,6 +113,9 @@ activity: failed
 activity: failed
 
 ## discord without a url · test missed targets
+activity: failed
+
+## discord without a url · test met targets again
 activity: failed
 
 ## discord without a url · test failed
@@ -132,9 +149,16 @@ Content-Type: application/json; charset=utf-8
 ## discord saved from the settings form · test missed targets
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 414
+Content-Length: 444
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":":warning: **A speedtest missed your targets**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":":warning: **A speedtest missed your targets for ping, download and upload**\n \u003E :ping_pong: \u0060Ping\u0060: 31 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · test met targets again
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 433
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":white_check_mark: **Speedtests are meeting your targets again**\n \u003E :ping_pong: \u0060Ping\u0060: 12 ms (target 25 ms)\n \u003E :arrow_down: \u0060Download\u0060: 941.25 Mbps (target 900.00 Mbps)\n \u003E :arrow_up: \u0060Upload\u0060: 110.50 Mbps (target 100.00 Mbps)","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord saved from the settings form · test failed
 activity: sent
@@ -183,13 +207,24 @@ Download: 941.25 Mbps
 ## ntfy saved from the settings form · test missed targets
 activity: sent
 POST https://localhost/ntfy/alerts
-Content-Length: 142
+Content-Length: 172
 Content-Type: text/plain; charset=utf-8
 Priority: 5
-A speedtest missed your targets:
+A speedtest missed your targets for ping, download and upload:
 Ping: 31 ms (target 25 ms)
 Download: 612.50 Mbps (target 900.00 Mbps)
 Upload: 98.12 Mbps (target 100.00 Mbps)
+
+## ntfy saved from the settings form · test met targets again
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 153
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+Speedtests are meeting your targets again:
+Ping: 12 ms (target 25 ms)
+Download: 941.25 Mbps (target 900.00 Mbps)
+Upload: 110.50 Mbps (target 100.00 Mbps)
 
 ## ntfy saved from the settings form · test failed
 activity: sent
@@ -240,9 +275,16 @@ Content-Type: application/json; charset=utf-8
 ## telegram · test missed targets
 activity: sent
 POST https://api.telegram.org/bot1:abc/sendMessage
-Content-Length: 284
+Content-Length: 314
 Content-Type: application/json; charset=utf-8
-{"chat_id":"42","text":"\u26A0\uFE0F *A speedtest missed your targets*\n\uD83C\uDFD3 \u0060Ping\u0060: 31 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","parse_mode":"markdown"}
+{"chat_id":"42","text":"\u26A0\uFE0F *A speedtest missed your targets for ping, download and upload*\n\uD83C\uDFD3 \u0060Ping\u0060: 31 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","parse_mode":"markdown"}
+
+## telegram · test met targets again
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 289
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2705 *Speedtests are meeting your targets again*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps (target 100.00 Mbps)","parse_mode":"markdown"}
 
 ## telegram · test failed
 activity: sent
@@ -289,9 +331,17 @@ Content-Type: application/json; charset=utf-8
 activity: sent
 POST https://localhost/gotify/message
 Authorization: Bearer AAAAAAAAAAAAAAA
-Content-Length: 172
+Content-Length: 202
 Content-Type: application/json; charset=utf-8
-{"message":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","priority":7}
+{"message":"A speedtest missed your targets for ping, download and upload:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","priority":7}
+
+## gotify · test met targets again
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 183
+Content-Type: application/json; charset=utf-8
+{"message":"Speedtests are meeting your targets again:\nPing: 12 ms (target 25 ms)\nDownload: 941.25 Mbps (target 900.00 Mbps)\nUpload: 110.50 Mbps (target 100.00 Mbps)","priority":4}
 
 ## gotify · test failed
 activity: sent
@@ -333,6 +383,9 @@ activity: unchanged
 activity: unchanged
 
 ## gotify with every message turned off · test missed targets
+activity: unchanged
+
+## gotify with every message turned off · test met targets again
 activity: unchanged
 
 ## gotify with every message turned off · test failed
@@ -379,15 +432,29 @@ Download: 941.25 Mbps
 activity: sent
 POST https://localhost/ntfy/alerts
 Authorization: Bearer tk_1
-Content-Length: 142
+Content-Length: 172
 Content-Type: text/plain; charset=utf-8
 Priority: 4
 Tags: warning
 Title: Speedtest
-A speedtest missed your targets:
+A speedtest missed your targets for ping, download and upload:
 Ping: 31 ms (target 25 ms)
 Download: 612.50 Mbps (target 900.00 Mbps)
 Upload: 98.12 Mbps (target 100.00 Mbps)
+
+## ntfy · test met targets again
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 153
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+Speedtests are meeting your targets again:
+Ping: 12 ms (target 25 ms)
+Download: 941.25 Mbps (target 900.00 Mbps)
+Upload: 110.50 Mbps (target 100.00 Mbps)
 
 ## ntfy · test failed
 activity: sent
@@ -447,9 +514,16 @@ Content-Type: application/json; charset=utf-8
 ## pushover · test missed targets
 activity: sent
 POST https://api.pushover.net/1/messages.json
-Content-Length: 240
+Content-Length: 270
 Content-Type: application/json; charset=utf-8
-{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)"}
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest missed your targets for ping, download and upload:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)"}
+
+## pushover · test met targets again
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 251
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"Speedtests are meeting your targets again:\nPing: 12 ms (target 25 ms)\nDownload: 941.25 Mbps (target 900.00 Mbps)\nUpload: 110.50 Mbps (target 100.00 Mbps)"}
 
 ## pushover · test failed
 activity: sent
@@ -496,9 +570,17 @@ Content-Type: application/json; charset=utf-8
 activity: sent
 POST https://localhost/apprise/notify/
 Accept: application/json
-Content-Length: 265
+Content-Length: 295
 Content-Type: application/json; charset=utf-8
-{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest missed your targets for ping, download and upload:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise with urls · test met targets again
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 276
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"Speedtests are meeting your targets again:\nPing: 12 ms (target 25 ms)\nDownload: 941.25 Mbps (target 900.00 Mbps)\nUpload: 110.50 Mbps (target 100.00 Mbps)","type":"success","format":"text"}
 
 ## apprise with urls · test failed
 activity: sent
@@ -548,9 +630,17 @@ Content-Type: application/json; charset=utf-8
 activity: sent
 POST https://localhost/apprise/notify/home
 Accept: application/json
-Content-Length: 211
+Content-Length: 241
 Content-Type: application/json; charset=utf-8
-{"tag":"admin, devops","body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+{"tag":"admin, devops","body":"A speedtest missed your targets for ping, download and upload:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise with a config key and tags · test met targets again
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 222
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"Speedtests are meeting your targets again:\nPing: 12 ms (target 25 ms)\nDownload: 941.25 Mbps (target 900.00 Mbps)\nUpload: 110.50 Mbps (target 100.00 Mbps)","type":"success","format":"text"}
 
 ## apprise with a config key and tags · test failed
 activity: sent
@@ -594,6 +684,9 @@ activity: failed
 ## apprise with urls and a config key · test missed targets
 activity: failed
 
+## apprise with urls and a config key · test met targets again
+activity: failed
+
 ## apprise with urls and a config key · test failed
 activity: failed
 
@@ -627,9 +720,17 @@ Content-Type: application/json; charset=utf-8
 activity: sent
 POST https://localhost/apprise/notify/home
 Accept: application/json
-Content-Length: 189
+Content-Length: 219
 Content-Type: application/json; charset=utf-8
-{"body":"A speedtest missed your targets:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+{"body":"A speedtest missed your targets for ping, download and upload:\nPing: 31 ms (target 25 ms)\nDownload: 612.50 Mbps (target 900.00 Mbps)\nUpload: 98.12 Mbps (target 100.00 Mbps)","type":"warning","format":"text"}
+
+## apprise saved from the settings form · test met targets again
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 200
+Content-Type: application/json; charset=utf-8
+{"body":"Speedtests are meeting your targets again:\nPing: 12 ms (target 25 ms)\nDownload: 941.25 Mbps (target 900.00 Mbps)\nUpload: 110.50 Mbps (target 100.00 Mbps)","type":"success","format":"text"}
 
 ## apprise saved from the settings form · test failed
 activity: sent
@@ -682,6 +783,14 @@ Content-Length: 369
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
 {"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}}
+
+## webhook · test met targets again
+activity: sent
+POST https://localhost/hook
+Content-Length: 369
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"TEST_HEALTHY_AGAIN","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## webhook · test failed
 activity: sent
@@ -755,6 +864,9 @@ Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
 {"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}
 
+## healthChecks · test met targets again
+activity: unchanged
+
 ## healthChecks · test failed
 activity: sent
 POST https://localhost/hc/uuid/fail
@@ -817,6 +929,9 @@ speedtests,host=watcher download=941.25,upload=110.50,ping=12,jitter=0.40 178954
 ## influxdb · test missed targets
 activity: unchanged
 
+## influxdb · test met targets again
+activity: unchanged
+
 ## influxdb · test failed
 activity: unchanged
 
@@ -852,6 +967,9 @@ speed\ tests,host=living\ room,env=prod,site=home\ office download=941.25,upload
 ## influxdb with tags and names that need escaping · test missed targets
 activity: unchanged
 
+## influxdb with tags and names that need escaping · test met targets again
+activity: unchanged
+
 ## influxdb with tags and names that need escaping · test failed
 activity: unchanged
 
@@ -880,6 +998,9 @@ activity: failed
 activity: failed
 
 ## unknown type · test missed targets
+activity: failed
+
+## unknown type · test met targets again
 activity: failed
 
 ## unknown type · test failed

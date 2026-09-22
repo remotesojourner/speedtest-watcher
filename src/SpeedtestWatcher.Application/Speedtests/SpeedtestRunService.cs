@@ -146,6 +146,7 @@ public sealed partial class SpeedtestRunService
             result = await _runner.RunTestAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
         }
 
+        var previous = result.Success ? await _results.GetLatestCompletedAsync(cancellationToken) : null;
         var test = Record(result, type, settings.Targets);
         test.Id = await _results.CreateAsync(test, cancellationToken);
 
@@ -155,6 +156,8 @@ public sealed partial class SpeedtestRunService
             await _dispatcher.PublishAsync(new TestFinished(test), cancellationToken);
             if (test.Healthy == false)
                 await _dispatcher.PublishAsync(new TestUnhealthy(test), cancellationToken);
+            else if (test.Healthy == true && previous?.Healthy == false)
+                await _dispatcher.PublishAsync(new TestHealthyAgain(test), cancellationToken);
             if (recommendation != null)
                 await _dispatcher.PublishAsync(new RecommendationsUpdated(recommendation), cancellationToken);
         }

@@ -7,6 +7,7 @@ internal static class IntegrationEventData
         TestStarted started => new { provider = started.Provider, type = started.Type },
         TestFinished finished => finished.Result,
         TestUnhealthy unhealthy => unhealthy.Result,
+        TestHealthyAgain healthyAgain => healthyAgain.Result,
         TestFailed failed => failed.Result,
         TestSkipped skipped => skipped.Result,
         RecommendationsUpdated updated => updated.Recommendation,

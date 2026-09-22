@@ -9,12 +9,20 @@ internal sealed class TestDatabase : IDisposable
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
-    public TestDatabase()
+    public TestDatabase() : this(createSchema: true)
+    {
+    }
+
+    private TestDatabase(bool createSchema)
     {
         _connection.Open();
+        if (!createSchema) return;
+
         using var db = NewContext();
         db.Database.EnsureCreated();
     }
+
+    public static TestDatabase WithoutSchema() => new(createSchema: false);
 
     public SpeedtestWatcherDbContext NewContext()
     {

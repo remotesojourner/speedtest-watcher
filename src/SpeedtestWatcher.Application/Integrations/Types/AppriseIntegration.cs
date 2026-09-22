@@ -78,7 +78,7 @@ internal sealed class AppriseIntegration : MessageIntegration
 
     private static string NotifyType(MessageKind kind) => kind switch
     {
-        MessageKind.Finished => "success",
+        MessageKind.Finished or MessageKind.HealthyAgain => "success",
         MessageKind.Failed => "failure",
         MessageKind.Unhealthy => "warning",
         _ => "info"

@@ -14,7 +14,7 @@ namespace SpeedtestWatcher.IntegrationTests.Application.Settings;
 
 public sealed class SettingsBackupTests : IDisposable
 {
-    private const string DiscordData = """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false}""";
+    private const string DiscordData = """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false,"send_healthy_again":false}""";
 
     private static readonly JsonSerializerOptions _apiJson = new(JsonSerializerDefaults.Web);
 
@@ -170,6 +170,29 @@ public sealed class SettingsBackupTests : IDisposable
         await new SettingsStore(db).ResetToDefaultsAsync(cancellationToken);
         await new IntegrationRepository(db).ClearAllAsync(cancellationToken);
         await new RecommendationRepository(db).ClearAllAsync(cancellationToken);
+    }
+
+    [Fact]
+    public async Task AnOlderBackupsIntegrationsSendHealthyAgainOnlyWhereTheySendUnhealthyAlerts()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var backup = new SettingsBackupDto
+        {
+            Integrations =
+            [
+                new IntegrationData { Id = "quiet", Name = "webhook", Data = """{"url":"https://localhost/hook","send_unhealthy":false}""" },
+                new IntegrationData { Id = "loud", Name = "ntfy", Data = """{"url":"https://localhost/ntfy","topic":"alerts"}""" },
+                new IntegrationData { Id = "pings", Name = "healthChecks", Data = """{"url":"https://localhost/hc"}""" }
+            ]
+        };
+
+        await using (var db = _database.NewContext()) await Backup(db).ImportAsync(backup, cancellationToken);
+
+        await using var check = _database.NewContext();
+        var imported = (await new IntegrationRepository(check).ListAllAsync(cancellationToken)).ToDictionary(integration => integration.Id, integration => IntegrationSettings.Parse(integration.Data)!);
+        Assert.False(imported["quiet"].GetBool("send_healthy_again", true));
+        Assert.True(imported["loud"].GetBool("send_healthy_again", false));
+        Assert.Equal("", imported["pings"].GetString("send_healthy_again"));
     }
 
     private SettingsBackupService Backup(SpeedtestWatcherDbContext db)
