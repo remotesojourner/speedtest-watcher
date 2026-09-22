@@ -14,11 +14,14 @@ public sealed class ApiResponseTests : IClassFixture<SignInOffApp>
         ("GET", "/api/config", null),
         ("GET", "/api/speedtests", null),
         ("GET", "/api/speedtests/2", null),
+        ("GET", "/api/speedtests/99", null),
+        ("GET", "/api/speedtests?status=unknown", null),
         ("GET", "/api/speedtests/status", null),
         ("GET", "/api/speedtests/statistics?from=2026-09-14&to=2026-09-15&tz=America/New_York", null),
         ("GET", "/api/speedtests/statistics?tz=Mars/Olympus_Mons", null),
         ("POST", "/api/speedtests/export", """{"format":"json"}"""),
         ("POST", "/api/speedtests/export", """{"format":"csv"}"""),
+        ("POST", "/api/speedtests/export", """{"format":"""),
         ("GET", "/api/prometheus/metrics", null)
     ];
 

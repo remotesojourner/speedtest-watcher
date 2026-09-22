@@ -74,8 +74,8 @@
                 @if (_pauseMode == CustomMode)
                 {
                     <MudNumericField T="double?" @bind-Value="_customPauseHours" Label="Hours" Variant="Variant.Outlined"
-                                     Margin="Margin.Dense" Min="0.1" Max="PauseRequest.MaxResumeInHours" Step="0.5" Immediate="true"
-                                     Error="@(!CustomPauseValid)" ErrorText="@($"Enter more than 0 and at most {PauseRequest.MaxResumeInHours:0} hours")"
+                                     Margin="Margin.Dense" Min="0.1" Max="PauseService.MaxResumeInHours" Step="0.5" Immediate="true"
+                                     Error="@(!CustomPauseValid)" ErrorText="@($"Enter more than 0 and at most {PauseService.MaxResumeInHours:0} hours")"
                                      HelperText="Up to 30 days. Pause indefinitely for longer." Class="mb-3" />
                 }
 
@@ -138,7 +138,7 @@
         EffectiveCron != Settings.Current.Schedule.Cron
         || _scheduleOffset != Settings.Current.Schedule.RandomOffset;
 
-    private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseRequest.MaxResumeInHours;
+    private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseService.MaxResumeInHours;
 
     protected override void OnInitialized()
     {

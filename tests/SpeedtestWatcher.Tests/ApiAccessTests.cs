@@ -12,57 +12,41 @@ namespace SpeedtestWatcher.Tests;
 
 public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>, IClassFixture<NoVisitorsApp>
 {
-    private static readonly string[] VisitorEndpoints =
+    internal static readonly string[] VisitorEndpoints =
     [
         "GET /api/config",
         "GET /api/opengraph/image",
         "GET /api/prometheus/metrics",
         "GET /api/speedtests",
-        "GET /api/speedtests/count",
         "GET /api/speedtests/statistics",
         "GET /api/speedtests/status",
         "GET /api/speedtests/{id:int}",
         "POST /api/speedtests/export"
     ];
 
-    private static readonly string[] FullAccessEndpoints =
+    internal static readonly string[] FullAccessEndpoints =
     [
-        "DELETE /api/auth/token",
-        "DELETE /api/integrations/{id}",
         "DELETE /api/speedtests/{id:int}",
-        "DELETE /api/storage/config",
         "DELETE /api/storage/tests/history",
-        "GET /api/info/interfaces",
-        "GET /api/info/server/{provider}",
         "GET /api/info/version",
-        "GET /api/integrations",
-        "GET /api/integrations/active",
         "GET /api/recommendations",
         "GET /api/storage",
         "GET /api/storage/config",
         "GET /api/storage/tests/history/csv",
         "GET /api/storage/tests/history/json",
         "PATCH /api/config",
-        "PATCH /api/config/{key}",
-        "PATCH /api/integrations/{id}",
-        "POST /api/auth/token",
-        "POST /api/integrations/{name}/test",
         "POST /api/speedtests/continue",
         "POST /api/speedtests/pause",
         "POST /api/speedtests/run",
-        "PUT /api/auth/settings",
-        "PUT /api/integrations/{name}",
         "PUT /api/storage/config",
         "PUT /api/storage/tests/history"
     ];
 
+    private static readonly string[] DocumentationPages = ["/api/openapi/v1.json", "/api/docs/"];
+
     private static readonly Dictionary<string, string> SampleRouteValues = new()
     {
-        ["id"] = "abc123",
-        ["id:int"] = "1",
-        ["key"] = "cron",
-        ["name"] = "webhook",
-        ["provider"] = "ookla"
+        ["id:int"] = "1"
     };
 
     private readonly ReadOnlyVisitorsApp _readOnlyVisitors;
@@ -77,6 +61,8 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     public static TheoryData<string> ReadableByVisitors => new(VisitorEndpoints);
 
     public static TheoryData<string> FullAccessOnly => new(FullAccessEndpoints);
+
+    public static TheoryData<string> Documentation => new(DocumentationPages);
 
     public static TheoryData<string> FullAccessReadsAndAHarmlessWrite =>
         new(FullAccessEndpoints.Where(endpoint => endpoint.StartsWith("GET ", StringComparison.Ordinal)).Append("POST /api/speedtests/continue"));
@@ -127,6 +113,29 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
         using var response = await SendAsync(_readOnlyVisitors, endpoint, _readOnlyVisitors.Token);
 
         Assert.True(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound, $"{endpoint} answered {(int)response.StatusCode}");
+    }
+
+    [Theory]
+    [MemberData(nameof(Documentation))]
+    public async Task TheSpecAndTheReferencePage_AreOpenToReadOnlyVisitors(string path)
+    {
+        using var client = _readOnlyVisitors.CreateClientWithoutRedirects();
+
+        using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Theory]
+    [MemberData(nameof(Documentation))]
+    public async Task TheSpecAndTheReferencePage_RefuseVisitorsWithoutAccess(string path)
+    {
+        using var client = _noVisitors.CreateClientWithoutRedirects();
+
+        using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("Bearer", response.Headers.WwwAuthenticate.ToString());
     }
 
     [Fact]

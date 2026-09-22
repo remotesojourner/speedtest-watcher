@@ -38,7 +38,7 @@
 200 application/json; charset=utf-8
 [
   {
-    "created": "2026-09-15T07:00:00.0000000Z",
+    "created": "2026-09-15T07:00:00Z",
     "download": -1,
     "error": "Network unreachable",
     "healthy": null,
@@ -58,7 +58,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-15T06:00:00.0000000Z",
+    "created": "2026-09-15T06:00:00Z",
     "download": -1,
     "error": "Public IP 203.0.113.9 is on the skip list",
     "healthy": null,
@@ -78,7 +78,7 @@
     "upload": -1
   },
   {
-    "created": "2026-09-14T20:35:00.0000000Z",
+    "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
     "error": null,
     "healthy": false,
@@ -98,7 +98,7 @@
     "upload": 98.125
   },
   {
-    "created": "2026-09-14T08:05:00.0000000Z",
+    "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
     "error": null,
     "healthy": true,
@@ -122,7 +122,7 @@
 ### GET /api/speedtests/2
 200 application/json; charset=utf-8
 {
-  "created": "2026-09-14T20:35:00.0000000Z",
+  "created": "2026-09-14T20:35:00Z",
   "download": 612.5,
   "error": null,
   "healthy": false,
@@ -140,6 +140,18 @@
   "time": 15,
   "type": "custom",
   "upload": 98.125
+}
+
+### GET /api/speedtests/99
+404 application/json; charset=utf-8
+{
+  "message": "Speedtest not found"
+}
+
+### GET /api/speedtests?status=unknown
+400 application/json; charset=utf-8
+{
+  "message": "The request isn't valid. status: The value 'unknown' is not valid."
 }
 
 ### GET /api/speedtests/status
@@ -166,39 +178,6 @@
       "stdDev": 6.19
     }
   },
-  "data": {
-    "download": [
-      941.25,
-      612.5,
-      null,
-      null
-    ],
-    "jitter": [
-      0.4,
-      2.75,
-      null,
-      null
-    ],
-    "ping": [
-      12,
-      31,
-      null,
-      null
-    ],
-    "time": [
-      14,
-      15,
-      null,
-      null
-    ],
-    "upload": [
-      110.5,
-      98.125,
-      null,
-      null
-    ]
-  },
-  "dataPoints": 4,
   "dateRange": {
     "days": 2,
     "from": "2026-09-14",
@@ -210,18 +189,6 @@
     "min": 612.5
   },
   "downsampled": false,
-  "errors": [
-    null,
-    null,
-    null,
-    "Network unreachable"
-  ],
-  "failed": [
-    false,
-    false,
-    false,
-    true
-  ],
   "hourlyAverages": [
     {
       "count": 0,
@@ -421,17 +388,53 @@
     "max": 2.75,
     "min": 0.4
   },
-  "labels": [
-    "2026-09-14T08:05:00.0000000Z",
-    "2026-09-14T20:35:00.0000000Z",
-    "2026-09-15T06:00:00.0000000Z",
-    "2026-09-15T07:00:00.0000000Z"
-  ],
   "ping": {
     "avg": 22,
     "max": 31,
     "min": 12
   },
+  "points": [
+    {
+      "download": 941.25,
+      "duration": 14,
+      "error": null,
+      "failed": false,
+      "jitter": 0.4,
+      "ping": 12,
+      "timestamp": "2026-09-14T08:05:00Z",
+      "upload": 110.5
+    },
+    {
+      "download": 612.5,
+      "duration": 15,
+      "error": null,
+      "failed": false,
+      "jitter": 2.75,
+      "ping": 31,
+      "timestamp": "2026-09-14T20:35:00Z",
+      "upload": 98.125
+    },
+    {
+      "download": null,
+      "duration": null,
+      "error": null,
+      "failed": false,
+      "jitter": null,
+      "ping": null,
+      "timestamp": "2026-09-15T06:00:00Z",
+      "upload": null
+    },
+    {
+      "download": null,
+      "duration": null,
+      "error": "Network unreachable",
+      "failed": true,
+      "jitter": null,
+      "ping": null,
+      "timestamp": "2026-09-15T07:00:00Z",
+      "upload": null
+    }
+  ],
   "rawDataPoints": 4,
   "tests": {
     "failed": 1,
@@ -547,6 +550,12 @@ id,created,status,healthy,type,ping,jitter,download,upload,time,serverId,serverN
 3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
 2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
 1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
+
+### POST /api/speedtests/export {"format":
+400 application/json; charset=utf-8
+{
+  "message": "The request isn't valid. The request field is required. Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.format | LineNumber: 0 | BytePositionInLine: 10."
+}
 
 ### GET /api/prometheus/metrics
 200 text/plain; version=0.0.4; charset=utf-8

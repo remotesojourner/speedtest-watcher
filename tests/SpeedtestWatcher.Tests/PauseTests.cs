@@ -19,7 +19,7 @@ public sealed class PauseTests : IClassFixture<SignInOffApp>
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
 
-        using var response = await client.PostAsJsonAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = 721 }, cancellationToken);
+        using var response = await client.PostAsJsonAsync("/api/speedtests/pause", new { resumeIn = 721 }, cancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("at most 720 hours", await response.Content.ReadAsStringAsync(cancellationToken), StringComparison.Ordinal);
@@ -32,7 +32,7 @@ public sealed class PauseTests : IClassFixture<SignInOffApp>
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
 
-        using var paused = await client.PostAsJsonAsync("/api/speedtests/pause", new PauseRequest { ResumeIn = 720 }, cancellationToken);
+        using var paused = await client.PostAsJsonAsync("/api/speedtests/pause", new { resumeIn = 720 }, cancellationToken);
         var statusWhilePaused = await StatusAsync(client, cancellationToken);
         using var resumed = await client.PostAsync("/api/speedtests/continue", null, cancellationToken);
 

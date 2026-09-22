@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Application.Info;
-using SpeedtestWatcher.Web.Api;
+using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
 [ApiController]
 [Route("api/info")]
+[Tags("Info")]
+[Produces("application/json")]
 public class SystemController : ControllerBase
 {
     private readonly SystemInfoService _info;
@@ -15,13 +17,15 @@ public class SystemController : ControllerBase
         _info = info;
     }
 
+    /// <summary>
+    /// Get the version
+    /// </summary>
+    /// <remarks>
+    /// Returns this instance's version and the latest release on GitHub. The release is checked at most every six hours, or every hour after a failed check.
+    /// </remarks>
+    /// <response code="200">Both versions.</response>
     [HttpGet("version")]
-    public async Task<IActionResult> GetVersion(CancellationToken cancellationToken) => Ok(await _info.GetVersionAsync(cancellationToken));
-
-    [HttpGet("server/{provider}")]
-    public async Task<IActionResult> GetServers(string provider, CancellationToken cancellationToken) =>
-        (await _info.GetServersAsync(provider, cancellationToken)).ToActionResult();
-
-    [HttpGet("interfaces")]
-    public async Task<IActionResult> GetInterfaces(CancellationToken cancellationToken) => Ok(await _info.GetInterfacesAsync(cancellationToken));
+    [ProducesResponseType<VersionResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<VersionResponse>> GetVersion(CancellationToken cancellationToken) =>
+        VersionResponse.From(await _info.GetVersionAsync(cancellationToken));
 }

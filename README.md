@@ -25,6 +25,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
 - **Your data** — export results as CSV or JSON, import them again, back up your settings, and clean up old results automatically
 - **Monitoring** — Prometheus metrics and a generated link-preview image
+- **REST API** — results, statistics, settings and backups for your own scripts, described by an OpenAPI document and a built-in reference page
 
 ---
 
@@ -214,6 +215,25 @@ When sign-in is on, create a token under **Settings → Security → API Token**
 
 ---
 
+## API
+
+Speedtest Watcher has a REST API for scripts and dashboards: results, statistics, running and pausing tests, settings, backups and Prometheus metrics. Every instance serves:
+
+| Path | What it is |
+|---|---|
+| `/api/docs` | An interactive reference with every operation, its parameters and responses, and a way to send test requests |
+| `/api/openapi/v1.json` | The OpenAPI 3.1 document, for API clients and code generators |
+
+While sign-in is on, send an API token from **Settings → Security → API Token** as `Authorization: Bearer swt_…`. Read operations don't need it when people who aren't signed in have read-only access.
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "http://speedtest-watcher:2003/api/speedtests?limit=5"
+```
+
+The [API guide](docs/api.md) covers authentication, errors, units and every group of endpoints with examples. The OpenAPI document is also committed as [`docs/openapi.json`](docs/openapi.json) and attached to each release.
+
+---
+
 ## Development Setup
 
 ### Requirements
@@ -261,7 +281,7 @@ docker compose up -d --build
 | Framework | ASP.NET Core 10, Blazor Server (Interactive Server render mode) |
 | UI components | [MudBlazor](https://mudblazor.com/) |
 | Database | SQLite via Entity Framework Core |
-| Live updates | SignalR |
+| API documentation | OpenAPI 3.1 from `Microsoft.AspNetCore.OpenApi`, reference page by [Scalar](https://github.com/scalar/scalar) |
 | Scheduling | [Cronos](https://github.com/HangfireIO/Cronos) |
 | Speed tests | Ookla Speedtest CLI, LibreSpeed CLI, cfspeedtest |
 | Link-preview image | [SkiaSharp](https://github.com/mono/SkiaSharp) |

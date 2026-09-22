@@ -1,5 +1,4 @@
 using SpeedtestWatcher.Application.Events;
-using SpeedtestWatcher.Core.DTOs;
 
 namespace SpeedtestWatcher.Application.Speedtests;
 
@@ -69,7 +68,7 @@ public sealed class RunState : IDisposable
 
     public void Pause(double? hours)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(hours ?? 0, PauseRequest.MaxResumeInHours, nameof(hours));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(hours ?? 0, PauseService.MaxResumeInHours, nameof(hours));
 
         lock (_lock)
         {

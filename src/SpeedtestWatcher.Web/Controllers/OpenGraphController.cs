@@ -9,6 +9,7 @@ namespace SpeedtestWatcher.Web.Controllers;
 
 [ApiController]
 [Route("api/opengraph")]
+[Tags("Link preview")]
 public class OpenGraphController : ControllerBase
 {
     private const int ImageWidth = 1200;
@@ -31,8 +32,16 @@ public class OpenGraphController : ControllerBase
 
     private sealed record CardStyle(SKPaint Fill, SKPaint Border, SKFont LabelFont, SKPaint LabelPaint, SKFont ValueFont);
 
+    /// <summary>
+    /// Get the link-preview image
+    /// </summary>
+    /// <remarks>
+    /// A 1200 by 600 PNG with the latest completed test's ping, download and upload, for chat apps and social sites that show a preview of a shared link.
+    /// </remarks>
+    /// <response code="200">The image.</response>
     [HttpGet("image")]
     [Authorize(Policy = AccessPolicies.Read)]
+    [ProducesResponseType<Stream>(StatusCodes.Status200OK, "image/png")]
     public async Task<IActionResult> GetImage(CancellationToken cancellationToken)
     {
         var preview = LinkPreview.For(await _results.GetLatestCompletedAsync(cancellationToken));

@@ -5,6 +5,8 @@ namespace SpeedtestWatcher.Application.Speedtests;
 
 public sealed class PauseService
 {
+    public const double MaxResumeInHours = 720;
+
     private readonly RunState _state;
     private readonly ICurrentAccess _access;
 
@@ -20,8 +22,8 @@ public sealed class PauseService
     {
         if (!_access.HasFullAccess) return OperationResult.Denied();
 
-        if (resumeInHours > PauseRequest.MaxResumeInHours)
-            return OperationResult.Invalid($"Speedtests can be paused for at most {PauseRequest.MaxResumeInHours:0} hours. Pause them indefinitely for a longer break.");
+        if (resumeInHours > MaxResumeInHours)
+            return OperationResult.Invalid($"Speedtests can be paused for at most {MaxResumeInHours:0} hours. Pause them indefinitely for a longer break.");
 
         _state.Pause(resumeInHours);
         return OperationResult.Ok();

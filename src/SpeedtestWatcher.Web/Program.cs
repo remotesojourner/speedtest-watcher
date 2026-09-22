@@ -4,6 +4,7 @@ using SpeedtestWatcher.Application;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Core.Hosting;
 using SpeedtestWatcher.Infrastructure;
+using SpeedtestWatcher.Web.Api.OpenApi;
 using SpeedtestWatcher.Web.Components;
 using SpeedtestWatcher.Web.Hosting;
 using SpeedtestWatcher.Web.Middleware;
@@ -54,6 +55,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
+app.MapApiDocumentation();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

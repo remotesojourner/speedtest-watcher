@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc;
 using MudBlazor.Services;
 using SpeedtestWatcher.Application.Security;
 using SpeedtestWatcher.Core.Hosting;
+using SpeedtestWatcher.Web.Api;
+using SpeedtestWatcher.Web.Api.OpenApi;
 using SpeedtestWatcher.Web.Background;
 using SpeedtestWatcher.Web.Services;
 using SpeedtestWatcher.Web.Services.Auth;
@@ -69,7 +72,12 @@ public static class WebServiceCollectionExtensions
 
     public static IServiceCollection AddWebApi(this IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers().ConfigureApiBehaviorOptions(options =>
+        {
+            options.SuppressMapClientErrors = true;
+            options.InvalidModelStateResponseFactory = context => new BadRequestObjectResult(InvalidRequest.Describe(context.ModelState));
+        });
+        services.AddApiDocumentation();
         return services;
     }
 

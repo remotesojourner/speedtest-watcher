@@ -1,0 +1,2466 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Speedtest Watcher API",
+    "description": "Results, statistics, settings, backups and metrics of a Speedtest Watcher instance.\n\n- **Authentication:** while sign-in is off, no token is needed. While it's on, create a token under **Settings → Security → API Token** and send it as `Authorization: Bearer swt_…`. Read operations also work without a token when people who aren't signed in have read-only access.\n- **Errors** answer with `{ \"message\": \"…\" }` and a 4xx status. `401` means the request needs a valid token.\n- **Units:** timestamps are UTC ISO 8601, speeds are Mbps, ping and jitter are milliseconds, and test durations are seconds. Failed and skipped results have `-1` readings.\n\nThe guide, with examples, is at https://github.com/remotesojourner/speedtest-watcher/blob/main/docs/api.md.",
+    "license": {
+      "name": "AGPL-3.0-only",
+      "identifier": "AGPL-3.0-only"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/config": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Get the settings",
+        "description": "Returns every setting the caller may see as a string, plus flags about sign-in. Read-only visitors don't get the settings marked full access only. Sign-in settings are managed on the Security tab and secrets are never returned.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "responses": {
+          "200": {
+            "description": "The settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Change settings",
+        "description": "Saves one or more settings together: either every change is saved or none is. Keys are the setting names from `GET /api/config`, and values are strings. Send `none` to unset an optional value. Sign-in settings can only be changed on the Security tab.\n\nOpen browser tabs, the scheduler and integrations pick the changes up straight away.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "requestBody": {
+          "description": "The settings to change, as `{ \"key\": \"value\" }`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Every change was saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A key is unknown or managed on the Security tab, or a value isn't allowed. Nothing was saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/opengraph/image": {
+      "get": {
+        "tags": [
+          "Link preview"
+        ],
+        "summary": "Get the link-preview image",
+        "description": "A 1200 by 600 PNG with the latest completed test's ping, download and upload, for chat apps and social sites that show a preview of a shared link.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "responses": {
+          "200": {
+            "description": "The image.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/prometheus/metrics": {
+      "get": {
+        "tags": [
+          "Prometheus"
+        ],
+        "summary": "Get Prometheus metrics",
+        "description": "The latest readings in the Prometheus text format, each prefixed with `speedtest_watcher_`. Readings come from the latest completed test, so a failed or skipped test leaves no gaps. `last_test_timestamp_seconds` shows when any test last ran and `last_completed_test_timestamp_seconds` when one last completed.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "responses": {
+          "200": {
+            "description": "The metrics.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/recommendations": {
+      "get": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Get the recommended targets",
+        "description": "The best ping, download and upload of the last 10 completed tests, updated after every completed test.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "The recommended targets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fewer than 10 tests have completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/speedtests": {
+      "get": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "List results",
+        "description": "Returns results newest first. To get the next page, pass the `id` of the last result you received as `afterId`. An `afterId` that doesn't exist gives an empty list.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "afterId",
+            "in": "query",
+            "description": "Continue after this result.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many results to return. 0 or less gives 10.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Only results with this status.",
+            "schema": {
+              "$ref": "#/components/schemas/TestStatus"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Only results started this way: `auto` by the schedule, `custom` by hand.",
+            "schema": {
+              "$ref": "#/components/schemas/TestType"
+            }
+          },
+          {
+            "name": "healthy",
+            "in": "query",
+            "description": "Only results that met (`true`) or missed (`false`) their targets.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpeedtestResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A filter has a value that isn't allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/speedtests/{id}": {
+      "get": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Get a result",
+        "description": "**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The result's id.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedtestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No result has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      },
+      "delete": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Delete a result",
+        "description": "**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The result's id.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The result was deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No result has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/speedtests/statistics": {
+      "get": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Get statistics",
+        "description": "Summarises the tests in a period: counts, the lowest, average and highest readings, how steady they were, averages per hour of the day, and points for charts.\n\n`from` and `to` each take a date (`2026-09-14`), which covers that whole day, or a date and time. A time without an offset is read in `tz`. A value that can't be read falls back to the default.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "The start of the period. Defaults to seven days ago.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "The end of the period. Defaults to today.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tz",
+            "in": "query",
+            "description": "An IANA time zone, such as `Europe/London`, for day boundaries and the hourly averages. Defaults to UTC.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The statistics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The time zone isn't one the server knows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/speedtests/export": {
+      "post": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Export results",
+        "description": "Downloads the matching results as a CSV or JSON file, oldest first. A JSON export can be imported again with `PUT /api/storage/tests/history`.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "requestBody": {
+          "description": "Which results to export and in what format.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportResultsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportResultsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body isn't valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/speedtests/status": {
+      "get": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Get the run status",
+        "description": "**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "responses": {
+          "200": {
+            "description": "Whether a test is running and whether tests are paused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/speedtests/run": {
+      "post": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Start a speedtest",
+        "description": "Starts a manual test and answers straight away, while the test runs in the background. Poll `GET /api/speedtests/status` or the result list to see when it has finished.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "query",
+            "description": "Test against this server instead of the configured choice. Only providers with server choice use it.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The test has started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server id isn't a number.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A test is already running, tests are paused, or no provider is chosen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/speedtests/pause": {
+      "post": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Pause speedtests",
+        "description": "Stops scheduled and manual tests. A test that is already running finishes. The pause is kept in memory, so restarting the app resumes tests.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "requestBody": {
+          "description": "How long to pause. Send no body, or leave `resumeIn` out, to pause until tests are resumed.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PauseRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PauseRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tests are paused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The pause is longer than 720 hours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/speedtests/continue": {
+      "post": {
+        "tags": [
+          "Speedtests"
+        ],
+        "summary": "Resume speedtests",
+        "description": "**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "Tests are running on schedule again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Get storage information",
+        "description": "**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "The database size and how many results are stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage/tests/history/json": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Export every result as JSON",
+        "description": "Downloads `speedtests.json`, oldest first. It can be imported again with `PUT /api/storage/tests/history`.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage/tests/history/csv": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Export every result as CSV",
+        "description": "Downloads `speedtests.csv`, oldest first. Text that a spreadsheet would run as a formula is escaped.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": { }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage/tests/history": {
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Import results",
+        "description": "Adds results from a JSON export. Ids in the file are ignored, and results whose timestamp is already stored are skipped, so importing the same file twice is safe.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "requestBody": {
+          "description": "The results, in the format of a JSON export.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TestImportRow"
+                    }
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TestImportRow"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "How many results were imported and skipped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The list is empty or isn't valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Delete every result",
+        "description": "Clears the history. Settings, integrations and recommendations stay. This can't be undone.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "Every result was deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage/config": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Export a settings backup",
+        "description": "Returns the settings, integrations and recommendations in the format of the Storage tab's backup file. Sign-in settings are never included.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "The backup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsBackup"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      },
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Restore a settings backup",
+        "description": "Saves the valid settings together, adds or replaces integrations by id, and restores the recommendations when all three values are positive. Anything that isn't valid, and any sign-in setting, is skipped and counted.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "requestBody": {
+          "description": "A backup from `GET /api/storage/config` or the Storage tab.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsBackup"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsBackup"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "What was restored and how much was skipped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body isn't valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/info/version": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "summary": "Get the version",
+        "description": "Returns this instance's version and the latest release on GitHub. The release is checked at most every six hours, or every hour after a failed check.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "Both versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChartPointResponse": {
+        "required": [
+          "timestamp",
+          "failed",
+          "error",
+          "ping",
+          "jitter",
+          "download",
+          "upload",
+          "duration"
+        ],
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "examples": [
+              "2026-09-14T08:05:00Z"
+            ],
+            "type": "string",
+            "description": "When the test ran, or the middle of the slice, in UTC.",
+            "format": "date-time"
+          },
+          "failed": {
+            "type": "boolean",
+            "description": "Whether the test, or any test in the slice, failed."
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the test failed, or how many tests in the slice failed."
+          },
+          "ping": {
+            "examples": [
+              12
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Ping in milliseconds.",
+            "format": "int32"
+          },
+          "jitter": {
+            "examples": [
+              0.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Jitter in milliseconds.",
+            "format": "double"
+          },
+          "download": {
+            "examples": [
+              941.25
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Download speed in Mbps.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              110.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Upload speed in Mbps.",
+            "format": "double"
+          },
+          "duration": {
+            "examples": [
+              14
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "How long the test took, in seconds.",
+            "format": "int32"
+          }
+        },
+        "description": "One point on the charts: a single test, or the average of the tests in a slice of the period. Readings are `null` when no test in it completed."
+      },
+      "ConfigResponse": {
+        "required": [
+          "viewMode",
+          "authActive",
+          "authDisabledByEnv"
+        ],
+        "type": "object",
+        "properties": {
+          "viewMode": {
+            "type": "boolean",
+            "description": "The caller has read-only access."
+          },
+          "authActive": {
+            "type": "boolean",
+            "description": "Sign-in is switched on and enforced."
+          },
+          "authDisabledByEnv": {
+            "type": "boolean",
+            "description": "Sign-in is switched off by the `DISABLE_AUTH` environment variable."
+          },
+          "oidcClientSecretSet": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "A client secret is saved for the identity provider. Left out for read-only visitors."
+          },
+          "apiTokenSet": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "An API token exists. Left out for read-only visitors."
+          },
+          "ping": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "25"
+          },
+          "download": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "100"
+          },
+          "upload": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "50"
+          },
+          "cron": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "0 * * * *"
+          },
+          "scheduleOffset": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "true"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "none"
+          },
+          "interface": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "none"
+          },
+          "libreUrl": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "serverMode": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "auto"
+          },
+          "serverListMode": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "allow"
+          },
+          "ooklaId": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "libreId": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "ooklaServerIds": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "libreServerIds": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "internetCheckEnabled": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "true"
+          },
+          "internetCheckUrl": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "https://icanhazip.com"
+          },
+          "skipIps": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "chartRange": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "7d"
+          },
+          "chartBeginAtZero": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "false"
+          },
+          "dateFormat": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "dmy"
+          },
+          "retentionDays": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "365"
+          },
+          "authEnabled": {
+            "type": "string",
+            "description": "Changed only on the Security tab. Left out for read-only visitors.",
+            "default": "false"
+          },
+          "visitorAccess": {
+            "type": "string",
+            "description": "Changed only on the Security tab. Left out for read-only visitors.",
+            "default": "none"
+          },
+          "oidcAuthority": {
+            "type": "string",
+            "description": "Changed only on the Security tab. Left out for read-only visitors.",
+            "default": "none"
+          },
+          "oidcClientId": {
+            "type": "string",
+            "description": "Changed only on the Security tab. Left out for read-only visitors.",
+            "default": "none"
+          },
+          "oidcScopes": {
+            "type": "string",
+            "description": "Changed only on the Security tab. Left out for read-only visitors.",
+            "default": "openid profile email"
+          }
+        },
+        "description": "The saved settings, one string property per setting, plus what the caller may see and do. Unset values are `none`. Read-only visitors don't get the settings marked full access only, and secrets are never returned."
+      },
+      "ConsistencyResponse": {
+        "required": [
+          "download",
+          "upload",
+          "ping"
+        ],
+        "type": "object",
+        "properties": {
+          "download": {
+            "description": "Download speed consistency.",
+            "$ref": "#/components/schemas/SpeedConsistencyResponse"
+          },
+          "upload": {
+            "description": "Upload speed consistency.",
+            "$ref": "#/components/schemas/SpeedConsistencyResponse"
+          },
+          "ping": {
+            "description": "Ping consistency.",
+            "$ref": "#/components/schemas/PingConsistencyResponse"
+          }
+        },
+        "description": "How steady the readings of the completed tests were. All values are `0` when no test completed."
+      },
+      "ErrorResponse": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "What went wrong, written for people."
+          }
+        },
+        "description": "Why a request failed. Every error the API answers carries this body."
+      },
+      "ExportResultsRequest": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "examples": [
+              "json"
+            ],
+            "type": "string",
+            "description": "`csv` or `json`. Anything else gives CSV. The JSON can be imported again."
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TestStatus"
+              }
+            ],
+            "description": "Only results with this status."
+          },
+          "type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TestType"
+              }
+            ],
+            "description": "Only results started this way."
+          },
+          "healthy": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Only results that met (`true`) or missed (`false`) their targets."
+          },
+          "ids": {
+            "examples": [
+              [
+                41,
+                42
+              ]
+            ],
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Only these results. The other filters still apply."
+          }
+        },
+        "description": "Which results to export and in what format. Leave everything out to export every result as CSV."
+      },
+      "HourlyAverageResponse": {
+        "required": [
+          "hour",
+          "count",
+          "download",
+          "upload",
+          "ping",
+          "jitter"
+        ],
+        "type": "object",
+        "properties": {
+          "hour": {
+            "examples": [
+              16
+            ],
+            "type": "integer",
+            "description": "The hour of the day, 0 to 23, in the requested time zone.",
+            "format": "int32"
+          },
+          "count": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "How many completed tests ran in this hour.",
+            "format": "int32"
+          },
+          "download": {
+            "examples": [
+              612.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Average download speed in Mbps, or `null` when no test ran in this hour.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              98.12
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Average upload speed in Mbps, or `null` when no test ran in this hour.",
+            "format": "double"
+          },
+          "ping": {
+            "examples": [
+              31
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Average ping in milliseconds, or `null` when no test ran in this hour.",
+            "format": "int32"
+          },
+          "jitter": {
+            "examples": [
+              2.75
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Average jitter in milliseconds, or `null` when no test in this hour reported it.",
+            "format": "double"
+          }
+        },
+        "description": "Averages of the completed tests that ran in one hour of the day."
+      },
+      "MessageResponse": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "What happened, written for people."
+          }
+        },
+        "description": "Confirms that a request which changes something succeeded."
+      },
+      "MetricSummaryResponse": {
+        "required": [
+          "min",
+          "avg",
+          "max"
+        ],
+        "type": "object",
+        "properties": {
+          "min": {
+            "examples": [
+              612.5
+            ],
+            "type": "number",
+            "description": "The lowest value.",
+            "format": "double"
+          },
+          "avg": {
+            "examples": [
+              776.88
+            ],
+            "type": "number",
+            "description": "The average, rounded to two decimals. Ping and time averages are rounded to whole numbers.",
+            "format": "double"
+          },
+          "max": {
+            "examples": [
+              941.25
+            ],
+            "type": "number",
+            "description": "The highest value.",
+            "format": "double"
+          }
+        },
+        "description": "The lowest, average and highest value of one reading."
+      },
+      "PauseRequest": {
+        "type": "object",
+        "properties": {
+          "resumeIn": {
+            "examples": [
+              6
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Resume automatically after this many hours, at most 720 (30 days). Leave it out to pause until tests are resumed.",
+            "format": "double"
+          }
+        },
+        "description": "How long to pause speedtests."
+      },
+      "PingConsistencyResponse": {
+        "required": [
+          "stdDev",
+          "jitter"
+        ],
+        "type": "object",
+        "properties": {
+          "stdDev": {
+            "examples": [
+              9.5
+            ],
+            "type": "number",
+            "description": "The standard deviation of ping, in milliseconds.",
+            "format": "double"
+          },
+          "jitter": {
+            "examples": [
+              9.5
+            ],
+            "type": "number",
+            "description": "The same standard deviation, kept for older dashboards.",
+            "format": "double"
+          }
+        },
+        "description": "How much ping varied."
+      },
+      "RecommendationResponse": {
+        "required": [
+          "ping",
+          "download",
+          "upload"
+        ],
+        "type": "object",
+        "properties": {
+          "ping": {
+            "examples": [
+              11
+            ],
+            "type": "integer",
+            "description": "The lowest ping, in milliseconds.",
+            "format": "int32"
+          },
+          "download": {
+            "examples": [
+              948.2
+            ],
+            "type": "number",
+            "description": "The highest download speed, in Mbps.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              112.4
+            ],
+            "type": "number",
+            "description": "The highest upload speed, in Mbps.",
+            "format": "double"
+          }
+        },
+        "description": "Suggested targets: the best ping, download and upload of the last 10 completed tests."
+      },
+      "RunStatusResponse": {
+        "required": [
+          "running",
+          "paused"
+        ],
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "description": "A speedtest is running now."
+          },
+          "paused": {
+            "type": "boolean",
+            "description": "Scheduled and manual tests are paused."
+          }
+        },
+        "description": "Whether a speedtest is running and whether tests are paused."
+      },
+      "SettingsBackup": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingsBackupEntry"
+            },
+            "description": "The saved settings."
+          },
+          "integrations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingsBackupIntegration"
+            },
+            "description": "The configured integrations."
+          },
+          "recommendations": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingsBackupRecommendation"
+              }
+            ],
+            "description": "The recommended targets, or `null` before 10 tests have completed."
+          }
+        },
+        "description": "A settings backup: the settings, integrations and recommendations, in the same format as the file the Storage tab exports. Sign-in settings are never included."
+      },
+      "SettingsBackupEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "examples": [
+              "cron"
+            ],
+            "type": "string",
+            "description": "The setting's name, as in `GET /api/config`."
+          },
+          "value": {
+            "examples": [
+              "0 * * * *"
+            ],
+            "type": "string",
+            "description": "The saved value. `none` means unset."
+          }
+        },
+        "description": "One saved setting in a backup."
+      },
+      "SettingsBackupIntegration": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "examples": [
+              "3f9c2a1b7d4e"
+            ],
+            "type": "string",
+            "description": "The integration's id. An import replaces the integration with the same id."
+          },
+          "displayName": {
+            "examples": [
+              "Home hook"
+            ],
+            "type": "string",
+            "description": "The name shown on the Integrations tab."
+          },
+          "name": {
+            "examples": [
+              "webhook"
+            ],
+            "type": "string",
+            "description": "The integration type, such as `webhook`, `discord` or `influxdb`."
+          },
+          "data": {
+            "examples": [
+              {
+                "url": "https://example.com/hook",
+                "send_finished": true
+              }
+            ],
+            "type": "string",
+            "description": "The integration's settings, as a JSON object written out as a string."
+          },
+          "lastActivity": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the integration last sent something, in UTC.",
+            "format": "date-time"
+          },
+          "activityFailed": {
+            "type": "boolean",
+            "description": "Whether the last send failed."
+          }
+        },
+        "description": "One configured integration in a backup."
+      },
+      "SettingsBackupRecommendation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "The stored row's id. It is ignored on import.",
+            "format": "int32"
+          },
+          "ping": {
+            "examples": [
+              11
+            ],
+            "type": "integer",
+            "description": "The recommended ping, in milliseconds.",
+            "format": "int32"
+          },
+          "download": {
+            "examples": [
+              948.2
+            ],
+            "type": "number",
+            "description": "The recommended download speed, in Mbps.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              112.4
+            ],
+            "type": "number",
+            "description": "The recommended upload speed, in Mbps.",
+            "format": "double"
+          }
+        },
+        "description": "The recommended targets in a backup. They're restored only when all three values are positive."
+      },
+      "SettingsImportResponse": {
+        "required": [
+          "settings",
+          "integrations",
+          "recommendations",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "examples": [
+              21
+            ],
+            "type": "integer",
+            "description": "Settings that were saved.",
+            "format": "int32"
+          },
+          "integrations": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "Integrations that were added or replaced.",
+            "format": "int32"
+          },
+          "recommendations": {
+            "type": "boolean",
+            "description": "Whether the recommendations were restored."
+          },
+          "skipped": {
+            "examples": [
+              0
+            ],
+            "type": "integer",
+            "description": "Entries that were left out because they weren't valid, such as unknown settings or integration types.",
+            "format": "int32"
+          }
+        },
+        "description": "What a settings backup import restored."
+      },
+      "SpeedConsistencyResponse": {
+        "required": [
+          "stdDev",
+          "consistency"
+        ],
+        "type": "object",
+        "properties": {
+          "stdDev": {
+            "examples": [
+              164.38
+            ],
+            "type": "number",
+            "description": "The standard deviation, in Mbps.",
+            "format": "double"
+          },
+          "consistency": {
+            "examples": [
+              78.8
+            ],
+            "type": "number",
+            "description": "100 minus the standard deviation as a percentage of the average, never below 0. 100 means every test got the same speed.",
+            "format": "double"
+          }
+        },
+        "description": "How much a speed varied."
+      },
+      "SpeedtestResponse": {
+        "required": [
+          "id",
+          "created",
+          "status",
+          "type",
+          "ping",
+          "jitter",
+          "download",
+          "upload",
+          "time",
+          "healthy",
+          "thresholdPing",
+          "thresholdDownload",
+          "thresholdUpload",
+          "error",
+          "serverId",
+          "serverName",
+          "serverHost",
+          "resultId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "examples": [
+              42
+            ],
+            "type": "integer",
+            "description": "The result's id.",
+            "format": "int32"
+          },
+          "created": {
+            "examples": [
+              "2026-09-14T20:35:00Z"
+            ],
+            "type": "string",
+            "description": "When the test ran, in UTC.",
+            "format": "date-time"
+          },
+          "status": {
+            "description": "Whether the test completed, failed, or was skipped before it ran.",
+            "$ref": "#/components/schemas/TestStatus"
+          },
+          "type": {
+            "description": "What started the test: `auto` for the schedule, `custom` for a manual run.",
+            "$ref": "#/components/schemas/TestType"
+          },
+          "ping": {
+            "examples": [
+              12
+            ],
+            "type": "integer",
+            "description": "Latency in milliseconds, or `-1` when the test didn't complete.",
+            "format": "int32"
+          },
+          "jitter": {
+            "examples": [
+              0.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Jitter in milliseconds, when the provider reports it.",
+            "format": "double"
+          },
+          "download": {
+            "examples": [
+              941.25
+            ],
+            "type": "number",
+            "description": "Download speed in Mbps, or `-1` when the test didn't complete.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              110.5
+            ],
+            "type": "number",
+            "description": "Upload speed in Mbps, or `-1` when the test didn't complete.",
+            "format": "double"
+          },
+          "time": {
+            "examples": [
+              14
+            ],
+            "type": "integer",
+            "description": "How long the test took, in seconds.",
+            "format": "int32"
+          },
+          "healthy": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the result met the targets it was judged against. `null` when the test didn't complete or no targets were set."
+          },
+          "thresholdPing": {
+            "examples": [
+              25
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The highest acceptable ping, in milliseconds, when the test ran.",
+            "format": "int32"
+          },
+          "thresholdDownload": {
+            "examples": [
+              900
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The lowest acceptable download speed, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "thresholdUpload": {
+            "examples": [
+              100
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The lowest acceptable upload speed, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the test failed or was skipped."
+          },
+          "serverId": {
+            "examples": [
+              12345
+            ],
+            "type": "integer",
+            "description": "The id of the server the test ran against, or `0` when there was none.",
+            "format": "int32"
+          },
+          "serverName": {
+            "examples": [
+              "Acme Fibre"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name of the server the test ran against."
+          },
+          "serverHost": {
+            "examples": [
+              "speed.acme.example"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The host of the server the test ran against."
+          },
+          "resultId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The provider's own id for the result, such as Ookla's result id."
+          }
+        },
+        "description": "One stored speedtest result. Failed and skipped results have `-1` for ping, download and upload."
+      },
+      "StatisticsPeriodResponse": {
+        "required": [
+          "from",
+          "to",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "examples": [
+              "2026-09-14"
+            ],
+            "type": "string",
+            "description": "The start, as requested, or seven days ago."
+          },
+          "to": {
+            "examples": [
+              "2026-09-15"
+            ],
+            "type": "string",
+            "description": "The end, as requested, or today."
+          },
+          "days": {
+            "examples": [
+              2
+            ],
+            "type": "integer",
+            "description": "How many days the period spans, rounded up.",
+            "format": "int32"
+          }
+        },
+        "description": "The period statistics cover."
+      },
+      "StatisticsResponse": {
+        "required": [
+          "dateRange",
+          "tests",
+          "ping",
+          "jitter",
+          "download",
+          "upload",
+          "time",
+          "consistency",
+          "hourlyAverages",
+          "points",
+          "rawDataPoints",
+          "downsampled"
+        ],
+        "type": "object",
+        "properties": {
+          "dateRange": {
+            "description": "The period the figures cover.",
+            "$ref": "#/components/schemas/StatisticsPeriodResponse"
+          },
+          "tests": {
+            "description": "How many tests ran in the period and how many of them failed.",
+            "$ref": "#/components/schemas/TestCountsResponse"
+          },
+          "ping": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Ping of the completed tests, in milliseconds. `null` when none completed."
+          },
+          "jitter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Jitter of the completed tests, in milliseconds. `null` when none reported jitter."
+          },
+          "download": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Download speed of the completed tests, in Mbps. `null` when none completed."
+          },
+          "upload": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Upload speed of the completed tests, in Mbps. `null` when none completed."
+          },
+          "time": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "How long the completed tests took, in seconds. `null` when none completed."
+          },
+          "consistency": {
+            "description": "How steady the completed tests' readings were.",
+            "$ref": "#/components/schemas/ConsistencyResponse"
+          },
+          "hourlyAverages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HourlyAverageResponse"
+            },
+            "description": "Averages of the completed tests for each hour of the day, 0 to 23, in the requested time zone."
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartPointResponse"
+            },
+            "description": "Chart points, oldest first. Up to 300 tests give one point each. More are averaged into 300 equal slices of the period, and slices without tests are left out."
+          },
+          "rawDataPoints": {
+            "examples": [
+              4
+            ],
+            "type": "integer",
+            "description": "How many tests ran in the period, before any averaging.",
+            "format": "int32"
+          },
+          "downsampled": {
+            "type": "boolean",
+            "description": "Whether the points were averaged down from more tests."
+          }
+        },
+        "description": "Summary figures and chart points for a period."
+      },
+      "StorageInfoResponse": {
+        "required": [
+          "size",
+          "testCount"
+        ],
+        "type": "object",
+        "properties": {
+          "size": {
+            "examples": [
+              45056
+            ],
+            "type": "integer",
+            "description": "The size of the SQLite database, in bytes.",
+            "format": "int64"
+          },
+          "testCount": {
+            "examples": [
+              41
+            ],
+            "type": "integer",
+            "description": "How many results are stored.",
+            "format": "int32"
+          }
+        },
+        "description": "How much is stored."
+      },
+      "TestCountsResponse": {
+        "required": [
+          "total",
+          "failed"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "examples": [
+              4
+            ],
+            "type": "integer",
+            "description": "Every test in the period, including failed and skipped ones.",
+            "format": "int32"
+          },
+          "failed": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "The tests that failed.",
+            "format": "int32"
+          }
+        },
+        "description": "How many tests ran in a period."
+      },
+      "TestImportResponse": {
+        "required": [
+          "imported",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "imported": {
+            "examples": [
+              40
+            ],
+            "type": "integer",
+            "description": "Results that were stored.",
+            "format": "int32"
+          },
+          "skipped": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "Results that were left out because a result with the same timestamp is already stored.",
+            "format": "int32"
+          }
+        },
+        "description": "What a results import stored."
+      },
+      "TestImportRow": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "examples": [
+              "2026-09-14T08:05:00Z"
+            ],
+            "type": "string",
+            "description": "When the test ran. A time without an offset is read as UTC. A result with the same timestamp as a stored one is skipped.",
+            "format": "date-time"
+          },
+          "status": {
+            "examples": [
+              "completed"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`completed`, `failed` or `skipped`. Anything else counts as `failed` when there's an error, and as `completed` otherwise."
+          },
+          "type": {
+            "examples": [
+              "auto"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`auto` or `custom`. Anything else counts as `auto`."
+          },
+          "ping": {
+            "examples": [
+              12
+            ],
+            "type": "integer",
+            "description": "Latency in milliseconds.",
+            "format": "int32"
+          },
+          "jitter": {
+            "examples": [
+              0.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Jitter in milliseconds.",
+            "format": "double"
+          },
+          "download": {
+            "examples": [
+              941.25
+            ],
+            "type": "number",
+            "description": "Download speed in Mbps.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              110.5
+            ],
+            "type": "number",
+            "description": "Upload speed in Mbps.",
+            "format": "double"
+          },
+          "time": {
+            "examples": [
+              14
+            ],
+            "type": "integer",
+            "description": "How long the test took, in seconds.",
+            "format": "int32"
+          },
+          "healthy": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the result met its targets."
+          },
+          "thresholdPing": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The ping target, in milliseconds, when the test ran.",
+            "format": "int32"
+          },
+          "thresholdDownload": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The download target, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "thresholdUpload": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The upload target, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the test failed or was skipped."
+          },
+          "serverId": {
+            "type": "integer",
+            "description": "The id of the server the test ran against.",
+            "format": "int32"
+          },
+          "serverName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name of the server the test ran against."
+          },
+          "serverHost": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The host of the server the test ran against."
+          },
+          "resultId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The provider's own id for the result."
+          }
+        },
+        "description": "One result to import, in the format of a JSON export. Ids in the file are ignored."
+      },
+      "TestStatus": {
+        "enum": [
+          "completed",
+          "failed",
+          "skipped"
+        ]
+      },
+      "TestType": {
+        "enum": [
+          "auto",
+          "custom"
+        ]
+      },
+      "VersionResponse": {
+        "required": [
+          "local",
+          "remote"
+        ],
+        "type": "object",
+        "properties": {
+          "local": {
+            "examples": [
+              "2.0.0"
+            ],
+            "type": "string",
+            "description": "The version of this instance."
+          },
+          "remote": {
+            "examples": [
+              "2.1.0"
+            ],
+            "type": "string",
+            "description": "The latest release on GitHub, or `0` when it couldn't be checked. It is checked at most every six hours."
+          }
+        },
+        "description": "The running version and the latest release."
+      }
+    },
+    "securitySchemes": {
+      "apiToken": {
+        "type": "http",
+        "description": "An API token (`swt_…`) from **Settings → Security → API Token**. It's needed only while sign-in is on, and read operations don't need it when people who aren't signed in have read-only access.",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "apiToken": [ ]
+    },
+    { }
+  ],
+  "tags": [
+    {
+      "name": "Speedtests",
+      "description": "Stored results and statistics, and running and pausing tests."
+    },
+    {
+      "name": "Settings",
+      "description": "Reading and changing settings."
+    },
+    {
+      "name": "Recommendations",
+      "description": "Suggested targets based on recent results."
+    },
+    {
+      "name": "Storage",
+      "description": "The database, bulk result exports and imports, and settings backups."
+    },
+    {
+      "name": "Prometheus",
+      "description": "Metrics for Prometheus."
+    },
+    {
+      "name": "Link preview",
+      "description": "The image shown when a link to Speedtest Watcher is shared."
+    },
+    {
+      "name": "Info",
+      "description": "Information about this instance."
+    }
+  ]
+}

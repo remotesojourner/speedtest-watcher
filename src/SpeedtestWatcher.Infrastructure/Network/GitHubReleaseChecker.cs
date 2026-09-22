@@ -5,18 +5,46 @@ using SpeedtestWatcher.Core.Interfaces;
 
 namespace SpeedtestWatcher.Infrastructure.Network;
 
-public class GitHubReleaseChecker : IReleaseChecker
+public sealed class GitHubReleaseChecker : IReleaseChecker, IDisposable
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<GitHubReleaseChecker> _logger;
+    public static readonly TimeSpan AnswerLifetime = TimeSpan.FromHours(6);
+    public static readonly TimeSpan FailureLifetime = TimeSpan.FromHours(1);
 
-    public GitHubReleaseChecker(IHttpClientFactory httpClientFactory, ILogger<GitHubReleaseChecker> logger)
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly TimeProvider _time;
+    private readonly ILogger<GitHubReleaseChecker> _logger;
+    private readonly SemaphoreSlim _lock = new(1, 1);
+    private string? _latestVersion;
+    private DateTimeOffset _askAgainAt = DateTimeOffset.MinValue;
+
+    public GitHubReleaseChecker(IHttpClientFactory httpClientFactory, TimeProvider time, ILogger<GitHubReleaseChecker> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _time = time;
         _logger = logger;
     }
 
     public async Task<string?> GetLatestVersionAsync(CancellationToken cancellationToken = default)
+    {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_time.GetUtcNow() < _askAgainAt) return _latestVersion;
+
+            var answer = await AskGitHubAsync(cancellationToken);
+            if (answer != null) _latestVersion = answer;
+            _askAgainAt = _time.GetUtcNow() + (answer == null ? FailureLifetime : AnswerLifetime);
+            return _latestVersion;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public void Dispose() => _lock.Dispose();
+
+    private async Task<string?> AskGitHubAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -35,7 +63,7 @@ public class GitHubReleaseChecker : IReleaseChecker
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
             return document.RootElement.TryGetProperty("tag_name", out var tag) ? tag.GetString()?.Replace("v", "", StringComparison.Ordinal) : null;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             _logger.LogWarning(ex, "Could not check {Repository} for a newer release", ProjectInfo.Repository);
             return null;

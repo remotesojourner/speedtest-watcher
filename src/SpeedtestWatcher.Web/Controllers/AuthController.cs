@@ -3,23 +3,19 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SpeedtestWatcher.Application.Security;
-using SpeedtestWatcher.Core.DTOs;
-using SpeedtestWatcher.Web.Api;
 using SpeedtestWatcher.Web.Services.Auth;
 
 namespace SpeedtestWatcher.Web.Controllers;
 
 [ApiController]
+[ApiExplorerSettings(IgnoreApi = true)]
 public class AuthController : ControllerBase
 {
     private readonly AuthSettings _auth;
-    private readonly SignInService _signIn;
 
-    public AuthController(AuthSettings auth, SignInService signIn)
+    public AuthController(AuthSettings auth)
     {
         _auth = auth;
-        _signIn = signIn;
     }
 
     [HttpGet("/auth/login")]
@@ -58,18 +54,6 @@ public class AuthController : ControllerBase
         "If the sign-in settings are wrong, start Speedtest Watcher with DISABLE_AUTH=true. Sign-in is then off, so you can correct the settings on the Security tab and remove the variable again.",
         "/auth/login",
         "Try again");
-
-    [HttpPut("/api/auth/settings")]
-    public async Task<IActionResult> SaveSettings([FromBody] AuthSettingsRequest request, CancellationToken cancellationToken) =>
-        (await _signIn.SaveAsync(request, cancellationToken)).ToActionResult(active => Ok(new { message = "Sign-in settings saved", active }));
-
-    [HttpPost("/api/auth/token")]
-    public async Task<IActionResult> CreateToken(CancellationToken cancellationToken) =>
-        (await _signIn.CreateTokenAsync(cancellationToken)).ToActionResult();
-
-    [HttpDelete("/api/auth/token")]
-    public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken) =>
-        (await _signIn.RevokeTokenAsync(cancellationToken)).ToActionResult("The API token has been revoked");
 
     private static ContentResult MessagePage(string title, string message, string? note, string actionHref, string actionText)
     {

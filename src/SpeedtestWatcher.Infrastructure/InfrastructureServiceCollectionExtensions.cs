@@ -42,7 +42,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IServerListProvider, ServerListProvider>();
         services.AddScoped<IConnectivityChecker, ConnectivityChecker>();
         services.AddScoped<IOidcDiscovery, OidcDiscoveryChecker>();
-        services.AddScoped<IReleaseChecker, GitHubReleaseChecker>();
+        services.AddSingleton<IReleaseChecker, GitHubReleaseChecker>();
 
         services.AddIntegrations();
         return services;

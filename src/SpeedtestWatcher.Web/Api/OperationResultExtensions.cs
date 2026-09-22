@@ -1,20 +1,26 @@
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Application;
+using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Web.Api.Contracts;
 
 namespace SpeedtestWatcher.Web.Api;
 
 public static class OperationResultExtensions
 {
-    public static IActionResult ToActionResult(this OperationResult result, string successMessage) =>
-        result.Succeeded ? new OkObjectResult(new { message = successMessage }) : Failure(result.Outcome, result.Message);
+    public const string UnexplainedFailure = "The request couldn't be completed";
 
-    public static IActionResult ToActionResult<T>(this OperationResult<T> result) =>
-        result.Succeeded ? new OkObjectResult(result.Value) : Failure(result.Outcome, result.Message);
+    public static ActionResult<MessageResponse> ToActionResult(this OperationResult result, string successMessage) =>
+        result.Succeeded ? new OkObjectResult(new MessageResponse { Message = successMessage }) : Failure(result.Outcome, result.Message);
 
-    public static IActionResult ToActionResult<T>(this OperationResult<T> result, Func<T, IActionResult> success) =>
-        result.Succeeded ? success(result.Value!) : Failure(result.Outcome, result.Message);
+    public static ActionResult<TResponse> ToActionResult<T, TResponse>(this OperationResult<T> result, Func<T, TResponse> toResponse) =>
+        result.Succeeded ? new OkObjectResult(toResponse(result.Value!)) : Failure(result.Outcome, result.Message);
 
-    private static ObjectResult Failure(OperationOutcome outcome, string? message) => new(new { message })
+    public static IActionResult ToFileResult(this OperationResult<ExportFile> result) =>
+        result.Succeeded ? ToFileResult(result.Value!) : Failure(result.Outcome, result.Message);
+
+    public static FileContentResult ToFileResult(this ExportFile file) => new(file.Content, file.ContentType) { FileDownloadName = file.FileName };
+
+    private static ObjectResult Failure(OperationOutcome outcome, string? message) => new(new ErrorResponse { Message = message ?? UnexplainedFailure })
     {
         StatusCode = outcome switch
         {

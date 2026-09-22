@@ -245,9 +245,24 @@ jobs:
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
           if [ -n "$PREV_TAG" ]; then
-            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --no-merges)
+            RANGE="${PREV_TAG}..HEAD"
           else
-            COMMITS=$(git log --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --no-merges)
+            RANGE="HEAD"
+          fi
+
+          COMMITS=$(git log "$RANGE" --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" --no-merges)
+
+          BREAKING=$(git log "$RANGE" --no-merges --format='%B%x1e' | python3 -c '
+          import re, sys
+          for message in sys.stdin.read().split("\x1e"):
+              footer = re.search(r"^BREAKING[ -]CHANGE:[ \t]*(.*)", message, re.S | re.M)
+              if footer:
+                  print(footer.group(1).strip())
+          ')
+
+          BREAKING_SECTION=""
+          if [ -n "$BREAKING" ]; then
+            BREAKING_SECTION=$(printf '## Breaking Changes\n\n%s\n\nSee the [API guide](https://github.com/%s/blob/%s/docs/api.md) for details.\n' "$BREAKING" "${{ github.repository }}" "$VERSION")
           fi
 
           cat <<EOF > release_notes.md
@@ -261,9 +276,14 @@ jobs:
 
           Supports **linux/amd64** and **linux/arm64**.
 
+          ${BREAKING_SECTION}
+
           ## Changes
           ${COMMITS}
           EOF
+
+      - name: Stamp the OpenAPI document with the release version
+        run: jq --arg version "${{ needs.version.outputs.semver }}" '.info.version = $version' docs/openapi.json > openapi.json
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -271,4 +291,5 @@ jobs:
           tag_name: v${{ needs.version.outputs.semver }}
           name: v${{ needs.version.outputs.semver }}
           body_path: release_notes.md
+          files: openapi.json
           make_latest: true

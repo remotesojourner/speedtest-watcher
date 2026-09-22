@@ -56,15 +56,15 @@ public sealed class ConfigEndpointTests : IClassFixture<SignInOffApp>
     }
 
     [Fact]
-    public async Task TheSingleKeyEndpoint_StillSavesOneSetting()
+    public async Task TheSingleKeyEndpoint_IsGone()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var client = _app.CreateClientWithoutRedirects();
 
         using var response = await client.PatchAsJsonAsync("/api/config/scheduleOffset", new { value = "false" }, cancellationToken);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("false", (await ConfigAsync(client, cancellationToken)).GetProperty("scheduleOffset").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("true", (await ConfigAsync(client, cancellationToken)).GetProperty("scheduleOffset").GetString());
     }
 
     private static async Task<JsonElement> ConfigAsync(HttpClient client, CancellationToken cancellationToken) =>
