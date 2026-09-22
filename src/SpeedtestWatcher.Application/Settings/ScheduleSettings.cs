@@ -2,18 +2,19 @@ using Cronos;
 
 namespace SpeedtestWatcher.Application.Settings;
 
-public sealed record ScheduleSettings(string Cron, bool RandomOffset)
+public sealed record ScheduleSettings(string Cron, bool RandomOffset, string? UnhealthyCron = null)
 {
-    private const int DaysInAMonth = 30;
     private const int MostRunsCounted = 50_000;
 
-    public DateTime? NextRunAfter(DateTime utc) =>
-        CronExpression.Parse(Cron, CronFormat.Standard).GetNextOccurrence(DateTime.SpecifyKind(utc, DateTimeKind.Utc), TimeZoneInfo.Utc);
+    public bool HasUnhealthySchedule => !string.IsNullOrWhiteSpace(UnhealthyCron);
 
-    public int RunsPerMonth(DateTime utc)
+    public DateTime? NextRunAfter(DateTime utc, bool unhealthy = false) =>
+        Parse(CronFor(unhealthy)).GetNextOccurrence(DateTime.SpecifyKind(utc, DateTimeKind.Utc), TimeZoneInfo.Utc);
+
+    public int RunsIn(TimeSpan window, DateTime utc)
     {
-        var schedule = CronExpression.Parse(Cron, CronFormat.Standard);
-        var until = DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddDays(DaysInAMonth);
+        var schedule = Parse(Cron);
+        var until = DateTime.SpecifyKind(utc, DateTimeKind.Utc).Add(window);
         var at = DateTime.SpecifyKind(utc, DateTimeKind.Utc);
         var runs = 0;
 
@@ -25,4 +26,8 @@ public sealed record ScheduleSettings(string Cron, bool RandomOffset)
 
         return runs;
     }
+
+    private string CronFor(bool unhealthy) => unhealthy && HasUnhealthySchedule ? UnhealthyCron! : Cron;
+
+    private static CronExpression Parse(string cron) => CronExpression.Parse(cron, CronFormat.Standard);
 }

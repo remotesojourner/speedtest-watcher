@@ -26,6 +26,7 @@ public static partial class SettingDefinitions
 
         new("cron", "0 * * * *", SettingVisibility.FullAccessOnly, Cron),
         new("scheduleOffset", "true", SettingVisibility.FullAccessOnly, Boolean),
+        new("unhealthyCron", Unset, SettingVisibility.FullAccessOnly, UnsetOr(Cron)),
 
         new("provider", SpeedtestProvider.None.ToName(), SettingVisibility.Everyone, OneOf<SpeedtestProvider>("You need to provide a valid provider")),
         new("interface", Unset, SettingVisibility.Everyone),

@@ -1216,6 +1216,11 @@
             "description": "Left out for read-only visitors.",
             "default": "true"
           },
+          "unhealthyCron": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
           "provider": {
             "type": "string",
             "description": "Visible to everyone who can read the settings.",

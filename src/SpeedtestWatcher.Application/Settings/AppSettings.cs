@@ -30,6 +30,12 @@ public sealed record AppSettings(
             return Optional(key) is { } value && definition.ProblemWith(value) == null ? value : definition.Default;
         }
 
+        string? Valid(string key)
+        {
+            var value = Optional(key);
+            return value != null && SettingDefinitions.Find(key)!.ProblemWith(value) == null ? value : null;
+        }
+
         bool Flag(string key) => Text(key) == "true";
 
         TEnum Choice<TEnum>(string key) where TEnum : struct, Enum =>
@@ -46,7 +52,7 @@ public sealed record AppSettings(
                 PositiveNumber("ping") is { } ping ? (int)Math.Round(ping) : null,
                 PositiveNumber("download"),
                 PositiveNumber("upload")),
-            Schedule: new ScheduleSettings(Text("cron"), Flag("scheduleOffset")),
+            Schedule: new ScheduleSettings(Text("cron"), Flag("scheduleOffset"), Valid("unhealthyCron")),
             Provider: new ProviderSettings(
                 Selected: Choice<SpeedtestProvider>("provider"),
                 Interface: Optional("interface"),

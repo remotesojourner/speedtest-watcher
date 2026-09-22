@@ -72,12 +72,12 @@ public sealed class ResultsService
             await _results.SumBytesSinceAsync(null, cancellationToken));
     }
 
-    public async Task<long?> EstimateMonthlyBytesAsync(ScheduleSettings schedule, CancellationToken cancellationToken = default)
+    public async Task<long?> EstimateBytesAsync(ScheduleSettings schedule, TimeSpan window, CancellationToken cancellationToken = default)
     {
         int runs;
         try
         {
-            runs = schedule.RunsPerMonth(DateTime.UtcNow);
+            runs = schedule.RunsIn(window, DateTime.UtcNow);
         }
         catch (CronFormatException)
         {

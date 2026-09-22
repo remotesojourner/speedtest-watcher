@@ -17,7 +17,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 - **Scheduled speed tests** — runs tests on a cron schedule with [Ookla Speedtest](https://www.speedtest.net/apps/cli), [LibreSpeed](https://github.com/librespeed/speedtest-cli) or [Cloudflare](https://github.com/code-inflation/cfspeedtest). The command-line tools are downloaded automatically
   - Server choice for Ookla and LibreSpeed: automatic, random from an allow or deny list, or a single pinned server
   - One-off tests against any Ookla or LibreSpeed server, without changing your saved settings
-- **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history
+- **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history. An optional faster schedule kicks in while your line is missing those targets
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
 - **Dashboard** — averages, min/max, jitter, packet loss, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
@@ -129,7 +129,8 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | Field | Description |
 |---|---|
 | **Test Schedule** | Every minute, every 30 minutes, every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC. Next to the next run time is an estimate of the data that schedule will use a month, from how much your recent tests moved |
-| **Offset schedule** | Adds a random delay of 30 seconds to 5 minutes, so tests don't start at exact times |
+| **Offset schedule** | Starts each test 30 seconds to 5 minutes late, so tests don't land on exact times and every instance doesn't hit the same server at once. The delay is never more than a quarter of the gap between tests, so a fast schedule keeps its pace, and it applies to both schedules |
+| **While unhealthy** | An optional faster schedule, used while the last completed test missed your targets, and dropped again as soon as a test meets them. Presets from every 5 minutes to hourly, or your own cron expression. Off unless you choose a pace, and the card shows what that pace costs an hour |
 | **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours up to 720 (30 days). A pause ends when the app restarts |
 
 ### Tab: Provider

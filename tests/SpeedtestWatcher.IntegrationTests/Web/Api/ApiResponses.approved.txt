@@ -29,6 +29,7 @@
   "serverListMode": "allow",
   "serverMode": "auto",
   "skipIps": "none",
+  "unhealthyCron": "none",
   "upload": "50",
   "viewMode": false,
   "visitorAccess": "none"

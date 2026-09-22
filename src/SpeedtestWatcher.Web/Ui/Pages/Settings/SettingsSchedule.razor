@@ -39,7 +39,7 @@
             <div class="d-flex align-center justify-space-between mb-4">
                 <div>
                     <MudText Typo="Typo.body2">Offset schedule</MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Adds a small delay so tests don't start at exact times</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Starts each test a little late, by at most 5 minutes and never more than a quarter of the gap</MudText>
                 </div>
                 <MudSwitch @bind-Value="_scheduleOffset" Color="Color.Primary" />
             </div>
@@ -51,6 +51,51 @@
         </SurfaceCard>
     </MudItem>
 
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.NetworkCheck" Title="While Unhealthy"
+                     Description="Test again sooner while the last completed test misses your targets. Off unless you choose a pace.">
+            <div class="sw-option-list mb-3">
+                <OptionCard Title="Off" Description="Always use the test schedule" Icon="@Icons.Material.Filled.DoNotDisturbOn"
+                            Active="@(_unhealthyMode == OffMode)" OnClick="@(() => SelectUnhealthyCron(OffMode))" />
+                @foreach (var preset in _unhealthyPresets)
+                {
+                    <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
+                                Active="@(_unhealthyMode == preset.Cron)" OnClick="@(() => SelectUnhealthyCron(preset.Cron))" />
+                }
+                <OptionCard Title="Custom" Description="Your own cron expression" Icon="@Icons.Material.Filled.Code"
+                            Active="@(_unhealthyMode == CustomMode)" OnClick="@(() => SelectUnhealthyCron(CustomMode))" />
+            </div>
+
+            @if (_unhealthyMode == CustomMode)
+            {
+                <MudTextField @bind-Value="_customUnhealthyCron" Label="Cron expression" Placeholder="*/5 * * * *"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                              Error="@(UnhealthyNextRun == null)" ErrorText="Not a valid cron expression" Class="mb-2" />
+            }
+
+            @if (UnhealthyNextRun is { } nextWhileUnhealthy)
+            {
+                <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
+                    <MudText Typo="Typo.caption" Class="sw-muted">
+                        @($"First test after a miss: {PreferencesService.FormatDateTime(nextWhileUnhealthy)}")
+                    </MudText>
+                    <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">Cron syntax help</MudLink>
+                </div>
+            }
+
+            @if (_hourlyBytes is { } hourly)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+                    @($"This pace uses about {ByteSize.Describe(hourly)} an hour at your recent speeds, until a test meets your targets again.")
+                </MudAlert>
+            }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       Disabled="@(!UnhealthyScheduleDirty || (_unhealthyMode != OffMode && UnhealthyNextRun == null))" OnClick="SaveUnhealthyScheduleAsync">
+                Save
+            </MudButton>
+        </SurfaceCard>
+    </MudItem>
     <MudItem xs="12" md="6">
         <SurfaceCard Icon="@Icons.Material.Filled.PauseCircle" Title="Pause Speedtests"
                      Description="Temporarily stop automatic tests.">
@@ -102,6 +147,15 @@
         ("0 0,6,12,18 * * *", "Very rarely", "Every 6 hours", Icons.Material.Filled.Spa)
     ];
 
+    private static readonly (string Cron, string Title, string Description, string Icon)[] _unhealthyPresets =
+    [
+        ("*/5 * * * *", "Every 5 minutes", "The quickest look at a bad line", Icons.Material.Filled.Bolt),
+        ("*/10 * * * *", "Every 10 minutes", "Often, without hammering the line", Icons.Material.Filled.Speed),
+        ("*/15 * * * *", "Every 15 minutes", "A good middle ground", Icons.Material.Filled.Timer),
+        ("0,30 * * * *", "Every 30 minutes", "Twice the usual hourly pace", Icons.Material.Filled.Schedule),
+        ("0 * * * *", "Every hour", "Only useful with a slower schedule", Icons.Material.Filled.Spa)
+    ];
+
     private static readonly (string Id, double? Hours, string Title, string Description, string Icon)[] _pausePresets =
     [
         ("manual", null, "Pause indefinitely", "Until you resume manually", Icons.Material.Filled.AllInclusive),
@@ -110,29 +164,41 @@
         ("long", 12, "Long break", "Pause for 12 hours", Icons.Material.Filled.Bedtime)
     ];
 
+    private const string OffMode = "off";
+
     private string _cronMode = "0 * * * *";
     private string _customCron = "0 * * * *";
     private bool _scheduleOffset;
+
+    private string _unhealthyMode = OffMode;
+    private string _customUnhealthyCron = "*/5 * * * *";
 
     private string _pauseMode = "manual";
     private double? _customPauseHours;
 
     private string EffectiveCron => (_cronMode == CustomMode ? _customCron : _cronMode).Trim();
 
-    private DateTime? NextRun
+    private string? EffectiveUnhealthyCron => _unhealthyMode switch
     {
-        get
+        OffMode => null,
+        CustomMode => _customUnhealthyCron.Trim(),
+        _ => _unhealthyMode
+    };
+
+    private DateTime? NextRun => NextRunOf(EffectiveCron);
+
+    private DateTime? UnhealthyNextRun => EffectiveUnhealthyCron is { } cron ? NextRunOf(cron) : null;
+
+    private DateTime? NextRunOf(string cron)
+    {
+        try
         {
-            try
-            {
-                var next = CronExpression.Parse(EffectiveCron, CronFormat.Standard)
-                    .GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
-                return next is { } utc ? PreferencesService.ToLocal(utc) : null;
-            }
-            catch (CronFormatException)
-            {
-                return null;
-            }
+            var next = CronExpression.Parse(cron, CronFormat.Standard).GetNextOccurrence(DateTime.UtcNow, TimeZoneInfo.Utc);
+            return next is { } utc ? PreferencesService.ToLocal(utc) : null;
+        }
+        catch (CronFormatException)
+        {
+            return null;
         }
     }
 
@@ -140,17 +206,24 @@
         EffectiveCron != Settings.Current.Schedule.Cron
         || _scheduleOffset != Settings.Current.Schedule.RandomOffset;
 
+    private bool UnhealthyScheduleDirty => EffectiveUnhealthyCron != Settings.Current.Schedule.UnhealthyCron;
+
     private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseService.MaxResumeInHours;
 
     private long? _monthlyBytes;
+    private long? _hourlyBytes;
     private string _estimatedFor = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_estimatedFor == EffectiveCron) return;
+        var estimateFor = $"{EffectiveCron}|{EffectiveUnhealthyCron}";
+        if (_estimatedFor == estimateFor) return;
 
-        _estimatedFor = EffectiveCron;
-        _monthlyBytes = await Results.EstimateMonthlyBytesAsync(new ScheduleSettings(EffectiveCron, RandomOffset: false));
+        _estimatedFor = estimateFor;
+        _monthlyBytes = await Results.EstimateBytesAsync(new ScheduleSettings(EffectiveCron, RandomOffset: false), TimeSpan.FromDays(30));
+        _hourlyBytes = EffectiveUnhealthyCron is { } cron
+            ? await Results.EstimateBytesAsync(new ScheduleSettings(cron, RandomOffset: false), TimeSpan.FromHours(1))
+            : null;
         StateHasChanged();
     }
 
@@ -162,6 +235,12 @@
         _cronMode = _cronPresets.Any(p => p.Cron == cron) ? cron : CustomMode;
         _customCron = cron;
         _scheduleOffset = Settings.Current.Schedule.RandomOffset;
+
+        if (Settings.Current.Schedule.UnhealthyCron is { } unhealthyCron)
+        {
+            _unhealthyMode = _unhealthyPresets.Any(p => p.Cron == unhealthyCron) ? unhealthyCron : CustomMode;
+            _customUnhealthyCron = unhealthyCron;
+        }
     }
 
     private void SelectCron(string mode)
@@ -170,10 +249,23 @@
         if (mode != CustomMode) _customCron = mode;
     }
 
+    private void SelectUnhealthyCron(string mode)
+    {
+        _unhealthyMode = mode;
+        if (mode is not (CustomMode or OffMode)) _customUnhealthyCron = mode;
+    }
+
     private async Task SaveScheduleAsync()
     {
         var result = await Settings.SaveAsync(("cron", EffectiveCron), ("scheduleOffset", _scheduleOffset ? "true" : "false"));
         if (result.Succeeded) Snackbar.Add("Schedule saved", Severity.Success);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+    }
+
+    private async Task SaveUnhealthyScheduleAsync()
+    {
+        var result = await Settings.SaveAsync(("unhealthyCron", EffectiveUnhealthyCron ?? SettingDefinitions.Unset));
+        if (result.Succeeded) Snackbar.Add(EffectiveUnhealthyCron == null ? "Unhealthy schedule turned off" : "Unhealthy schedule saved", Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 

@@ -15,6 +15,7 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
     private readonly bool _runTestOnStartup;
     private readonly ILogger<SpeedtestSchedulerService> _logger;
     private CancellationTokenSource _scheduleChanged = new();
+    private bool? _waitingWhileUnhealthy;
 
     public SpeedtestSchedulerService(
         IServiceScopeFactory scopes, IAppEvents events, TimeProvider time, IOptions<SpeedtestWatcherOptions> options, ILogger<SpeedtestSchedulerService> logger)
@@ -29,6 +30,7 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _events.SettingsChanged += OnSettingsChanged;
+        _events.TestFinished += OnTestFinished;
         try
         {
             if (_runTestOnStartup && await BackgroundDelay.WaitAsync(TimeSpan.FromSeconds(5), stoppingToken)) await RunAsync(stoppingToken);
@@ -49,6 +51,7 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
         finally
         {
             _events.SettingsChanged -= OnSettingsChanged;
+            _events.TestFinished -= OnTestFinished;
         }
     }
 
@@ -61,12 +64,15 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
     private async Task<bool> WaitForNextRunAsync(CancellationToken stoppingToken)
     {
         var scheduleChanged = _scheduleChanged.Token;
-        var due = (await ReadScheduleAsync(stoppingToken)).NextRunAfter(_time.GetUtcNow().UtcDateTime) ?? DateTime.MaxValue;
+        var schedule = await ReadScheduleAsync(stoppingToken);
+        var unhealthy = schedule.HasUnhealthySchedule && await LatestResultMissedTargetsAsync(stoppingToken);
+        _waitingWhileUnhealthy = schedule.HasUnhealthySchedule ? unhealthy : null;
+
+        var due = schedule.NextRunAfter(_time.GetUtcNow().UtcDateTime, unhealthy) ?? DateTime.MaxValue;
         if (!await BackgroundDelay.WaitUntilAsync(due, _time, stoppingToken, scheduleChanged)) return false;
 
-        if ((await ReadScheduleAsync(stoppingToken)).RandomOffset)
+        if ((await ReadScheduleAsync(stoppingToken)).RandomOffset && OffsetAfter(due, schedule, unhealthy) is { } offset)
         {
-            var offset = TimeSpan.FromSeconds(Random.Shared.Next(30, 300));
             LogOffset(offset.TotalSeconds);
             await Task.Delay(offset, _time, stoppingToken);
         }
@@ -74,15 +80,35 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
         return true;
     }
 
+    private static TimeSpan? OffsetAfter(DateTime due, ScheduleSettings schedule, bool unhealthy) =>
+        schedule.NextRunAfter(due, unhealthy) is { } following ? ScheduleOffset.Within(following - due) : null;
+
     private void OnSettingsChanged(IReadOnlyDictionary<string, string> changes)
     {
-        if (changes.ContainsKey("cron")) Interlocked.Exchange(ref _scheduleChanged, new CancellationTokenSource()).Cancel();
+        if (changes.ContainsKey("cron") || changes.ContainsKey("unhealthyCron")) StartWaitingAgain();
     }
+
+    private void OnTestFinished(SpeedtestDto result)
+    {
+        if (_waitingWhileUnhealthy is not { } waitingWhileUnhealthy || result.Healthy is not { } healthy) return;
+
+        var missedTargets = !healthy;
+        if (missedTargets != waitingWhileUnhealthy) StartWaitingAgain();
+    }
+
+    private void StartWaitingAgain() => Interlocked.Exchange(ref _scheduleChanged, new CancellationTokenSource()).Cancel();
 
     private async Task<ScheduleSettings> ReadScheduleAsync(CancellationToken stoppingToken)
     {
         using var scope = _scopes.CreateScope();
         return (await scope.ServiceProvider.GetRequiredService<ISettingsStore>().GetAsync(stoppingToken)).Schedule;
+    }
+
+    private async Task<bool> LatestResultMissedTargetsAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _scopes.CreateScope();
+        var latest = await scope.ServiceProvider.GetRequiredService<ISpeedtestRepository>().GetLatestCompletedAsync(stoppingToken);
+        return latest?.Healthy == false;
     }
 
     private async Task RunAsync(CancellationToken stoppingToken)
