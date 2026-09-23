@@ -24,7 +24,8 @@ public static class PrometheusMetrics
         Gauge(sb, "upload", "Upload speed of the latest completed test in Mbps", completed?.Upload, completedLabels, "F2");
         Gauge(sb, "time", "Duration of the latest completed test in seconds", completed?.Time, completedLabels, "F0");
         Gauge(sb, "packet_loss", "Packet loss of the latest completed test as a percentage, when the provider measured it", completed?.PacketLoss, completedLabels, "F2");
-        Gauge(sb, "bufferbloat_ms", "How much longer the line took to answer under load than when idle during the latest completed test, in ms", completed?.Bufferbloat, completedLabels, "F2");
+        Gauge(sb, "bufferbloat_download_ms", "How much longer the line took to answer while the latest completed test was downloading than when idle, in ms", completed?.BufferbloatDown, completedLabels, "F2");
+        Gauge(sb, "bufferbloat_upload_ms", "How much longer the line took to answer while the latest completed test was uploading than when idle, in ms", completed?.BufferbloatUp, completedLabels, "F2");
         Gauge(sb, "last_test_bytes", "Bytes the latest completed test moved, download and upload together, when the provider reported them", BytesMoved(completed), completedLabels, "F0");
         GaugeFamily(sb, "data_used_bytes", "Bytes the tests in a period moved, download and upload together", "F0",
         [

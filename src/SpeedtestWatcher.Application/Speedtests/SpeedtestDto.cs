@@ -13,8 +13,6 @@ public class SpeedtestDto
     public string? Error { get; set; }
     public double? PacketLoss { get; set; }
 
-    public double? Bufferbloat { get; set; }
-
     public double? BufferbloatDown { get; set; }
 
     public double? BufferbloatUp { get; set; }
@@ -60,7 +58,6 @@ public class SpeedtestDto
         Upload = test.Upload,
         Error = test.Error,
         PacketLoss = test.PacketLoss,
-        Bufferbloat = test.Bufferbloat,
         BufferbloatDown = test.BufferbloatDown,
         BufferbloatUp = test.BufferbloatUp,
         LatencyIdle = test.LatencyIdle,

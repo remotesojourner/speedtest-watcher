@@ -28,6 +28,25 @@ public sealed class LatencyHistoryTests : IDisposable
     }
 
     [Fact]
+    public async Task SlotsLongerThanAnHourSpanWholeHours()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var midnight = _noon.Date;
+        await StoreAsync(cancellationToken,
+            Round(midnight.AddMinutes(10), 10),
+            Round(midnight.AddMinutes(110), 30),
+            Round(midnight.AddHours(2), 50),
+            Round(midnight.AddHours(3).AddMinutes(59), 70));
+
+        await using var db = _database.NewContext();
+        var points = await new MonitoringRepository(db).LatencyAsync(midnight, midnight.AddHours(4), 120, cancellationToken);
+
+        Assert.Equal([midnight, midnight.AddHours(2)], points.Select(point => point.At));
+        Assert.Equal([20, 60], points.Select(point => point.Milliseconds));
+        Assert.Equal([2, 2], points.Select(point => point.Rounds));
+    }
+
+    [Fact]
     public async Task ASlotWhereNothingAnsweredHasNoFigureAndCountsItsFailures()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

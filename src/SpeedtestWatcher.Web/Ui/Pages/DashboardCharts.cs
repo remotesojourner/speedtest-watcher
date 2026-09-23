@@ -12,22 +12,26 @@ public sealed class DashboardCharts
         List<ChartSeries<double>> download,
         List<ChartSeries<double>> upload,
         List<ChartSeries<double>> ping,
-        (int Download, int Upload, int Ping) tickSteps,
+        string[] bufferbloatLabels,
+        List<ChartSeries<double>> bufferbloat,
+        (int Download, int Upload, int Ping, int Bufferbloat) tickSteps,
         bool showMarkers,
-        bool hasBufferbloat,
+        bool showBufferbloatMarkers,
         IReadOnlyList<ChartPoint> failures)
     {
         Labels = labels;
         Download = download;
         Upload = upload;
         Ping = ping;
+        BufferbloatLabels = bufferbloatLabels;
+        Bufferbloat = bufferbloat;
         TickSteps = tickSteps;
         ShowMarkers = showMarkers;
-        HasBufferbloat = hasBufferbloat;
+        ShowBufferbloatMarkers = showBufferbloatMarkers;
         Failures = failures;
     }
 
-    public static DashboardCharts Empty { get; } = new([], [], [], [], (0, 0, 0), false, false, []);
+    public static DashboardCharts Empty { get; } = new([], [], [], [], [], [], (0, 0, 0, 0), false, false, []);
 
     public string[] Labels { get; }
 
@@ -37,11 +41,17 @@ public sealed class DashboardCharts
 
     public List<ChartSeries<double>> Ping { get; }
 
-    public (int Download, int Upload, int Ping) TickSteps { get; }
+    public string[] BufferbloatLabels { get; }
+
+    public List<ChartSeries<double>> Bufferbloat { get; }
+
+    public (int Download, int Upload, int Ping, int Bufferbloat) TickSteps { get; }
 
     public bool ShowMarkers { get; }
 
-    public bool HasBufferbloat { get; }
+    public bool ShowBufferbloatMarkers { get; }
+
+    public bool HasBufferbloat => BufferbloatLabels.Length > 0;
 
     public IReadOnlyList<ChartPoint> Failures { get; }
 
@@ -53,21 +63,26 @@ public sealed class DashboardCharts
         var upload = readings.Select(point => convertSpeed(point.Upload ?? 0)).ToArray();
         var ping = readings.Select(point => (double)(point.Ping ?? 0)).ToArray();
         var jitter = readings.Select(point => point.Jitter ?? 0).ToArray();
-        var hasBufferbloat = readings.Any(point => point.Bufferbloat.HasValue);
-        var bufferbloat = readings.Select(point => point.Bufferbloat ?? 0).ToArray();
 
-        List<ChartSeries<double>> latency = [new ChartSeries<double> { Name = WebStrings.Ping, Data = ping }, new ChartSeries<double> { Name = WebStrings.Jitter, Data = jitter }];
-        if (hasBufferbloat) latency.Add(new ChartSeries<double> { Name = WebStrings.Bufferbloat, Data = bufferbloat });
-        latency.Add(Average(ping));
+        var bloated = readings.Where(point => point.BufferbloatDown.HasValue || point.BufferbloatUp.HasValue).ToList();
+        var bufferbloatDown = bloated.Select(point => point.BufferbloatDown ?? 0).ToArray();
+        var bufferbloatUp = bloated.Select(point => point.BufferbloatUp ?? 0).ToArray();
 
         return new DashboardCharts(
             readings.Select(point => label(point.Time)).ToArray(),
             [new ChartSeries<double> { Name = WebStrings.Download, Data = download }, Average(download)],
             [new ChartSeries<double> { Name = WebStrings.Upload, Data = upload }, Average(upload)],
-            latency,
-            (ChartAxisHelper.TickStep(download, beginAtZero), ChartAxisHelper.TickStep(upload, beginAtZero), ChartAxisHelper.TickStep(ping.Concat(jitter).Concat(hasBufferbloat ? bufferbloat : []), beginAtZero)),
+            [new ChartSeries<double> { Name = WebStrings.Ping, Data = ping }, new ChartSeries<double> { Name = WebStrings.Jitter, Data = jitter }, Average(ping)],
+            bloated.Select(point => label(point.Time)).ToArray(),
+            bloated.Count == 0
+                ? []
+                : [new ChartSeries<double> { Name = WebStrings.Download, Data = bufferbloatDown }, new ChartSeries<double> { Name = WebStrings.Upload, Data = bufferbloatUp }],
+            (ChartAxisHelper.TickStep(download, beginAtZero),
+                ChartAxisHelper.TickStep(upload, beginAtZero),
+                ChartAxisHelper.TickStep(ping.Concat(jitter), beginAtZero),
+                ChartAxisHelper.TickStep(bufferbloatDown.Concat(bufferbloatUp), beginAtZero)),
             ChartAxisHelper.HasRoomForMarkers(readings.Count),
-            hasBufferbloat,
+            ChartAxisHelper.HasRoomForMarkers(bloated.Count),
             points.Where(point => point.Failed).Reverse().ToList());
     }
 

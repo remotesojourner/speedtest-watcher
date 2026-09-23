@@ -8,5 +8,6 @@ public sealed record ChartPoint(
     double? Jitter,
     double? Download,
     double? Upload,
-    double? Bufferbloat,
+    double? BufferbloatDown,
+    double? BufferbloatUp,
     int? Duration);

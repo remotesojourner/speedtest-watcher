@@ -216,6 +216,9 @@
   <data name="LatencyRange7Days" xml:space="preserve">
     <value>7 days</value>
   </data>
+  <data name="LatencyRange30Days" xml:space="preserve">
+    <value>30 days</value>
+  </data>
   <data name="OutageNotFound" xml:space="preserve">
     <value>Outage not found</value>
   </data>

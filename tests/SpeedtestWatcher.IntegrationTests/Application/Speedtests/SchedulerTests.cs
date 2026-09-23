@@ -55,6 +55,42 @@ public sealed class SchedulerTests : IDisposable
         Assert.True(_time.GetUtcNow() < new DateTimeOffset(2026, 9, 23, 0, 0, 0, TimeSpan.Zero));
     }
 
+    [Fact(Timeout = 15000)]
+    public async Task SkippingTheNextTestPassesOverOneScheduledRunAndKeepsTheOneAfter()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var runner = new SignallingRunner();
+        _services = await RunTestServices.BuildAsync(_database, runner, cancellationToken, configure: services =>
+        {
+            services.AddSingleton<TimeProvider>(_time);
+            services.AddSingleton(Options.Create(new SpeedtestWatcherOptions()));
+        });
+        await SaveAsync(new Dictionary<string, string> { ["cron"] = "* * * * *", ["scheduleOffset"] = "false" }, cancellationToken);
+        var state = _services.GetRequiredService<RunState>();
+        state.SkipNextScheduledRun();
+
+        using var scheduler = ActivatorUtilities.CreateInstance<SpeedtestSchedulerService>(_services);
+        await scheduler.StartAsync(cancellationToken);
+        await Task.Delay(200, cancellationToken);
+
+        while (state.IsPaused)
+        {
+            _time.Advance(TimeSpan.FromSeconds(31));
+            await Task.Delay(100, cancellationToken);
+        }
+
+        Assert.False(runner.Ran.IsCompleted);
+
+        while (!runner.Ran.IsCompleted)
+        {
+            _time.Advance(TimeSpan.FromSeconds(31));
+            await Task.WhenAny(runner.Ran, Task.Delay(100, cancellationToken));
+        }
+
+        await scheduler.StopAsync(cancellationToken);
+        Assert.True(_time.GetUtcNow() >= new DateTimeOffset(2026, 9, 22, 12, 2, 0, TimeSpan.Zero));
+    }
+
     private async Task SaveAsync(Dictionary<string, string> changes, CancellationToken cancellationToken)
     {
         using var scope = _services!.CreateScope();

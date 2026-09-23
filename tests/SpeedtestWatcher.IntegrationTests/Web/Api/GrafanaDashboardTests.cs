@@ -68,7 +68,7 @@ public sealed partial class GrafanaDashboardTests
             Id = 1, ServerId = 12345, ServerName = "Acme Fibre", ServerHost = "speed.acme.example",
             Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Time = 14,
             Status = TestStatus.Completed, Healthy = true, PacketLoss = 0.5,
-            Bufferbloat = 18.5, LatencyIdle = 13.2, LatencyLoaded = 31.7, LatencyLoadedTail = 64.2,
+            BufferbloatDown = 5.1, BufferbloatUp = 42.8, LatencyIdle = 13.2, LatencyLoaded = 31.7, LatencyLoadedTail = 64.2,
             DownloadBytes = 903347628, UploadBytes = 88429797,
             ThresholdPing = 25, ThresholdDownload = 900, ThresholdUpload = 100,
             Created = new DateTime(2026, 9, 22, 12, 0, 0, DateTimeKind.Utc)

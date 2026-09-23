@@ -29,6 +29,37 @@
     line-height: 1;
 }
 
+.sw-stat-value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+}
+
+.sw-metric-columns {
+    display: flex;
+    gap: 8px;
+}
+
+.sw-metric-columns > * {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.sw-chip-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    margin-bottom: -8px;
+    padding-top: 16px;
+}
+
+.sw-chip-footer .mud-chip {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+}
+
 .sw-card {
     border: 1px solid var(--mud-palette-lines-default);
 }
@@ -109,7 +140,7 @@
     justify-content: flex-start;
 }
 
-.sw-chart-average .mud-charts-line-series path.mud-chart-line {
+.sw-chart .mud-charts-line-series path.mud-chart-line {
     pointer-events: none;
 }
 
@@ -117,13 +148,17 @@
     stroke-dasharray: 6 4;
 }
 
-.sw-chart-average .mud-charts-line-series circle.mud-chart-point:not([opacity]) {
+.sw-chart .mud-charts-line-series circle.mud-chart-point:not([opacity]) {
     fill: var(--mud-palette-surface);
 }
 
 .sw-chart-average .mud-charts-line-series path.mud-chart-line:last-of-type ~ circle.mud-chart-point {
     visibility: hidden;
     pointer-events: none;
+}
+
+.sw-chart-average .mud-chart-legend-item:last-child {
+    display: none;
 }
 
 .sw-hourly-scroll {
@@ -191,16 +226,6 @@
     background: var(--mud-palette-background);
 }
 
-.sw-range-table th,
-.sw-range-table td {
-    white-space: nowrap;
-}
-
-.sw-range-table.mud-simple-table.mud-table-dense tr > td,
-.sw-range-table.mud-simple-table.mud-table-dense tr > th {
-    padding: 6px 10px;
-}
-
 .sw-card-danger {
     border: 1px solid var(--mud-palette-error);
     background: color-mix(in srgb, var(--mud-palette-error) 6%, transparent);
@@ -237,6 +262,30 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.sw-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 38px;
+}
+
+.sw-narrow-field {
+    max-width: 280px;
+}
+
+.sw-option-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px 16px;
+}
+
+@media (min-width: 960px) {
+    .sw-option-columns {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .sw-option-grid {
@@ -375,17 +424,38 @@
     margin-right: 3px;
 }
 
-.sw-uptime-calendar {
-    display: flex;
-    gap: 3px;
-    overflow-x: auto;
-    padding-bottom: 4px;
+.sw-row-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    column-gap: 32px;
 }
 
-.sw-uptime-week {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+@media (min-width: 600px) {
+    .sw-row-columns {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.sw-uptime-calendar {
+    display: grid;
+    grid-template-columns: auto repeat(31, minmax(0, 1fr));
+    gap: 3px 2px;
+    align-items: center;
+}
+
+.sw-uptime-calendar .sw-uptime-month.mud-typography {
+    padding-right: 6px;
+    font-size: 0.6875rem;
+    line-height: 1;
+}
+
+.sw-uptime-calendar .sw-uptime-day {
+    width: 100%;
+    height: 12px;
+}
+
+.sw-uptime-calendar .mud-tooltip-root {
+    display: block;
 }
 
 .sw-uptime-day {

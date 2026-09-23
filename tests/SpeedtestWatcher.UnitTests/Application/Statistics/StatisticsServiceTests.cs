@@ -21,9 +21,9 @@ public class StatisticsServiceTests
 
         Assert.Equal(
             [
-                new ChartPoint(_start.AddHours(1), false, null, 12, 0.5, 900, 90, null, 15),
-                new ChartPoint(_start.AddHours(2), true, "Network unreachable", null, null, null, null, null, null),
-                new ChartPoint(_start.AddHours(3), false, null, null, null, null, null, null, null)
+                new ChartPoint(_start.AddHours(1), false, null, 12, 0.5, 900, 90, null, null, 15),
+                new ChartPoint(_start.AddHours(2), true, "Network unreachable", null, null, null, null, null, null, null),
+                new ChartPoint(_start.AddHours(3), false, null, null, null, null, null, null, null, null)
             ],
             statistics.ChartPoints);
         Assert.Equal((3, 1, false), (statistics.Tests.Total, statistics.Tests.Failed, statistics.Downsampled));

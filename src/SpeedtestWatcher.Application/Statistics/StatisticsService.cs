@@ -49,7 +49,8 @@ public sealed class StatisticsService
             Download: hasCompleted ? DecimalRange(completed.Select(row => row.Download).ToList()) : null,
             Upload: hasCompleted ? DecimalRange(completed.Select(row => row.Upload).ToList()) : null,
             PacketLoss: completed.Any(row => row.PacketLoss.HasValue) ? DecimalRange(completed.Where(row => row.PacketLoss.HasValue).Select(row => row.PacketLoss!.Value).ToList()) : null,
-            Bufferbloat: completed.Any(row => row.Bufferbloat.HasValue) ? DecimalRange(completed.Where(row => row.Bufferbloat.HasValue).Select(row => row.Bufferbloat!.Value).ToList()) : null,
+            BufferbloatDown: RangeOfMeasured(completed, row => row.BufferbloatDown),
+            BufferbloatUp: RangeOfMeasured(completed, row => row.BufferbloatUp),
             Time: hasCompleted ? WholeNumberRange(completed.Select(row => row.Time).ToList()) : null,
             ChartPoints: rows.Count <= MaxChartPoints ? PointPerResult(rows) : PointPerTimeBucket(rows, range.FromUtc, range.ToUtc),
             HourlyAverages: HourlyAverages(completed, range.TimeZone),
@@ -61,7 +62,9 @@ public sealed class StatisticsService
             {
                 From = range.From,
                 To = range.To,
-                Days = (int)Math.Ceiling((range.ToUtc - range.FromUtc).TotalDays)
+                Days = (int)Math.Ceiling((range.ToUtc - range.FromUtc).TotalDays),
+                FromUtc = range.FromUtc,
+                ToUtc = range.ToUtc
             });
     }
 
@@ -91,6 +94,18 @@ public sealed class StatisticsService
         Max = Math.Round(values.Max(), 2),
         Avg = Math.Round(values.Average(), 2)
     };
+
+    private static MetricStatsDto<double>? RangeOfMeasured(List<Speedtest> rows, Func<Speedtest, double?> reading)
+    {
+        var measured = rows.Select(reading).OfType<double>().ToList();
+        return measured.Count > 0 ? DecimalRange(measured) : null;
+    }
+
+    private static double? AverageOfMeasured(List<Speedtest> rows, Func<Speedtest, double?> reading)
+    {
+        var measured = rows.Select(reading).OfType<double>().ToList();
+        return measured.Count > 0 ? Math.Round(measured.Average(), 2) : null;
+    }
 
     private static ConsistencyDto Consistency(List<Speedtest> completed)
     {
@@ -152,7 +167,8 @@ public sealed class StatisticsService
             hasReadings ? row.Jitter : null,
             hasReadings ? row.Download : null,
             hasReadings ? row.Upload : null,
-            hasReadings ? row.Bufferbloat : null,
+            hasReadings ? row.BufferbloatDown : null,
+            hasReadings ? row.BufferbloatUp : null,
             hasReadings ? row.Time : null);
     }).ToList();
 
@@ -185,12 +201,11 @@ public sealed class StatisticsService
 
             if (valid.Count == 0)
             {
-                points.Add(new ChartPoint(midpoint, true, failedSummary, null, null, null, null, null, null));
+                points.Add(new ChartPoint(midpoint, true, failedSummary, null, null, null, null, null, null, null));
                 continue;
             }
 
             var jitters = valid.Where(row => row.Jitter.HasValue).Select(row => row.Jitter!.Value).ToList();
-            var bufferbloats = valid.Where(row => row.Bufferbloat.HasValue).Select(row => row.Bufferbloat!.Value).ToList();
             points.Add(new ChartPoint(
                 midpoint,
                 failedCount > 0,
@@ -199,7 +214,8 @@ public sealed class StatisticsService
                 jitters.Count > 0 ? Math.Round(jitters.Average(), 2) : null,
                 Math.Round(valid.Average(row => row.Download), 2),
                 Math.Round(valid.Average(row => row.Upload), 2),
-                bufferbloats.Count > 0 ? Math.Round(bufferbloats.Average(), 2) : null,
+                AverageOfMeasured(valid, row => row.BufferbloatDown),
+                AverageOfMeasured(valid, row => row.BufferbloatUp),
                 (int)Math.Round(valid.Average(row => row.Time))));
         }
 

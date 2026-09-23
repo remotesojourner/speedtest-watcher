@@ -41,14 +41,15 @@ internal static class TemplateVariables
         ["threshold_upload"] = Decimal(test.ThresholdUpload) ?? "-",
         ["missed"] = TargetSettings.Describe(Missed(test)),
         ["packet_loss"] = Decimal(test.PacketLoss) ?? "-",
-        ["bufferbloat"] = Decimal(test.Bufferbloat) ?? "-",
+        ["bufferbloat_down"] = Decimal(test.BufferbloatDown) ?? "-",
+        ["bufferbloat_up"] = Decimal(test.BufferbloatUp) ?? "-",
         ["data_used"] = test.DownloadBytes + test.UploadBytes is { } bytes ? ByteSize.Describe(bytes) : "-"
     };
 
     private static IReadOnlyList<TargetKind> Missed(Speedtest test) =>
         test.Status == TestStatus.Completed
             ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload, test.ThresholdPacketLoss, test.ThresholdBufferbloat)
-                .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.Bufferbloat))
+                .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.BufferbloatDown, test.BufferbloatUp))
             : [];
 
     private static string? Decimal(double? value) => value?.ToString("F2", CultureInfo.InvariantCulture);

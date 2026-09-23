@@ -22,7 +22,7 @@ public sealed class ManualRunTests : BrowserTest, IClassFixture<BrowserAppWithRe
         var history = await browser.NewPageAsync();
         await dashboard.GotoAsync("/");
         await history.GotoAsync("/history");
-        await Expect(dashboard.GetByText("Overview")).ToBeVisibleAsync();
+        await Expect(dashboard.GetByText("Under Load", new() { Exact = true })).ToBeVisibleAsync();
         await Expect(history.GetByText("Recent Tests")).ToBeVisibleAsync();
         var newestResult = history.Locator(".mud-list-item").First;
         await Expect(newestResult).Not.ToContainTextAsync(HeldSpeedtestRunner.DownloadShown);

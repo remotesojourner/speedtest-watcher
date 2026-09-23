@@ -8,6 +8,7 @@ public sealed class RunState : IDisposable
     private readonly IAppEvents _events;
     private bool _running;
     private DateTime? _resumesAt;
+    private bool _skippingNextScheduledRun;
     private Timer? _timer;
 
     public RunState(IAppEvents events)
@@ -74,6 +75,7 @@ public sealed class RunState : IDisposable
         {
             _timer?.Dispose();
             _timer = null;
+            _skippingNextScheduledRun = false;
 
             if (hours == null || hours < 0)
             {
@@ -89,6 +91,33 @@ public sealed class RunState : IDisposable
         Publish();
     }
 
+    public void SkipNextScheduledRun()
+    {
+        lock (_lock)
+        {
+            _timer?.Dispose();
+            _timer = null;
+            _resumesAt = DateTime.MaxValue;
+            _skippingNextScheduledRun = true;
+        }
+
+        Publish();
+    }
+
+    public bool TrySkipScheduledRun()
+    {
+        lock (_lock)
+        {
+            if (!_skippingNextScheduledRun) return false;
+
+            _skippingNextScheduledRun = false;
+            _resumesAt = null;
+        }
+
+        Publish();
+        return true;
+    }
+
     public void Resume()
     {
         lock (_lock)
@@ -96,6 +125,7 @@ public sealed class RunState : IDisposable
             _timer?.Dispose();
             _timer = null;
             _resumesAt = null;
+            _skippingNextScheduledRun = false;
         }
 
         Publish();

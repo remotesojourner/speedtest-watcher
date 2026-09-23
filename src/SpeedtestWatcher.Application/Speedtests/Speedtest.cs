@@ -17,8 +17,6 @@ public class Speedtest
 
     public double? PacketLoss { get; set; }
 
-    public double? Bufferbloat { get; set; }
-
     public double? BufferbloatDown { get; set; }
 
     public double? BufferbloatUp { get; set; }

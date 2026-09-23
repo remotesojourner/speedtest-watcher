@@ -8,7 +8,7 @@ public sealed class PageLayoutTests : BrowserTest, IClassFixture<BrowserAppWithR
 {
     private static readonly (string Path, string Name, string Landmark)[] _pages =
     [
-        ("/", "dashboard", "Overview"),
+        ("/", "dashboard", "Under Load"),
         ("/history", "history", "Recent Tests"),
         ("/uptime", "uptime", "Outages"),
         ("/settings/general", "general", "Before Each Test"),

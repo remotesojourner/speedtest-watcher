@@ -13,15 +13,19 @@
 }
 else
 {
-    <div class="text-center">
+    <div>
         <div class="d-flex align-center justify-center gap-1">
             @if (!string.IsNullOrEmpty(Icon))
             {
                 <MudIcon Icon="@Icon" Size="MudBlazor.Size.Small" Color="@Color" />
             }
-            <MudText Typo="@(ValueTypo())" Class="sw-hero-value font-weight-bold" Color="@Color">@Value</MudText>
+            <MudText Typo="@ValueTypo" Class="sw-hero-value font-weight-bold" Color="@Color">@Value</MudText>
         </div>
-        <MudText Typo="Typo.caption" Class="sw-muted">@Label</MudText>
+        <MudText Typo="Typo.caption" Align="Align.Center" Class="sw-muted d-block">@Label</MudText>
+        @if (!string.IsNullOrEmpty(Detail))
+        {
+            <MudText Typo="Typo.caption" Align="Align.Center" Class="sw-muted d-block">@Detail</MudText>
+        }
     </div>
 }
 
@@ -29,15 +33,16 @@ else
     [Parameter] public string Value { get; set; } = "";
     [Parameter] public string? Unit { get; set; }
     [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string? Detail { get; set; }
     [Parameter] public string? Icon { get; set; }
     [Parameter] public Color Color { get; set; } = Color.Default;
     [Parameter] public MetricSize Size { get; set; } = MetricSize.Large;
 
     [Parameter] public bool Dense { get; set; }
 
-    private Typo ValueTypo() => Size switch
+    private Typo ValueTypo => Size switch
     {
-        MetricSize.Large => Dense ? Typo.h6 : Typo.h5,
-        _ => Typo.body1
+        MetricSize.Small => Typo.body1,
+        _ => Dense ? Typo.h6 : Typo.h5
     };
 }

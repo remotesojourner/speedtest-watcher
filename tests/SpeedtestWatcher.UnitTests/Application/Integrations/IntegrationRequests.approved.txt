@@ -72,37 +72,37 @@ activity: unchanged
 ## discord with every template variable · test finished
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 244
+Content-Length: 249
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|18.50|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|5.10|42.80|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test missed targets
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 254
+Content-Length: 256
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"31|2.75|612.50|98.12|completed|no|Acme Fibre|25|900.00|100.00|ping, download and upload|-|-|-|","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"31|2.75|612.50|98.12|completed|no|Acme Fibre|25|900.00|100.00|ping, download and upload|-|-|-|-|","color":16098851,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test met targets again
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 244
+Content-Length: 249
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|18.50|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|5.10|42.80|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test failed
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 235
+Content-Length: 237
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|failed|unknown|Acme Fibre|-|-|-||-|-|-|Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|failed|unknown|Acme Fibre|-|-|-||-|-|-|-|Network unreachable","color":12993861,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · test skipped
 activity: sent
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 247
+Content-Length: 249
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-||-|-|-|Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-||-|-|-|-|Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord with every template variable · connection lost
 activity: sent
@@ -130,9 +130,9 @@ activity: unchanged
 ## discord with every template variable · send test
 result: sent, activity: unchanged
 POST https://localhost/discord.com/api/webhooks/1/x
-Content-Length: 244
+Content-Length: 249
 Content-Type: application/json; charset=utf-8
-{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|18.50|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+{"username":"Speedtest Watcher","embeds":[{"description":"12|0.40|941.25|110.50|completed|yes|Acme Fibre|25|900.00|100.00||0.00|5.10|42.80|945.8 MB|","color":4572762,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord without a url · test started
 activity: failed
@@ -961,42 +961,42 @@ User-Agent: SpeedtestWatcher/WebhookAgent
 ## webhook · test finished
 activity: sent
 POST https://localhost/hook
-Content-Length: 607
+Content-Length: 588
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_FINISHED","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"Bufferbloat":18.5,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":30,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
+{"event":"TEST_FINISHED","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":50,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## webhook · test missed targets
 activity: sent
 POST https://localhost/hook
-Content-Length: 610
+Content-Length: 591
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}}
+{"event":"TEST_UNHEALTHY","data":{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}}
 
 ## webhook · test met targets again
 activity: sent
 POST https://localhost/hook
-Content-Length: 612
+Content-Length: 593
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_HEALTHY_AGAIN","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"Bufferbloat":18.5,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":30,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
+{"event":"TEST_HEALTHY_AGAIN","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":50,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## webhook · test failed
 activity: sent
 POST https://localhost/hook
-Content-Length: 612
+Content-Length: 593
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_FAILED","data":{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}}
+{"event":"TEST_FAILED","data":{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}}
 
 ## webhook · test skipped
 activity: sent
 POST https://localhost/hook
-Content-Length: 608
+Content-Length: 589
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}}
+{"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}}
 
 ## webhook · connection lost
 activity: sent
@@ -1041,10 +1041,10 @@ User-Agent: SpeedtestWatcher/WebhookAgent
 ## webhook · send test
 result: sent, activity: unchanged
 POST https://localhost/hook
-Content-Length: 598
+Content-Length: 579
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
-{"event":"TEST","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"Bufferbloat":18.5,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":30,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
+{"event":"TEST","data":{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":50,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}}
 
 ## healthChecks · test started
 activity: sent
@@ -1057,18 +1057,18 @@ User-Agent: SpeedtestWatcher/HealthAgent
 ## healthChecks · test finished
 activity: sent
 POST https://localhost/hc/uuid
-Content-Length: 574
+Content-Length: 555
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"Bufferbloat":18.5,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":30,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":50,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
 
 ## healthChecks · test missed targets
 activity: sent
 POST https://localhost/hc/uuid
-Content-Length: 576
+Content-Length: 557
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}
+{"Id":42,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":31,"Jitter":2.75,"Download":612.5,"Upload":98.125,"Error":null,"PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"completed","Healthy":false,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"custom","ResultId":"r-42","Time":15,"Created":"2026-09-16T09:05:00Z"}
 
 ## healthChecks · test met targets again
 activity: unchanged
@@ -1076,18 +1076,18 @@ activity: unchanged
 ## healthChecks · test failed
 activity: sent
 POST https://localhost/hc/uuid/fail
-Content-Length: 581
+Content-Length: 562
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}
+{"Id":44,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Network unreachable","PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"failed","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T11:05:00Z"}
 
 ## healthChecks · test skipped
 activity: sent
 POST https://localhost/hc/uuid/log
-Content-Length: 576
+Content-Length: 557
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"Bufferbloat":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}
+{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"BufferbloatDown":null,"BufferbloatUp":null,"LatencyIdle":null,"LatencyLoaded":null,"LatencyLoadedTail":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"ThresholdPacketLoss":null,"ThresholdBufferbloat":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}
 
 ## healthChecks · connection lost
 activity: unchanged
@@ -1122,10 +1122,10 @@ User-Agent: SpeedtestWatcher/HealthAgent
 ## healthChecks · send test
 result: sent, activity: unchanged
 POST https://localhost/hc/uuid/log
-Content-Length: 574
+Content-Length: 555
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
-{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"Bufferbloat":18.5,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":30,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
+{"Id":41,"ServerId":12345,"ServerName":"Acme Fibre","ServerHost":"speed.acme.example","Ping":12,"Jitter":0.4,"Download":941.25,"Upload":110.5,"Error":null,"PacketLoss":0,"BufferbloatDown":5.1,"BufferbloatUp":42.8,"LatencyIdle":13.2,"LatencyLoaded":31.7,"LatencyLoadedTail":64.2,"DownloadBytes":903347628,"UploadBytes":88429797,"Status":"completed","Healthy":true,"ThresholdPing":25,"ThresholdDownload":900,"ThresholdUpload":100,"ThresholdPacketLoss":0.5,"ThresholdBufferbloat":50,"Type":"auto","ResultId":"r-41","Time":14,"Created":"2026-09-16T08:05:00Z"}
 
 ## influxdb · test started
 activity: unchanged
@@ -1134,9 +1134,9 @@ activity: unchanged
 activity: sent
 POST https://localhost/influx/api/v2/write?org=home&bucket=speed&precision=s
 Authorization: Token influx-token
-Content-Length: 136
+Content-Length: 161
 Content-Type: text/plain; charset=utf-8
-speedtests,host=watcher download=941.25,upload=110.50,ping=12,jitter=0.40,packet_loss=0.00,bufferbloat=18.50,bytes=991777425i 1789545900
+speedtests,host=watcher download=941.25,upload=110.50,ping=12,jitter=0.40,packet_loss=0.00,bufferbloat_down=5.10,bufferbloat_up=42.80,bytes=991777425i 1789545900
 
 ## influxdb · test missed targets
 activity: unchanged
@@ -1178,9 +1178,9 @@ activity: unchanged
 activity: sent
 POST https://localhost/influx/api/v2/write?org=home&bucket=speed&precision=s
 Authorization: Token influx-token
-Content-Length: 170
+Content-Length: 195
 Content-Type: text/plain; charset=utf-8
-speed\ tests,host=living\ room,env=prod,site=home\ office download=941.25,upload=110.50,ping=12,jitter=0.40,packet_loss=0.00,bufferbloat=18.50,bytes=991777425i 1789545900
+speed\ tests,host=living\ room,env=prod,site=home\ office download=941.25,upload=110.50,ping=12,jitter=0.40,packet_loss=0.00,bufferbloat_down=5.10,bufferbloat_up=42.80,bytes=991777425i 1789545900
 
 ## influxdb with tags and names that need escaping · test missed targets
 activity: unchanged

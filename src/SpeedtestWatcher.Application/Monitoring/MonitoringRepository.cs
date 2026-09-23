@@ -5,6 +5,8 @@ namespace SpeedtestWatcher.Application.Monitoring;
 
 internal class MonitoringRepository : IMonitoringRepository
 {
+    private const int MinutesInAnHour = 60;
+
     private readonly SpeedtestWatcherDbContext _db;
 
     public MonitoringRepository(SpeedtestWatcherDbContext db)
@@ -28,9 +30,11 @@ internal class MonitoringRepository : IMonitoringRepository
 
     public async Task<List<LatencyPointDto>> LatencyAsync(DateTime fromUtc, DateTime toUtc, int slotMinutes, CancellationToken cancellationToken = default)
     {
+        var slotHours = Math.Max(1, slotMinutes / MinutesInAnHour);
+        var minutesInSlot = Math.Min(slotMinutes, MinutesInAnHour);
         var buckets = await _db.ProbeRounds
             .Where(round => round.At >= fromUtc && round.At <= toUtc)
-            .GroupBy(round => new { round.At.Year, round.At.Month, round.At.Day, round.At.Hour, Slot = round.At.Minute / slotMinutes })
+            .GroupBy(round => new { round.At.Year, round.At.Month, round.At.Day, Hour = round.At.Hour / slotHours, Slot = round.At.Minute / minutesInSlot })
             .Select(rounds => new
             {
                 rounds.Key,
@@ -45,7 +49,7 @@ internal class MonitoringRepository : IMonitoringRepository
         [
             .. buckets
                 .Select(bucket => new LatencyPointDto(
-                    new DateTime(bucket.Key.Year, bucket.Key.Month, bucket.Key.Day, bucket.Key.Hour, bucket.Key.Slot * slotMinutes, 0, DateTimeKind.Utc),
+                    new DateTime(bucket.Key.Year, bucket.Key.Month, bucket.Key.Day, bucket.Key.Hour * slotHours, bucket.Key.Slot * minutesInSlot, 0, DateTimeKind.Utc),
                     bucket.Milliseconds,
                     bucket.Rounds,
                     bucket.Failed,

@@ -15,7 +15,8 @@ public sealed class MonitoringService
         new("1h", ApplicationStrings.LatencyRange1Hour, TimeSpan.FromHours(1), 1),
         new("6h", ApplicationStrings.LatencyRange6Hours, TimeSpan.FromHours(6), 2),
         new("24h", ApplicationStrings.LatencyRange24Hours, TimeSpan.FromHours(24), 5),
-        new("7d", ApplicationStrings.LatencyRange7Days, TimeSpan.FromDays(7), 30)
+        new("7d", ApplicationStrings.LatencyRange7Days, TimeSpan.FromDays(7), 30),
+        new("30d", ApplicationStrings.LatencyRange30Days, TimeSpan.FromDays(30), 120)
     ];
 
     private readonly IMonitoringRepository _monitoring;
@@ -50,6 +51,13 @@ public sealed class MonitoringService
             Uptime.Over(now.AddHours(-24), now, sessions, outages, now),
             Uptime.Over(now.AddDays(-7), now, sessions, outages, now),
             Uptime.Over(now.AddDays(-30), now, sessions, outages, now));
+    }
+
+    public async Task<UptimeDto> UptimeAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    {
+        var sessions = await _monitoring.ListWatchSessionsSinceAsync(fromUtc, cancellationToken);
+        var outages = await _monitoring.ListOutagesSinceAsync(fromUtc, MostOutagesListed, cancellationToken);
+        return Uptime.Over(fromUtc, toUtc, sessions, outages, DateTime.UtcNow);
     }
 
     public async Task<IReadOnlyList<OutageDto>> OutagesAsync(int limit, CancellationToken cancellationToken = default)

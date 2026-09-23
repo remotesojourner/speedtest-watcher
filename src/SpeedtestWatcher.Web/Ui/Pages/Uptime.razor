@@ -23,41 +23,64 @@
             </MudAlert>
         }
 
-        <MudGrid Spacing="4" Class="mb-2">
-            <MudItem xs="12" md="6">
-                <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="@WebStrings.UptimeRightNow"
-                             Description="@WebStrings.Format(WebStrings.UptimeProbesEvery, Duration.Describe(TimeSpan.FromSeconds(Interval)))">
-                    <div class="d-flex flex-wrap align-center gap-6">
-                        <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@StateColor(status.Health)"
-                                       Value="@StateText(status.Health)" Label="@SinceLabel(status)" />
-                        @if (status.FastestMilliseconds is { } fastest)
+        <MudGrid Spacing="4" Class="mb-4">
+            <MudItem xs="12" lg="6">
+                <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="@WebStrings.UptimeConnection"
+                             Description="@WebStrings.Format(WebStrings.UptimeConnectionDescription, Duration.Describe(TimeSpan.FromSeconds(Interval)))">
+                    <MudText Typo="Typo.h4" Class="sw-hero-value font-weight-bold" Color="@StateColor(status.Health)">@StateText(status.Health)</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted d-block mt-1 mb-4">@SinceLabel(status)</MudText>
+                    <div class="sw-metric-columns">
+                        @foreach (var (label, uptime) in Periods(status))
                         {
-                            <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
-                                           Value="@($"{fastest:F0}")" Label="@WebStrings.UptimeMsToAnswer" />
+                            <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@UptimeColor(uptime)"
+                                           Value="@Percent(uptime)" Label="@label" />
                         }
+                    </div>
+                    <MudDivider Class="my-3" />
+                    <div class="sw-row-columns">
+                        <DataRow Label="@WebStrings.UptimeAnswerTime" Value="@(status.FastestMilliseconds is { } fastest ? $"{fastest:F0} ms" : NoValue)" />
+                        <DataRow Label="@WebStrings.UptimeDownLast30Days" Value="@Duration.Describe(TimeSpan.FromSeconds(status.Last30Days.DownSeconds))" />
+                        <DataRow Label="@WebStrings.UptimeLastOutage" Value="@LastOutage" />
+                        <DataRow Label="@WebStrings.UptimeOutagesLast30Days" Value="@status.Last30Days.Outages.ToString(CultureInfo.InvariantCulture)" />
                     </div>
                     @if (status.CurrentOutage is { } current)
                     {
-                        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-4">
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-3">
                             @WebStrings.Format(WebStrings.UptimeDownFor, Duration.Describe(TimeSpan.FromSeconds(current.Seconds ?? 0)), PreferencesService.FormatDateTime(PreferencesService.ToLocal(current.StartedAt)))
                         </MudAlert>
                     }
                 </SurfaceCard>
             </MudItem>
 
-            <MudItem xs="12" md="6">
-                <SurfaceCard Icon="@Icons.Material.Filled.Percent" Title="@WebStrings.UptimeTitle"
-                             Description="@WebStrings.UptimeWatchedTimeOnly">
-                    <div class="d-flex flex-wrap justify-space-between gap-4">
-                        @foreach (var (label, uptime) in Periods(status))
+            <MudItem xs="12" lg="6">
+                <SurfaceCard Icon="@Icons.Material.Filled.CalendarMonth" Title="@WebStrings.UptimeLastYear">
+                    <div class="sw-uptime-calendar">
+                        @foreach (var month in Months())
                         {
-                            <MetricDisplay Size="MetricSize.Large" Color="@UptimeColor(uptime)"
-                                           Value="@Percent(uptime)" Label="@label" />
+                            <MudText Typo="Typo.caption" Class="sw-muted sw-uptime-month">@month.Label</MudText>
+                            @foreach (var day in month.Days)
+                            {
+                                if (day is { } known)
+                                {
+                                    <MudTooltip Text="@DayText(known)" Placement="Placement.Top">
+                                        <div class="@DayClass(known)"></div>
+                                    </MudTooltip>
+                                }
+                                else
+                                {
+                                    <div class="sw-uptime-day sw-uptime-empty"></div>
+                                }
+                            }
                         }
                     </div>
-                    <MudDivider Class="my-3" />
-                    <DataRow Label="@WebStrings.UptimeDownLast30Days" Value="@Duration.Describe(TimeSpan.FromSeconds(status.Last30Days.DownSeconds))" />
-                    <DataRow Label="@WebStrings.UptimeOutagesLast30Days" Value="@status.Last30Days.Outages.ToString(CultureInfo.InvariantCulture)" />
+                    <div class="d-flex align-center gap-2 mt-3">
+                        <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyNoOutage</MudText>
+                        <div class="sw-uptime-day sw-uptime-none"></div>
+                        <div class="sw-uptime-day sw-uptime-brief"></div>
+                        <div class="sw-uptime-day sw-uptime-short"></div>
+                        <div class="sw-uptime-day sw-uptime-long"></div>
+                        <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyHoursDown</MudText>
+                    </div>
                 </SurfaceCard>
             </MudItem>
         </MudGrid>
@@ -105,38 +128,6 @@
             </StateView>
         </SurfaceCard>
 
-        <SurfaceCard Icon="@Icons.Material.Filled.CalendarMonth" Title="@WebStrings.UptimeLastYear"
-                     Description="@WebStrings.UptimeLastYearDescription" Class="mb-6">
-            <div class="sw-uptime-calendar">
-                @foreach (var week in Weeks())
-                {
-                    <div class="sw-uptime-week">
-                        @foreach (var day in week)
-                        {
-                            if (day is { } known)
-                            {
-                                <MudTooltip Text="@DayText(known)" Placement="Placement.Top">
-                                    <div class="@DayClass(known)"></div>
-                                </MudTooltip>
-                            }
-                            else
-                            {
-                                <div class="sw-uptime-day sw-uptime-empty"></div>
-                            }
-                        }
-                    </div>
-                }
-            </div>
-            <div class="d-flex align-center gap-2 mt-3">
-                <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyNoOutage</MudText>
-                <div class="sw-uptime-day sw-uptime-none"></div>
-                <div class="sw-uptime-day sw-uptime-brief"></div>
-                <div class="sw-uptime-day sw-uptime-short"></div>
-                <div class="sw-uptime-day sw-uptime-long"></div>
-                <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyHoursDown</MudText>
-            </div>
-        </SurfaceCard>
-
         <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">@WebStrings.UptimeOutages</MudText>
         <StateView Empty="@(_outages.Count == 0)" EmptyMessage="@WebStrings.UptimeNoOutages">
             <MudPaper Elevation="1" Class="sw-surface">
@@ -177,6 +168,9 @@
 </StateView>
 
 @code {
+    private const int DaysInLongestMonth = 31;
+    private const string NoValue = "—";
+
     private MonitoringStatusDto? _status;
     private IReadOnlyList<LatencyPointDto> _latency = [];
     private string _latencyRange = "24h";
@@ -301,23 +295,24 @@
         _ => Color.Default
     };
 
+    private string LastOutage => _outages.FirstOrDefault(outage => outage.EndedAt != null) is { EndedAt: { } ended }
+        ? DisplayFormat.ToRelativeTime(ended)
+        : WebStrings.UptimeNoOutageInAYear;
+
     private string SinceLabel(MonitoringStatusDto status) =>
         status.Since is { } since
             ? WebStrings.Format(WebStrings.UptimeSince, PreferencesService.FormatDateTime(PreferencesService.ToLocal(since)))
             : WebStrings.UptimeNoRoundsYet;
 
-    private IEnumerable<IReadOnlyList<UptimeDayDto?>> Weeks()
+    private IEnumerable<(string Label, UptimeDayDto?[] Days)> Months()
     {
-        if (_days.Count == 0) yield break;
-
-        List<UptimeDayDto?> squares = [.. Enumerable.Repeat<UptimeDayDto?>(null, DaysBeforeMonday(_days[0].Date)), .. _days];
-        for (var start = 0; start < squares.Count; start += 7)
+        foreach (var month in _days.GroupBy(day => (day.Date.Year, day.Date.Month)))
         {
-            yield return squares.Skip(start).Take(7).ToList();
+            var days = new UptimeDayDto?[DaysInLongestMonth];
+            foreach (var day in month) days[day.Date.Day - 1] = day;
+            yield return (new DateTime(month.Key.Year, month.Key.Month, 1).ToString("MMM", CultureInfo.CurrentCulture), days);
         }
     }
-
-    private static int DaysBeforeMonday(DateOnly date) => ((int)date.DayOfWeek + 6) % 7;
 
     private string DayClass(UptimeDayDto day) => day.DownSeconds switch
     {

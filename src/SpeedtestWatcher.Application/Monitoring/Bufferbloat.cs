@@ -10,7 +10,6 @@ public enum LoadDirection
 public readonly record struct LatencySample(double Milliseconds, LoadDirection Direction);
 
 public sealed record BufferbloatReading(
-    double Milliseconds,
     double IdleMilliseconds,
     double LoadedMilliseconds,
     double LoadedTailMilliseconds,
@@ -62,7 +61,6 @@ public static class Bufferbloat
         var everything = loaded.Select(sample => sample.Milliseconds).ToList();
 
         return new BufferbloatReading(
-            Above(idleMedian, Median(everything)),
             idleMedian,
             Median(everything),
             Percentile95(everything),

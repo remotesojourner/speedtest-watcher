@@ -10,18 +10,18 @@ public class BufferbloatTests
     [Fact]
     public void BufferbloatIsTheMedianUnderLoadLessTheMedianIdle()
     {
-        var reading = From([10, 12, 11, 13, 12], Under(LoadDirection.Unclear, 12, 50));
+        var reading = From([10, 12, 11, 13, 12], Under(LoadDirection.Download, 12, 50));
 
         Assert.NotNull(reading);
-        Assert.Equal((38, 12, 50), (reading.Milliseconds, reading.IdleMilliseconds, reading.LoadedMilliseconds));
+        Assert.Equal((38, 12, 50), (reading.DownloadMilliseconds, reading.IdleMilliseconds, reading.LoadedMilliseconds));
     }
 
     [Fact]
     public void ALineThatAnswersFasterUnderLoadCountsAsNoBufferbloat()
     {
-        var reading = From(Flat(6, 20), Under(LoadDirection.Unclear, 12, 12));
+        var reading = From(Flat(6, 20), Under(LoadDirection.Download, 12, 12));
 
-        Assert.Equal(0, reading!.Milliseconds);
+        Assert.Equal(0, reading!.DownloadMilliseconds);
         Assert.Equal(12, reading.LoadedMilliseconds);
     }
 
@@ -37,7 +37,6 @@ public class BufferbloatTests
         var reading = From(Flat(6, 12), loaded);
 
         Assert.Equal((8, 68), (reading!.DownloadMilliseconds, reading.UploadMilliseconds));
-        Assert.Equal(38, reading.Milliseconds);
     }
 
     [Fact]
@@ -56,11 +55,11 @@ public class BufferbloatTests
     }
 
     [Fact]
-    public void SamplesTheAppCannotPlaceStillCountTowardsTheWholeTest()
+    public void SamplesTheAppCannotPlaceGiveNoBufferbloatFigureButStillCountAsLoadedLatency()
     {
         var reading = From(Flat(6, 12), Under(LoadDirection.Unclear, 12, 60));
 
-        Assert.Equal(48, reading!.Milliseconds);
+        Assert.Equal(60, reading!.LoadedMilliseconds);
         Assert.Null(reading.DownloadMilliseconds);
         Assert.Null(reading.UploadMilliseconds);
     }
@@ -88,19 +87,19 @@ public class BufferbloatTests
     [Fact]
     public void ARetransmittedHandshakeIsKeptOutOfTheBaseline()
     {
-        var withRetransmit = From([12, 11, 13, 12, 1013, 12], Under(LoadDirection.Unclear, 12, 50));
-        var without = From([12, 11, 13, 12, 12], Under(LoadDirection.Unclear, 12, 50));
+        var withRetransmit = From([12, 11, 13, 12, 1013, 12], Under(LoadDirection.Download, 12, 50));
+        var without = From([12, 11, 13, 12, 12], Under(LoadDirection.Download, 12, 50));
 
         Assert.Equal(without!.IdleMilliseconds, withRetransmit!.IdleMilliseconds);
-        Assert.Equal(without.Milliseconds, withRetransmit.Milliseconds);
+        Assert.Equal(without.DownloadMilliseconds, withRetransmit.DownloadMilliseconds);
     }
 
     [Fact]
     public void ARetransmittedHandshakeIsTheSignalUnderLoadAndStays()
     {
-        var reading = From(Flat(6, 12), Under(LoadDirection.Unclear, 10, 1013));
+        var reading = From(Flat(6, 12), Under(LoadDirection.Upload, 10, 1013));
 
-        Assert.Equal(1001, reading!.Milliseconds);
+        Assert.Equal(1001, reading!.UploadMilliseconds);
     }
 
     [Fact]
@@ -114,9 +113,9 @@ public class BufferbloatTests
     {
         var satellite = new List<double> { 600, 610, 620, 605, 615, 1615 };
 
-        var reading = From(satellite, Under(LoadDirection.Unclear, 12, 700));
+        var reading = From(satellite, Under(LoadDirection.Download, 12, 700));
 
-        Assert.Equal((610, 90), (reading!.IdleMilliseconds, reading.Milliseconds));
+        Assert.Equal((610, 90), (reading!.IdleMilliseconds, reading.DownloadMilliseconds));
     }
 
     [Theory]

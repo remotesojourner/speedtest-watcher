@@ -21,7 +21,7 @@ public sealed class ReadOnlyVisitorTests : BrowserTest, IClassFixture<BrowserApp
         var page = await browser.NewPageAsync();
 
         await page.GotoAsync("/");
-        await Expect(page.GetByText("Overview")).ToBeVisibleAsync();
+        await Expect(page.GetByText("Under Load", new() { Exact = true })).ToBeVisibleAsync();
 
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sign in" })).ToBeVisibleAsync();
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Run Test" })).ToHaveCountAsync(0);

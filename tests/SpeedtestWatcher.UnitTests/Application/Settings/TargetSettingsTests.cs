@@ -34,13 +34,21 @@ public class TargetSettingsTests
     [Fact]
     public void PacketLossAndBufferbloatAreJudgedWhenTheyWereMeasured()
     {
-        var healthy = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 0, bufferbloat: 12));
-        var loose = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 1.25, bufferbloat: 12));
-        var bloated = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 0, bufferbloat: 140));
+        var healthy = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 0, bufferbloatDown: 12, bufferbloatUp: 12));
+        var loose = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 1.25, bufferbloatDown: 12, bufferbloatUp: 12));
+        var bloated = _everyTarget.Missed(Reading(12, 941, 110, packetLoss: 0, bufferbloatDown: 140, bufferbloatUp: 12));
 
         Assert.Empty(healthy);
         Assert.Equal([TargetKind.PacketLoss], loose);
         Assert.Equal([TargetKind.Bufferbloat], bloated);
+    }
+
+    [Fact]
+    public void TheBufferbloatMaximumAppliesToEachDirectionOnItsOwn()
+    {
+        Assert.Equal([TargetKind.Bufferbloat], _everyTarget.Missed(Reading(12, 941, 110, bufferbloatDown: 5, bufferbloatUp: 45)));
+        Assert.Equal([TargetKind.Bufferbloat], _everyTarget.Missed(Reading(12, 941, 110, bufferbloatUp: 45)));
+        Assert.Empty(_everyTarget.Missed(Reading(12, 941, 110, bufferbloatDown: 25)));
     }
 
     [Fact]
@@ -70,6 +78,7 @@ public class TargetSettingsTests
         Assert.Equal(expected, TargetSettings.Describe(missed));
     }
 
-    private static Readings Reading(int ping, double download, double upload, double? packetLoss = null, double? bufferbloat = null) =>
-        new(ping, download, upload, packetLoss, bufferbloat);
+    private static Readings Reading(
+        int ping, double download, double upload, double? packetLoss = null, double? bufferbloatDown = null, double? bufferbloatUp = null) =>
+        new(ping, download, upload, packetLoss, bufferbloatDown, bufferbloatUp);
 }

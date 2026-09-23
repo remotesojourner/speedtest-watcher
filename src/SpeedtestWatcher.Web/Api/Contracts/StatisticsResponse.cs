@@ -53,9 +53,14 @@ public sealed record StatisticsResponse
     public required MetricSummaryResponse? PacketLoss { get; init; }
 
     /// <summary>
-    /// Bufferbloat in milliseconds across the completed tests that have a figure, or <c>null</c> when none do.
+    /// Bufferbloat while downloading, in milliseconds, across the completed tests that have a figure, or <c>null</c> when none do.
     /// </summary>
-    public required MetricSummaryResponse? Bufferbloat { get; init; }
+    public required MetricSummaryResponse? BufferbloatDown { get; init; }
+
+    /// <summary>
+    /// Bufferbloat while uploading, in milliseconds, across the completed tests that have a figure, or <c>null</c> when none do.
+    /// </summary>
+    public required MetricSummaryResponse? BufferbloatUp { get; init; }
 
     /// <summary>
     /// Bytes the tests in the period moved, download and upload together, as far as the providers reported them.
@@ -95,7 +100,8 @@ public sealed record StatisticsResponse
         Time = MetricSummaryResponse.From(statistics.Time),
         Consistency = ConsistencyResponse.From(statistics.Consistency),
         PacketLoss = MetricSummaryResponse.From(statistics.PacketLoss),
-        Bufferbloat = MetricSummaryResponse.From(statistics.Bufferbloat),
+        BufferbloatDown = MetricSummaryResponse.From(statistics.BufferbloatDown),
+        BufferbloatUp = MetricSummaryResponse.From(statistics.BufferbloatUp),
         DataUsedBytes = statistics.DataUsedBytes,
         HourlyAverages = statistics.HourlyAverages.Select(HourlyAverageResponse.From).ToList(),
         Points = statistics.ChartPoints.Select(ChartPointResponse.From).ToList(),

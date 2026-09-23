@@ -204,7 +204,6 @@ public sealed partial class SpeedtestRunService
         ThresholdPacketLoss = targets.PacketLoss,
         ThresholdBufferbloat = targets.Bufferbloat,
         PacketLoss = result.Success ? result.PacketLoss : null,
-        Bufferbloat = bufferbloat?.Milliseconds,
         BufferbloatDown = bufferbloat?.DownloadMilliseconds,
         BufferbloatUp = bufferbloat?.UploadMilliseconds,
         LatencyIdle = bufferbloat?.IdleMilliseconds,
@@ -217,7 +216,7 @@ public sealed partial class SpeedtestRunService
     };
 
     private static Readings Judged(SpeedtestExecutionResult result, BufferbloatReading? bufferbloat) =>
-        new(result.Ping, result.Download, result.Upload, result.PacketLoss, bufferbloat?.Milliseconds);
+        new(result.Ping, result.Download, result.Upload, result.PacketLoss, bufferbloat?.DownloadMilliseconds, bufferbloat?.UploadMilliseconds);
 
     private async Task RecordSkippedAsync(TestType type, string reason, string? publicIp, CancellationToken cancellationToken)
     {

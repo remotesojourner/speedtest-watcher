@@ -9,6 +9,7 @@ public class LatencyRangeTests
     [InlineData("6h", 2, 180)]
     [InlineData("24h", 5, 288)]
     [InlineData("7d", 30, 336)]
+    [InlineData("30d", 120, 360)]
     public void EveryRangeFitsInAFewHundredPoints(string id, int slotMinutes, int points)
     {
         var range = MonitoringService.RangeFor(id);

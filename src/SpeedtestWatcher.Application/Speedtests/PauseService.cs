@@ -30,6 +30,14 @@ public sealed class PauseService
         return OperationResult.Ok();
     }
 
+    public OperationResult SkipNextScheduledTest()
+    {
+        if (!_access.HasFullAccess) return OperationResult.Denied();
+
+        _state.SkipNextScheduledRun();
+        return OperationResult.Ok();
+    }
+
     public OperationResult Resume()
     {
         if (!_access.HasFullAccess) return OperationResult.Denied();

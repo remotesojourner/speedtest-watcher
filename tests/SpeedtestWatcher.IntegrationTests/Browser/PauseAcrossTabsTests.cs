@@ -24,7 +24,7 @@ public sealed class PauseAcrossTabsTests : BrowserTest, IClassFixture<BrowserApp
         await dashboard.GotoAsync("/");
         var pauseButton = schedule.GetByRole(AriaRole.Button, new() { Name = "Pause Tests" });
         await Expect(pauseButton).ToBeVisibleAsync();
-        await Expect(dashboard.GetByText("Overview")).ToBeVisibleAsync();
+        await Expect(dashboard.GetByText("Under Load", new() { Exact = true })).ToBeVisibleAsync();
 
         await pauseButton.ClickAsync();
         await Expect(dashboard.GetByText("Paused", new() { Exact = true })).ToBeVisibleAsync();

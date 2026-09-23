@@ -14,7 +14,9 @@ public class SpeedtestImportRow
     public string? Error { get; set; }
     public double? PacketLoss { get; set; }
 
-    public double? Bufferbloat { get; set; }
+    public double? BufferbloatDown { get; set; }
+
+    public double? BufferbloatUp { get; set; }
     public long? DownloadBytes { get; set; }
     public long? UploadBytes { get; set; }
     public string? Status { get; set; }
@@ -38,7 +40,8 @@ public class SpeedtestImportRow
         Upload = Upload,
         Error = Error,
         PacketLoss = PacketLoss,
-        Bufferbloat = Bufferbloat,
+        BufferbloatDown = BufferbloatDown,
+        BufferbloatUp = BufferbloatUp,
         DownloadBytes = DownloadBytes,
         UploadBytes = UploadBytes,
         Status = EnumNames.TryParse<TestStatus>(Status, out var status) ? status : FallbackStatus,

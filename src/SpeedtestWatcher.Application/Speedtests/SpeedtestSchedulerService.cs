@@ -11,6 +11,7 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopes;
     private readonly IAppEvents _events;
+    private readonly RunState _state;
     private readonly TimeProvider _time;
     private readonly bool _runTestOnStartup;
     private readonly ILogger<SpeedtestSchedulerService> _logger;
@@ -18,10 +19,11 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
     private bool? _waitingWhileUnhealthy;
 
     public SpeedtestSchedulerService(
-        IServiceScopeFactory scopes, IAppEvents events, TimeProvider time, IOptions<SpeedtestWatcherOptions> options, ILogger<SpeedtestSchedulerService> logger)
+        IServiceScopeFactory scopes, IAppEvents events, RunState state, TimeProvider time, IOptions<SpeedtestWatcherOptions> options, ILogger<SpeedtestSchedulerService> logger)
     {
         _scopes = scopes;
         _events = events;
+        _state = state;
         _time = time;
         _runTestOnStartup = options.Value.RunTestOnStartup;
         _logger = logger;
@@ -113,6 +115,12 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
 
     private async Task RunAsync(CancellationToken stoppingToken)
     {
+        if (_state.TrySkipScheduledRun())
+        {
+            LogScheduledRunSkipped();
+            return;
+        }
+
         using var scope = _scopes.CreateScope();
         await scope.ServiceProvider.GetRequiredService<SpeedtestRunService>().RunAsync(TestType.Auto, cancellationToken: stoppingToken);
     }
@@ -122,4 +130,7 @@ internal sealed partial class SpeedtestSchedulerService : BackgroundService
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Applying random schedule offset of {Seconds}s")]
     private partial void LogOffset(double seconds);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Skipped this scheduled speedtest as asked, and resumed the schedule")]
+    private partial void LogScheduledRunSkipped();
 }

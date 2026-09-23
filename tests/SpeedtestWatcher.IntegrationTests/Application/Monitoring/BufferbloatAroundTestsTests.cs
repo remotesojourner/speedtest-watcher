@@ -22,8 +22,7 @@ public sealed class BufferbloatAroundTestsTests : IDisposable
 
         var stored = await RunAsync(new SlowingRunner(_probe, _traffic, loadedMilliseconds: 92), cancellationToken);
 
-        Assert.Equal((80, 12, 92), (stored.Bufferbloat, stored.LatencyIdle, stored.LatencyLoaded));
-        Assert.Equal((80, null), (stored.BufferbloatDown, stored.BufferbloatUp));
+        Assert.Equal((80, null, 12, 92), (stored.BufferbloatDown, stored.BufferbloatUp, stored.LatencyIdle, stored.LatencyLoaded));
     }
 
     [Fact(Timeout = 15000)]
@@ -45,7 +44,8 @@ public sealed class BufferbloatAroundTestsTests : IDisposable
         var stored = await RunAsync(new QuickRunner(), cancellationToken,
             maximums: new Dictionary<string, string> { ["maxBufferbloat"] = "1", ["ping"] = "0", ["download"] = "0", ["upload"] = "0" });
 
-        Assert.Null(stored.Bufferbloat);
+        Assert.Null(stored.BufferbloatDown);
+        Assert.Null(stored.BufferbloatUp);
         Assert.True(stored.Healthy);
     }
 
@@ -56,7 +56,7 @@ public sealed class BufferbloatAroundTestsTests : IDisposable
 
         var stored = await RunAsync(new FailingRunner(), cancellationToken);
 
-        Assert.Equal((TestStatus.Failed, null, null, null), (stored.Status, stored.Bufferbloat, stored.LatencyIdle, stored.LatencyLoaded));
+        Assert.Equal((TestStatus.Failed, null, null, null, null), (stored.Status, stored.BufferbloatDown, stored.BufferbloatUp, stored.LatencyIdle, stored.LatencyLoaded));
     }
 
     private async Task<Speedtest> RunAsync(ISpeedtestRunner runner, CancellationToken cancellationToken, Dictionary<string, string>? maximums = null)

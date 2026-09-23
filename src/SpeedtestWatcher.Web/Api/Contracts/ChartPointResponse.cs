@@ -48,10 +48,16 @@ public sealed record ChartPointResponse
     public required double? Upload { get; init; }
 
     /// <summary>
-    /// Bufferbloat in milliseconds, when the test measured it.
+    /// Bufferbloat while downloading, in milliseconds, when the test measured it.
     /// </summary>
-    /// <example>18.5</example>
-    public required double? Bufferbloat { get; init; }
+    /// <example>5.1</example>
+    public required double? BufferbloatDown { get; init; }
+
+    /// <summary>
+    /// Bufferbloat while uploading, in milliseconds, when the test measured it.
+    /// </summary>
+    /// <example>42.8</example>
+    public required double? BufferbloatUp { get; init; }
 
     /// <summary>
     /// How long the test took, in seconds.
@@ -68,7 +74,8 @@ public sealed record ChartPointResponse
         Jitter = point.Jitter,
         Download = point.Download,
         Upload = point.Upload,
-        Bufferbloat = point.Bufferbloat,
+        BufferbloatDown = point.BufferbloatDown,
+        BufferbloatUp = point.BufferbloatUp,
         Duration = point.Duration
     };
 }

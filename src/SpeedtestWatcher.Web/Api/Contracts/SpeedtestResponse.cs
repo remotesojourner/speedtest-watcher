@@ -90,7 +90,7 @@ public sealed record SpeedtestResponse
     public required double? ThresholdPacketLoss { get; init; }
 
     /// <summary>
-    /// The highest acceptable bufferbloat, in milliseconds, when the test ran. <c>null</c> when no maximum was set. It is only judged when the test measured bufferbloat.
+    /// The highest acceptable bufferbloat, in milliseconds, when the test ran. <c>null</c> when no maximum was set. It applies to the download and the upload figure alike, and each is only judged when the test measured it.
     /// </summary>
     /// <example>30</example>
     public required double? ThresholdBufferbloat { get; init; }
@@ -130,19 +130,13 @@ public sealed record SpeedtestResponse
     public required double? PacketLoss { get; init; }
 
     /// <summary>
-    /// How much longer the line took to answer under load than when idle, in milliseconds. The app measures this itself around every test, the same way for every provider.
-    /// </summary>
-    /// <example>18.5</example>
-    public required double? Bufferbloat { get; init; }
-
-    /// <summary>
-    /// Bufferbloat measured only while the test was pulling data down, in milliseconds. <c>null</c> when too few samples fell in that phase.
+    /// Bufferbloat while the test was pulling data down: how much longer the line took to answer than when idle, in milliseconds. The app measures it itself around every test, the same way for every provider. <c>null</c> when too few samples fell in that phase.
     /// </summary>
     /// <example>5.1</example>
     public required double? BufferbloatDown { get; init; }
 
     /// <summary>
-    /// Bufferbloat measured only while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones.
+    /// Bufferbloat while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones. <c>null</c> when too few samples fell in that phase.
     /// </summary>
     /// <example>42.8</example>
     public required double? BufferbloatUp { get; init; }
@@ -206,7 +200,6 @@ public sealed record SpeedtestResponse
         ServerHost = test.ServerHost,
         ResultId = test.ResultId,
         PacketLoss = test.PacketLoss,
-        Bufferbloat = test.Bufferbloat,
         BufferbloatDown = test.BufferbloatDown,
         BufferbloatUp = test.BufferbloatUp,
         LatencyIdle = test.LatencyIdle,

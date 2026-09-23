@@ -47,7 +47,6 @@
 200 application/json; charset=utf-8
 [
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-15T07:00:00Z",
@@ -79,7 +78,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-15T06:00:00Z",
@@ -111,7 +109,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-14T20:35:00Z",
@@ -143,7 +140,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": 18.5,
     "bufferbloatDown": 5.1,
     "bufferbloatUp": 42.8,
     "created": "2026-09-14T08:05:00Z",
@@ -164,7 +160,7 @@
     "serverId": 12345,
     "serverName": "Acme Fibre",
     "status": "completed",
-    "thresholdBufferbloat": 30,
+    "thresholdBufferbloat": 50,
     "thresholdDownload": 900,
     "thresholdPacketLoss": 0.5,
     "thresholdPing": 25,
@@ -179,7 +175,6 @@
 ### GET /api/speedtests/2
 200 application/json; charset=utf-8
 {
-  "bufferbloat": null,
   "bufferbloatDown": null,
   "bufferbloatUp": null,
   "created": "2026-09-14T20:35:00Z",
@@ -233,10 +228,15 @@
 ### GET /api/speedtests/statistics?from=2026-09-14&to=2026-09-15&tz=America/New_York
 200 application/json; charset=utf-8
 {
-  "bufferbloat": {
-    "avg": 18.5,
-    "max": 18.5,
-    "min": 18.5
+  "bufferbloatDown": {
+    "avg": 5.1,
+    "max": 5.1,
+    "min": 5.1
+  },
+  "bufferbloatUp": {
+    "avg": 42.8,
+    "max": 42.8,
+    "min": 42.8
   },
   "consistency": {
     "download": {
@@ -475,7 +475,8 @@
   },
   "points": [
     {
-      "bufferbloat": 18.5,
+      "bufferbloatDown": 5.1,
+      "bufferbloatUp": 42.8,
       "download": 941.25,
       "duration": 14,
       "error": null,
@@ -486,7 +487,8 @@
       "upload": 110.5
     },
     {
-      "bufferbloat": null,
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
       "download": 612.5,
       "duration": 15,
       "error": null,
@@ -497,7 +499,8 @@
       "upload": 98.125
     },
     {
-      "bufferbloat": null,
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
       "download": null,
       "duration": null,
       "error": null,
@@ -508,7 +511,8 @@
       "upload": null
     },
     {
-      "bufferbloat": null,
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
       "download": null,
       "duration": null,
       "error": "Network unreachable",
@@ -546,7 +550,6 @@
 200 application/json
 [
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-15T07:00:00Z",
@@ -577,7 +580,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-15T06:00:00Z",
@@ -608,7 +610,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": null,
     "bufferbloatDown": null,
     "bufferbloatUp": null,
     "created": "2026-09-14T20:35:00Z",
@@ -639,7 +640,6 @@
     "uploadBytes": null
   },
   {
-    "bufferbloat": 18.5,
     "bufferbloatDown": 5.1,
     "bufferbloatUp": 42.8,
     "created": "2026-09-14T08:05:00Z",
@@ -659,7 +659,7 @@
     "serverId": 12345,
     "serverName": "Acme Fibre",
     "status": "completed",
-    "thresholdBufferbloat": 30,
+    "thresholdBufferbloat": 50,
     "thresholdDownload": 900,
     "thresholdPacketLoss": 0.5,
     "thresholdPing": 25,
@@ -673,11 +673,11 @@
 
 ### POST /api/speedtests/export {"format":"csv"}
 200 text/csv
-id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloat,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
-4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
-3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
-2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
-1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,18.5,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
+id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
+4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
+3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
+2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
+1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,5.1,42.8,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
 
 ### POST /api/speedtests/export {"format":
 400 application/json; charset=utf-8

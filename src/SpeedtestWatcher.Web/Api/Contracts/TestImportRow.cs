@@ -87,10 +87,16 @@ public sealed record TestImportRow
     public double? PacketLoss { get; init; }
 
     /// <summary>
-    /// Bufferbloat in milliseconds, when the export carried it.
+    /// Bufferbloat while downloading, in milliseconds, when the export carried it.
     /// </summary>
-    /// <example>18.5</example>
-    public double? Bufferbloat { get; init; }
+    /// <example>5.1</example>
+    public double? BufferbloatDown { get; init; }
+
+    /// <summary>
+    /// Bufferbloat while uploading, in milliseconds, when the export carried it.
+    /// </summary>
+    /// <example>42.8</example>
+    public double? BufferbloatUp { get; init; }
 
     /// <summary>
     /// Bytes downloaded during the test.
@@ -140,7 +146,8 @@ public sealed record TestImportRow
         ThresholdUpload = ThresholdUpload,
         Error = Error,
         PacketLoss = PacketLoss,
-        Bufferbloat = Bufferbloat,
+        BufferbloatDown = BufferbloatDown,
+        BufferbloatUp = BufferbloatUp,
         DownloadBytes = DownloadBytes,
         UploadBytes = UploadBytes,
         ServerId = ServerId,

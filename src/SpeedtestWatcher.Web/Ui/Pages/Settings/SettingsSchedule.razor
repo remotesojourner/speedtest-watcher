@@ -7,183 +7,189 @@
 @inject ISnackbar Snackbar
 @implements IDisposable
 
-<MudGrid Spacing="4">
-    <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="@WebStrings.ScheduleTitle"
-                     Description="@WebStrings.Format(WebStrings.ScheduleDescription, ProjectInfo.Name)">
-            <div class="sw-option-list mb-3">
-                @foreach (var preset in CronPresets)
-                {
-                    <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
-                                Active="@(_cronMode == preset.Cron)" OnClick="@(() => SelectCron(preset.Cron))" />
-                }
-                <OptionCard Title="@WebStrings.Custom" Description="@WebStrings.ScheduleCustomDescription" Icon="@Icons.Material.Filled.Code"
-                            Active="@(_cronMode == CustomMode)" OnClick="@(() => SelectCron(CustomMode))" />
-            </div>
-
-            @if (_cronMode == CustomMode)
-            {
-                <MudTextField @bind-Value="_customCron" Label="@WebStrings.ScheduleCronExpression" Placeholder="0 * * * *"
-                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                              Error="@(NextRun == null)" ErrorText="@WebStrings.ScheduleCronInvalid" Class="mb-2" />
-            }
-
-            <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
-                <MudText Typo="Typo.caption" Class="sw-muted">
-                    @(NextRun != null ? WebStrings.Format(WebStrings.ScheduleNextTest, PreferencesService.FormatDateTime(NextRun.Value)) : "")
-                    @(_monthlyBytes is { } bytes ? $" · {WebStrings.Format(WebStrings.ScheduleMonthlyData, ByteSize.Describe(bytes))}" : "")
-                </MudText>
-                <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">@WebStrings.ScheduleCronHelp</MudLink>
-            </div>
-
-            <div class="d-flex align-center justify-space-between mb-4">
-                <div>
-                    <MudText Typo="Typo.body2">@WebStrings.ScheduleOffset</MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.ScheduleOffsetDescription</MudText>
+<div class="d-flex flex-column gap-4">
+    <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="@WebStrings.ScheduleTitle" FullHeight="false"
+                 Description="@WebStrings.Format(WebStrings.ScheduleDescription, ProjectInfo.Name)">
+        <MudGrid Spacing="4">
+            <MudItem xs="12" md="6">
+                <div class="sw-heading-row mb-2">
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">@WebStrings.ScheduleRegularTitle</MudText>
                 </div>
-                <MudSwitch @bind-Value="_scheduleOffset" Color="Color.Primary" />
-            </div>
+                <div class="sw-option-list mb-3">
+                    @foreach (var preset in CronPresets)
+                    {
+                        <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
+                                    Active="@(_cronMode == preset.Cron)" OnClick="@(() => SelectCron(preset.Cron))" />
+                    }
+                    <OptionCard Title="@WebStrings.Custom" Description="@WebStrings.ScheduleCustomDescription" Icon="@Icons.Material.Filled.Code"
+                                Active="@(_cronMode == CustomMode)" OnClick="@(() => SelectCron(CustomMode))" />
+                </div>
 
+                @if (_cronMode == CustomMode)
+                {
+                    <MudTextField @bind-Value="_customCron" Label="@WebStrings.ScheduleCronExpression" Placeholder="0 * * * *"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  Error="@(NextRun == null)" ErrorText="@WebStrings.ScheduleCronInvalid" Class="mb-2" />
+                }
+
+                @if (NextRun is { } nextRun)
+                {
+                    <MudText Typo="Typo.caption" Class="sw-muted d-block">
+                        @WebStrings.Format(WebStrings.ScheduleNextTest, PreferencesService.FormatDateTime(nextRun))@(_monthlyBytes is { } bytes ? $" · {WebStrings.Format(WebStrings.ScheduleMonthlyData, ByteSize.Describe(bytes))}" : "")
+                    </MudText>
+                }
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <div class="sw-heading-row mb-2">
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">@WebStrings.ScheduleUnhealthyTitle</MudText>
+                    <MudSwitch @bind-Value="_unhealthyOn" Color="Color.Primary" />
+                </div>
+                <div class="sw-option-list mb-3">
+                    @foreach (var preset in UnhealthyPresets)
+                    {
+                        <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon" Disabled="@(!_unhealthyOn)"
+                                    Active="@(_unhealthyOn && _unhealthyMode == preset.Cron)" OnClick="@(() => SelectUnhealthyCron(preset.Cron))" />
+                    }
+                    <OptionCard Title="@WebStrings.Custom" Description="@WebStrings.ScheduleCustomDescription" Icon="@Icons.Material.Filled.Code" Disabled="@(!_unhealthyOn)"
+                                Active="@(_unhealthyOn && _unhealthyMode == CustomMode)" OnClick="@(() => SelectUnhealthyCron(CustomMode))" />
+                </div>
+
+                @if (!_unhealthyOn)
+                {
+                    <MudText Typo="Typo.caption" Class="sw-muted d-block">@WebStrings.ScheduleUnhealthyOffNote</MudText>
+                }
+                else
+                {
+                    @if (_unhealthyMode == CustomMode)
+                    {
+                        <MudTextField @bind-Value="_customUnhealthyCron" Label="@WebStrings.ScheduleCronExpression" Placeholder="*/5 * * * *"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                      Error="@(UnhealthyNextRun == null)" ErrorText="@WebStrings.ScheduleCronInvalid" Class="mb-2" />
+                    }
+
+                    @if (UnhealthyNextRun is { } nextWhileUnhealthy)
+                    {
+                        <MudText Typo="Typo.caption" Class="sw-muted d-block">
+                            @WebStrings.Format(WebStrings.ScheduleFirstTestAfterMiss, PreferencesService.FormatDateTime(nextWhileUnhealthy))
+                        </MudText>
+                    }
+
+                    @if (_hourlyBytes is { } hourly)
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                            @WebStrings.Format(WebStrings.ScheduleHourlyData, ByteSize.Describe(hourly))
+                        </MudAlert>
+                    }
+                }
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        <div class="d-flex align-center justify-space-between gap-4 mb-4">
+            <div>
+                <MudText Typo="Typo.body2">@WebStrings.ScheduleOffset</MudText>
+                <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.ScheduleOffsetDescription</MudText>
+            </div>
+            <MudSwitch @bind-Value="_scheduleOffset" Color="Color.Primary" />
+        </div>
+
+        <div class="d-flex flex-wrap align-center justify-space-between gap-2">
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       Disabled="@(!ScheduleDirty || NextRun == null)" OnClick="SaveScheduleAsync">
+                       Disabled="@(!ScheduleDirty || !ScheduleValid)" OnClick="SaveScheduleAsync">
                 @WebStrings.ScheduleSave
             </MudButton>
-        </SurfaceCard>
-    </MudItem>
+            <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">@WebStrings.ScheduleCronHelp</MudLink>
+        </div>
+    </SurfaceCard>
 
-    <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.NetworkCheck" Title="@WebStrings.ScheduleUnhealthyTitle"
-                     Description="@WebStrings.ScheduleUnhealthyDescription">
-            <div class="sw-option-list mb-3">
-                <OptionCard Title="@WebStrings.ScheduleUnhealthyOff" Description="@WebStrings.ScheduleUnhealthyOffDescription" Icon="@Icons.Material.Filled.DoNotDisturbOn"
-                            Active="@(_unhealthyMode == OffMode)" OnClick="@(() => SelectUnhealthyCron(OffMode))" />
-                @foreach (var preset in UnhealthyPresets)
-                {
-                    <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
-                                Active="@(_unhealthyMode == preset.Cron)" OnClick="@(() => SelectUnhealthyCron(preset.Cron))" />
-                }
-                <OptionCard Title="@WebStrings.Custom" Description="@WebStrings.ScheduleCustomDescription" Icon="@Icons.Material.Filled.Code"
-                            Active="@(_unhealthyMode == CustomMode)" OnClick="@(() => SelectUnhealthyCron(CustomMode))" />
-            </div>
-
-            @if (_unhealthyMode == CustomMode)
-            {
-                <MudTextField @bind-Value="_customUnhealthyCron" Label="@WebStrings.ScheduleCronExpression" Placeholder="*/5 * * * *"
-                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                              Error="@(UnhealthyNextRun == null)" ErrorText="@WebStrings.ScheduleCronInvalid" Class="mb-2" />
-            }
-
-            @if (UnhealthyNextRun is { } nextWhileUnhealthy)
-            {
-                <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
-                    <MudText Typo="Typo.caption" Class="sw-muted">
-                        @WebStrings.Format(WebStrings.ScheduleFirstTestAfterMiss, PreferencesService.FormatDateTime(nextWhileUnhealthy))
-                    </MudText>
-                    <MudLink Href="https://crontab.guru/" Target="_blank" Typo="Typo.caption">@WebStrings.ScheduleCronHelp</MudLink>
-                </div>
-            }
-
-            @if (_hourlyBytes is { } hourly)
-            {
-                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-3">
-                    @WebStrings.Format(WebStrings.ScheduleHourlyData, ByteSize.Describe(hourly))
-                </MudAlert>
-            }
-
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       Disabled="@(!UnhealthyScheduleDirty || (_unhealthyMode != OffMode && UnhealthyNextRun == null))" OnClick="SaveUnhealthyScheduleAsync">
-                @WebStrings.Save
-            </MudButton>
-        </SurfaceCard>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.PauseCircle" Title="@WebStrings.SchedulePauseTitle"
-                     Description="@WebStrings.SchedulePauseDescription">
-            @if (StatusService.Paused)
-            {
-                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">@WebStrings.PausedNotice</MudAlert>
+    <SurfaceCard Icon="@Icons.Material.Filled.PauseCircle" Title="@WebStrings.SchedulePauseTitle" FullHeight="false"
+                 Description="@WebStrings.SchedulePauseDescription">
+        @if (StatusService.Paused)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">@WebStrings.PausedNotice</MudAlert>
+            <div>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="ResumeTests">
                     @WebStrings.ScheduleResumeTests
                 </MudButton>
-            }
-            else
-            {
-                <div class="sw-option-list mb-3">
-                    @foreach (var preset in PausePresets)
-                    {
-                        <OptionCard Title="@preset.Title" Description="@preset.Description" Icon="@preset.Icon"
-                                    Active="@(_pauseMode == preset.Id)" OnClick="@(() => _pauseMode = preset.Id)" />
-                    }
-                    <OptionCard Title="@WebStrings.SchedulePauseCustom" Description="@WebStrings.SchedulePauseCustomDescription" Icon="@Icons.Material.Filled.Tune"
-                                Active="@(_pauseMode == CustomMode)" OnClick="@(() => _pauseMode = CustomMode)" />
-                </div>
-
-                @if (_pauseMode == CustomMode)
+            </div>
+        }
+        else
+        {
+            <div class="sw-option-columns mb-3">
+                @foreach (var option in PauseOptions)
                 {
-                    <MudNumericField T="double?" @bind-Value="_customPauseHours" Label="@WebStrings.SchedulePauseHours" Variant="Variant.Outlined"
-                                     Margin="Margin.Dense" Min="0.1" Max="PauseService.MaxResumeInHours" Step="0.5" Immediate="true"
-                                     Error="@(!CustomPauseValid)" ErrorText="@WebStrings.Format(WebStrings.SchedulePauseHoursInvalid, PauseService.MaxResumeInHours)"
-                                     HelperText="@WebStrings.SchedulePauseHoursHelp" Class="mb-3" />
+                    <OptionCard Title="@option.Title" Description="@option.Description" Icon="@option.Icon"
+                                Active="@(_pauseMode == option.Id)" OnClick="@(() => _pauseMode = option.Id)" />
                 }
+            </div>
 
+            @if (_pauseMode == CustomMode)
+            {
+                <MudNumericField T="double?" @bind-Value="_customPauseHours" Label="@WebStrings.SchedulePauseHours" Variant="Variant.Outlined"
+                                 Margin="Margin.Dense" Min="0.1" Max="PauseService.MaxResumeInHours" Step="0.5" Immediate="true"
+                                 Error="@(_customPauseHours != null && !CustomPauseValid)" ErrorText="@WebStrings.Format(WebStrings.SchedulePauseHoursInvalid, PauseService.MaxResumeInHours)"
+                                 HelperText="@WebStrings.SchedulePauseHoursHelp" Class="sw-narrow-field mb-3" />
+            }
+
+            <div>
                 <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Pause"
                            Disabled="@(_pauseMode == CustomMode && !CustomPauseValid)" OnClick="PauseTests">
                     @WebStrings.SchedulePauseTests
                 </MudButton>
-            }
-        </SurfaceCard>
-    </MudItem>
-</MudGrid>
+            </div>
+        }
+    </SurfaceCard>
+</div>
 
 @code {
     private const string CustomMode = "custom";
+    private const string EveryHour = "0 * * * *";
+    private const string EveryFifteenMinutes = "*/15 * * * *";
+    private const string IndefinitelyMode = "indefinitely";
+    private const string SkipNextMode = "skipNext";
+    private const string SkipDayMode = "skipDay";
+    private const double HoursInADay = 24;
 
     private static (string Cron, string Title, string Description, string Icon)[] CronPresets =>
     [
-        ("* * * * *", WebStrings.ScheduleContinuous, WebStrings.ScheduleContinuousDescription, Icons.Material.Filled.Bolt),
-        ("0,30 * * * *", WebStrings.ScheduleVeryOften, WebStrings.ScheduleEvery30Minutes, Icons.Material.Filled.Speed),
-        ("0 * * * *", WebStrings.ScheduleDefault, WebStrings.ScheduleDefaultDescription, Icons.Material.Filled.Schedule),
-        ("0 0,3,6,9,12,15,18,21 * * *", WebStrings.ScheduleRarely, WebStrings.ScheduleEvery3Hours, Icons.Material.Filled.Timer),
-        ("0 0,6,12,18 * * *", WebStrings.ScheduleVeryRarely, WebStrings.ScheduleEvery6Hours, Icons.Material.Filled.Spa)
+        (EveryHour, WebStrings.ScheduleEveryHour, WebStrings.ScheduleEveryHourRecommended, Icons.Material.Filled.Schedule),
+        ("0 0,3,6,9,12,15,18,21 * * *", WebStrings.ScheduleEvery3Hours, WebStrings.ScheduleEvery3HoursDescription, Icons.Material.Filled.Timer),
+        ("0 0,6,12,18 * * *", WebStrings.ScheduleEvery6Hours, WebStrings.ScheduleEvery6HoursDescription, Icons.Material.Filled.Spa)
     ];
 
     private static (string Cron, string Title, string Description, string Icon)[] UnhealthyPresets =>
     [
-        ("*/5 * * * *", WebStrings.ScheduleEvery5Minutes, WebStrings.ScheduleEvery5MinutesDescription, Icons.Material.Filled.Bolt),
-        ("*/10 * * * *", WebStrings.ScheduleEvery10Minutes, WebStrings.ScheduleEvery10MinutesDescription, Icons.Material.Filled.Speed),
-        ("*/15 * * * *", WebStrings.ScheduleEvery15Minutes, WebStrings.ScheduleEvery15MinutesDescription, Icons.Material.Filled.Timer),
-        ("0,30 * * * *", WebStrings.ScheduleEvery30Minutes, WebStrings.ScheduleEvery30MinutesDescription, Icons.Material.Filled.Schedule),
-        ("0 * * * *", WebStrings.ScheduleEveryHour, WebStrings.ScheduleEveryHourDescription, Icons.Material.Filled.Spa)
+        (EveryFifteenMinutes, WebStrings.ScheduleEvery15Minutes, WebStrings.ScheduleEvery15MinutesDescription, Icons.Material.Filled.Bolt),
+        ("0,30 * * * *", WebStrings.ScheduleEvery30Minutes, WebStrings.ScheduleEvery30MinutesDescription, Icons.Material.Filled.Speed),
+        (EveryHour, WebStrings.ScheduleEveryHour, WebStrings.ScheduleEveryHourDescription, Icons.Material.Filled.Schedule)
     ];
 
-    private static (string Id, double? Hours, string Title, string Description, string Icon)[] PausePresets =>
+    private static (string Id, string Title, string Description, string Icon)[] PauseOptions =>
     [
-        ("manual", null, WebStrings.SchedulePauseIndefinitely, WebStrings.SchedulePauseIndefinitelyDescription, Icons.Material.Filled.AllInclusive),
-        ("short", 1, WebStrings.SchedulePauseShort, WebStrings.SchedulePauseShortDescription, Icons.Material.Filled.Coffee),
-        ("medium", 6, WebStrings.SchedulePauseMedium, WebStrings.SchedulePauseMediumDescription, Icons.Material.Filled.Schedule),
-        ("long", 12, WebStrings.SchedulePauseLong, WebStrings.SchedulePauseLongDescription, Icons.Material.Filled.Bedtime)
+        (IndefinitelyMode, WebStrings.SchedulePauseIndefinitely, WebStrings.SchedulePauseIndefinitelyDescription, Icons.Material.Filled.AllInclusive),
+        (SkipNextMode, WebStrings.SchedulePauseSkipNext, WebStrings.SchedulePauseSkipNextDescription, Icons.Material.Filled.SkipNext),
+        (SkipDayMode, WebStrings.SchedulePauseSkipDay, WebStrings.SchedulePauseSkipDayDescription, Icons.Material.Filled.EventBusy),
+        (CustomMode, WebStrings.SchedulePauseCustom, WebStrings.SchedulePauseCustomDescription, Icons.Material.Filled.Tune)
     ];
 
-    private const string OffMode = "off";
-
-    private string _cronMode = "0 * * * *";
-    private string _customCron = "0 * * * *";
+    private string _cronMode = EveryHour;
+    private string _customCron = EveryHour;
     private bool _scheduleOffset;
 
-    private string _unhealthyMode = OffMode;
-    private string _customUnhealthyCron = "*/5 * * * *";
+    private bool _unhealthyOn;
+    private string _unhealthyMode = EveryFifteenMinutes;
+    private string _customUnhealthyCron = EveryFifteenMinutes;
 
-    private string _pauseMode = "manual";
+    private string _pauseMode = IndefinitelyMode;
     private double? _customPauseHours;
 
     private string EffectiveCron => (_cronMode == CustomMode ? _customCron : _cronMode).Trim();
 
-    private string? EffectiveUnhealthyCron => _unhealthyMode switch
-    {
-        OffMode => null,
-        CustomMode => _customUnhealthyCron.Trim(),
-        _ => _unhealthyMode
-    };
+    private string? EffectiveUnhealthyCron => !_unhealthyOn ? null
+        : _unhealthyMode == CustomMode ? _customUnhealthyCron.Trim()
+        : _unhealthyMode;
 
     private DateTime? NextRun => NextRunOf(EffectiveCron);
 
@@ -204,9 +210,10 @@
 
     private bool ScheduleDirty =>
         EffectiveCron != Settings.Current.Schedule.Cron
-        || _scheduleOffset != Settings.Current.Schedule.RandomOffset;
+        || _scheduleOffset != Settings.Current.Schedule.RandomOffset
+        || EffectiveUnhealthyCron != Settings.Current.Schedule.UnhealthyCron;
 
-    private bool UnhealthyScheduleDirty => EffectiveUnhealthyCron != Settings.Current.Schedule.UnhealthyCron;
+    private bool ScheduleValid => NextRun != null && (!_unhealthyOn || UnhealthyNextRun != null);
 
     private bool CustomPauseValid => _customPauseHours is > 0 and <= PauseService.MaxResumeInHours;
 
@@ -238,6 +245,7 @@
 
         if (Settings.Current.Schedule.UnhealthyCron is { } unhealthyCron)
         {
+            _unhealthyOn = true;
             _unhealthyMode = UnhealthyPresets.Any(p => p.Cron == unhealthyCron) ? unhealthyCron : CustomMode;
             _customUnhealthyCron = unhealthyCron;
         }
@@ -252,27 +260,28 @@
     private void SelectUnhealthyCron(string mode)
     {
         _unhealthyMode = mode;
-        if (mode is not (CustomMode or OffMode)) _customUnhealthyCron = mode;
+        if (mode != CustomMode) _customUnhealthyCron = mode;
     }
 
     private async Task SaveScheduleAsync()
     {
-        var result = await Settings.SaveAsync(("cron", EffectiveCron), ("scheduleOffset", _scheduleOffset ? "true" : "false"));
+        var result = await Settings.SaveAsync(
+            ("cron", EffectiveCron),
+            ("scheduleOffset", _scheduleOffset ? "true" : "false"),
+            ("unhealthyCron", EffectiveUnhealthyCron ?? SettingDefinitions.Unset));
         if (result.Succeeded) Snackbar.Add(WebStrings.ScheduleSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
-    }
-
-    private async Task SaveUnhealthyScheduleAsync()
-    {
-        var result = await Settings.SaveAsync(("unhealthyCron", EffectiveUnhealthyCron ?? SettingDefinitions.Unset));
-        if (result.Succeeded) Snackbar.Add(EffectiveUnhealthyCron == null ? WebStrings.ScheduleUnhealthyTurnedOff : WebStrings.ScheduleUnhealthySaved, Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 
     private void PauseTests()
     {
-        var hours = _pauseMode == CustomMode ? _customPauseHours : PausePresets.First(p => p.Id == _pauseMode).Hours;
-        var result = Pausing.Pause(hours);
+        var result = _pauseMode switch
+        {
+            SkipNextMode => Pausing.SkipNextScheduledTest(),
+            SkipDayMode => Pausing.Pause(HoursInADay),
+            CustomMode => Pausing.Pause(_customPauseHours),
+            _ => Pausing.Pause(null)
+        };
         if (!result.Succeeded)
         {
             Snackbar.Add(result.Message ?? WebStrings.SchedulePauseFailed, Severity.Error);

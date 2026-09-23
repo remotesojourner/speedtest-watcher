@@ -239,7 +239,7 @@
           {
             "name": "range",
             "in": "query",
-            "description": "How far back to go: `1h`, `6h`, `24h` (the default) or `7d`.",
+            "description": "How far back to go: `1h`, `6h`, `24h` (the default), `7d` or `30d`.",
             "schema": {
               "type": "string"
             }
@@ -1299,7 +1299,8 @@
           "jitter",
           "download",
           "upload",
-          "bufferbloat",
+          "bufferbloatDown",
+          "bufferbloatUp",
           "duration"
         ],
         "type": "object",
@@ -1367,15 +1368,26 @@
             "description": "Upload speed in Mbps.",
             "format": "double"
           },
-          "bufferbloat": {
+          "bufferbloatDown": {
             "examples": [
-              18.5
+              5.1
             ],
             "type": [
               "null",
               "number"
             ],
-            "description": "Bufferbloat in milliseconds, when the test measured it.",
+            "description": "Bufferbloat while downloading, in milliseconds, when the test measured it.",
+            "format": "double"
+          },
+          "bufferbloatUp": {
+            "examples": [
+              42.8
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat while uploading, in milliseconds, when the test measured it.",
             "format": "double"
           },
           "duration": {
@@ -2334,7 +2346,6 @@
           "serverHost",
           "resultId",
           "packetLoss",
-          "bufferbloat",
           "bufferbloatDown",
           "bufferbloatUp",
           "latencyIdle",
@@ -2472,7 +2483,7 @@
               "null",
               "number"
             ],
-            "description": "The highest acceptable bufferbloat, in milliseconds, when the test ran. `null` when no maximum was set. It is only judged when the test measured bufferbloat.",
+            "description": "The highest acceptable bufferbloat, in milliseconds, when the test ran. `null` when no maximum was set. It applies to the download and the upload figure alike, and each is only judged when the test measured it.",
             "format": "double"
           },
           "error": {
@@ -2528,17 +2539,6 @@
             "description": "Packet loss as a percentage, when the provider measures it. Only Ookla does.",
             "format": "double"
           },
-          "bufferbloat": {
-            "examples": [
-              18.5
-            ],
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "How much longer the line took to answer under load than when idle, in milliseconds. The app measures this itself around every test, the same way for every provider.",
-            "format": "double"
-          },
           "bufferbloatDown": {
             "examples": [
               5.1
@@ -2547,7 +2547,7 @@
               "null",
               "number"
             ],
-            "description": "Bufferbloat measured only while the test was pulling data down, in milliseconds. `null` when too few samples fell in that phase.",
+            "description": "Bufferbloat while the test was pulling data down: how much longer the line took to answer than when idle, in milliseconds. The app measures it itself around every test, the same way for every provider. `null` when too few samples fell in that phase.",
             "format": "double"
           },
           "bufferbloatUp": {
@@ -2558,7 +2558,7 @@
               "null",
               "number"
             ],
-            "description": "Bufferbloat measured only while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones.",
+            "description": "Bufferbloat while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones. `null` when too few samples fell in that phase.",
             "format": "double"
           },
           "latencyIdle": {
@@ -2673,7 +2673,8 @@
           "time",
           "consistency",
           "packetLoss",
-          "bufferbloat",
+          "bufferbloatDown",
+          "bufferbloatUp",
           "dataUsedBytes",
           "hourlyAverages",
           "points",
@@ -2760,7 +2761,7 @@
             ],
             "description": "Packet loss across the completed tests that measured it, as percentages. Only Ookla measures it."
           },
-          "bufferbloat": {
+          "bufferbloatDown": {
             "oneOf": [
               {
                 "type": "null"
@@ -2769,7 +2770,18 @@
                 "$ref": "#/components/schemas/MetricSummaryResponse"
               }
             ],
-            "description": "Bufferbloat in milliseconds across the completed tests that have a figure, or `null` when none do."
+            "description": "Bufferbloat while downloading, in milliseconds, across the completed tests that have a figure, or `null` when none do."
+          },
+          "bufferbloatUp": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Bufferbloat while uploading, in milliseconds, across the completed tests that have a figure, or `null` when none do."
           },
           "dataUsedBytes": {
             "examples": [
@@ -3009,15 +3021,26 @@
             "description": "Packet loss as a percentage.",
             "format": "double"
           },
-          "bufferbloat": {
+          "bufferbloatDown": {
             "examples": [
-              18.5
+              5.1
             ],
             "type": [
               "null",
               "number"
             ],
-            "description": "Bufferbloat in milliseconds, when the export carried it.",
+            "description": "Bufferbloat while downloading, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "bufferbloatUp": {
+            "examples": [
+              42.8
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat while uploading, in milliseconds, when the export carried it.",
             "format": "double"
           },
           "downloadBytes": {

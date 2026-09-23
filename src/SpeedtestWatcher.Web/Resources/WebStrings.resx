@@ -123,6 +123,12 @@
   <data name="Bufferbloat" xml:space="preserve">
     <value>Bufferbloat</value>
   </data>
+  <data name="BufferbloatDown" xml:space="preserve">
+    <value>Bufferbloat down</value>
+  </data>
+  <data name="BufferbloatUp" xml:space="preserve">
+    <value>Bufferbloat up</value>
+  </data>
   <data name="ChartCardExpand" xml:space="preserve">
     <value>Expand {0}</value>
   </data>
@@ -252,6 +258,15 @@
   <data name="TestDetailDataUsed" xml:space="preserve">
     <value>Data used</value>
   </data>
+  <data name="TestDetailLatency" xml:space="preserve">
+    <value>Latency</value>
+  </data>
+  <data name="TestDetailLatencyIdle" xml:space="preserve">
+    <value>{0:F0} ms idle</value>
+  </data>
+  <data name="TestDetailLatencyIdleAndWorst" xml:space="preserve">
+    <value>{0:F0} ms idle, {1:F0} ms at worst under load</value>
+  </data>
   <data name="TestDetailPublicIp" xml:space="preserve">
     <value>Public IP</value>
   </data>
@@ -279,18 +294,6 @@
   <data name="TestDetailDelete" xml:space="preserve">
     <value>Delete Test</value>
   </data>
-  <data name="TestDetailBufferbloatDown" xml:space="preserve">
-    <value>+{0:F0} ms down</value>
-  </data>
-  <data name="TestDetailBufferbloatUp" xml:space="preserve">
-    <value>+{0:F0} ms up</value>
-  </data>
-  <data name="TestDetailLatencyIdleToLoaded" xml:space="preserve">
-    <value>{0:F0} → {1:F0} ms</value>
-  </data>
-  <data name="TestDetailLatencyWorst" xml:space="preserve">
-    <value>worst 5% {0:F0} ms</value>
-  </data>
   <data name="TestDetailDeleteFailed" xml:space="preserve">
     <value>Could not delete the test</value>
   </data>
@@ -316,7 +319,7 @@
     <value>Sign in to change the schedule, provider, integrations and storage.</value>
   </data>
   <data name="SettingsSubtitle" xml:space="preserve">
-    <value>Schedule, provider, display, monitoring, integrations, security, storage and app info.</value>
+    <value>Choose when and how your connection is tested, what counts as a good result, and where alerts go.</value>
   </data>
   <data name="SettingsTabGeneral" xml:space="preserve">
     <value>General</value>
@@ -396,50 +399,77 @@
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Couldn't load the statistics for this period.</value>
   </data>
-  <data name="DashboardOverview" xml:space="preserve">
-    <value>Overview</value>
-  </data>
-  <data name="DashboardAvgDownload" xml:space="preserve">
-    <value>{0} avg download</value>
-  </data>
-  <data name="DashboardAvgUpload" xml:space="preserve">
-    <value>{0} avg upload</value>
-  </data>
-  <data name="DashboardAvgPing" xml:space="preserve">
-    <value>ms avg ping</value>
-  </data>
-  <data name="DashboardAvgJitter" xml:space="preserve">
-    <value>ms avg jitter</value>
-  </data>
-  <data name="DashboardTestRun" xml:space="preserve">
-    <value>test run</value>
-  </data>
   <data name="DashboardTestsRun" xml:space="preserve">
     <value>tests run</value>
   </data>
-  <data name="DashboardFailed" xml:space="preserve">
-    <value>failed</value>
-  </data>
-  <data name="DashboardAverageDuration" xml:space="preserve">
-    <value>average duration</value>
-  </data>
-  <data name="DashboardAvgPacketLoss" xml:space="preserve">
-    <value>avg packet loss</value>
-  </data>
-  <data name="DashboardBufferbloatTooltip" xml:space="preserve">
-    <value>How much longer the line takes to answer while a test saturates it. Under 30 ms is good; a lot more means calls and games suffer while something big is downloading.</value>
-  </data>
-  <data name="DashboardAvgBufferbloat" xml:space="preserve">
-    <value>avg bufferbloat</value>
+  <data name="DashboardPerTest" xml:space="preserve">
+    <value>per test</value>
   </data>
   <data name="DashboardDataUsed" xml:space="preserve">
     <value>data used</value>
   </data>
-  <data name="DashboardUptime7Days" xml:space="preserve">
-    <value>uptime, 7 days</value>
-  </data>
   <data name="DashboardLatestTest" xml:space="preserve">
     <value>Latest Test</value>
+  </data>
+  <data name="DashboardAverage" xml:space="preserve">
+    <value>average</value>
+  </data>
+  <data name="DashboardAveragePing" xml:space="preserve">
+    <value>average ping</value>
+  </data>
+  <data name="DashboardAveragePingWithJitter" xml:space="preserve">
+    <value>average ping, {0:F1} ms jitter</value>
+  </data>
+  <data name="DashboardRange" xml:space="preserve">
+    <value>Range</value>
+  </data>
+  <data name="DashboardRangeValue" xml:space="preserve">
+    <value>{0} – {1}</value>
+  </data>
+  <data name="DashboardMaxDetail" xml:space="preserve">
+    <value>max {0}</value>
+  </data>
+  <data name="DashboardJitterDetail" xml:space="preserve">
+    <value>±{0:F1} jitter</value>
+  </data>
+  <data name="DashboardConsistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="DashboardConsistencyValue" xml:space="preserve">
+    <value>{0:F0}%, ±{1}</value>
+  </data>
+  <data name="DashboardLatency" xml:space="preserve">
+    <value>Latency</value>
+  </data>
+  <data name="DashboardUnderLoad" xml:space="preserve">
+    <value>Under Load</value>
+  </data>
+  <data name="DashboardUnderLoadDescription" xml:space="preserve">
+    <value>How much slower the line answers while a test fills it. Under 30 ms is good.</value>
+  </data>
+  <data name="DashboardUnderLoadDownload" xml:space="preserve">
+    <value>download</value>
+  </data>
+  <data name="DashboardUnderLoadUpload" xml:space="preserve">
+    <value>upload</value>
+  </data>
+  <data name="DashboardPacketLoss" xml:space="preserve">
+    <value>packet loss</value>
+  </data>
+  <data name="DashboardTests" xml:space="preserve">
+    <value>Tests</value>
+  </data>
+  <data name="DashboardTestsDescription" xml:space="preserve">
+    <value>Across the selected period.</value>
+  </data>
+  <data name="DashboardFailedCount" xml:space="preserve">
+    <value>{0} failed</value>
+  </data>
+  <data name="DashboardNoneFailed" xml:space="preserve">
+    <value>None failed</value>
+  </data>
+  <data name="DashboardUptimePercent" xml:space="preserve">
+    <value>{0:F2}% uptime</value>
   </data>
   <data name="DashboardNoTestsYet" xml:space="preserve">
     <value>No tests yet.</value>
@@ -453,53 +483,11 @@
   <data name="MissedYourTargets" xml:space="preserve">
     <value>Missed your targets</value>
   </data>
-  <data name="DashboardStability" xml:space="preserve">
-    <value>Connection Stability</value>
-  </data>
-  <data name="DashboardStabilityDescription" xml:space="preserve">
-    <value>How consistent results were across the period.</value>
-  </data>
-  <data name="DashboardDownloadDeviation" xml:space="preserve">
-    <value>download ±{0}</value>
-  </data>
-  <data name="DashboardUploadDeviation" xml:space="preserve">
-    <value>upload ±{0}</value>
-  </data>
-  <data name="DashboardPingVariance" xml:space="preserve">
-    <value>ms ping variance</value>
-  </data>
-  <data name="DashboardStabilityOverall" xml:space="preserve">
-    <value>Overall: {0}</value>
-  </data>
-  <data name="DashboardStabilityExcellent" xml:space="preserve">
-    <value>Excellent</value>
-  </data>
-  <data name="DashboardStabilityGood" xml:space="preserve">
-    <value>Good</value>
-  </data>
-  <data name="DashboardStabilityFair" xml:space="preserve">
-    <value>Fair</value>
-  </data>
-  <data name="DashboardStabilityPoor" xml:space="preserve">
-    <value>Poor</value>
-  </data>
-  <data name="DashboardValueRanges" xml:space="preserve">
-    <value>Value Ranges</value>
-  </data>
-  <data name="DashboardMin" xml:space="preserve">
-    <value>Min</value>
-  </data>
-  <data name="DashboardMax" xml:space="preserve">
-    <value>Max</value>
-  </data>
   <data name="DashboardDownloadChart" xml:space="preserve">
     <value>Download Speed</value>
   </data>
   <data name="DashboardUploadChart" xml:space="preserve">
     <value>Upload Speed</value>
-  </data>
-  <data name="DashboardPingChart" xml:space="preserve">
-    <value>Ping &amp; Jitter</value>
   </data>
   <data name="DashboardByTimeOfDay" xml:space="preserve">
     <value>By Time of Day</value>
@@ -642,32 +630,32 @@
   <data name="UptimeMonitoringOff" xml:space="preserve">
     <value>Connection monitoring is off, so nothing is being watched. Turn it on under Settings → Monitoring.</value>
   </data>
-  <data name="UptimeRightNow" xml:space="preserve">
-    <value>Right Now</value>
+  <data name="UptimeConnection" xml:space="preserve">
+    <value>Connection</value>
   </data>
-  <data name="UptimeProbesEvery" xml:space="preserve">
-    <value>The monitor probes every {0}.</value>
+  <data name="UptimeConnectionDescription" xml:space="preserve">
+    <value>The monitor probes every {0}. Uptime counts only the time it was watching, so a restart is neither uptime nor downtime.</value>
   </data>
-  <data name="UptimeMsToAnswer" xml:space="preserve">
-    <value>ms to answer</value>
+  <data name="UptimeLastOutage" xml:space="preserve">
+    <value>Last outage</value>
+  </data>
+  <data name="UptimeDownLast30Days" xml:space="preserve">
+    <value>Down in 30 days</value>
+  </data>
+  <data name="UptimeOutagesLast30Days" xml:space="preserve">
+    <value>Outages in 30 days</value>
+  </data>
+  <data name="UptimeNoOutageInAYear" xml:space="preserve">
+    <value>None in a year</value>
   </data>
   <data name="UptimeDownFor" xml:space="preserve">
     <value>Down for {0}, since {1}.</value>
-  </data>
-  <data name="UptimeWatchedTimeOnly" xml:space="preserve">
-    <value>Only the time the app was watching counts, so a restart is neither uptime nor downtime.</value>
-  </data>
-  <data name="UptimeDownLast30Days" xml:space="preserve">
-    <value>Down in the last 30 days</value>
-  </data>
-  <data name="UptimeOutagesLast30Days" xml:space="preserve">
-    <value>Outages in the last 30 days</value>
   </data>
   <data name="UptimeLatency" xml:space="preserve">
     <value>Connection Latency</value>
   </data>
   <data name="UptimeLatencyDescription" xml:space="preserve">
-    <value>How long the quickest probe target took to answer. Rounds are averaged into slots, so a week is a few hundred points.</value>
+    <value>How long the quickest probe target took to answer. Rounds are averaged into slots, so even 30 days is a few hundred points.</value>
   </data>
   <data name="UptimeNoRounds" xml:space="preserve">
     <value>No probe rounds in this period yet.</value>
@@ -689,9 +677,6 @@
   </data>
   <data name="UptimeLastYear" xml:space="preserve">
     <value>The Last Year</value>
-  </data>
-  <data name="UptimeLastYearDescription" xml:space="preserve">
-    <value>One square a day. The darker the square, the longer the line was down.</value>
   </data>
   <data name="UptimeKeyNoOutage" xml:space="preserve">
     <value>No outage</value>
@@ -970,7 +955,7 @@
     <value>Bufferbloat (ms)</value>
   </data>
   <data name="GeneralMaxBufferbloatHelp" xml:space="preserve">
-    <value>Added latency under load. Under 30 ms is good</value>
+    <value>Applies to download and upload alike. Under 30 ms is good</value>
   </data>
   <data name="GeneralSaveTargets" xml:space="preserve">
     <value>Save Values</value>
@@ -1131,8 +1116,11 @@
   <data name="ScheduleTitle" xml:space="preserve">
     <value>Test Schedule</value>
   </data>
+  <data name="ScheduleRegularTitle" xml:space="preserve">
+    <value>Regular schedule</value>
+  </data>
   <data name="ScheduleDescription" xml:space="preserve">
-    <value>How often {0} runs a speedtest automatically. Cron expressions run in UTC.</value>
+    <value>How often {0} runs a speedtest automatically. When the unhealthy schedule is on, it takes over while the last completed test misses your targets. Cron expressions run in UTC.</value>
   </data>
   <data name="ScheduleCustomDescription" xml:space="preserve">
     <value>Your own cron expression</value>
@@ -1153,25 +1141,19 @@
     <value>Cron syntax help</value>
   </data>
   <data name="ScheduleOffset" xml:space="preserve">
-    <value>Offset schedule</value>
+    <value>Offset both schedules</value>
   </data>
   <data name="ScheduleOffsetDescription" xml:space="preserve">
-    <value>Starts each test a little late, by at most 5 minutes and never more than a quarter of the gap</value>
+    <value>Starts each test a little late: by at most 5 minutes, and never more than a quarter of the gap between tests</value>
   </data>
   <data name="ScheduleSave" xml:space="preserve">
     <value>Save Schedule</value>
   </data>
   <data name="ScheduleUnhealthyTitle" xml:space="preserve">
-    <value>While Unhealthy</value>
+    <value>Unhealthy schedule</value>
   </data>
-  <data name="ScheduleUnhealthyDescription" xml:space="preserve">
-    <value>Test again sooner while the last completed test misses your targets. Off unless you choose a pace.</value>
-  </data>
-  <data name="ScheduleUnhealthyOff" xml:space="preserve">
-    <value>Off</value>
-  </data>
-  <data name="ScheduleUnhealthyOffDescription" xml:space="preserve">
-    <value>Always use the test schedule</value>
+  <data name="ScheduleUnhealthyOffNote" xml:space="preserve">
+    <value>Off, so the regular schedule is always used.</value>
   </data>
   <data name="ScheduleFirstTestAfterMiss" xml:space="preserve">
     <value>First test after a miss: {0}</value>
@@ -1206,53 +1188,26 @@
   <data name="SchedulePauseTests" xml:space="preserve">
     <value>Pause Tests</value>
   </data>
-  <data name="ScheduleContinuous" xml:space="preserve">
-    <value>Continuous</value>
-  </data>
-  <data name="ScheduleContinuousDescription" xml:space="preserve">
-    <value>Every minute — high resource usage</value>
-  </data>
-  <data name="ScheduleVeryOften" xml:space="preserve">
-    <value>Very often</value>
-  </data>
   <data name="ScheduleEvery30Minutes" xml:space="preserve">
     <value>Every 30 minutes</value>
-  </data>
-  <data name="ScheduleDefault" xml:space="preserve">
-    <value>Default</value>
-  </data>
-  <data name="ScheduleDefaultDescription" xml:space="preserve">
-    <value>Every hour — recommended</value>
-  </data>
-  <data name="ScheduleRarely" xml:space="preserve">
-    <value>Rarely</value>
   </data>
   <data name="ScheduleEvery3Hours" xml:space="preserve">
     <value>Every 3 hours</value>
   </data>
-  <data name="ScheduleVeryRarely" xml:space="preserve">
-    <value>Very rarely</value>
+  <data name="ScheduleEvery3HoursDescription" xml:space="preserve">
+    <value>8 tests a day</value>
   </data>
   <data name="ScheduleEvery6Hours" xml:space="preserve">
     <value>Every 6 hours</value>
   </data>
-  <data name="ScheduleEvery5Minutes" xml:space="preserve">
-    <value>Every 5 minutes</value>
-  </data>
-  <data name="ScheduleEvery5MinutesDescription" xml:space="preserve">
-    <value>The quickest look at a bad line</value>
-  </data>
-  <data name="ScheduleEvery10Minutes" xml:space="preserve">
-    <value>Every 10 minutes</value>
-  </data>
-  <data name="ScheduleEvery10MinutesDescription" xml:space="preserve">
-    <value>Often, without hammering the line</value>
+  <data name="ScheduleEvery6HoursDescription" xml:space="preserve">
+    <value>4 tests a day</value>
   </data>
   <data name="ScheduleEvery15Minutes" xml:space="preserve">
     <value>Every 15 minutes</value>
   </data>
   <data name="ScheduleEvery15MinutesDescription" xml:space="preserve">
-    <value>A good middle ground</value>
+    <value>The closest watch on a bad line</value>
   </data>
   <data name="ScheduleEvery30MinutesDescription" xml:space="preserve">
     <value>Twice the usual hourly pace</value>
@@ -1263,38 +1218,29 @@
   <data name="ScheduleEveryHourDescription" xml:space="preserve">
     <value>Only useful with a slower schedule</value>
   </data>
+  <data name="ScheduleEveryHourRecommended" xml:space="preserve">
+    <value>24 tests a day, recommended</value>
+  </data>
   <data name="SchedulePauseIndefinitely" xml:space="preserve">
-    <value>Pause indefinitely</value>
+    <value>Indefinitely</value>
   </data>
   <data name="SchedulePauseIndefinitelyDescription" xml:space="preserve">
-    <value>Until you resume manually</value>
+    <value>Until you resume</value>
   </data>
-  <data name="SchedulePauseShort" xml:space="preserve">
-    <value>Short break</value>
+  <data name="SchedulePauseSkipNext" xml:space="preserve">
+    <value>Skip next test</value>
   </data>
-  <data name="SchedulePauseShortDescription" xml:space="preserve">
-    <value>Pause for 1 hour</value>
+  <data name="SchedulePauseSkipNextDescription" xml:space="preserve">
+    <value>Resumes once the next scheduled test is skipped</value>
   </data>
-  <data name="SchedulePauseMedium" xml:space="preserve">
-    <value>Medium break</value>
+  <data name="SchedulePauseSkipDay" xml:space="preserve">
+    <value>Skip a day</value>
   </data>
-  <data name="SchedulePauseMediumDescription" xml:space="preserve">
-    <value>Pause for 6 hours</value>
-  </data>
-  <data name="SchedulePauseLong" xml:space="preserve">
-    <value>Long break</value>
-  </data>
-  <data name="SchedulePauseLongDescription" xml:space="preserve">
-    <value>Pause for 12 hours</value>
+  <data name="SchedulePauseSkipDayDescription" xml:space="preserve">
+    <value>Resumes in 24 hours</value>
   </data>
   <data name="ScheduleSaved" xml:space="preserve">
     <value>Schedule saved</value>
-  </data>
-  <data name="ScheduleUnhealthyTurnedOff" xml:space="preserve">
-    <value>Unhealthy schedule turned off</value>
-  </data>
-  <data name="ScheduleUnhealthySaved" xml:space="preserve">
-    <value>Unhealthy schedule saved</value>
   </data>
   <data name="SchedulePauseFailed" xml:space="preserve">
     <value>Could not pause speedtests</value>

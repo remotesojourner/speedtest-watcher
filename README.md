@@ -20,13 +20,22 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 - **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history. An optional faster schedule kicks in while your line is missing those targets
 - **Connection monitoring** — a TCP probe to a few internet hosts every 15 seconds records every outage with its start and end, an **Uptime** page with a latency chart between tests and a year of days at a glance, and alerts when the line drops and when it comes back
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
-- **Dashboard** — averages, min/max, jitter, packet loss, bufferbloat, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
+- **Dashboard** — for the period you pick: a tile for download, upload and latency with the average, range and consistency of each, bufferbloat while downloading and while uploading, packet loss, the latest test, how many tests ran and failed, how much data they used, uptime over the same period, an hour-by-hour table, and charts of download, upload, latency and bufferbloat, with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
 - **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, Apprise, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets, is skipped, or meets your targets again
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
 - **Your data** — export results as CSV or JSON, import them again, back up your settings, and clean up old results automatically
 - **Monitoring** — Prometheus metrics, a ready-made Grafana dashboard, a `/healthz` endpoint for Docker, and a generated link-preview image
 - **REST API** — results, statistics, settings and backups for your own scripts, described by an OpenAPI document and a built-in reference page
+
+---
+
+## Upcoming Features
+
+Planned, but not built yet. There are no dates.
+
+- **iperf3 support** — test against an [iperf3](https://iperf.fr/) server you run yourself, on your LAN, in a homelab or on a VPS. The other providers test the whole path to someone else's server; your own server measures the part of it you can do something about. Download, upload, ping, jitter and packet loss, from a list of your servers
+- **Translations** — the interface in languages other than English. All its text is already kept in resource files, ready to be translated
 
 ---
 
@@ -121,7 +130,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | Field | Description |
 |---|---|
 | **Optimal Values** | Your contracted ping, download and upload speeds. Results are colour-coded against these, marked healthy or not, and integrations can alert you when a test misses them. Recommendations appear after at least 10 tests |
-| **Optional maximums** | A highest acceptable packet loss and bufferbloat. Each is judged only when a test measured it, so a provider that doesn't report one can never miss it, and a test from before you set a maximum keeps the verdict it was given. Leave empty for no target |
+| **Optional maximums** | A highest acceptable packet loss and bufferbloat. The bufferbloat maximum applies to the download and the upload figure alike, so a test misses it when either goes over. Each is judged only when a test measured it, so a provider that doesn't report one can never miss it, and a test from before you set a maximum keeps the verdict it was given. Leave empty for no target |
 | **Probe targets** | The `host:port` list the app opens TCP connections to. Connection monitoring uses them to tell whether the line is up, and every speedtest uses them to measure bufferbloat. Default: `1.1.1.1:443, 8.8.8.8:443, 9.9.9.9:443`. Three or more is best — with one, a single slow answer looks like an outage |
 | **Check the connection first** | Skips the test instead of recording a failure when the line is down |
 | **Check URL** | Must return your public IP address. Default: `https://icanhazip.com` |
@@ -131,10 +140,10 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 
 | Field | Description |
 |---|---|
-| **Test Schedule** | Every minute, every 30 minutes, every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC. Next to the next run time is an estimate of the data that schedule will use a month, from how much your recent tests moved |
-| **Offset schedule** | Starts each test 30 seconds to 5 minutes late, so tests don't land on exact times and every instance doesn't hit the same server at once. The delay is never more than a quarter of the gap between tests, so a fast schedule keeps its pace, and it applies to both schedules |
-| **While unhealthy** | An optional faster schedule, used while the last completed test missed your targets, and dropped again as soon as a test meets them. Presets from every 5 minutes to hourly, or your own cron expression. Off unless you choose a pace, and the card shows what that pace costs an hour |
-| **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours up to 720 (30 days). A pause ends when the app restarts |
+| **Regular schedule** | Every hour (default), every 3 hours, every 6 hours, or your own cron expression. Cron expressions are evaluated in UTC. Below it are the next run time and an estimate of the data that schedule will use a month, from how much your recent tests moved |
+| **Unhealthy schedule** | An optional faster schedule, used while the last completed test missed your targets, and dropped again as soon as a test meets them. Every 15 minutes, every 30 minutes, every hour, or your own cron expression. Off until you switch it on, and it shows what that pace costs an hour |
+| **Offset both schedules** | Starts each test 30 seconds to 5 minutes late, so tests don't land on exact times and every instance doesn't hit the same server at once. The delay is never more than a quarter of the gap between tests, so a fast schedule keeps its pace. It applies to the regular and the unhealthy schedule alike. **Save Schedule** saves both schedules and the offset together |
+| **Pause Speedtests** | Pause indefinitely, skip the next scheduled test, skip a day (24 hours), or pause for a custom number of hours up to 720 (30 days). Skipping the next test resumes the schedule once that test's time has passed; a test after the connection comes back doesn't count. The Run Test button is refused while paused. A pause ends when the app restarts |
 
 ### Tab: Monitoring
 
@@ -146,7 +155,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | **Good rounds before up again** | How many rounds in a row have to pass before the line counts as back. Default: 2 |
 | **Test after a reconnect** | Runs a speedtest when the line comes back, at most once an hour. Off by default |
 
-Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Bufferbloat is measured too: Speedtest Watcher samples the probe targets for three seconds before each test and for as long as it runs, and stores the difference between the two medians, along with the 95th percentile under load — the tail that calls and games feel. It is also stored per direction: while it samples, the app watches its own network counters and labels each sample as download or upload, so you can see that pulling data down costs 5 ms while pushing it up costs 40. Upstream buffers usually bloat worse. A lost handshake retransmits after about a second, so samples that shape are dropped from the idle baseline, where they would hide real bufferbloat, and kept under load, where they are the thing being measured. It works the same way whatever provider you use, and it needs the probe targets but not the monitor, so it still happens when monitoring is switched off. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a latency chart of the probe rounds over 1 hour, 6 hours, 24 hours or 7 days with a strip marking failed rounds and rounds that ran during a speedtest, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
+Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Bufferbloat is measured too: Speedtest Watcher samples the probe targets for three seconds before each test and for as long as it runs, and stores the 95th percentile under load — the tail that calls and games feel. Bufferbloat itself is stored per direction, never as one blended figure: while it samples, the app watches its own network counters and labels each sample as download or upload, and each direction's median under load less the idle median is its bufferbloat, so you can see that pulling data down costs 5 ms while pushing it up costs 40. Samples it can't place in either direction count towards neither figure. Upstream buffers usually bloat worse. A lost handshake retransmits after about a second, so samples that shape are dropped from the idle baseline, where they would hide real bufferbloat, and kept under load, where they are the thing being measured. It works the same way whatever provider you use, and it needs the probe targets but not the monitor, so it still happens when monitoring is switched off. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, how long the line was down and how many outages it had in the last 30 days, the probe answer time and when the last outage ended, a latency chart of the probe rounds over 1 hour, 6 hours, 24 hours, 7 days or 30 days with a strip marking failed rounds and rounds that ran during a speedtest, a year of days, one row a month, shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
 
 ### Tab: Provider
 
@@ -217,7 +226,7 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 |---|---|
 | `ping`, `jitter`, `download`, `upload`, `time` | Readings from the latest completed test |
 | `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla measures it |
-| `bufferbloat_ms` | How much longer the line took to answer under load during the latest completed test |
+| `bufferbloat_download_ms`, `bufferbloat_upload_ms` | How much longer the line took to answer while the latest completed test was downloading, and while it was uploading |
 | `last_test_bytes` | Data the latest completed test moved, download and upload together |
 | `data_used_bytes` | Data all tests moved, one series per `period` label: `24h`, `7d`, `30d` and `stored` |
 | `connection_up` | Whether the connection monitor last saw the line up (1 or 0). Missing until it has enough rounds |
@@ -277,7 +286,7 @@ groups:
           summary: Download is more than 20% under your target
 
       - alert: Bufferbloat
-        expr: speedtest_watcher_bufferbloat_ms > 100
+        expr: '{__name__=~"speedtest_watcher_bufferbloat_(download|upload)_ms"} > 100'
         for: 30m
         annotations:
           summary: The line adds {{ $value | printf "%.0f" }} ms of latency under load
@@ -402,7 +411,7 @@ When you paste a link to your instance into Slack, Discord, Teams, WhatsApp or s
 
 ### Do you plan to add new features?
 
-If I come across a new idea or receive a suggestion that fits into keeping an eye on an internet connection, I will consider adding it. No roadmap or guarantees — this project exists to solve my own needs first.
+If I come across a new idea or receive a suggestion that fits into keeping an eye on an internet connection, I will consider adding it. What's already planned is under [Upcoming Features](#upcoming-features), but there are no dates or guarantees — this project exists to solve my own needs first.
 
 ---
 

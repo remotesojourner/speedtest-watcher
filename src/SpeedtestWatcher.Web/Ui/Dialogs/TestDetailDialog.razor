@@ -63,14 +63,22 @@
                     <MudText Typo="Typo.body2" Color="@MetricStatus.PacketLoss(packetLoss, Test.ThresholdPacketLoss)">@($"{packetLoss:F2}%")</MudText>
                 </DataRow>
             }
-            @if (Test.Bufferbloat is { } bufferbloat)
+            @if (Test.BufferbloatDown is { } bufferbloatDown)
             {
-                <DataRow Label="@WebStrings.Bufferbloat">
-                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloat, Test.ThresholdBufferbloat)">
-                        @($"+{bufferbloat:F0} ms")
-                    </MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted ml-2">@BufferbloatDetail</MudText>
+                <DataRow Label="@WebStrings.BufferbloatDown">
+                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloatDown, Test.ThresholdBufferbloat)">@($"+{bufferbloatDown:F0} ms")</MudText>
                 </DataRow>
+            }
+            @if (Test.BufferbloatUp is { } bufferbloatUp)
+            {
+                <DataRow Label="@WebStrings.BufferbloatUp">
+                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloatUp, Test.ThresholdBufferbloat)">@($"+{bufferbloatUp:F0} ms")</MudText>
+                </DataRow>
+            }
+            @if (Test.LatencyIdle is { } idle)
+            {
+                <DataRow Label="@WebStrings.TestDetailLatency"
+                         Value="@(Test.LatencyLoadedTail is { } worst ? WebStrings.Format(WebStrings.TestDetailLatencyIdleAndWorst, idle, worst) : WebStrings.Format(WebStrings.TestDetailLatencyIdle, idle))" />
             }
             @if (Test.DownloadBytes + Test.UploadBytes is { } dataUsed)
             {
@@ -121,21 +129,6 @@
 
     private bool _deleting;
 
-    private string BufferbloatDetail
-    {
-        get
-        {
-            if (Test is not { } test) return "";
-
-            List<string> parts = [];
-            if (test.BufferbloatDown is { } down) parts.Add(WebStrings.Format(WebStrings.TestDetailBufferbloatDown, down));
-            if (test.BufferbloatUp is { } up) parts.Add(WebStrings.Format(WebStrings.TestDetailBufferbloatUp, up));
-            if (test.LatencyIdle is { } idle && test.LatencyLoaded is { } loaded) parts.Add(WebStrings.Format(WebStrings.TestDetailLatencyIdleToLoaded, idle, loaded));
-            if (test.LatencyLoadedTail is { } tail) parts.Add(WebStrings.Format(WebStrings.TestDetailLatencyWorst, tail));
-            return string.Join(", ", parts);
-        }
-    }
-
     private bool IsManual => Test?.Type == TestType.Custom;
 
     private bool IsSkipped => Test?.Status == TestStatus.Skipped;
@@ -144,7 +137,7 @@
 
     private IReadOnlyList<TargetKind> MissedTargets => Test is { Status: TestStatus.Completed } test
         ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload, test.ThresholdPacketLoss, test.ThresholdBufferbloat)
-            .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.Bufferbloat))
+            .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.BufferbloatDown, test.BufferbloatUp))
         : [];
 
     private string MissedTargetsText => TargetSettings.Describe(MissedTargets) is { Length: > 0 } text

@@ -44,7 +44,6 @@ public static class MetricStatus
     public const string ChartUpload = "#a855f7";
     public const string ChartPing = "#f59e0b";
     public const string ChartJitter = "#ec4899";
-    public const string ChartBufferbloat = "#14b8a6";
     public const string ChartAverage = "#94a3b8";
 
     public static string CssVar(Color color) => color switch

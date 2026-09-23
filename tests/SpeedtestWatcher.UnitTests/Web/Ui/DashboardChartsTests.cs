@@ -25,6 +25,32 @@ public class DashboardChartsTests
     }
 
     [Fact]
+    public void BufferbloatHasItsOwnChartOfTheTestsThatMeasuredIt()
+    {
+        var charts = Build([
+            Reading(0, download: 100),
+            Reading(1, download: 100) with { BufferbloatDown = 5, BufferbloatUp = 40 },
+            Reading(2, download: 100) with { BufferbloatUp = 60 }]);
+
+        Assert.True(charts.HasBufferbloat);
+        Assert.Equal(["Ping", "Jitter", "Average"], charts.Ping.Select(series => series.Name));
+        Assert.Equal(["09:00", "10:00"], charts.BufferbloatLabels);
+        Assert.Equal(["Download", "Upload"], charts.Bufferbloat.Select(series => series.Name));
+        Assert.Equal([5, 0], charts.Bufferbloat[0].Data.Values);
+        Assert.Equal([40, 60], charts.Bufferbloat[1].Data.Values);
+        Assert.Equal(20, charts.TickSteps.Bufferbloat);
+    }
+
+    [Fact]
+    public void APeriodWithoutBufferbloatHasNoBufferbloatChart()
+    {
+        var charts = Build([Reading(0, download: 100), Reading(1, download: 120)]);
+
+        Assert.False(charts.HasBufferbloat);
+        Assert.Empty(charts.Bufferbloat);
+    }
+
+    [Fact]
     public void FailedTestsAreLeftOutOfTheChartsAndListedNewestFirst()
     {
         var charts = Build([Failure(0, "no-internet"), Reading(1, download: 100), Failure(2, "timeout"), Reading(3, download: null)]);
@@ -41,8 +67,8 @@ public class DashboardChartsTests
         var charts = Build(points);
         var fromZero = Build(points, beginAtZero: true);
 
-        Assert.Equal((200, 10, 5), charts.TickSteps);
-        Assert.Equal((500, 20, 5), fromZero.TickSteps);
+        Assert.Equal((200, 10, 5, 1), charts.TickSteps);
+        Assert.Equal((500, 20, 5, 1), fromZero.TickSteps);
     }
 
     [Theory]
@@ -69,8 +95,8 @@ public class DashboardChartsTests
         DashboardCharts.Build(points, convertSpeed ?? (mbps => mbps), time => time.ToString("HH:mm", CultureInfo.InvariantCulture), beginAtZero);
 
     private static ChartPoint Reading(int hour, double? download, double upload = 10, int ping = 10, double jitter = 1) =>
-        new(_start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, Bufferbloat: null, Duration: 20);
+        new(_start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, BufferbloatDown: null, BufferbloatUp: null, Duration: 20);
 
     private static ChartPoint Failure(int hour, string error) =>
-        new(_start.AddHours(hour), Failed: true, error, null, null, null, null, null, null);
+        new(_start.AddHours(hour), Failed: true, error, null, null, null, null, null, null, null);
 }

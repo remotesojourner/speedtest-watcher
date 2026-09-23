@@ -24,13 +24,14 @@ public class BufferbloatMeterTests
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var measuring = await Meter(_quickly).StartAsync(cancellationToken);
+        _traffic.Moving = LoadDirection.Download;
         _probe.Milliseconds = 60;
         await Task.Delay(250, cancellationToken);
 
         var reading = await measuring.StopAsync();
 
         Assert.NotNull(reading);
-        Assert.Equal((50, 10, 60), (reading.Milliseconds, reading.IdleMilliseconds, reading.LoadedMilliseconds));
+        Assert.Equal((50, 10, 60), (reading.DownloadMilliseconds, reading.IdleMilliseconds, reading.LoadedMilliseconds));
     }
 
     [Fact]
