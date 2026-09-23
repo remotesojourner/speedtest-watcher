@@ -25,7 +25,7 @@
     <PackageVersion Include="MudBlazor" Version="9.10.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.7" />
     <PackageVersion Include="SkiaSharp" Version="4.152.0" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.152.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.152.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
     <PackageVersion Include="xunit.v3.assert" Version="4.0.1" />
