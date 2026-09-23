@@ -13,7 +13,7 @@ else if (ErrorMessage != null)
             {
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
                            OnClick="OnRetry">
-                    Try again
+                    @WebStrings.TryAgain
                 </MudButton>
             }
         </div>
@@ -42,7 +42,7 @@ else
     [Parameter] public bool Empty { get; set; }
     [Parameter] public string? ErrorMessage { get; set; }
     [Parameter] public EventCallback OnRetry { get; set; }
-    [Parameter] public string EmptyMessage { get; set; } = "Nothing to show yet.";
+    [Parameter] public string EmptyMessage { get; set; } = WebStrings.StateViewNothingToShow;
     [Parameter] public RenderFragment? EmptyContent { get; set; }
     [Parameter] public Severity Severity { get; set; } = Severity.Info;
     [Parameter] public bool Compact { get; set; }

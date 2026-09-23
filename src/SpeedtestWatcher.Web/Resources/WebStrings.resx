@@ -1,0 +1,2085 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="TryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="StateViewNothingToShow" xml:space="preserve">
+    <value>Nothing to show yet.</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Paused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="DashboardTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="UptimeTitle" xml:space="preserve">
+    <value>Uptime</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="LayoutToggleNavigation" xml:space="preserve">
+    <value>Toggle navigation</value>
+  </data>
+  <data name="LayoutToggleTheme" xml:space="preserve">
+    <value>Toggle theme</value>
+  </data>
+  <data name="Offline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="LayoutSignInRequired" xml:space="preserve">
+    <value>Sign in required</value>
+  </data>
+  <data name="LayoutInstanceProtected" xml:space="preserve">
+    <value>This {0} instance is protected. Sign in to continue.</value>
+  </data>
+  <data name="LayoutLoadFailedTitle" xml:space="preserve">
+    <value>Couldn't load {0}</value>
+  </data>
+  <data name="LayoutLoadFailedDescription" xml:space="preserve">
+    <value>The settings and results couldn't be read. Please try again.</value>
+  </data>
+  <data name="LayoutPageErrorTitle" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="LayoutPageErrorDescription" xml:space="preserve">
+    <value>This page couldn't finish what it was doing. Please try again.</value>
+  </data>
+  <data name="LayoutTestSkipped" xml:space="preserve">
+    <value>Speedtest skipped: {0}</value>
+  </data>
+  <data name="LayoutTestComplete" xml:space="preserve">
+    <value>Speedtest complete: ↓ {0:F1} Mbps  ↑ {1:F1} Mbps</value>
+  </data>
+  <data name="AccountMenuLabel" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="AccountMenuSignedInAs" xml:space="preserve">
+    <value>Signed in as</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="UpdateAvailableVersion" xml:space="preserve">
+    <value>Update available: v{0}</value>
+  </data>
+  <data name="UpdateNoticeLabel" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="RunTestButton" xml:space="preserve">
+    <value>Run Test</value>
+  </data>
+  <data name="RunTestRunning" xml:space="preserve">
+    <value>Running...</value>
+  </data>
+  <data name="RunTestOnServer" xml:space="preserve">
+    <value>Run on a specific server</value>
+  </data>
+  <data name="RunTestPausedTooltip" xml:space="preserve">
+    <value>Speedtests are paused. Resume them in Settings.</value>
+  </data>
+  <data name="RunTestRunningTooltip" xml:space="preserve">
+    <value>Speedtest running</value>
+  </data>
+  <data name="RunTestStartTooltip" xml:space="preserve">
+    <value>Start speedtest</value>
+  </data>
+  <data name="SpeedtestStarted" xml:space="preserve">
+    <value>Speedtest started</value>
+  </data>
+  <data name="RunTestCantStart" xml:space="preserve">
+    <value>A speedtest can't start right now</value>
+  </data>
+  <data name="RunTestOnServerDialogTitle" xml:space="preserve">
+    <value>Run a test on a specific server</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="PacketLoss" xml:space="preserve">
+    <value>Packet loss</value>
+  </data>
+  <data name="Bufferbloat" xml:space="preserve">
+    <value>Bufferbloat</value>
+  </data>
+  <data name="ChartCardExpand" xml:space="preserve">
+    <value>Expand {0}</value>
+  </data>
+  <data name="ExportResults" xml:space="preserve">
+    <value>Results</value>
+  </data>
+  <data name="ExportShownResults" xml:space="preserve">
+    <value>Shown results</value>
+  </data>
+  <data name="ExportSelectedResults" xml:space="preserve">
+    <value>Selected results</value>
+  </data>
+  <data name="AllResults" xml:space="preserve">
+    <value>All results</value>
+  </data>
+  <data name="ExportFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="ExportCsvDescription" xml:space="preserve">
+    <value>Opens in a spreadsheet</value>
+  </data>
+  <data name="ExportJsonDescription" xml:space="preserve">
+    <value>Can be imported again</value>
+  </data>
+  <data name="ExportExporting" xml:space="preserve">
+    <value>Exporting...</value>
+  </data>
+  <data name="ExportButton" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="ExportCounting" xml:space="preserve">
+    <value>Counting...</value>
+  </data>
+  <data name="ExportCountFailed" xml:space="preserve">
+    <value>Couldn't count the results</value>
+  </data>
+  <data name="ExportMatchingFilters" xml:space="preserve">
+    <value>{0} matching the current filters</value>
+  </data>
+  <data name="ExportNoFilters" xml:space="preserve">
+    <value>No filters applied, so all {0}</value>
+  </data>
+  <data name="ExportSelectFirst" xml:space="preserve">
+    <value>Select results in the list first</value>
+  </data>
+  <data name="SelectedCount" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="ExportFailed" xml:space="preserve">
+    <value>Could not export the results</value>
+  </data>
+  <data name="Exported" xml:space="preserve">
+    <value>Exported {0}</value>
+  </data>
+  <data name="ExportOneResult" xml:space="preserve">
+    <value>1 result</value>
+  </data>
+  <data name="ExportResultCount" xml:space="preserve">
+    <value>{0} results</value>
+  </data>
+  <data name="RunWithServerIntro" xml:space="preserve">
+    <value>Runs one test against the server you pick here. Your saved server settings aren't changed.</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="ServerId" xml:space="preserve">
+    <value>Server ID</value>
+  </data>
+  <data name="ServerIdPlaceholder" xml:space="preserve">
+    <value>e.g. 12345</value>
+  </data>
+  <data name="ServerIdInvalid" xml:space="preserve">
+    <value>Server IDs are numbers</value>
+  </data>
+  <data name="RunWithServerServerIdHelp" xml:space="preserve">
+    <value>Or type an ID that isn't listed</value>
+  </data>
+  <data name="RunWithServerRun" xml:space="preserve">
+    <value>Run test</value>
+  </data>
+  <data name="LoadingServers" xml:space="preserve">
+    <value>Loading servers...</value>
+  </data>
+  <data name="RunWithServerListFailed" xml:space="preserve">
+    <value>Couldn't load the server list. Enter a server ID below.</value>
+  </data>
+  <data name="NearestServersFirst" xml:space="preserve">
+    <value>Nearest servers are listed first</value>
+  </data>
+  <data name="RunWithServerFailed" xml:space="preserve">
+    <value>Could not start the speedtest</value>
+  </data>
+  <data name="TestDetailSkippedTitle" xml:space="preserve">
+    <value>Test Skipped</value>
+  </data>
+  <data name="TestDetailFailedTitle" xml:space="preserve">
+    <value>Test Failed</value>
+  </data>
+  <data name="TestDetailTitle" xml:space="preserve">
+    <value>Test Result</value>
+  </data>
+  <data name="TestDetailSkipped" xml:space="preserve">
+    <value>This test was skipped before it ran.</value>
+  </data>
+  <data name="TestDetailFailedHint" xml:space="preserve">
+    <value>Please check whether this happens often.</value>
+  </data>
+  <data name="TestDetailErrorDetails" xml:space="preserve">
+    <value>Error details</value>
+  </data>
+  <data name="DownloadSpeed" xml:space="preserve">
+    <value>Download speed</value>
+  </data>
+  <data name="UploadUnit" xml:space="preserve">
+    <value>{0} upload</value>
+  </data>
+  <data name="PingMs" xml:space="preserve">
+    <value>ms ping</value>
+  </data>
+  <data name="PingMsWithJitter" xml:space="preserve">
+    <value>ms ping (±{0:F1})</value>
+  </data>
+  <data name="TestDetailDuration" xml:space="preserve">
+    <value>sec duration</value>
+  </data>
+  <data name="TestDetailDataUsed" xml:space="preserve">
+    <value>Data used</value>
+  </data>
+  <data name="TestDetailPublicIp" xml:space="preserve">
+    <value>Public IP</value>
+  </data>
+  <data name="TestDetailMissedTargets" xml:space="preserve">
+    <value>Missed targets</value>
+  </data>
+  <data name="TestDetailTime" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="TestDetailStarted" xml:space="preserve">
+    <value>Started</value>
+  </data>
+  <data name="TestDetailStartedManually" xml:space="preserve">
+    <value>Manually, by you</value>
+  </data>
+  <data name="TestDetailStartedAutomatically" xml:space="preserve">
+    <value>Automatically</value>
+  </data>
+  <data name="TestDetailResult" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="TestDetailViewOnSpeedtestNet" xml:space="preserve">
+    <value>View on Speedtest.net</value>
+  </data>
+  <data name="TestDetailDelete" xml:space="preserve">
+    <value>Delete Test</value>
+  </data>
+  <data name="TestDetailBufferbloatDown" xml:space="preserve">
+    <value>+{0:F0} ms down</value>
+  </data>
+  <data name="TestDetailBufferbloatUp" xml:space="preserve">
+    <value>+{0:F0} ms up</value>
+  </data>
+  <data name="TestDetailLatencyIdleToLoaded" xml:space="preserve">
+    <value>{0:F0} → {1:F0} ms</value>
+  </data>
+  <data name="TestDetailLatencyWorst" xml:space="preserve">
+    <value>worst 5% {0:F0} ms</value>
+  </data>
+  <data name="TestDetailDeleteFailed" xml:space="preserve">
+    <value>Could not delete the test</value>
+  </data>
+  <data name="TestDetailDeleted" xml:space="preserve">
+    <value>The test has been deleted</value>
+  </data>
+  <data name="NotFoundPageTitle" xml:space="preserve">
+    <value>Not Found</value>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Page Not Found</value>
+  </data>
+  <data name="NotFoundDescription" xml:space="preserve">
+    <value>The page you are looking for does not exist or has been moved.</value>
+  </data>
+  <data name="NotFoundGoToDashboard" xml:space="preserve">
+    <value>Go to Dashboard</value>
+  </data>
+  <data name="SettingsReadOnlySubtitle" xml:space="preserve">
+    <value>This instance is read-only. Display preferences are saved in this browser.</value>
+  </data>
+  <data name="SettingsReadOnlySignIn" xml:space="preserve">
+    <value>Sign in to change the schedule, provider, integrations and storage.</value>
+  </data>
+  <data name="SettingsSubtitle" xml:space="preserve">
+    <value>Schedule, provider, display, monitoring, integrations, security, storage and app info.</value>
+  </data>
+  <data name="SettingsTabGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="SettingsTabSchedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="SettingsTabProvider" xml:space="preserve">
+    <value>Provider</value>
+  </data>
+  <data name="SettingsTabDisplay" xml:space="preserve">
+    <value>Display</value>
+  </data>
+  <data name="SettingsTabMonitoring" xml:space="preserve">
+    <value>Monitoring</value>
+  </data>
+  <data name="SettingsTabIntegrations" xml:space="preserve">
+    <value>Integrations</value>
+  </data>
+  <data name="SettingsTabSecurity" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="SettingsTabStorage" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="SettingsTabAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="Upload" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="Ping" xml:space="preserve">
+    <value>Ping</value>
+  </data>
+  <data name="Jitter" xml:space="preserve">
+    <value>Jitter</value>
+  </data>
+  <data name="Average" xml:space="preserve">
+    <value>Average</value>
+  </data>
+  <data name="Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="ResumeFailed" xml:space="preserve">
+    <value>Could not resume speedtests</value>
+  </data>
+  <data name="Resumed" xml:space="preserve">
+    <value>Speedtests resumed</value>
+  </data>
+  <data name="DashboardFrom" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="DashboardTo" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="DashboardRange24Hours" xml:space="preserve">
+    <value>24h</value>
+  </data>
+  <data name="SevenDays" xml:space="preserve">
+    <value>7 days</value>
+  </data>
+  <data name="ThirtyDays" xml:space="preserve">
+    <value>30 days</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="PausedNotice" xml:space="preserve">
+    <value>Speedtests are currently paused.</value>
+  </data>
+  <data name="DashboardNoTests" xml:space="preserve">
+    <value>There are no tests in the selected period.</value>
+  </data>
+  <data name="DashboardLoadFailed" xml:space="preserve">
+    <value>Couldn't load the statistics for this period.</value>
+  </data>
+  <data name="DashboardOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="DashboardAvgDownload" xml:space="preserve">
+    <value>{0} avg download</value>
+  </data>
+  <data name="DashboardAvgUpload" xml:space="preserve">
+    <value>{0} avg upload</value>
+  </data>
+  <data name="DashboardAvgPing" xml:space="preserve">
+    <value>ms avg ping</value>
+  </data>
+  <data name="DashboardAvgJitter" xml:space="preserve">
+    <value>ms avg jitter</value>
+  </data>
+  <data name="DashboardTestRun" xml:space="preserve">
+    <value>test run</value>
+  </data>
+  <data name="DashboardTestsRun" xml:space="preserve">
+    <value>tests run</value>
+  </data>
+  <data name="DashboardFailed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="DashboardAverageDuration" xml:space="preserve">
+    <value>average duration</value>
+  </data>
+  <data name="DashboardAvgPacketLoss" xml:space="preserve">
+    <value>avg packet loss</value>
+  </data>
+  <data name="DashboardBufferbloatTooltip" xml:space="preserve">
+    <value>How much longer the line takes to answer while a test saturates it. Under 30 ms is good; a lot more means calls and games suffer while something big is downloading.</value>
+  </data>
+  <data name="DashboardAvgBufferbloat" xml:space="preserve">
+    <value>avg bufferbloat</value>
+  </data>
+  <data name="DashboardDataUsed" xml:space="preserve">
+    <value>data used</value>
+  </data>
+  <data name="DashboardUptime7Days" xml:space="preserve">
+    <value>uptime, 7 days</value>
+  </data>
+  <data name="DashboardLatestTest" xml:space="preserve">
+    <value>Latest Test</value>
+  </data>
+  <data name="DashboardNoTestsYet" xml:space="preserve">
+    <value>No tests yet.</value>
+  </data>
+  <data name="DashboardLatestSkipped" xml:space="preserve">
+    <value>Skipped — {0}</value>
+  </data>
+  <data name="MetYourTargets" xml:space="preserve">
+    <value>Met your targets</value>
+  </data>
+  <data name="MissedYourTargets" xml:space="preserve">
+    <value>Missed your targets</value>
+  </data>
+  <data name="DashboardStability" xml:space="preserve">
+    <value>Connection Stability</value>
+  </data>
+  <data name="DashboardStabilityDescription" xml:space="preserve">
+    <value>How consistent results were across the period.</value>
+  </data>
+  <data name="DashboardDownloadDeviation" xml:space="preserve">
+    <value>download ±{0}</value>
+  </data>
+  <data name="DashboardUploadDeviation" xml:space="preserve">
+    <value>upload ±{0}</value>
+  </data>
+  <data name="DashboardPingVariance" xml:space="preserve">
+    <value>ms ping variance</value>
+  </data>
+  <data name="DashboardStabilityOverall" xml:space="preserve">
+    <value>Overall: {0}</value>
+  </data>
+  <data name="DashboardStabilityExcellent" xml:space="preserve">
+    <value>Excellent</value>
+  </data>
+  <data name="DashboardStabilityGood" xml:space="preserve">
+    <value>Good</value>
+  </data>
+  <data name="DashboardStabilityFair" xml:space="preserve">
+    <value>Fair</value>
+  </data>
+  <data name="DashboardStabilityPoor" xml:space="preserve">
+    <value>Poor</value>
+  </data>
+  <data name="DashboardValueRanges" xml:space="preserve">
+    <value>Value Ranges</value>
+  </data>
+  <data name="DashboardMin" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="DashboardMax" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="DashboardDownloadChart" xml:space="preserve">
+    <value>Download Speed</value>
+  </data>
+  <data name="DashboardUploadChart" xml:space="preserve">
+    <value>Upload Speed</value>
+  </data>
+  <data name="DashboardPingChart" xml:space="preserve">
+    <value>Ping &amp; Jitter</value>
+  </data>
+  <data name="DashboardByTimeOfDay" xml:space="preserve">
+    <value>By Time of Day</value>
+  </data>
+  <data name="DashboardByTimeOfDayDescription" xml:space="preserve">
+    <value>Averages for each hour of the day across the selected period.</value>
+  </data>
+  <data name="DashboardHourAm" xml:space="preserve">
+    <value>{0}a</value>
+  </data>
+  <data name="DashboardHourPm" xml:space="preserve">
+    <value>{0}p</value>
+  </data>
+  <data name="DashboardOneTest" xml:space="preserve">
+    <value>1 test</value>
+  </data>
+  <data name="DashboardTestCount" xml:space="preserve">
+    <value>{0} tests</value>
+  </data>
+  <data name="DashboardFailedTests" xml:space="preserve">
+    <value>Failed Tests</value>
+  </data>
+  <data name="DashboardFailedInPeriod" xml:space="preserve">
+    <value>{0} failed in this period</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="StatusFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="StatusSkipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="HistoryDownloadTooltip" xml:space="preserve">
+    <value>Download speed affects your browsing experience. The more you get, the faster your computer can receive data.</value>
+  </data>
+  <data name="HistoryUploadTooltip" xml:space="preserve">
+    <value>Upload speed affects your browsing experience. The more you get, the faster your computer can send data.</value>
+  </data>
+  <data name="HistoryPingTooltip" xml:space="preserve">
+    <value>Ping shows how fast the provider responds — shorter is better. Jitter is how much it varies; lower means a more stable connection.</value>
+  </data>
+  <data name="HistoryRecentTests" xml:space="preserve">
+    <value>Recent Tests</value>
+  </data>
+  <data name="HistoryFilterStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="HistoryFilterStartedBy" xml:space="preserve">
+    <value>Started by</value>
+  </data>
+  <data name="HistoryFilterTargets" xml:space="preserve">
+    <value>Targets</value>
+  </data>
+  <data name="HistoryStartedByAnything" xml:space="preserve">
+    <value>Anything</value>
+  </data>
+  <data name="HistoryStartedBySchedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="HistoryStartedByHand" xml:space="preserve">
+    <value>By hand</value>
+  </data>
+  <data name="HistoryTargetsAny" xml:space="preserve">
+    <value>Any result</value>
+  </data>
+  <data name="HistoryTargetsMet" xml:space="preserve">
+    <value>Met targets</value>
+  </data>
+  <data name="HistoryTargetsMissed" xml:space="preserve">
+    <value>Missed targets</value>
+  </data>
+  <data name="HistoryStopSelecting" xml:space="preserve">
+    <value>Stop selecting</value>
+  </data>
+  <data name="HistorySelectResults" xml:space="preserve">
+    <value>Select results</value>
+  </data>
+  <data name="HistorySelectAllShown" xml:space="preserve">
+    <value>Select all shown</value>
+  </data>
+  <data name="HistoryClearSelection" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>No results match these filters.</value>
+  </data>
+  <data name="HistoryNoTests" xml:space="preserve">
+    <value>There are currently no tests. Click {0} above to run your first one.</value>
+  </data>
+  <data name="HistoryLoadMoreFailed" xml:space="preserve">
+    <value>Couldn't load more tests.</value>
+  </data>
+  <data name="HistoryNoMoreTests" xml:space="preserve">
+    <value>No more tests to load</value>
+  </data>
+  <data name="HistoryBackToTop" xml:space="preserve">
+    <value>Back to top</value>
+  </data>
+  <data name="HistoryFilteredLoadFailed" xml:space="preserve">
+    <value>Couldn't load the results for these filters.</value>
+  </data>
+  <data name="HistoryLoadFailed" xml:space="preserve">
+    <value>Couldn't load your tests.</value>
+  </data>
+  <data name="HistoryExportDialogTitle" xml:space="preserve">
+    <value>Export results</value>
+  </data>
+  <data name="HistoryTargetPing" xml:space="preserve">
+    <value>ping {0} ms</value>
+  </data>
+  <data name="HistoryTargetDownload" xml:space="preserve">
+    <value>download {0:F1} {1}</value>
+  </data>
+  <data name="HistoryTargetUpload" xml:space="preserve">
+    <value>upload {0:F1} {1}</value>
+  </data>
+  <data name="HistoryMissedTargetsList" xml:space="preserve">
+    <value>Missed your targets: {0}</value>
+  </data>
+  <data name="HistoryDownloadSpeedLastTest" xml:space="preserve">
+    <value>Download speed · last test {0}</value>
+  </data>
+  <data name="HistoryToday" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="HistoryYesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="HistoryTestDetailsDialogTitle" xml:space="preserve">
+    <value>Test Details</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="UptimeSubtitle" xml:space="preserve">
+    <value>How often your line was down, as the connection monitor saw it.</value>
+  </data>
+  <data name="UptimeMonitoringOff" xml:space="preserve">
+    <value>Connection monitoring is off, so nothing is being watched. Turn it on under Settings → Monitoring.</value>
+  </data>
+  <data name="UptimeRightNow" xml:space="preserve">
+    <value>Right Now</value>
+  </data>
+  <data name="UptimeProbesEvery" xml:space="preserve">
+    <value>The monitor probes every {0}.</value>
+  </data>
+  <data name="UptimeMsToAnswer" xml:space="preserve">
+    <value>ms to answer</value>
+  </data>
+  <data name="UptimeDownFor" xml:space="preserve">
+    <value>Down for {0}, since {1}.</value>
+  </data>
+  <data name="UptimeWatchedTimeOnly" xml:space="preserve">
+    <value>Only the time the app was watching counts, so a restart is neither uptime nor downtime.</value>
+  </data>
+  <data name="UptimeDownLast30Days" xml:space="preserve">
+    <value>Down in the last 30 days</value>
+  </data>
+  <data name="UptimeOutagesLast30Days" xml:space="preserve">
+    <value>Outages in the last 30 days</value>
+  </data>
+  <data name="UptimeLatency" xml:space="preserve">
+    <value>Connection Latency</value>
+  </data>
+  <data name="UptimeLatencyDescription" xml:space="preserve">
+    <value>How long the quickest probe target took to answer. Rounds are averaged into slots, so a week is a few hundred points.</value>
+  </data>
+  <data name="UptimeNoRounds" xml:space="preserve">
+    <value>No probe rounds in this period yet.</value>
+  </data>
+  <data name="UptimeAnswerTime" xml:space="preserve">
+    <value>Answer time</value>
+  </data>
+  <data name="UptimeKeyAnswered" xml:space="preserve">
+    <value>Answered</value>
+  </data>
+  <data name="UptimeKeySomeFailed" xml:space="preserve">
+    <value>Some rounds failed</value>
+  </data>
+  <data name="UptimeKeyNoAnswer" xml:space="preserve">
+    <value>No answer</value>
+  </data>
+  <data name="UptimeKeyTesting" xml:space="preserve">
+    <value>A speedtest was running</value>
+  </data>
+  <data name="UptimeLastYear" xml:space="preserve">
+    <value>The Last Year</value>
+  </data>
+  <data name="UptimeLastYearDescription" xml:space="preserve">
+    <value>One square a day. The darker the square, the longer the line was down.</value>
+  </data>
+  <data name="UptimeKeyNoOutage" xml:space="preserve">
+    <value>No outage</value>
+  </data>
+  <data name="UptimeKeyHoursDown" xml:space="preserve">
+    <value>Hours down</value>
+  </data>
+  <data name="UptimeOutages" xml:space="preserve">
+    <value>Outages</value>
+  </data>
+  <data name="UptimeNoOutages" xml:space="preserve">
+    <value>No outages recorded yet.</value>
+  </data>
+  <data name="UptimeStarted" xml:space="preserve">
+    <value>Started</value>
+  </data>
+  <data name="UptimeEnded" xml:space="preserve">
+    <value>Ended</value>
+  </data>
+  <data name="UptimeDownForColumn" xml:space="preserve">
+    <value>Down for</value>
+  </data>
+  <data name="UptimeRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="UptimeStillDown" xml:space="preserve">
+    <value>Still down</value>
+  </data>
+  <data name="UptimeDeleteOutageLabel" xml:space="preserve">
+    <value>Delete the outage that started {0:u}</value>
+  </data>
+  <data name="UptimeTypical" xml:space="preserve">
+    <value>{0:F0} ms typical</value>
+  </data>
+  <data name="UptimeFailedRound" xml:space="preserve">
+    <value>{0} failed round</value>
+  </data>
+  <data name="UptimeFailedRounds" xml:space="preserve">
+    <value>{0} failed rounds</value>
+  </data>
+  <data name="UptimeSlotNoAnswer" xml:space="preserve">
+    <value>no answer</value>
+  </data>
+  <data name="UptimeSlotRound" xml:space="preserve">
+    <value>{0} round</value>
+  </data>
+  <data name="UptimeSlotRounds" xml:space="preserve">
+    <value>{0} rounds</value>
+  </data>
+  <data name="UptimeSlotFailed" xml:space="preserve">
+    <value>{0} failed</value>
+  </data>
+  <data name="UptimeSlotDuringTest" xml:space="preserve">
+    <value>{0} during a speedtest</value>
+  </data>
+  <data name="Uptime24Hours" xml:space="preserve">
+    <value>24 hours</value>
+  </data>
+  <data name="UptimeOnline" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="UptimeUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="UptimeSince" xml:space="preserve">
+    <value>since {0}</value>
+  </data>
+  <data name="UptimeNoRoundsYet" xml:space="preserve">
+    <value>no rounds yet</value>
+  </data>
+  <data name="UptimeDayNoOutages" xml:space="preserve">
+    <value>{0:d MMM yyyy}: no outages</value>
+  </data>
+  <data name="UptimeDayOneOutage" xml:space="preserve">
+    <value>{0:d MMM yyyy}: {1} outage, {2} down</value>
+  </data>
+  <data name="UptimeDayOutages" xml:space="preserve">
+    <value>{0:d MMM yyyy}: {1} outages, {2} down</value>
+  </data>
+  <data name="UptimeDeleteTitle" xml:space="preserve">
+    <value>Delete this outage?</value>
+  </data>
+  <data name="UptimeDeleteMessage" xml:space="preserve">
+    <value>It stops counting against your uptime. This can't be undone.</value>
+  </data>
+  <data name="UptimeDeleteFailed" xml:space="preserve">
+    <value>Could not delete the outage</value>
+  </data>
+  <data name="UptimeDeleted" xml:space="preserve">
+    <value>Outage deleted</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Saving...</value>
+  </data>
+  <data name="EnterHttpUrl" xml:space="preserve">
+    <value>Enter a full http(s) URL</value>
+  </data>
+  <data name="PingTargetLabel" xml:space="preserve">
+    <value>Ping (ms)</value>
+  </data>
+  <data name="DownloadTargetLabel" xml:space="preserve">
+    <value>Download (Mbps)</value>
+  </data>
+  <data name="UploadTargetLabel" xml:space="preserve">
+    <value>Upload (Mbps)</value>
+  </data>
+  <data name="OoklaTermsOfService" xml:space="preserve">
+    <value>Ookla Terms of Service</value>
+  </data>
+  <data name="OoklaEula" xml:space="preserve">
+    <value>Ookla End User License Agreement</value>
+  </data>
+  <data name="OoklaPrivacyPolicy" xml:space="preserve">
+    <value>Ookla Privacy Policy</value>
+  </data>
+  <data name="WelcomePageTitle" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="WelcomeStep" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+  </data>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>Welcome to {0}!</value>
+  </data>
+  <data name="WelcomeIntro" xml:space="preserve">
+    <value>Let's set up {0} for the first time. It won't take long.</value>
+  </data>
+  <data name="WelcomeProviderTitle" xml:space="preserve">
+    <value>Choose a provider</value>
+  </data>
+  <data name="WelcomeProviderDescription" xml:space="preserve">
+    <value>This provider runs your speedtests. You can change it later in Settings.</value>
+  </data>
+  <data name="WelcomeTargetsTitle" xml:space="preserve">
+    <value>Set your optimal values</value>
+  </data>
+  <data name="WelcomeTargetsDescription" xml:space="preserve">
+    <value>Enter the speeds from your internet contract. Results are colour-coded against them.</value>
+  </data>
+  <data name="WelcomeTermsTitle" xml:space="preserve">
+    <value>Accept Ookla's terms</value>
+  </data>
+  <data name="WelcomeTermsDescription" xml:space="preserve">
+    <value>Ookla requires you to accept its terms before {0} can run tests with it.</value>
+  </data>
+  <data name="WelcomeAcceptTerms" xml:space="preserve">
+    <value>I have read and accept these terms</value>
+  </data>
+  <data name="WelcomeBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="WelcomeDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="WelcomeContinue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="WelcomeFinished" xml:space="preserve">
+    <value>{0} is set up. Tests will run on the default hourly schedule.</value>
+  </data>
+  <data name="AboutChangelog" xml:space="preserve">
+    <value>Changelog</value>
+  </data>
+  <data name="AboutUpdateCheckFailed" xml:space="preserve">
+    <value>Couldn't check for updates.</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>A self-hosted speed test manager that periodically tests your internet connection and logs results to monitor your ISP performance.</value>
+  </data>
+  <data name="AboutLinks" xml:space="preserve">
+    <value>Links</value>
+  </data>
+  <data name="AboutReleases" xml:space="preserve">
+    <value>Releases</value>
+  </data>
+  <data name="AboutReportIssue" xml:space="preserve">
+    <value>Report an issue</value>
+  </data>
+  <data name="AboutSponsor" xml:space="preserve">
+    <value>Sponsor</value>
+  </data>
+  <data name="DisplayTitle" xml:space="preserve">
+    <value>Display Preferences</value>
+  </data>
+  <data name="DisplayDescription" xml:space="preserve">
+    <value>Time format and speed unit are saved in this browser; the rest apply to everyone using this instance.</value>
+  </data>
+  <data name="DisplayTimeFormat" xml:space="preserve">
+    <value>Time format</value>
+  </data>
+  <data name="Display24Hour" xml:space="preserve">
+    <value>24-hour</value>
+  </data>
+  <data name="Display24HourDescription" xml:space="preserve">
+    <value>Display times like 14:30</value>
+  </data>
+  <data name="Display12Hour" xml:space="preserve">
+    <value>12-hour</value>
+  </data>
+  <data name="Display12HourDescription" xml:space="preserve">
+    <value>Display times like 2:30 PM</value>
+  </data>
+  <data name="DisplaySpeedUnit" xml:space="preserve">
+    <value>Speed unit</value>
+  </data>
+  <data name="DisplayMbpsDescription" xml:space="preserve">
+    <value>Megabits per second — the standard speedtest unit</value>
+  </data>
+  <data name="DisplayMBytesDescription" xml:space="preserve">
+    <value>Megabytes per second — as shown by browsers and download managers</value>
+  </data>
+  <data name="DisplayDateFormat" xml:space="preserve">
+    <value>Date format</value>
+  </data>
+  <data name="DisplayDashboardCharts" xml:space="preserve">
+    <value>Dashboard charts</value>
+  </data>
+  <data name="DisplayStartAtZero" xml:space="preserve">
+    <value>Start charts at zero</value>
+  </data>
+  <data name="DisplayStartAtZeroDescription" xml:space="preserve">
+    <value>Off zooms in on the range your results actually cover</value>
+  </data>
+  <data name="DisplayDayFirst" xml:space="preserve">
+    <value>Day first</value>
+  </data>
+  <data name="DisplayMonthFirst" xml:space="preserve">
+    <value>Month first</value>
+  </data>
+  <data name="DisplayYearFirst" xml:space="preserve">
+    <value>Year first</value>
+  </data>
+  <data name="DisplayLast24Hours" xml:space="preserve">
+    <value>Last 24 hours</value>
+  </data>
+  <data name="DisplayLast24HoursDescription" xml:space="preserve">
+    <value>Opens the dashboard on today's results</value>
+  </data>
+  <data name="DisplayLast7Days" xml:space="preserve">
+    <value>Last 7 days</value>
+  </data>
+  <data name="DisplayLast7DaysDescription" xml:space="preserve">
+    <value>A week of results</value>
+  </data>
+  <data name="DisplayLast30Days" xml:space="preserve">
+    <value>Last 30 days</value>
+  </data>
+  <data name="DisplayLast30DaysDescription" xml:space="preserve">
+    <value>A month of results</value>
+  </data>
+  <data name="DisplayPreferencesSaved" xml:space="preserve">
+    <value>Preferences saved</value>
+  </data>
+  <data name="DisplaySettingsSaved" xml:space="preserve">
+    <value>Display settings saved</value>
+  </data>
+  <data name="GeneralTargetsTitle" xml:space="preserve">
+    <value>Optimal Values</value>
+  </data>
+  <data name="GeneralTargetsDescription" xml:space="preserve">
+    <value>Your contracted speeds. Results are colour-coded against these, marked healthy or not, and integrations can alert you when a test misses them.</value>
+  </data>
+  <data name="GeneralMaximums" xml:space="preserve">
+    <value>Optional maximums</value>
+  </data>
+  <data name="GeneralMaximumsDescription" xml:space="preserve">
+    <value>Judged only when a test measured the figure, so a provider that doesn't report one can never miss it. Leave empty for no target.</value>
+  </data>
+  <data name="GeneralMaxPacketLoss" xml:space="preserve">
+    <value>Packet loss (%)</value>
+  </data>
+  <data name="GeneralMaxPacketLossHelp" xml:space="preserve">
+    <value>Only Ookla measures packet loss</value>
+  </data>
+  <data name="GeneralMaxBufferbloat" xml:space="preserve">
+    <value>Bufferbloat (ms)</value>
+  </data>
+  <data name="GeneralMaxBufferbloatHelp" xml:space="preserve">
+    <value>Added latency under load. Under 30 ms is good</value>
+  </data>
+  <data name="GeneralSaveTargets" xml:space="preserve">
+    <value>Save Values</value>
+  </data>
+  <data name="GeneralUseRecommended" xml:space="preserve">
+    <value>Use recommended</value>
+  </data>
+  <data name="GeneralRecommendationsFailed" xml:space="preserve">
+    <value>Couldn't load recommendations.</value>
+  </data>
+  <data name="GeneralRecommendationsLater" xml:space="preserve">
+    <value>Recommendations appear after at least 10 tests.</value>
+  </data>
+  <data name="GeneralChecksTitle" xml:space="preserve">
+    <value>Before Each Test</value>
+  </data>
+  <data name="GeneralChecksDescription" xml:space="preserve">
+    <value>Checks that run before a speedtest starts. A test that doesn't run is recorded as skipped.</value>
+  </data>
+  <data name="GeneralCheckConnection" xml:space="preserve">
+    <value>Check the connection first</value>
+  </data>
+  <data name="GeneralCheckConnectionDescription" xml:space="preserve">
+    <value>Skips the test instead of recording a failure when the line is down</value>
+  </data>
+  <data name="GeneralCheckUrl" xml:space="preserve">
+    <value>Check URL</value>
+  </data>
+  <data name="GeneralCheckUrlHelp" xml:space="preserve">
+    <value>Must return your public IP address, which the skip list below is compared against</value>
+  </data>
+  <data name="GeneralSkipIps" xml:space="preserve">
+    <value>Skip tests when the public IP is</value>
+  </data>
+  <data name="GeneralSkipIpsHelp" xml:space="preserve">
+    <value>Comma separated. Useful while a VPN or backup line is up. Leave empty to always test.</value>
+  </data>
+  <data name="GeneralSaveChecks" xml:space="preserve">
+    <value>Save Checks</value>
+  </data>
+  <data name="GeneralProbeTargetsTitle" xml:space="preserve">
+    <value>Probe Targets</value>
+  </data>
+  <data name="GeneralProbeTargetsDescription" xml:space="preserve">
+    <value>The hosts {0} opens a TCP connection to. Connection monitoring uses them to tell whether the line is up, and every speedtest uses them to measure bufferbloat.</value>
+  </data>
+  <data name="GeneralProbeTargets" xml:space="preserve">
+    <value>Probe targets</value>
+  </data>
+  <data name="GeneralProbeTargetsInvalid" xml:space="preserve">
+    <value>Each target needs to look like host:port</value>
+  </data>
+  <data name="GeneralProbeTargetsHelp" xml:space="preserve">
+    <value>Comma separated. Three or more is best: with one, a single slow answer looks like an outage.</value>
+  </data>
+  <data name="GeneralResetProbeTargets" xml:space="preserve">
+    <value>Reset to defaults</value>
+  </data>
+  <data name="GeneralSaveProbeTargets" xml:space="preserve">
+    <value>Save Targets</value>
+  </data>
+  <data name="GeneralTargetsSaved" xml:space="preserve">
+    <value>Optimal values saved</value>
+  </data>
+  <data name="GeneralChecksSaved" xml:space="preserve">
+    <value>Pre-test checks saved</value>
+  </data>
+  <data name="GeneralProbeTargetsSaved" xml:space="preserve">
+    <value>Probe targets saved</value>
+  </data>
+  <data name="GeneralRecommended" xml:space="preserve">
+    <value>Recommended: {0} {1}</value>
+  </data>
+  <data name="MonitoringTitle" xml:space="preserve">
+    <value>Connection Monitoring</value>
+  </data>
+  <data name="MonitoringDescription" xml:space="preserve">
+    <value>Opens a TCP connection to each target on a short interval, so outages are recorded with their start and end even when no speedtest is running. The same targets measure bufferbloat around every test.</value>
+  </data>
+  <data name="MonitoringWatch" xml:space="preserve">
+    <value>Watch the connection</value>
+  </data>
+  <data name="MonitoringWatchDescription" xml:space="preserve">
+    <value>Off means no outages and no uptime. Bufferbloat still uses the targets below.</value>
+  </data>
+  <data name="MonitoringProbing" xml:space="preserve">
+    <value>Probing {0}. The targets are under {1}, because bufferbloat uses them too.</value>
+  </data>
+  <data name="MonitoringTargetsLink" xml:space="preserve">
+    <value>Settings → General</value>
+  </data>
+  <data name="MonitoringInterval" xml:space="preserve">
+    <value>Probe interval (seconds)</value>
+  </data>
+  <data name="MonitoringIntervalHelp" xml:space="preserve">
+    <value>Between {0} and {1} seconds</value>
+  </data>
+  <data name="MonitoringRoundsDown" xml:space="preserve">
+    <value>Failed rounds before down</value>
+  </data>
+  <data name="MonitoringRoundsUp" xml:space="preserve">
+    <value>Good rounds before up again</value>
+  </data>
+  <data name="MonitoringTestAfterReconnect" xml:space="preserve">
+    <value>Test after a reconnect</value>
+  </data>
+  <data name="MonitoringTestAfterReconnectDescription" xml:space="preserve">
+    <value>Runs a speedtest when the line comes back, at most once an hour</value>
+  </data>
+  <data name="MonitoringSave" xml:space="preserve">
+    <value>Save Monitoring</value>
+  </data>
+  <data name="MonitoringStoredTitle" xml:space="preserve">
+    <value>What Gets Stored</value>
+  </data>
+  <data name="MonitoringStoredDescription" xml:space="preserve">
+    <value>Every round is kept for 30 days for the latency history. Outages are kept as long as your results.</value>
+  </data>
+  <data name="MonitoringRoundPassesLabel" xml:space="preserve">
+    <value>A round passes when</value>
+  </data>
+  <data name="MonitoringRoundPasses" xml:space="preserve">
+    <value>most targets answer within 2 seconds</value>
+  </data>
+  <data name="MonitoringRoundsDuringTestLabel" xml:space="preserve">
+    <value>Rounds during a speedtest</value>
+  </data>
+  <data name="MonitoringRoundsDuringTest" xml:space="preserve">
+    <value>count for latency, never start an outage</value>
+  </data>
+  <data name="MonitoringUptimeCountsLabel" xml:space="preserve">
+    <value>Uptime counts</value>
+  </data>
+  <data name="MonitoringUptimeCounts" xml:space="preserve">
+    <value>only the time the app was watching</value>
+  </data>
+  <data name="MonitoringBufferbloatSampled" xml:space="preserve">
+    <value>sampled around every test, watching or not</value>
+  </data>
+  <data name="MonitoringRestartNote" xml:space="preserve">
+    <value>A restart or a stopped container is neither uptime nor downtime, so a week away doesn't show as a week offline.</value>
+  </data>
+  <data name="MonitoringSeeUptime" xml:space="preserve">
+    <value>See the Uptime page</value>
+  </data>
+  <data name="MonitoringNoTargets" xml:space="preserve">
+    <value>nothing, because no targets are set</value>
+  </data>
+  <data name="MonitoringDownHint" xml:space="preserve">
+    <value>About {0} of silence before an outage starts</value>
+  </data>
+  <data name="MonitoringSaved" xml:space="preserve">
+    <value>Monitoring saved</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ScheduleTitle" xml:space="preserve">
+    <value>Test Schedule</value>
+  </data>
+  <data name="ScheduleDescription" xml:space="preserve">
+    <value>How often {0} runs a speedtest automatically. Cron expressions run in UTC.</value>
+  </data>
+  <data name="ScheduleCustomDescription" xml:space="preserve">
+    <value>Your own cron expression</value>
+  </data>
+  <data name="ScheduleCronExpression" xml:space="preserve">
+    <value>Cron expression</value>
+  </data>
+  <data name="ScheduleCronInvalid" xml:space="preserve">
+    <value>Not a valid cron expression</value>
+  </data>
+  <data name="ScheduleNextTest" xml:space="preserve">
+    <value>Next test: {0}</value>
+  </data>
+  <data name="ScheduleMonthlyData" xml:space="preserve">
+    <value>about {0} a month at your recent speeds</value>
+  </data>
+  <data name="ScheduleCronHelp" xml:space="preserve">
+    <value>Cron syntax help</value>
+  </data>
+  <data name="ScheduleOffset" xml:space="preserve">
+    <value>Offset schedule</value>
+  </data>
+  <data name="ScheduleOffsetDescription" xml:space="preserve">
+    <value>Starts each test a little late, by at most 5 minutes and never more than a quarter of the gap</value>
+  </data>
+  <data name="ScheduleSave" xml:space="preserve">
+    <value>Save Schedule</value>
+  </data>
+  <data name="ScheduleUnhealthyTitle" xml:space="preserve">
+    <value>While Unhealthy</value>
+  </data>
+  <data name="ScheduleUnhealthyDescription" xml:space="preserve">
+    <value>Test again sooner while the last completed test misses your targets. Off unless you choose a pace.</value>
+  </data>
+  <data name="ScheduleUnhealthyOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="ScheduleUnhealthyOffDescription" xml:space="preserve">
+    <value>Always use the test schedule</value>
+  </data>
+  <data name="ScheduleFirstTestAfterMiss" xml:space="preserve">
+    <value>First test after a miss: {0}</value>
+  </data>
+  <data name="ScheduleHourlyData" xml:space="preserve">
+    <value>This pace uses about {0} an hour at your recent speeds, until a test meets your targets again.</value>
+  </data>
+  <data name="SchedulePauseTitle" xml:space="preserve">
+    <value>Pause Speedtests</value>
+  </data>
+  <data name="SchedulePauseDescription" xml:space="preserve">
+    <value>Temporarily stop automatic tests.</value>
+  </data>
+  <data name="ScheduleResumeTests" xml:space="preserve">
+    <value>Resume Tests</value>
+  </data>
+  <data name="SchedulePauseCustom" xml:space="preserve">
+    <value>Custom duration</value>
+  </data>
+  <data name="SchedulePauseCustomDescription" xml:space="preserve">
+    <value>Pause for a number of hours</value>
+  </data>
+  <data name="SchedulePauseHours" xml:space="preserve">
+    <value>Hours</value>
+  </data>
+  <data name="SchedulePauseHoursInvalid" xml:space="preserve">
+    <value>Enter more than 0 and at most {0:0} hours</value>
+  </data>
+  <data name="SchedulePauseHoursHelp" xml:space="preserve">
+    <value>Up to 30 days. Pause indefinitely for longer.</value>
+  </data>
+  <data name="SchedulePauseTests" xml:space="preserve">
+    <value>Pause Tests</value>
+  </data>
+  <data name="ScheduleContinuous" xml:space="preserve">
+    <value>Continuous</value>
+  </data>
+  <data name="ScheduleContinuousDescription" xml:space="preserve">
+    <value>Every minute — high resource usage</value>
+  </data>
+  <data name="ScheduleVeryOften" xml:space="preserve">
+    <value>Very often</value>
+  </data>
+  <data name="ScheduleEvery30Minutes" xml:space="preserve">
+    <value>Every 30 minutes</value>
+  </data>
+  <data name="ScheduleDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="ScheduleDefaultDescription" xml:space="preserve">
+    <value>Every hour — recommended</value>
+  </data>
+  <data name="ScheduleRarely" xml:space="preserve">
+    <value>Rarely</value>
+  </data>
+  <data name="ScheduleEvery3Hours" xml:space="preserve">
+    <value>Every 3 hours</value>
+  </data>
+  <data name="ScheduleVeryRarely" xml:space="preserve">
+    <value>Very rarely</value>
+  </data>
+  <data name="ScheduleEvery6Hours" xml:space="preserve">
+    <value>Every 6 hours</value>
+  </data>
+  <data name="ScheduleEvery5Minutes" xml:space="preserve">
+    <value>Every 5 minutes</value>
+  </data>
+  <data name="ScheduleEvery5MinutesDescription" xml:space="preserve">
+    <value>The quickest look at a bad line</value>
+  </data>
+  <data name="ScheduleEvery10Minutes" xml:space="preserve">
+    <value>Every 10 minutes</value>
+  </data>
+  <data name="ScheduleEvery10MinutesDescription" xml:space="preserve">
+    <value>Often, without hammering the line</value>
+  </data>
+  <data name="ScheduleEvery15Minutes" xml:space="preserve">
+    <value>Every 15 minutes</value>
+  </data>
+  <data name="ScheduleEvery15MinutesDescription" xml:space="preserve">
+    <value>A good middle ground</value>
+  </data>
+  <data name="ScheduleEvery30MinutesDescription" xml:space="preserve">
+    <value>Twice the usual hourly pace</value>
+  </data>
+  <data name="ScheduleEveryHour" xml:space="preserve">
+    <value>Every hour</value>
+  </data>
+  <data name="ScheduleEveryHourDescription" xml:space="preserve">
+    <value>Only useful with a slower schedule</value>
+  </data>
+  <data name="SchedulePauseIndefinitely" xml:space="preserve">
+    <value>Pause indefinitely</value>
+  </data>
+  <data name="SchedulePauseIndefinitelyDescription" xml:space="preserve">
+    <value>Until you resume manually</value>
+  </data>
+  <data name="SchedulePauseShort" xml:space="preserve">
+    <value>Short break</value>
+  </data>
+  <data name="SchedulePauseShortDescription" xml:space="preserve">
+    <value>Pause for 1 hour</value>
+  </data>
+  <data name="SchedulePauseMedium" xml:space="preserve">
+    <value>Medium break</value>
+  </data>
+  <data name="SchedulePauseMediumDescription" xml:space="preserve">
+    <value>Pause for 6 hours</value>
+  </data>
+  <data name="SchedulePauseLong" xml:space="preserve">
+    <value>Long break</value>
+  </data>
+  <data name="SchedulePauseLongDescription" xml:space="preserve">
+    <value>Pause for 12 hours</value>
+  </data>
+  <data name="ScheduleSaved" xml:space="preserve">
+    <value>Schedule saved</value>
+  </data>
+  <data name="ScheduleUnhealthyTurnedOff" xml:space="preserve">
+    <value>Unhealthy schedule turned off</value>
+  </data>
+  <data name="ScheduleUnhealthySaved" xml:space="preserve">
+    <value>Unhealthy schedule saved</value>
+  </data>
+  <data name="SchedulePauseFailed" xml:space="preserve">
+    <value>Could not pause speedtests</value>
+  </data>
+  <data name="SchedulePaused" xml:space="preserve">
+    <value>Speedtests paused</value>
+  </data>
+  <data name="ProviderTitle" xml:space="preserve">
+    <value>Speedtest Provider</value>
+  </data>
+  <data name="ProviderDescription" xml:space="preserve">
+    <value>Choose who runs your tests and how they connect.</value>
+  </data>
+  <data name="ProviderInterface" xml:space="preserve">
+    <value>Network interface</value>
+  </data>
+  <data name="ProviderInterfacesFailed" xml:space="preserve">
+    <value>Couldn't list this machine's network interfaces</value>
+  </data>
+  <data name="ProviderInterfaceHelp" xml:space="preserve">
+    <value>The local address tests are sent from</value>
+  </data>
+  <data name="ProviderDefaultRoute" xml:space="preserve">
+    <value>Default route</value>
+  </data>
+  <data name="ProviderLibreUrl" xml:space="preserve">
+    <value>Custom LibreSpeed server URL</value>
+  </data>
+  <data name="ProviderLibreUrlHelp" xml:space="preserve">
+    <value>Replaces the server selection</value>
+  </data>
+  <data name="ProviderServerChoice" xml:space="preserve">
+    <value>Which server to test against</value>
+  </data>
+  <data name="ProviderServerAuto" xml:space="preserve">
+    <value>Automatically</value>
+  </data>
+  <data name="ProviderServerAutoDescription" xml:space="preserve">
+    <value>{0} picks the best server for each test</value>
+  </data>
+  <data name="ProviderServerRandom" xml:space="preserve">
+    <value>Random</value>
+  </data>
+  <data name="ProviderServerRandomDescription" xml:space="preserve">
+    <value>A different server each test, chosen from your list</value>
+  </data>
+  <data name="ProviderServerSingle" xml:space="preserve">
+    <value>Single</value>
+  </data>
+  <data name="ProviderServerSingleDescription" xml:space="preserve">
+    <value>Always test against the same server</value>
+  </data>
+  <data name="ProviderChooseServer" xml:space="preserve">
+    <value>Choose a server</value>
+  </data>
+  <data name="ProviderEnterOrChooseServer" xml:space="preserve">
+    <value>Enter or choose a server</value>
+  </data>
+  <data name="ProviderServerIdHelp" xml:space="preserve">
+    <value>Use a specific server that isn't listed</value>
+  </data>
+  <data name="ProviderAllowList" xml:space="preserve">
+    <value>Only these servers</value>
+  </data>
+  <data name="ProviderAllowListDescription" xml:space="preserve">
+    <value>Each test picks randomly from the list below</value>
+  </data>
+  <data name="ProviderDenyList" xml:space="preserve">
+    <value>Any server except these</value>
+  </data>
+  <data name="ProviderDenyListDescription" xml:space="preserve">
+    <value>Each test picks randomly from the nearby servers, skipping the list below</value>
+  </data>
+  <data name="ProviderServers" xml:space="preserve">
+    <value>Servers</value>
+  </data>
+  <data name="ProviderAddServerId" xml:space="preserve">
+    <value>Add a server ID</value>
+  </data>
+  <data name="ProviderAddServerIdHelp" xml:space="preserve">
+    <value>For servers that aren't in the list</value>
+  </data>
+  <data name="ProviderAddServerIdLabel" xml:space="preserve">
+    <value>Add server ID</value>
+  </data>
+  <data name="ProviderNothingExcluded" xml:space="preserve">
+    <value>Nothing excluded yet, so any nearby server can be used.</value>
+  </data>
+  <data name="ProviderNothingChosen" xml:space="preserve">
+    <value>No servers chosen yet, so the provider picks for each test.</value>
+  </data>
+  <data name="ProviderAcceptOoklaTerms" xml:space="preserve">
+    <value>I have read and accept Ookla's {0}, {1} and {2}.</value>
+  </data>
+  <data name="ProviderEula" xml:space="preserve">
+    <value>EULA</value>
+  </data>
+  <data name="ProviderPrivacyPolicy" xml:space="preserve">
+    <value>privacy policy</value>
+  </data>
+  <data name="ProviderTermsOfService" xml:space="preserve">
+    <value>terms of service</value>
+  </data>
+  <data name="ProviderServerListFailed" xml:space="preserve">
+    <value>Couldn't load the server list. You can still enter a server ID.</value>
+  </data>
+  <data name="ProviderServerFallback" xml:space="preserve">
+    <value>Server {0}</value>
+  </data>
+  <data name="ProviderInterfaceSaved" xml:space="preserve">
+    <value>{0} (currently saved)</value>
+  </data>
+  <data name="ProviderSaved" xml:space="preserve">
+    <value>The provider settings have been saved</value>
+  </data>
+  <data name="IntegrationsTitle" xml:space="preserve">
+    <value>Integrations</value>
+  </data>
+  <data name="IntegrationsDescription" xml:space="preserve">
+    <value>Send results and alerts to other services.</value>
+  </data>
+  <data name="IntegrationsEmpty" xml:space="preserve">
+    <value>No integrations yet. Add one to send test results or alerts to another service.</value>
+  </data>
+  <data name="IntegrationsLoadFailed" xml:space="preserve">
+    <value>Couldn't load your integrations.</value>
+  </data>
+  <data name="IntegrationsName" xml:space="preserve">
+    <value>Integration name</value>
+  </data>
+  <data name="IntegrationsSending" xml:space="preserve">
+    <value>Sending...</value>
+  </data>
+  <data name="IntegrationsSendTest" xml:space="preserve">
+    <value>Send test</value>
+  </data>
+  <data name="IntegrationsAdd" xml:space="preserve">
+    <value>Add integration</value>
+  </data>
+  <data name="IntegrationsRequired" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="IntegrationsTooLong" xml:space="preserve">
+    <value>At most {0} characters</value>
+  </data>
+  <data name="IntegrationsInvalidFormat" xml:space="preserve">
+    <value>Invalid format</value>
+  </data>
+  <data name="IntegrationsSaved" xml:space="preserve">
+    <value>{0} saved</value>
+  </data>
+  <data name="IntegrationsSaveFailed" xml:space="preserve">
+    <value>Could not save the integration. Check the highlighted fields.</value>
+  </data>
+  <data name="IntegrationsTestSucceeded" xml:space="preserve">
+    <value>{0} test succeeded</value>
+  </data>
+  <data name="IntegrationsTestFailed" xml:space="preserve">
+    <value>{0} test failed. {1}</value>
+  </data>
+  <data name="IntegrationsSendTestFailed" xml:space="preserve">
+    <value>Could not send the test</value>
+  </data>
+  <data name="IntegrationsDeleteTitle" xml:space="preserve">
+    <value>Delete integration</value>
+  </data>
+  <data name="IntegrationsDeleteMessage" xml:space="preserve">
+    <value>Delete "{0}"? It will stop sending notifications.</value>
+  </data>
+  <data name="IntegrationsDeleteFailed" xml:space="preserve">
+    <value>Could not delete the integration</value>
+  </data>
+  <data name="IntegrationsRemoved" xml:space="preserve">
+    <value>Integration removed</value>
+  </data>
+  <data name="IntegrationsNotSaved" xml:space="preserve">
+    <value>Not saved yet</value>
+  </data>
+  <data name="IntegrationsLastRunFailed" xml:space="preserve">
+    <value>Last run failed</value>
+  </data>
+  <data name="IntegrationsLastRun" xml:space="preserve">
+    <value>Last run {0}</value>
+  </data>
+  <data name="IntegrationsNeverRun" xml:space="preserve">
+    <value>Never executed</value>
+  </data>
+  <data name="SecurityDisabledByEnvironment" xml:space="preserve">
+    <value>Sign-in is switched off by {0}</value>
+  </data>
+  <data name="SecurityDisabledByEnvironmentDescription" xml:space="preserve">
+    <value>Anyone who can reach this instance has full access, whatever is saved below. Correct the settings, then remove the variable and restart {0}.</value>
+  </data>
+  <data name="SecuritySignInTitle" xml:space="preserve">
+    <value>Sign-in</value>
+  </data>
+  <data name="SecuritySignInDescription" xml:space="preserve">
+    <value>Require people to sign in with an OpenID Connect provider, such as Authentik, Authelia, Keycloak or Pocket ID.</value>
+  </data>
+  <data name="SecuritySignedInAs" xml:space="preserve">
+    <value>Signed in as {0}</value>
+  </data>
+  <data name="SecurityRequireSignIn" xml:space="preserve">
+    <value>Require sign-in</value>
+  </data>
+  <data name="SecurityRequireSignInDescription" xml:space="preserve">
+    <value>The provider is checked before this is switched on</value>
+  </data>
+  <data name="SecurityProviderUrl" xml:space="preserve">
+    <value>Provider URL</value>
+  </data>
+  <data name="SecurityProviderUrlHelp" xml:space="preserve">
+    <value>The issuer URL your provider gives for this app</value>
+  </data>
+  <data name="SecurityClientId" xml:space="preserve">
+    <value>Client ID</value>
+  </data>
+  <data name="SecurityClientSecret" xml:space="preserve">
+    <value>Client secret</value>
+  </data>
+  <data name="SecurityShowSecret" xml:space="preserve">
+    <value>Show or hide the client secret</value>
+  </data>
+  <data name="SecuritySecretSavedPlaceholder" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="SecurityRemoveSecret" xml:space="preserve">
+    <value>Remove the saved secret</value>
+  </data>
+  <data name="SecurityScopes" xml:space="preserve">
+    <value>Scopes</value>
+  </data>
+  <data name="SecurityScopesHelp" xml:space="preserve">
+    <value>Space separated. openid is always included.</value>
+  </data>
+  <data name="SecurityRedirectUri" xml:space="preserve">
+    <value>Redirect URI</value>
+  </data>
+  <data name="SecurityCopyRedirectUri" xml:space="preserve">
+    <value>Copy the redirect URI</value>
+  </data>
+  <data name="SecurityRedirectUriHelp" xml:space="preserve">
+    <value>Register this with your provider</value>
+  </data>
+  <data name="SecurityPlainHttp" xml:space="preserve">
+    <value>This page is on plain http. Many providers only accept https redirect addresses.</value>
+  </data>
+  <data name="SecurityVisitors" xml:space="preserve">
+    <value>People who aren't signed in</value>
+  </data>
+  <data name="SecurityNoAccess" xml:space="preserve">
+    <value>No access</value>
+  </data>
+  <data name="SecurityNoAccessDescription" xml:space="preserve">
+    <value>They're sent to sign in before they see anything</value>
+  </data>
+  <data name="SecurityReadOnly" xml:space="preserve">
+    <value>Read-only</value>
+  </data>
+  <data name="SecurityReadOnlyDescription" xml:space="preserve">
+    <value>They can see results, but can't run tests or change settings</value>
+  </data>
+  <data name="SecurityCheckingProvider" xml:space="preserve">
+    <value>Checking the provider...</value>
+  </data>
+  <data name="SecurityApiTokenTitle" xml:space="preserve">
+    <value>API Token</value>
+  </data>
+  <data name="SecurityApiTokenDescription" xml:space="preserve">
+    <value>For Prometheus and scripts, which can't sign in through a browser. Send it as a bearer token.</value>
+  </data>
+  <data name="SecurityCopyTokenNow" xml:space="preserve">
+    <value>Copy this token now. It won't be shown again.</value>
+  </data>
+  <data name="SecurityCopyToken" xml:space="preserve">
+    <value>Copy the API token</value>
+  </data>
+  <data name="SecurityTokenSet" xml:space="preserve">
+    <value>A token is set.</value>
+  </data>
+  <data name="SecurityNoToken" xml:space="preserve">
+    <value>No token has been created.</value>
+  </data>
+  <data name="SecurityReplaceToken" xml:space="preserve">
+    <value>Replace token</value>
+  </data>
+  <data name="SecurityCreateToken" xml:space="preserve">
+    <value>Create token</value>
+  </data>
+  <data name="SecurityRevoke" xml:space="preserve">
+    <value>Revoke</value>
+  </data>
+  <data name="SecurityTokenNeeded" xml:space="preserve">
+    <value>Needed while sign-in is on, unless people who aren't signed in have read-only access. For Prometheus:</value>
+  </data>
+  <data name="SecuritySecretSaved" xml:space="preserve">
+    <value>A secret is saved. Leave this empty to keep it.</value>
+  </data>
+  <data name="SecuritySecretEmpty" xml:space="preserve">
+    <value>Leave empty if your provider set this app up as a public client.</value>
+  </data>
+  <data name="SecuritySaveFailed" xml:space="preserve">
+    <value>Could not save the sign-in settings</value>
+  </data>
+  <data name="SecuritySignInOn" xml:space="preserve">
+    <value>Sign-in is on. Taking you to your provider...</value>
+  </data>
+  <data name="SecuritySaved" xml:space="preserve">
+    <value>Sign-in settings saved</value>
+  </data>
+  <data name="SecurityReplaceTokenTitle" xml:space="preserve">
+    <value>Replace the API token</value>
+  </data>
+  <data name="SecurityReplaceTokenMessage" xml:space="preserve">
+    <value>The current token stops working straight away. Anything using it will need the new one.</value>
+  </data>
+  <data name="SecurityReplace" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="SecurityCreateTokenFailed" xml:space="preserve">
+    <value>Could not create a token</value>
+  </data>
+  <data name="SecurityRevokeTokenTitle" xml:space="preserve">
+    <value>Revoke the API token</value>
+  </data>
+  <data name="SecurityRevokeTokenMessage" xml:space="preserve">
+    <value>Anything using the token, such as Prometheus, loses access straight away.</value>
+  </data>
+  <data name="SecurityRevokeTokenFailed" xml:space="preserve">
+    <value>Could not revoke the token</value>
+  </data>
+  <data name="SecurityTokenRevoked" xml:space="preserve">
+    <value>The API token has been revoked</value>
+  </data>
+  <data name="SecurityCopied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="SecurityCopyFailed" xml:space="preserve">
+    <value>Couldn't copy. Select the text and copy it instead.</value>
+  </data>
+  <data name="ListAnd" xml:space="preserve">
+    <value>{0} and {1}</value>
+  </data>
+  <data name="StorageDatabase" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="StorageStoredTests" xml:space="preserve">
+    <value>Stored tests</value>
+  </data>
+  <data name="StorageDatabaseSize" xml:space="preserve">
+    <value>Database size</value>
+  </data>
+  <data name="StorageInfoFailed" xml:space="preserve">
+    <value>Couldn't load the database details.</value>
+  </data>
+  <data name="StorageRetentionTitle" xml:space="preserve">
+    <value>Data Retention</value>
+  </data>
+  <data name="StorageRetentionDescription" xml:space="preserve">
+    <value>How long results are kept before they're deleted automatically.</value>
+  </data>
+  <data name="StorageKeepFor" xml:space="preserve">
+    <value>Keep speedtests for</value>
+  </data>
+  <data name="StorageRetentionCustom" xml:space="preserve">
+    <value>Custom...</value>
+  </data>
+  <data name="StorageDays" xml:space="preserve">
+    <value>Days</value>
+  </data>
+  <data name="StorageDaysHelp" xml:space="preserve">
+    <value>0 keeps results forever</value>
+  </data>
+  <data name="StorageDaysInvalid" xml:space="preserve">
+    <value>Enter 0 to 10000 days</value>
+  </data>
+  <data name="StorageSaveRetention" xml:space="preserve">
+    <value>Save Retention</value>
+  </data>
+  <data name="StorageResultsTitle" xml:space="preserve">
+    <value>Speedtest Results</value>
+  </data>
+  <data name="StorageResultsDescription" xml:space="preserve">
+    <value>Export your results, or import results exported from {0}.</value>
+  </data>
+  <data name="StorageExportCsv" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="StorageExportJson" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="StorageImportJson" xml:space="preserve">
+    <value>Import JSON</value>
+  </data>
+  <data name="StorageBackupTitle" xml:space="preserve">
+    <value>Settings Backup</value>
+  </data>
+  <data name="StorageBackupDescription" xml:space="preserve">
+    <value>Settings, integrations and recommendations as a JSON file.</value>
+  </data>
+  <data name="StorageExportSettings" xml:space="preserve">
+    <value>Export settings</value>
+  </data>
+  <data name="StorageImportSettings" xml:space="preserve">
+    <value>Import settings</value>
+  </data>
+  <data name="StorageDangerZone" xml:space="preserve">
+    <value>Danger Zone</value>
+  </data>
+  <data name="StorageDangerZoneDescription" xml:space="preserve">
+    <value>Permanent operations. They cannot be undone.</value>
+  </data>
+  <data name="StorageClearHistory" xml:space="preserve">
+    <value>Clear history</value>
+  </data>
+  <data name="StorageFactoryReset" xml:space="preserve">
+    <value>Factory reset</value>
+  </data>
+  <data name="StorageRetention90Days" xml:space="preserve">
+    <value>90 days</value>
+  </data>
+  <data name="StorageRetention180Days" xml:space="preserve">
+    <value>180 days</value>
+  </data>
+  <data name="StorageRetentionOneYear" xml:space="preserve">
+    <value>1 year (default)</value>
+  </data>
+  <data name="StorageRetentionForever" xml:space="preserve">
+    <value>Keep forever</value>
+  </data>
+  <data name="StorageRetentionSaved" xml:space="preserve">
+    <value>Retention period updated</value>
+  </data>
+  <data name="StorageExportFailed" xml:space="preserve">
+    <value>Export failed</value>
+  </data>
+  <data name="StorageNotATestExport" xml:space="preserve">
+    <value>That file isn't a {0} test export</value>
+  </data>
+  <data name="StorageTestImportFailed" xml:space="preserve">
+    <value>An error occurred while importing the test file</value>
+  </data>
+  <data name="StorageNothingNew" xml:space="preserve">
+    <value>Nothing new to import: {0}</value>
+  </data>
+  <data name="StorageImported" xml:space="preserve">
+    <value>Imported {0}</value>
+  </data>
+  <data name="StorageImportedSomeStored" xml:space="preserve">
+    <value>Imported {0}. {1}</value>
+  </data>
+  <data name="StorageOneResult" xml:space="preserve">
+    <value>1 result</value>
+  </data>
+  <data name="StorageResultCount" xml:space="preserve">
+    <value>{0:N0} results</value>
+  </data>
+  <data name="StorageOneAlreadyStored" xml:space="preserve">
+    <value>1 result was already stored</value>
+  </data>
+  <data name="StorageAlreadyStored" xml:space="preserve">
+    <value>{0:N0} results were already stored</value>
+  </data>
+  <data name="StorageNotASettingsExport" xml:space="preserve">
+    <value>That file isn't a {0} settings export</value>
+  </data>
+  <data name="StorageSettingsImportFailed" xml:space="preserve">
+    <value>An error occurred while importing the settings file</value>
+  </data>
+  <data name="StorageOneSetting" xml:space="preserve">
+    <value>1 setting</value>
+  </data>
+  <data name="StorageSettingCount" xml:space="preserve">
+    <value>{0:N0} settings</value>
+  </data>
+  <data name="StorageOneIntegration" xml:space="preserve">
+    <value>1 integration</value>
+  </data>
+  <data name="StorageIntegrationCount" xml:space="preserve">
+    <value>{0:N0} integrations</value>
+  </data>
+  <data name="StorageRecommendations" xml:space="preserve">
+    <value>recommendations</value>
+  </data>
+  <data name="StorageImportedList" xml:space="preserve">
+    <value>Imported {0}.</value>
+  </data>
+  <data name="StorageOneSkipped" xml:space="preserve">
+    <value>1 item wasn't valid and was skipped.</value>
+  </data>
+  <data name="StorageSkippedCount" xml:space="preserve">
+    <value>{0:N0} items weren't valid and were skipped.</value>
+  </data>
+  <data name="StorageClearHistoryMessage" xml:space="preserve">
+    <value>Delete all stored speedtest results? This cannot be undone.</value>
+  </data>
+  <data name="StorageDeleteAll" xml:space="preserve">
+    <value>Delete all</value>
+  </data>
+  <data name="StorageClearHistoryFailed" xml:space="preserve">
+    <value>Could not clear the history</value>
+  </data>
+  <data name="StorageHistoryCleared" xml:space="preserve">
+    <value>The history has been cleared</value>
+  </data>
+  <data name="StorageFactoryResetMessage" xml:space="preserve">
+    <value>Reset all settings, including sign-in, and remove every integration? Your speedtest results are kept.</value>
+  </data>
+  <data name="StorageReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="StorageFactoryResetFailed" xml:space="preserve">
+    <value>Could not reset the settings</value>
+  </data>
+  <data name="HtmlLanguage" xml:space="preserve">
+    <value>en</value>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+  <data name="JustNow" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="OneMinuteAgo" xml:space="preserve">
+    <value>1 minute ago</value>
+  </data>
+  <data name="MinutesAgo" xml:space="preserve">
+    <value>{0} minutes ago</value>
+  </data>
+  <data name="OneHourAgo" xml:space="preserve">
+    <value>1 hour ago</value>
+  </data>
+  <data name="HoursAgo" xml:space="preserve">
+    <value>{0} hours ago</value>
+  </data>
+  <data name="OneDayAgo" xml:space="preserve">
+    <value>1 day ago</value>
+  </data>
+  <data name="DaysAgo" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="SettingsSaveFailed" xml:space="preserve">
+    <value>Could not save your changes. Try again.</value>
+  </data>
+  <data name="AuthSignedOutTitle" xml:space="preserve">
+    <value>You've signed out</value>
+  </data>
+  <data name="AuthSignedOutMessage" xml:space="preserve">
+    <value>You're signed out of {0}. Your identity provider may still have you signed in there.</value>
+  </data>
+  <data name="AuthSignInAgain" xml:space="preserve">
+    <value>Sign in again</value>
+  </data>
+  <data name="AuthFailedTitle" xml:space="preserve">
+    <value>Sign-in didn't work</value>
+  </data>
+  <data name="AuthFailedReason" xml:space="preserve">
+    <value>The identity provider didn't complete the sign-in.</value>
+  </data>
+  <data name="AuthFailedNote" xml:space="preserve">
+    <value>If the sign-in settings are wrong, start {0} with {1}. Sign-in is then off, so you can correct the settings on the Security tab and remove the variable again.</value>
+  </data>
+  <data name="LinkPreviewNoTests" xml:space="preserve">
+    <value>No completed speedtests yet</value>
+  </data>
+  <data name="LinkPreviewLatestTest" xml:space="preserve">
+    <value>Latest test: {0} UTC</value>
+  </data>
+  <data name="LinkPreviewJitter" xml:space="preserve">
+    <value>±{0} ms jitter</value>
+  </data>
+  <data name="LinkPreviewHeader" xml:space="preserve">
+    <value>{0} Network Performance</value>
+  </data>
+  <data name="LinkPreviewPing" xml:space="preserve">
+    <value>PING</value>
+  </data>
+  <data name="LinkPreviewDownload" xml:space="preserve">
+    <value>DOWNLOAD</value>
+  </data>
+  <data name="LinkPreviewUpload" xml:space="preserve">
+    <value>UPLOAD</value>
+  </data>
+  <data name="LinkPreviewDescription" xml:space="preserve">
+    <value>Internet speed tests on a schedule, with a live dashboard of the results.</value>
+  </data>
+  <data name="LinkPreviewImageAlt" xml:space="preserve">
+    <value>The latest speed test's ping, download and upload</value>
+  </data>
+  <data name="ErrorUnstableConnection" xml:space="preserve">
+    <value>Internet connection was unstable during the time of the test</value>
+  </data>
+  <data name="ErrorTookTooLong" xml:space="preserve">
+    <value>The test took too long and was canceled</value>
+  </data>
+  <data name="ErrorNoPermission" xml:space="preserve">
+    <value>{0} has no permission to start this test</value>
+  </data>
+  <data name="ErrorResourceUnavailable" xml:space="preserve">
+    <value>The test could not be performed because the resource was temporarily unavailable</value>
+  </data>
+  <data name="ErrorNoRoute" xml:space="preserve">
+    <value>The test could not be performed because there was no route to the host</value>
+  </data>
+  <data name="ErrorConnectionRefused" xml:space="preserve">
+    <value>The test could not be performed because the connection was rejected</value>
+  </data>
+  <data name="ErrorOoklaConfiguration" xml:space="preserve">
+    <value>Ookla couldn't download its test configuration from speedtest.net</value>
+  </data>
+  <data name="IntegrationFieldUrl" xml:space="preserve">
+    <value>Server URL</value>
+  </data>
+  <data name="IntegrationFieldToken" xml:space="preserve">
+    <value>Token</value>
+  </data>
+  <data name="IntegrationFieldDisplayName" xml:space="preserve">
+    <value>Display name</value>
+  </data>
+  <data name="IntegrationFieldSendFailed" xml:space="preserve">
+    <value>Send error messages</value>
+  </data>
+  <data name="IntegrationFieldSendUnhealthy" xml:space="preserve">
+    <value>Send alerts when a test misses your targets</value>
+  </data>
+  <data name="IntegrationFieldUnhealthyMessage" xml:space="preserve">
+    <value>Target missed message</value>
+  </data>
+  <data name="IntegrationFieldSendHealthyAgain" xml:space="preserve">
+    <value>Send a message when tests meet your targets again</value>
+  </data>
+  <data name="IntegrationFieldHealthyAgainMessage" xml:space="preserve">
+    <value>Targets met again message</value>
+  </data>
+  <data name="IntegrationFieldSendSkipped" xml:space="preserve">
+    <value>Send alerts when a test is skipped</value>
+  </data>
+  <data name="IntegrationFieldSendConnectionLost" xml:space="preserve">
+    <value>Send an alert when the connection goes down</value>
+  </data>
+  <data name="IntegrationFieldConnectionLostMessage" xml:space="preserve">
+    <value>Connection lost message</value>
+  </data>
+  <data name="IntegrationFieldSendConnectionRestored" xml:space="preserve">
+    <value>Send a message when the connection comes back</value>
+  </data>
+  <data name="IntegrationFieldConnectionRestoredMessage" xml:space="preserve">
+    <value>Connection restored message</value>
+  </data>
+  <data name="IntegrationFieldSkippedMessage" xml:space="preserve">
+    <value>Skipped message</value>
+  </data>
+  <data name="IntegrationFieldSendFinished" xml:space="preserve">
+    <value>Send finished messages</value>
+  </data>
+  <data name="IntegrationFieldFinishedMessage" xml:space="preserve">
+    <value>Finished message</value>
+  </data>
+  <data name="IntegrationFieldErrorMessage" xml:space="preserve">
+    <value>Error message</value>
+  </data>
+  <data name="IntegrationFieldPriority" xml:space="preserve">
+    <value>Priority</value>
+  </data>
+  <data name="IntegrationFieldTags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="IntegrationFieldTitle" xml:space="preserve">
+    <value>Notification title</value>
+  </data>
+  <data name="IntegrationFieldInterval" xml:space="preserve">
+    <value>Interval (minutes)</value>
+  </data>
+  <data name="IntegrationFieldWebhookUrl" xml:space="preserve">
+    <value>Webhook URL</value>
+  </data>
+  <data name="IntegrationFieldAppToken" xml:space="preserve">
+    <value>App token</value>
+  </data>
+  <data name="IntegrationTelegramToken" xml:space="preserve">
+    <value>Bot token</value>
+  </data>
+  <data name="IntegrationTelegramChatId" xml:space="preserve">
+    <value>Chat ID</value>
+  </data>
+  <data name="IntegrationPushoverUserKey" xml:space="preserve">
+    <value>User key</value>
+  </data>
+  <data name="IntegrationAppriseUrl" xml:space="preserve">
+    <value>Apprise API URL</value>
+  </data>
+  <data name="IntegrationAppriseUrls" xml:space="preserve">
+    <value>Apprise URLs</value>
+  </data>
+  <data name="IntegrationAppriseKey" xml:space="preserve">
+    <value>Config key (instead of URLs)</value>
+  </data>
+  <data name="IntegrationHealthchecksUrl" xml:space="preserve">
+    <value>Healthchecks URL</value>
+  </data>
+  <data name="IntegrationHealthchecksInterval" xml:space="preserve">
+    <value>Ping interval (minutes)</value>
+  </data>
+  <data name="IntegrationNtfyTopic" xml:space="preserve">
+    <value>Topic</value>
+  </data>
+  <data name="IntegrationNtfyToken" xml:space="preserve">
+    <value>Access token</value>
+  </data>
+  <data name="IntegrationNtfyPriority" xml:space="preserve">
+    <value>Default priority (1-5)</value>
+  </data>
+  <data name="IntegrationNtfyErrorPriority" xml:space="preserve">
+    <value>Error priority (1-5)</value>
+  </data>
+  <data name="IntegrationWebhookSendStarted" xml:space="preserve">
+    <value>Send started messages</value>
+  </data>
+  <data name="IntegrationWebhookSendAlive" xml:space="preserve">
+    <value>Send keep-alive messages</value>
+  </data>
+  <data name="IntegrationWebhookSendRecommendations" xml:space="preserve">
+    <value>Send recommendations</value>
+  </data>
+  <data name="IntegrationWebhookSendUnhealthy" xml:space="preserve">
+    <value>Send target-missed alerts</value>
+  </data>
+  <data name="IntegrationWebhookSendHealthyAgain" xml:space="preserve">
+    <value>Send targets-met-again messages</value>
+  </data>
+  <data name="IntegrationWebhookSendSkipped" xml:space="preserve">
+    <value>Send skipped-test messages</value>
+  </data>
+  <data name="IntegrationWebhookSendConnectionLost" xml:space="preserve">
+    <value>Send connection-lost messages</value>
+  </data>
+  <data name="IntegrationWebhookSendConnectionRestored" xml:space="preserve">
+    <value>Send connection-restored messages</value>
+  </data>
+  <data name="IntegrationWebhookSendConfigUpdates" xml:space="preserve">
+    <value>Send configuration updates</value>
+  </data>
+  <data name="IntegrationWebhookInterval" xml:space="preserve">
+    <value>Keep-alive interval (minutes)</value>
+  </data>
+  <data name="IntegrationExampleUnhealthyMessage" xml:space="preserve">
+    <value>%download% Mbps down, %upload% Mbps up, %ping% ms — targets %threshold_download%/%threshold_upload%/%threshold_ping%</value>
+  </data>
+  <data name="IntegrationExampleHealthyAgainMessage" xml:space="preserve">
+    <value>Back within your targets: %download% Mbps down, %upload% Mbps up, %ping% ms</value>
+  </data>
+  <data name="IntegrationExampleSkippedMessage" xml:space="preserve">
+    <value>[%year%-%month%-%day% %hour%:%minute%] Skipped: %error%</value>
+  </data>
+  <data name="IntegrationExampleConnectionLostMessage" xml:space="preserve">
+    <value>The line has been down since %since%</value>
+  </data>
+  <data name="IntegrationExampleConnectionRestoredMessage" xml:space="preserve">
+    <value>The line is back after %downtime%</value>
+  </data>
+  <data name="IntegrationExampleErrorMessage" xml:space="preserve">
+    <value>[%year%-%month%-%day% %hour%:%minute%] Error: %error%</value>
+  </data>
+  <data name="IntegrationExampleDiscordName" xml:space="preserve">
+    <value>{0} Notification</value>
+  </data>
+  <data name="IntegrationExampleAppriseTags" xml:space="preserve">
+    <value>Optional, e.g. admin, devops or all</value>
+  </data>
+  <data name="IntegrationExampleNtfyToken" xml:space="preserve">
+    <value>Optional, for protected servers</value>
+  </data>
+  <data name="IntegrationExampleAppToken" xml:space="preserve">
+    <value>App Token</value>
+  </data>
+  <data name="IntegrationExampleApiToken" xml:space="preserve">
+    <value>API Token</value>
+  </data>
+  <data name="IntegrationExampleUserKey" xml:space="preserve">
+    <value>User Key</value>
+  </data>
+  <data name="IntegrationExampleBotToken" xml:space="preserve">
+    <value>Bot Token</value>
+  </data>
+  <data name="IntegrationExampleChatId" xml:space="preserve">
+    <value>Chat ID</value>
+  </data>
+</root>

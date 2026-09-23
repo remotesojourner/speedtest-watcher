@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Resources;
+
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class NtfyIntegration : MessageIntegration
@@ -26,7 +28,7 @@ internal sealed class NtfyIntegration : MessageIntegration
     protected override MessageTemplates Templates => MessageTemplates.PlainText;
 
     protected override string? SettingsProblem(IntegrationSettings settings) =>
-        string.IsNullOrEmpty(settings.GetString("topic")) ? "The topic is missing" : null;
+        string.IsNullOrEmpty(settings.GetString("topic")) ? ApplicationStrings.NtfyTopicMissing : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)
     {

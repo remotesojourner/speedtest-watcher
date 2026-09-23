@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Globalization;
 
 namespace SpeedtestWatcher.Application.Integrations.Types;
@@ -29,7 +30,7 @@ internal sealed class GotifyIntegration : MessageIntegration
 
     protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(ServerUrl(settings)) || string.IsNullOrEmpty(settings.GetString("key"))
-            ? "The server URL or app token is missing"
+            ? ApplicationStrings.GotifySettingsMissing
             : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)

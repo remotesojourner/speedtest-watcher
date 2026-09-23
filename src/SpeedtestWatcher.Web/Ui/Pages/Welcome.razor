@@ -4,24 +4,24 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
-<PageTitle>Speedtest Watcher - Welcome</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.WelcomePageTitle</PageTitle>
 
 <div class="d-flex justify-center mt-6">
     <SurfaceCard FullHeight="false" Class="sw-welcome-card">
         <MudProgressLinear Color="Color.Primary" Value="@ProgressValue" Rounded="true" Class="mb-2" />
-        <MudText Typo="Typo.caption" Class="sw-muted d-block mb-5">Step @(_step + 1) of @Steps.Count</MudText>
+        <MudText Typo="Typo.caption" Class="sw-muted d-block mb-5">@WebStrings.Format(WebStrings.WelcomeStep, _step + 1, Steps.Count)</MudText>
 
         @switch (CurrentStep)
         {
             case WelcomeStep.Greeting:
                 <img src="img/logo.svg" alt="" class="sw-welcome-logo mb-4" />
-                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Welcome to Speedtest Watcher!</MudText>
-                <MudText Typo="Typo.body1" Class="sw-muted">Let's set up Speedtest Watcher for the first time. It won't take long.</MudText>
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">@WebStrings.Format(WebStrings.WelcomeTitle, ProjectInfo.Name)</MudText>
+                <MudText Typo="Typo.body1" Class="sw-muted">@WebStrings.Format(WebStrings.WelcomeIntro, ProjectInfo.Name)</MudText>
                 break;
 
             case WelcomeStep.Provider:
-                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Choose a provider</MudText>
-                <MudText Typo="Typo.body2" Class="sw-muted mb-4">This provider runs your speedtests. You can change it later in Settings.</MudText>
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">@WebStrings.WelcomeProviderTitle</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">@WebStrings.WelcomeProviderDescription</MudText>
                 <div class="sw-option-grid">
                     @foreach (var tool in Tools)
                     {
@@ -32,26 +32,26 @@
                 break;
 
             case WelcomeStep.OptimalValues:
-                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Set your optimal values</MudText>
-                <MudText Typo="Typo.body2" Class="sw-muted mb-4">Enter the speeds from your internet contract. Results are colour-coded against them.</MudText>
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">@WebStrings.WelcomeTargetsTitle</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">@WebStrings.WelcomeTargetsDescription</MudText>
                 <MudGrid Spacing="3">
                     <MudItem xs="12" sm="4">
-                        <MudNumericField T="double" @bind-Value="_ping" Label="Ping (ms)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        <MudNumericField T="double" @bind-Value="_ping" Label="@WebStrings.PingTargetLabel" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
                     </MudItem>
                     <MudItem xs="12" sm="4">
-                        <MudNumericField T="double" @bind-Value="_download" Label="Download (Mbps)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        <MudNumericField T="double" @bind-Value="_download" Label="@WebStrings.DownloadTargetLabel" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
                     </MudItem>
                     <MudItem xs="12" sm="4">
-                        <MudNumericField T="double" @bind-Value="_upload" Label="Upload (Mbps)" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        <MudNumericField T="double" @bind-Value="_upload" Label="@WebStrings.UploadTargetLabel" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
                     </MudItem>
                 </MudGrid>
                 break;
 
             case WelcomeStep.License:
-                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">Accept Ookla's terms</MudText>
-                <MudText Typo="Typo.body2" Class="sw-muted mb-4">Ookla requires you to accept its terms before Speedtest Watcher can run tests with it.</MudText>
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">@WebStrings.WelcomeTermsTitle</MudText>
+                <MudText Typo="Typo.body2" Class="sw-muted mb-4">@WebStrings.Format(WebStrings.WelcomeTermsDescription, ProjectInfo.Name)</MudText>
                 <div class="sw-option-list mb-4">
-                    @foreach (var document in _licenseDocuments)
+                    @foreach (var document in LicenseDocuments)
                     {
                         <MudLink Href="@document.Url" Target="_blank" Class="sw-option" Underline="Underline.None">
                             <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="sw-option-icon" />
@@ -60,14 +60,14 @@
                         </MudLink>
                     }
                 </div>
-                <MudCheckBox T="bool" @bind-Value="_acceptedTerms" Color="Color.Primary" Label="I have read and accept these terms" />
+                <MudCheckBox T="bool" @bind-Value="_acceptedTerms" Color="Color.Primary" Label="@WebStrings.WelcomeAcceptTerms" />
                 break;
         }
 
         <div class="d-flex justify-space-between align-center mt-6">
-            <MudButton Variant="Variant.Text" Disabled="@(_step == 0 || _saving)" OnClick="@(() => _step--)">Back</MudButton>
+            <MudButton Variant="Variant.Text" Disabled="@(_step == 0 || _saving)" OnClick="@(() => _step--)">@WebStrings.WelcomeBack</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanContinue)" OnClick="ContinueAsync">
-                @(IsLastStep ? (_saving ? "Saving..." : "Done") : "Continue")
+                @(IsLastStep ? (_saving ? WebStrings.Saving : WebStrings.WelcomeDone) : WebStrings.WelcomeContinue)
             </MudButton>
         </div>
     </SurfaceCard>
@@ -76,11 +76,11 @@
 @code {
     private enum WelcomeStep { Greeting, Provider, OptimalValues, License }
 
-    private static readonly (string Title, string Url)[] _licenseDocuments =
+    private static (string Title, string Url)[] LicenseDocuments =>
     [
-        ("Ookla Terms of Service", OoklaTerms.TermsOfServiceUrl),
-        ("Ookla End User License Agreement", OoklaTerms.EulaUrl),
-        ("Ookla Privacy Policy", OoklaTerms.PrivacyPolicyUrl)
+        (WebStrings.OoklaTermsOfService, OoklaTerms.TermsOfServiceUrl),
+        (WebStrings.OoklaEula, OoklaTerms.EulaUrl),
+        (WebStrings.OoklaPrivacyPolicy, OoklaTerms.PrivacyPolicyUrl)
     ];
 
     private int _step;
@@ -134,7 +134,7 @@
             return;
         }
 
-        Snackbar.Add("Speedtest Watcher is set up. Tests will run on the default hourly schedule.", Severity.Success);
+        Snackbar.Add(WebStrings.Format(WebStrings.WelcomeFinished, ProjectInfo.Name), Severity.Success);
         Navigation.NavigateTo("/");
     }
 }

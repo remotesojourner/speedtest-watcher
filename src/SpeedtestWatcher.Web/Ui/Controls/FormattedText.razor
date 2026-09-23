@@ -1,0 +1,20 @@
+@foreach (var (text, argument) in FormatSegments.Split(Format))
+{
+    if (argument is not { } index)
+    {
+        @text
+    }
+    else if (Arguments[index] is RenderFragment fragment)
+    {
+        @fragment
+    }
+    else
+    {
+        @Arguments[index]
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public string Format { get; set; } = "";
+    [Parameter, EditorRequired] public object?[] Arguments { get; set; } = [];
+}

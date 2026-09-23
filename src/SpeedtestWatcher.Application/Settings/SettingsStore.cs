@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Storage;
 
 namespace SpeedtestWatcher.Application.Settings;
@@ -22,10 +23,10 @@ internal class SettingsStore : ISettingsStore
     }
 
     public Task<SettingsSaveResult> SaveAsync(IReadOnlyDictionary<string, string> changes, CancellationToken cancellationToken = default) =>
-        WriteAsync(changes, definition => !definition.IsManagedOnSecurityTab, "Sign-in settings are changed on the Security tab", cancellationToken);
+        WriteAsync(changes, definition => !definition.IsManagedOnSecurityTab, ApplicationStrings.SettingsOnSecurityTab, cancellationToken);
 
     public Task<SettingsSaveResult> SaveSignInAsync(IReadOnlyDictionary<string, string> changes, CancellationToken cancellationToken = default) =>
-        WriteAsync(changes, definition => definition.IsManagedOnSecurityTab, "Only sign-in settings are changed on the Security tab", cancellationToken);
+        WriteAsync(changes, definition => definition.IsManagedOnSecurityTab, ApplicationStrings.SettingsOnlySignIn, cancellationToken);
 
     public async Task InsertDefaultsAsync(CancellationToken cancellationToken = default)
     {
@@ -54,11 +55,11 @@ internal class SettingsStore : ISettingsStore
         string changedElsewhere,
         CancellationToken cancellationToken)
     {
-        if (changes.Count == 0) return new SettingsSaveResult("You need to provide at least one setting");
+        if (changes.Count == 0) return new SettingsSaveResult(ApplicationStrings.SettingsNoChanges);
 
         foreach (var (key, value) in changes)
         {
-            if (SettingDefinitions.Find(key) is not { } definition) return new SettingsSaveResult($"There's no setting called {key}");
+            if (SettingDefinitions.Find(key) is not { } definition) return new SettingsSaveResult(ApplicationStrings.Format(ApplicationStrings.SettingsUnknownKey, key));
             if (!changeableHere(definition)) return new SettingsSaveResult(changedElsewhere);
             if (definition.ProblemWith(value) is { } problem) return new SettingsSaveResult(problem);
         }

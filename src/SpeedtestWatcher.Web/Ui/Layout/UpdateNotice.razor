@@ -2,10 +2,10 @@
 
 @if (_updateVersion != null)
 {
-    <MudTooltip Text="@($"Update available: v{_updateVersion}")" Placement="Placement.Bottom">
+    <MudTooltip Text="@WebStrings.Format(WebStrings.UpdateAvailableVersion, _updateVersion)" Placement="Placement.Bottom">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowCircleUp" Color="Color.Warning"
                        Href="@($"{ProjectInfo.RepositoryUrl}/releases/latest")" Target="_blank"
-                       aria-label="Update available" />
+                       aria-label="@WebStrings.UpdateNoticeLabel" />
     </MudTooltip>
 }
 

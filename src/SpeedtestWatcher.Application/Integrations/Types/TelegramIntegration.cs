@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Resources;
+
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class TelegramIntegration : MessageIntegration
@@ -22,7 +24,7 @@ internal sealed class TelegramIntegration : MessageIntegration
 
     protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("token")) || string.IsNullOrEmpty(settings.GetString("chat_id"))
-            ? "The bot token or chat ID is missing"
+            ? ApplicationStrings.TelegramSettingsMissing
             : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)

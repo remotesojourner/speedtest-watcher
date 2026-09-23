@@ -1,5 +1,6 @@
 using System.Globalization;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Web.Resources;
 
 namespace SpeedtestWatcher.Web.Ui.Display;
 
@@ -46,18 +47,18 @@ public static class DisplayFormat
         var span = DateTime.UtcNow - TimeZones.AsUtc(moment);
 
         if (span.TotalSeconds < 60)
-            return "Just now";
+            return WebStrings.JustNow;
         if (span.TotalMinutes < 60)
         {
             var mins = Math.Max(1, (int)span.TotalMinutes);
-            return mins == 1 ? "1 minute ago" : $"{mins} minutes ago";
+            return mins == 1 ? WebStrings.OneMinuteAgo : WebStrings.Format(WebStrings.MinutesAgo, mins);
         }
         if (span.TotalHours < 24)
         {
             var hours = (int)span.TotalHours;
-            return hours == 1 ? "1 hour ago" : $"{hours} hours ago";
+            return hours == 1 ? WebStrings.OneHourAgo : WebStrings.Format(WebStrings.HoursAgo, hours);
         }
         var days = (int)span.TotalDays;
-        return days == 1 ? "1 day ago" : $"{days} days ago";
+        return days == 1 ? WebStrings.OneDayAgo : WebStrings.Format(WebStrings.DaysAgo, days);
     }
 }

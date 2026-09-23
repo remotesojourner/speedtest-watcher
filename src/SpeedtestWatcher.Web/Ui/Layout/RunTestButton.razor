@@ -11,7 +11,7 @@
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
                    StartIcon="@Icons.Material.Filled.Speed" Class="sw-split-main"
                    Disabled="@Blocked" OnClick="RunAsync">
-            @(StatusService.Running ? "Running..." : "Run Test")
+            @(StatusService.Running ? WebStrings.RunTestRunning : WebStrings.RunTestButton)
         </MudButton>
     </MudTooltip>
     @if (CanChooseServer)
@@ -19,7 +19,7 @@
         <MudTooltip Text="@RunOnServerTooltip" Placement="Placement.Bottom">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" DropShadow="false"
                        Class="sw-split-toggle" Disabled="@Blocked"
-                       OnClick="RunOnServerAsync" aria-label="Run on a specific server">
+                       OnClick="RunOnServerAsync" aria-label="@WebStrings.RunTestOnServer">
                 <MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" />
             </MudButton>
         </MudTooltip>
@@ -34,10 +34,10 @@
     private bool CanChooseServer => Tools.Any(tool => tool.Provider == Provider && tool.SupportsServerChoice());
 
     private string RunTestTooltip => StatusService.Paused
-        ? "Speedtests are paused. Resume them in Settings."
-        : StatusService.Running ? "Speedtest running" : "Start speedtest";
+        ? WebStrings.RunTestPausedTooltip
+        : StatusService.Running ? WebStrings.RunTestRunningTooltip : WebStrings.RunTestStartTooltip;
 
-    private string RunOnServerTooltip => Blocked ? RunTestTooltip : "Run on a specific server";
+    private string RunOnServerTooltip => Blocked ? RunTestTooltip : WebStrings.RunTestOnServer;
 
     protected override void OnInitialized()
     {
@@ -50,15 +50,15 @@
     private async Task RunAsync()
     {
         var result = await Runs.StartManualRunAsync(null);
-        if (result.Succeeded) Snackbar.Add("Speedtest started", Severity.Success);
-        else Snackbar.Add(result.Message ?? "A speedtest can't start right now", Severity.Warning);
+        if (result.Succeeded) Snackbar.Add(WebStrings.SpeedtestStarted, Severity.Success);
+        else Snackbar.Add(result.Message ?? WebStrings.RunTestCantStart, Severity.Warning);
     }
 
     private async Task RunOnServerAsync()
     {
         var parameters = new DialogParameters<RunWithServerDialog> { { x => x.Provider, Provider } };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
-        await DialogService.ShowAsync<RunWithServerDialog>("Run a test on a specific server", parameters, options);
+        await DialogService.ShowAsync<RunWithServerDialog>(WebStrings.RunTestOnServerDialogTitle, parameters, options);
     }
 
     public void Dispose()

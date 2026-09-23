@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Text.Json;
 
 namespace SpeedtestWatcher.Application.SignIn;
@@ -20,7 +21,7 @@ internal class OidcDiscoveryChecker : IOidcDiscovery
             client.Timeout = TimeSpan.FromSeconds(10);
             using var response = await client.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
-                return $"The provider answered {(int)response.StatusCode} for {url}. Check the provider URL.";
+                return ApplicationStrings.Format(ApplicationStrings.OidcProviderAnswered, (int)response.StatusCode, url);
 
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
             var root = document.RootElement;
@@ -28,14 +29,14 @@ internal class OidcDiscoveryChecker : IOidcDiscovery
                 || !root.TryGetProperty("authorization_endpoint", out _)
                 || !root.TryGetProperty("token_endpoint", out _))
             {
-                return $"{url} isn't an OpenID Connect discovery document. Check the provider URL.";
+                return ApplicationStrings.Format(ApplicationStrings.OidcNotDiscoveryDocument, url);
             }
 
             return null;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
-            return $"Couldn't read {url}: {ex.Message}";
+            return ApplicationStrings.Format(ApplicationStrings.OidcUnreadable, url, ex.Message);
         }
     }
 }

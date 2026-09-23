@@ -2,36 +2,36 @@
 @inject SettingsState Settings
 @inject ISnackbar Snackbar
 
-<SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="Display Preferences" FullHeight="false"
-             Description="Time format and speed unit are saved in this browser; the rest apply to everyone using this instance.">
+<SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="@WebStrings.DisplayTitle" FullHeight="false"
+             Description="@WebStrings.DisplayDescription">
     <MudGrid Spacing="4">
         <MudItem xs="12" md="6">
-            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Time format</MudText>
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.DisplayTimeFormat</MudText>
             <div class="sw-option-list">
-                <OptionCard Title="24-hour" Description="Display times like 14:30" Icon="@Icons.Material.Filled.Schedule"
+                <OptionCard Title="@WebStrings.Display24Hour" Description="@WebStrings.Display24HourDescription" Icon="@Icons.Material.Filled.Schedule"
                             Active="@(PreferencesService.TimeFormat == "24h")"
                             OnClick="@(() => SavePreferencesAsync("24h", PreferencesService.SpeedUnit))" />
-                <OptionCard Title="12-hour" Description="Display times like 2:30 PM" Icon="@Icons.Material.Filled.Schedule"
+                <OptionCard Title="@WebStrings.Display12Hour" Description="@WebStrings.Display12HourDescription" Icon="@Icons.Material.Filled.Schedule"
                             Active="@(PreferencesService.TimeFormat == "12h")"
                             OnClick="@(() => SavePreferencesAsync("12h", PreferencesService.SpeedUnit))" />
             </div>
         </MudItem>
         <MudItem xs="12" md="6">
-            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Speed unit</MudText>
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.DisplaySpeedUnit</MudText>
             <div class="sw-option-list">
-                <OptionCard Title="Mbps" Description="Megabits per second — the standard speedtest unit" Icon="@Icons.Material.Filled.Speed"
+                <OptionCard Title="Mbps" Description="@WebStrings.DisplayMbpsDescription" Icon="@Icons.Material.Filled.Speed"
                             Active="@(PreferencesService.SpeedUnit == "mbps")"
                             OnClick="@(() => SavePreferencesAsync(PreferencesService.TimeFormat, "mbps"))" />
-                <OptionCard Title="MB/s" Description="Megabytes per second — as shown by browsers and download managers" Icon="@Icons.Material.Filled.Speed"
+                <OptionCard Title="MB/s" Description="@WebStrings.DisplayMBytesDescription" Icon="@Icons.Material.Filled.Speed"
                             Active="@(PreferencesService.SpeedUnit == "mbytes")"
                             OnClick="@(() => SavePreferencesAsync(PreferencesService.TimeFormat, "mbytes"))" />
             </div>
         </MudItem>
 
         <MudItem xs="12" md="6">
-            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Date format</MudText>
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.DisplayDateFormat</MudText>
             <div class="sw-option-list">
-                @foreach (var option in _dateFormats)
+                @foreach (var option in DateFormats)
                 {
                     <OptionCard Title="@option.Title" Description="@Example(option.Id)" Icon="@Icons.Material.Filled.CalendarMonth"
                                 Active="@(DateFormat == option.Id)" OnClick="@(() => SaveSettingAsync("dateFormat", option.Id, DateFormat))" />
@@ -40,9 +40,9 @@
         </MudItem>
 
         <MudItem xs="12" md="6">
-            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Dashboard charts</MudText>
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.DisplayDashboardCharts</MudText>
             <div class="sw-option-list mb-3">
-                @foreach (var option in _chartRanges)
+                @foreach (var option in ChartRanges)
                 {
                     <OptionCard Title="@option.Title" Description="@option.Description" Icon="@Icons.Material.Filled.DateRange"
                                 Active="@(ChartRange == option.Id)" OnClick="@(() => SaveSettingAsync("chartRange", option.Id, ChartRange))" />
@@ -50,8 +50,8 @@
             </div>
             <div class="d-flex align-center justify-space-between">
                 <div>
-                    <MudText Typo="Typo.body2">Start charts at zero</MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Off zooms in on the range your results actually cover</MudText>
+                    <MudText Typo="Typo.body2">@WebStrings.DisplayStartAtZero</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.DisplayStartAtZeroDescription</MudText>
                 </div>
                 <MudSwitch T="bool" Value="@BeginAtZero" ValueChanged="@(value => SaveSettingAsync("chartBeginAtZero", value ? "true" : "false", BeginAtZero ? "true" : "false"))"
                            Color="Color.Primary" />
@@ -61,18 +61,18 @@
 </SurfaceCard>
 
 @code {
-    private static readonly (string Id, string Title)[] _dateFormats =
+    private static (string Id, string Title)[] DateFormats =>
     [
-        ("dmy", "Day first"),
-        ("mdy", "Month first"),
-        ("ymd", "Year first")
+        ("dmy", WebStrings.DisplayDayFirst),
+        ("mdy", WebStrings.DisplayMonthFirst),
+        ("ymd", WebStrings.DisplayYearFirst)
     ];
 
-    private static readonly (string Id, string Title, string Description)[] _chartRanges =
+    private static (string Id, string Title, string Description)[] ChartRanges =>
     [
-        ("24h", "Last 24 hours", "Opens the dashboard on today's results"),
-        ("7d", "Last 7 days", "A week of results"),
-        ("30d", "Last 30 days", "A month of results")
+        ("24h", WebStrings.DisplayLast24Hours, WebStrings.DisplayLast24HoursDescription),
+        ("7d", WebStrings.DisplayLast7Days, WebStrings.DisplayLast7DaysDescription),
+        ("30d", WebStrings.DisplayLast30Days, WebStrings.DisplayLast30DaysDescription)
     ];
 
     private string DateFormat => Settings.Current.Display.DateFormat;
@@ -89,7 +89,7 @@
         if (timeFormat == PreferencesService.TimeFormat && speedUnit == PreferencesService.SpeedUnit) return;
 
         await PreferencesService.SetPreferencesAsync(timeFormat, speedUnit);
-        Snackbar.Add("Preferences saved", Severity.Success);
+        Snackbar.Add(WebStrings.DisplayPreferencesSaved, Severity.Success);
     }
 
     private async Task SaveSettingAsync(string key, string value, string saved)
@@ -97,7 +97,7 @@
         if (value == saved) return;
 
         var result = await Settings.SaveAsync((key, value));
-        if (result.Succeeded) Snackbar.Add("Display settings saved", Severity.Success);
+        if (result.Succeeded) Snackbar.Add(WebStrings.DisplaySettingsSaved, Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 }

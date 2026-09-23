@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -25,7 +26,7 @@ internal sealed class LibreSpeedTool : ISpeedtestTool
 
     public string Title => "LibreSpeed";
 
-    public string Description => "Open-source, self-hostable speedtest";
+    public string Description => ApplicationStrings.LibreSpeedDescription;
 
     public string BinaryName => "librespeed-cli";
 

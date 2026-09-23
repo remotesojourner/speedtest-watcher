@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
@@ -22,7 +23,7 @@ internal sealed class CloudflareTool : ISpeedtestTool
 
     public string Title => "Cloudflare";
 
-    public string Description => "Fast CDN-based testing";
+    public string Description => ApplicationStrings.CloudflareDescription;
 
     public string BinaryName => "cfspeedtest";
 

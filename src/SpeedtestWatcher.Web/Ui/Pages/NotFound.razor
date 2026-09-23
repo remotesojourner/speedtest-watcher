@@ -1,17 +1,17 @@
 @page "/not-found"
 @inject NavigationManager Navigation
 
-<PageTitle>Speedtest Watcher - Not Found</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.NotFoundPageTitle</PageTitle>
 
 <div class="d-flex justify-center mt-12">
     <MudCard Elevation="1" Class="sw-card pa-8 text-center" Style="max-width:480px;width:100%;">
         <MudIcon Icon="@Icons.Material.Filled.SearchOff" Color="Color.Warning" Style="font-size:4rem;" Class="mb-3" />
-        <MudText Typo="Typo.h5" Class="font-weight-bold mb-2">Page Not Found</MudText>
+        <MudText Typo="Typo.h5" Class="font-weight-bold mb-2">@WebStrings.NotFoundTitle</MudText>
         <MudText Typo="Typo.body2" Class="sw-muted mb-6">
-            The page you are looking for does not exist or has been moved.
+            @WebStrings.NotFoundDescription
         </MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Dashboard" OnClick="@(() => Navigation.NavigateTo("/"))">
-            Go to Dashboard
+            @WebStrings.NotFoundGoToDashboard
         </MudButton>
     </MudCard>
 </div>

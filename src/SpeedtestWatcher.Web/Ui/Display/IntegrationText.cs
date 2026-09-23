@@ -1,112 +1,108 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Web.Resources;
 
 namespace SpeedtestWatcher.Web.Ui.Display;
 
 public static class IntegrationText
 {
-    private static readonly Dictionary<string, string> _commonLabels = new()
+    public static string Label(string integration, string field) =>
+        OwnLabel(integration, field) ?? CommonLabel(field) ?? Humanize(field);
+
+    public static string? Placeholder(string integration, string field, string? schemaPlaceholder) =>
+        OwnPlaceholder(integration, field) ?? CommonPlaceholder(field) ?? schemaPlaceholder;
+
+    private static string? CommonLabel(string field) => field switch
     {
-        ["url"] = "Server URL",
-        ["token"] = "Token",
-        ["display_name"] = "Display name",
-        ["send_failed"] = "Send error messages",
-        ["send_unhealthy"] = "Send alerts when a test misses your targets",
-        ["unhealthy_message"] = "Target missed message",
-        ["send_healthy_again"] = "Send a message when tests meet your targets again",
-        ["healthy_again_message"] = "Targets met again message",
-        ["send_skipped"] = "Send alerts when a test is skipped",
-        ["send_connection_lost"] = "Send an alert when the connection goes down",
-        ["connection_lost_message"] = "Connection lost message",
-        ["send_connection_restored"] = "Send a message when the connection comes back",
-        ["connection_restored_message"] = "Connection restored message",
-        ["skipped_message"] = "Skipped message",
-        ["send_finished"] = "Send finished messages",
-        ["finished_message"] = "Finished message",
-        ["error_message"] = "Error message",
-        ["priority"] = "Priority",
-        ["tags"] = "Tags",
-        ["title"] = "Notification title",
-        ["interval"] = "Interval (minutes)"
+        "url" => WebStrings.IntegrationFieldUrl,
+        "token" => WebStrings.IntegrationFieldToken,
+        "display_name" => WebStrings.IntegrationFieldDisplayName,
+        "send_failed" => WebStrings.IntegrationFieldSendFailed,
+        "send_unhealthy" => WebStrings.IntegrationFieldSendUnhealthy,
+        "unhealthy_message" => WebStrings.IntegrationFieldUnhealthyMessage,
+        "send_healthy_again" => WebStrings.IntegrationFieldSendHealthyAgain,
+        "healthy_again_message" => WebStrings.IntegrationFieldHealthyAgainMessage,
+        "send_skipped" => WebStrings.IntegrationFieldSendSkipped,
+        "send_connection_lost" => WebStrings.IntegrationFieldSendConnectionLost,
+        "connection_lost_message" => WebStrings.IntegrationFieldConnectionLostMessage,
+        "send_connection_restored" => WebStrings.IntegrationFieldSendConnectionRestored,
+        "connection_restored_message" => WebStrings.IntegrationFieldConnectionRestoredMessage,
+        "skipped_message" => WebStrings.IntegrationFieldSkippedMessage,
+        "send_finished" => WebStrings.IntegrationFieldSendFinished,
+        "finished_message" => WebStrings.IntegrationFieldFinishedMessage,
+        "error_message" => WebStrings.IntegrationFieldErrorMessage,
+        "priority" => WebStrings.IntegrationFieldPriority,
+        "tags" => WebStrings.IntegrationFieldTags,
+        "title" => WebStrings.IntegrationFieldTitle,
+        "interval" => WebStrings.IntegrationFieldInterval,
+        _ => null
     };
 
-    private static readonly Dictionary<string, Dictionary<string, string>> _labels = new()
+    private static string? OwnLabel(string integration, string field) => (integration, field) switch
     {
-        ["discord"] = new() { ["url"] = "Webhook URL" },
-        ["telegram"] = new() { ["token"] = "Bot token", ["chat_id"] = "Chat ID" },
-        ["gotify"] = new() { ["key"] = "App token" },
-        ["pushover"] = new() { ["token"] = "App token", ["user_key"] = "User key" },
-        ["apprise"] = new() { ["url"] = "Apprise API URL", ["urls"] = "Apprise URLs", ["key"] = "Config key (instead of URLs)" },
-        ["healthChecks"] = new() { ["url"] = "Healthchecks URL", ["interval"] = "Ping interval (minutes)" },
-        ["ntfy"] = new()
-        {
-            ["topic"] = "Topic",
-            ["token"] = "Access token",
-            ["priority"] = "Default priority (1-5)",
-            ["error_priority"] = "Error priority (1-5)"
-        },
-        ["webhook"] = new()
-        {
-            ["url"] = "Webhook URL",
-            ["send_started"] = "Send started messages",
-            ["send_alive"] = "Send keep-alive messages",
-            ["send_recommendations"] = "Send recommendations",
-            ["send_unhealthy"] = "Send target-missed alerts",
-            ["send_healthy_again"] = "Send targets-met-again messages",
-            ["send_skipped"] = "Send skipped-test messages",
-            ["send_connection_lost"] = "Send connection-lost messages",
-            ["send_connection_restored"] = "Send connection-restored messages",
-            ["send_config_updates"] = "Send configuration updates",
-            ["interval"] = "Keep-alive interval (minutes)"
-        }
+        ("discord", "url") => WebStrings.IntegrationFieldWebhookUrl,
+        ("telegram", "token") => WebStrings.IntegrationTelegramToken,
+        ("telegram", "chat_id") => WebStrings.IntegrationTelegramChatId,
+        ("gotify", "key") => WebStrings.IntegrationFieldAppToken,
+        ("pushover", "token") => WebStrings.IntegrationFieldAppToken,
+        ("pushover", "user_key") => WebStrings.IntegrationPushoverUserKey,
+        ("apprise", "url") => WebStrings.IntegrationAppriseUrl,
+        ("apprise", "urls") => WebStrings.IntegrationAppriseUrls,
+        ("apprise", "key") => WebStrings.IntegrationAppriseKey,
+        ("healthChecks", "url") => WebStrings.IntegrationHealthchecksUrl,
+        ("healthChecks", "interval") => WebStrings.IntegrationHealthchecksInterval,
+        ("ntfy", "topic") => WebStrings.IntegrationNtfyTopic,
+        ("ntfy", "token") => WebStrings.IntegrationNtfyToken,
+        ("ntfy", "priority") => WebStrings.IntegrationNtfyPriority,
+        ("ntfy", "error_priority") => WebStrings.IntegrationNtfyErrorPriority,
+        ("webhook", "url") => WebStrings.IntegrationFieldWebhookUrl,
+        ("webhook", "send_started") => WebStrings.IntegrationWebhookSendStarted,
+        ("webhook", "send_alive") => WebStrings.IntegrationWebhookSendAlive,
+        ("webhook", "send_recommendations") => WebStrings.IntegrationWebhookSendRecommendations,
+        ("webhook", "send_unhealthy") => WebStrings.IntegrationWebhookSendUnhealthy,
+        ("webhook", "send_healthy_again") => WebStrings.IntegrationWebhookSendHealthyAgain,
+        ("webhook", "send_skipped") => WebStrings.IntegrationWebhookSendSkipped,
+        ("webhook", "send_connection_lost") => WebStrings.IntegrationWebhookSendConnectionLost,
+        ("webhook", "send_connection_restored") => WebStrings.IntegrationWebhookSendConnectionRestored,
+        ("webhook", "send_config_updates") => WebStrings.IntegrationWebhookSendConfigUpdates,
+        ("webhook", "interval") => WebStrings.IntegrationWebhookInterval,
+        _ => null
     };
 
-    private static readonly Dictionary<string, string> _commonPlaceholders = new()
+    private static string? CommonPlaceholder(string field) => field switch
     {
-        ["finished_message"] = "%year%-%month%-%day% %hour%:%minute% — %ping% ms, %download% Mbps, %upload% Mbps",
-        ["unhealthy_message"] = "%download% Mbps down, %upload% Mbps up, %ping% ms — targets %threshold_download%/%threshold_upload%/%threshold_ping%",
-        ["healthy_again_message"] = "Back within your targets: %download% Mbps down, %upload% Mbps up, %ping% ms",
-        ["skipped_message"] = "[%year%-%month%-%day% %hour%:%minute%] Skipped: %error%",
-        ["connection_lost_message"] = "The line has been down since %since%",
-        ["connection_restored_message"] = "The line is back after %downtime%",
-        ["error_message"] = "[%year%-%month%-%day% %hour%:%minute%] Error: %error%"
+        "finished_message" => "%year%-%month%-%day% %hour%:%minute% — %ping% ms, %download% Mbps, %upload% Mbps",
+        "unhealthy_message" => WebStrings.IntegrationExampleUnhealthyMessage,
+        "healthy_again_message" => WebStrings.IntegrationExampleHealthyAgainMessage,
+        "skipped_message" => WebStrings.IntegrationExampleSkippedMessage,
+        "connection_lost_message" => WebStrings.IntegrationExampleConnectionLostMessage,
+        "connection_restored_message" => WebStrings.IntegrationExampleConnectionRestoredMessage,
+        "error_message" => WebStrings.IntegrationExampleErrorMessage,
+        _ => null
     };
 
-    private static readonly Dictionary<string, Dictionary<string, string>> _placeholders = new()
+    private static string? OwnPlaceholder(string integration, string field) => (integration, field) switch
     {
-        ["discord"] = new() { ["url"] = "https://discord.com/api/webhooks/...", ["display_name"] = "Speedtest Watcher Notification" },
-        ["apprise"] = new()
-        {
-            ["url"] = "http://apprise:8000",
-            ["urls"] = "discord://id/token, mailto://user:pass@example.com",
-            ["key"] = "apprise",
-            ["tags"] = "Optional, e.g. admin, devops or all",
-            ["title"] = ProjectInfo.Name
-        },
-        ["healthChecks"] = new() { ["url"] = "https://hc-ping.com/<uuid>" },
-        ["ntfy"] = new()
-        {
-            ["url"] = "https://ntfy.sh",
-            ["topic"] = "speedtest-watcher-alerts",
-            ["token"] = "Optional, for protected servers",
-            ["tags"] = "warning,satellite",
-            ["title"] = ProjectInfo.Name
-        },
-        ["webhook"] = new() { ["url"] = "https://your-server.com/hook" }
+        ("discord", "url") => "https://discord.com/api/webhooks/...",
+        ("discord", "display_name") => WebStrings.Format(WebStrings.IntegrationExampleDiscordName, ProjectInfo.Name),
+        ("gotify", "key") => WebStrings.IntegrationExampleAppToken,
+        ("pushover", "token") => WebStrings.IntegrationExampleApiToken,
+        ("pushover", "user_key") => WebStrings.IntegrationExampleUserKey,
+        ("telegram", "token") => WebStrings.IntegrationExampleBotToken,
+        ("telegram", "chat_id") => WebStrings.IntegrationExampleChatId,
+        ("apprise", "url") => "http://apprise:8000",
+        ("apprise", "urls") => "discord://id/token, mailto://user:pass@example.com",
+        ("apprise", "key") => "apprise",
+        ("apprise", "tags") => WebStrings.IntegrationExampleAppriseTags,
+        ("apprise", "title") => ProjectInfo.Name,
+        ("healthChecks", "url") => "https://hc-ping.com/<uuid>",
+        ("ntfy", "url") => "https://ntfy.sh",
+        ("ntfy", "topic") => "speedtest-watcher-alerts",
+        ("ntfy", "token") => WebStrings.IntegrationExampleNtfyToken,
+        ("ntfy", "tags") => "warning,satellite",
+        ("ntfy", "title") => ProjectInfo.Name,
+        ("webhook", "url") => "https://your-server.com/hook",
+        _ => null
     };
-
-    public static string Label(string integration, string field)
-    {
-        if (_labels.TryGetValue(integration, out var own) && own.TryGetValue(field, out var label)) return label;
-        if (_commonLabels.TryGetValue(field, out var common)) return common;
-        return Humanize(field);
-    }
-
-    public static string? Placeholder(string integration, string field, string? schemaPlaceholder)
-    {
-        if (_placeholders.TryGetValue(integration, out var own) && own.TryGetValue(field, out var placeholder)) return placeholder;
-        if (_commonPlaceholders.TryGetValue(field, out var common)) return common;
-        return schemaPlaceholder;
-    }
 
     private static string Humanize(string field)
     {

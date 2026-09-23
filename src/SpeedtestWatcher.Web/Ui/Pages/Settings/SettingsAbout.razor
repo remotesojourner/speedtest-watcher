@@ -6,34 +6,34 @@
             <div class="d-flex align-center gap-3 mb-3">
                 <img src="img/logo.svg" style="width:48px;height:48px;object-fit:contain;" alt="" />
                 <div>
-                    <MudText Typo="Typo.h6" Class="font-weight-bold">Speedtest Watcher</MudText>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">@ProjectInfo.Name</MudText>
                     <MudText Typo="Typo.body2" Class="sw-muted">v@(ProjectInfo.Version)</MudText>
                 </div>
             </div>
             @if (UpdateCheck.AvailableUpdate(_version) is { } update)
             {
                 <MudAlert Severity="Severity.Success" Class="mb-3">
-                    Update available: v@update
-                    <MudLink Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank" Class="ml-2">Changelog</MudLink>
+                    @WebStrings.Format(WebStrings.UpdateAvailableVersion, update)
+                    <MudLink Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank" Class="ml-2">@WebStrings.AboutChangelog</MudLink>
                 </MudAlert>
             }
             else if (_versionChecked && (_version == null || _version.Remote == "0"))
             {
-                <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">Couldn't check for updates.</MudText>
+                <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">@WebStrings.AboutUpdateCheckFailed</MudText>
             }
             <MudText Typo="Typo.body2" Class="sw-muted">
-                A self-hosted speed test manager that periodically tests your internet connection and logs results to monitor your ISP performance.
+                @WebStrings.AboutDescription
             </MudText>
         </SurfaceCard>
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Link" Title="Links">
+        <SurfaceCard Icon="@Icons.Material.Filled.Link" Title="@WebStrings.AboutLinks">
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Code" Href="@ProjectInfo.RepositoryUrl" Target="_blank">GitHub</MudButton>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.NewReleases" Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank">Releases</MudButton>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.BugReport" Href="@($"{ProjectInfo.RepositoryUrl}/issues")" Target="_blank">Report an issue</MudButton>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Favorite" Href="@ProjectInfo.SponsorUrl" Target="_blank" Class="sw-sponsor">Sponsor</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.NewReleases" Href="@($"{ProjectInfo.RepositoryUrl}/releases")" Target="_blank">@WebStrings.AboutReleases</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.BugReport" Href="@($"{ProjectInfo.RepositoryUrl}/issues")" Target="_blank">@WebStrings.AboutReportIssue</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Favorite" Href="@ProjectInfo.SponsorUrl" Target="_blank" Class="sw-sponsor">@WebStrings.AboutSponsor</MudButton>
             </div>
         </SurfaceCard>
     </MudItem>

@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -15,7 +16,7 @@ public static class IntegrationSettingsRules
     {
         var fieldNames = schema.Fields.Select(field => field.Name).ToHashSet(StringComparer.Ordinal);
         if (changedKeys.FirstOrDefault(key => !fieldNames.Contains(key)) is { } unknown)
-            return $"{unknown} isn't a setting of the {schema.Title} integration";
+            return ApplicationStrings.Format(ApplicationStrings.IntegrationUnknownSetting, unknown, schema.Title);
 
         return schema.Fields
             .Select(field => ProblemWith(field, settings.TryGetValue(field.Name, out var value) ? value : default))
@@ -25,12 +26,12 @@ public static class IntegrationSettingsRules
     private static string? ProblemWith(IntegrationFieldSchemaDto field, JsonElement value)
     {
         if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
-            return field.Required ? $"{field.Name} is required" : null;
+            return field.Required ? ApplicationStrings.Format(ApplicationStrings.IntegrationFieldRequired, field.Name) : null;
 
         return field.Type switch
         {
-            "boolean" => value.ValueKind is JsonValueKind.True or JsonValueKind.False ? null : $"{field.Name} needs to be true or false",
-            "number" => IsWholeNumber(value) ? null : $"{field.Name} needs to be a whole number",
+            "boolean" => value.ValueKind is JsonValueKind.True or JsonValueKind.False ? null : ApplicationStrings.Format(ApplicationStrings.IntegrationFieldBoolean, field.Name),
+            "number" => IsWholeNumber(value) ? null : ApplicationStrings.Format(ApplicationStrings.IntegrationFieldNumber, field.Name),
             _ => TextProblem(field, value)
         };
     }
@@ -44,15 +45,15 @@ public static class IntegrationSettingsRules
 
     private static string? TextProblem(IntegrationFieldSchemaDto field, JsonElement value)
     {
-        if (value.ValueKind != JsonValueKind.String) return $"{field.Name} needs to be text";
+        if (value.ValueKind != JsonValueKind.String) return ApplicationStrings.Format(ApplicationStrings.IntegrationFieldText, field.Name);
 
         var text = value.GetString()!;
-        if (text.Length == 0) return field.Required ? $"{field.Name} is required" : null;
+        if (text.Length == 0) return field.Required ? ApplicationStrings.Format(ApplicationStrings.IntegrationFieldRequired, field.Name) : null;
 
         var maxLength = field.Type == "textarea" ? MaxTextareaLength : MaxTextLength;
-        if (text.Length > maxLength) return $"{field.Name} can be at most {maxLength} characters";
+        if (text.Length > maxLength) return ApplicationStrings.Format(ApplicationStrings.IntegrationFieldTooLong, field.Name, maxLength);
 
-        return MatchesPattern(field.Regex, text) ? null : $"{field.Name} doesn't have the expected format";
+        return MatchesPattern(field.Regex, text) ? null : ApplicationStrings.Format(ApplicationStrings.IntegrationFieldFormat, field.Name);
     }
 
     private static bool MatchesPattern(string? pattern, string text)

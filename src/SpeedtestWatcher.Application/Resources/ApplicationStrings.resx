@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AuthenticationRequired" xml:space="preserve">
+    <value>Authentication required</value>
+  </data>
+  <data name="ListAnd" xml:space="preserve">
+    <value>{0} and {1}</value>
+  </data>
+  <data name="DurationOneSecond" xml:space="preserve">
+    <value>1 second</value>
+  </data>
+  <data name="DurationSeconds" xml:space="preserve">
+    <value>{0} seconds</value>
+  </data>
+  <data name="DurationOneMinute" xml:space="preserve">
+    <value>1 minute</value>
+  </data>
+  <data name="DurationMinutes" xml:space="preserve">
+    <value>{0} minutes</value>
+  </data>
+  <data name="DurationOneHour" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="DurationHours" xml:space="preserve">
+    <value>{0} hours</value>
+  </data>
+  <data name="DurationOneDay" xml:space="preserve">
+    <value>1 day</value>
+  </data>
+  <data name="DurationDays" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="TargetPing" xml:space="preserve">
+    <value>ping</value>
+  </data>
+  <data name="TargetDownload" xml:space="preserve">
+    <value>download</value>
+  </data>
+  <data name="TargetUpload" xml:space="preserve">
+    <value>upload</value>
+  </data>
+  <data name="TargetPacketLoss" xml:space="preserve">
+    <value>packet loss</value>
+  </data>
+  <data name="TargetBufferbloat" xml:space="preserve">
+    <value>bufferbloat</value>
+  </data>
+  <data name="SettingValueRequired" xml:space="preserve">
+    <value>You need to provide the new value</value>
+  </data>
+  <data name="SettingNumberNeeded" xml:space="preserve">
+    <value>You need to provide a number in order to change this</value>
+  </data>
+  <data name="SettingUrlNeeded" xml:space="preserve">
+    <value>You need to provide a valid URL in order to change this</value>
+  </data>
+  <data name="SettingInvalidProvider" xml:space="preserve">
+    <value>You need to provide a valid provider</value>
+  </data>
+  <data name="SettingInvalidServerMode" xml:space="preserve">
+    <value>You need to provide a valid server mode</value>
+  </data>
+  <data name="SettingInvalidServerListMode" xml:space="preserve">
+    <value>You need to provide a valid server list mode</value>
+  </data>
+  <data name="SettingInvalidChartRange" xml:space="preserve">
+    <value>You need to provide a valid chart range</value>
+  </data>
+  <data name="SettingInvalidDateFormat" xml:space="preserve">
+    <value>You need to provide a valid date format</value>
+  </data>
+  <data name="SettingInvalidVisitorAccess" xml:space="preserve">
+    <value>You need to provide a valid visitor access level</value>
+  </data>
+  <data name="SettingServerIdsInvalid" xml:space="preserve">
+    <value>Server IDs need to be numbers separated by commas</value>
+  </data>
+  <data name="SettingBooleanNeeded" xml:space="preserve">
+    <value>You need to provide a boolean in order to change this</value>
+  </data>
+  <data name="SettingProbeTargetsInvalid" xml:space="preserve">
+    <value>Probe targets need to look like host:port, separated by commas</value>
+  </data>
+  <data name="SettingSecondsRange" xml:space="preserve">
+    <value>You need to provide a number of seconds between {0} and {1}</value>
+  </data>
+  <data name="SettingRoundsRange" xml:space="preserve">
+    <value>You need to provide a number of rounds between 1 and {0}</value>
+  </data>
+  <data name="SettingSkipIpsInvalid" xml:space="preserve">
+    <value>The skip list needs IP addresses separated by commas</value>
+  </data>
+  <data name="SettingRetentionRange" xml:space="preserve">
+    <value>You need to provide a number between 0 and {0} in order to change this</value>
+  </data>
+  <data name="SettingCronInvalid" xml:space="preserve">
+    <value>You need to provide a valid cron expression</value>
+  </data>
+  <data name="SettingsOnSecurityTab" xml:space="preserve">
+    <value>Sign-in settings are changed on the Security tab</value>
+  </data>
+  <data name="SettingsOnlySignIn" xml:space="preserve">
+    <value>Only sign-in settings are changed on the Security tab</value>
+  </data>
+  <data name="SettingsNoChanges" xml:space="preserve">
+    <value>You need to provide at least one setting</value>
+  </data>
+  <data name="SettingsUnknownKey" xml:space="preserve">
+    <value>There's no setting called {0}</value>
+  </data>
+  <data name="IntegrationNotFound" xml:space="preserve">
+    <value>Integration not found</value>
+  </data>
+  <data name="IntegrationUnknownType" xml:space="preserve">
+    <value>{0} isn't a known integration type</value>
+  </data>
+  <data name="IntegrationUnknownSetting" xml:space="preserve">
+    <value>{0} isn't a setting of the {1} integration</value>
+  </data>
+  <data name="IntegrationFieldRequired" xml:space="preserve">
+    <value>{0} is required</value>
+  </data>
+  <data name="IntegrationFieldBoolean" xml:space="preserve">
+    <value>{0} needs to be true or false</value>
+  </data>
+  <data name="IntegrationFieldNumber" xml:space="preserve">
+    <value>{0} needs to be a whole number</value>
+  </data>
+  <data name="IntegrationFieldText" xml:space="preserve">
+    <value>{0} needs to be text</value>
+  </data>
+  <data name="IntegrationFieldTooLong" xml:space="preserve">
+    <value>{0} can be at most {1} characters</value>
+  </data>
+  <data name="IntegrationFieldFormat" xml:space="preserve">
+    <value>{0} doesn't have the expected format</value>
+  </data>
+  <data name="IntegrationSettingsUnreadable" xml:space="preserve">
+    <value>The settings can't be read</value>
+  </data>
+  <data name="IntegrationUnreachable" xml:space="preserve">
+    <value>Couldn't reach {0}: {1}</value>
+  </data>
+  <data name="IntegrationTimeout" xml:space="preserve">
+    <value>{0} didn't answer within {1:F0} seconds</value>
+  </data>
+  <data name="IntegrationAnswered" xml:space="preserve">
+    <value>{0} answered HTTP {1}</value>
+  </data>
+  <data name="IntegrationAnsweredWithReply" xml:space="preserve">
+    <value>{0} answered HTTP {1}: {2}</value>
+  </data>
+  <data name="AppriseServerUrlMissing" xml:space="preserve">
+    <value>The server URL is missing</value>
+  </data>
+  <data name="AppriseUrlsOrKey" xml:space="preserve">
+    <value>Use either Apprise URLs or a config key, not both</value>
+  </data>
+  <data name="AppriseNoValidUrls" xml:space="preserve">
+    <value>Apprise found no valid URLs to send to</value>
+  </data>
+  <data name="AppriseNoConfiguration" xml:space="preserve">
+    <value>Apprise has no configuration for the key {0}</value>
+  </data>
+  <data name="AppriseNothingTagged" xml:space="preserve">
+    <value>Apprise has nothing tagged {0} to notify</value>
+  </data>
+  <data name="AppriseNothingUntagged" xml:space="preserve">
+    <value>Apprise has nothing untagged to notify. Add tags, or all, to choose what to notify</value>
+  </data>
+  <data name="WebhookUrlMissing" xml:space="preserve">
+    <value>The webhook URL is missing</value>
+  </data>
+  <data name="HealthchecksUrlMissing" xml:space="preserve">
+    <value>The ping URL is missing</value>
+  </data>
+  <data name="InfluxDbDestinationMissing" xml:space="preserve">
+    <value>The URL, organization or bucket is missing</value>
+  </data>
+  <data name="InfluxDbNoBucket" xml:space="preserve">
+    <value>InfluxDB has no bucket named {0} in {1}</value>
+  </data>
+  <data name="GotifySettingsMissing" xml:space="preserve">
+    <value>The server URL or app token is missing</value>
+  </data>
+  <data name="NtfyTopicMissing" xml:space="preserve">
+    <value>The topic is missing</value>
+  </data>
+  <data name="PushoverSettingsMissing" xml:space="preserve">
+    <value>The API token or user key is missing</value>
+  </data>
+  <data name="TelegramSettingsMissing" xml:space="preserve">
+    <value>The bot token or chat ID is missing</value>
+  </data>
+  <data name="LatencyRange1Hour" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="LatencyRange6Hours" xml:space="preserve">
+    <value>6 hours</value>
+  </data>
+  <data name="LatencyRange24Hours" xml:space="preserve">
+    <value>24 hours</value>
+  </data>
+  <data name="LatencyRange7Days" xml:space="preserve">
+    <value>7 days</value>
+  </data>
+  <data name="OutageNotFound" xml:space="preserve">
+    <value>Outage not found</value>
+  </data>
+  <data name="OoklaDescription" xml:space="preserve">
+    <value>Popular provider with a global server network</value>
+  </data>
+  <data name="LibreSpeedDescription" xml:space="preserve">
+    <value>Open-source, self-hostable speedtest</value>
+  </data>
+  <data name="CloudflareDescription" xml:space="preserve">
+    <value>Fast CDN-based testing</value>
+  </data>
+  <data name="ProviderInvalid" xml:space="preserve">
+    <value>Invalid provider</value>
+  </data>
+  <data name="RecommendationsNotFound" xml:space="preserve">
+    <value>No recommendations found</value>
+  </data>
+  <data name="SignInProviderUrlInvalid" xml:space="preserve">
+    <value>The provider URL must be a full http(s) URL</value>
+  </data>
+  <data name="SignInIncomplete" xml:space="preserve">
+    <value>Sign-in needs the provider URL and a client ID</value>
+  </data>
+  <data name="OidcProviderAnswered" xml:space="preserve">
+    <value>The provider answered {0} for {1}. Check the provider URL.</value>
+  </data>
+  <data name="OidcNotDiscoveryDocument" xml:space="preserve">
+    <value>{0} isn't an OpenID Connect discovery document. Check the provider URL.</value>
+  </data>
+  <data name="OidcUnreadable" xml:space="preserve">
+    <value>Couldn't read {0}: {1}</value>
+  </data>
+  <data name="PauseTooLong" xml:space="preserve">
+    <value>Speedtests can be paused for at most {0:0} hours. Pause them indefinitely for a longer break.</value>
+  </data>
+  <data name="SpeedtestNotFound" xml:space="preserve">
+    <value>Speedtest not found</value>
+  </data>
+  <data name="NoTestsProvided" xml:space="preserve">
+    <value>No tests provided</value>
+  </data>
+  <data name="SpeedtestAlreadyRunning" xml:space="preserve">
+    <value>Speedtest is already running</value>
+  </data>
+  <data name="NoProviderSelected" xml:space="preserve">
+    <value>No speedtest provider selected</value>
+  </data>
+  <data name="SpeedtestsPaused" xml:space="preserve">
+    <value>Speedtests are paused</value>
+  </data>
+  <data name="StatisticsUnknownTimeZone" xml:space="preserve">
+    <value>{0} isn't a time zone this server knows. Use an IANA name such as Europe/London.</value>
+  </data>
+  <data name="StatisticsFailedInPeriod" xml:space="preserve">
+    <value>{0} failed in period</value>
+  </data>
+</root>

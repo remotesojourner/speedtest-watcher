@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkiaSharp;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Web.Resources;
 using SpeedtestWatcher.Web.SignIn;
 
 namespace SpeedtestWatcher.Web.Api;
@@ -71,13 +72,13 @@ public class OpenGraphController : ControllerBase
         using var downloadPaint = TextPaint("#06b6d4");
         using var uploadPaint = TextPaint("#8b5cf6");
 
-        canvas.DrawText($"{ProjectInfo.Name} Network Performance", 60, 90, SKTextAlign.Left, headerFont, headerPaint);
+        canvas.DrawText(WebStrings.Format(WebStrings.LinkPreviewHeader, ProjectInfo.Name), 60, 90, SKTextAlign.Left, headerFont, headerPaint);
         canvas.DrawText(preview.Subtitle, 60, 130, SKTextAlign.Left, labelFont, labelPaint);
 
         var style = new CardStyle(cardFill, cardBorder, labelFont, labelPaint, valueFont);
-        DrawCard(canvas, PingCardLeft, "PING", preview.Ping, pingPaint, preview.PingCaption, style);
-        DrawCard(canvas, DownloadCardLeft, "DOWNLOAD", preview.Download, downloadPaint, "Mbps", style);
-        DrawCard(canvas, UploadCardLeft, "UPLOAD", preview.Upload, uploadPaint, "Mbps", style);
+        DrawCard(canvas, PingCardLeft, WebStrings.LinkPreviewPing, preview.Ping, pingPaint, preview.PingCaption, style);
+        DrawCard(canvas, DownloadCardLeft, WebStrings.LinkPreviewDownload, preview.Download, downloadPaint, "Mbps", style);
+        DrawCard(canvas, UploadCardLeft, WebStrings.LinkPreviewUpload, preview.Upload, uploadPaint, "Mbps", style);
 
         canvas.Flush();
 

@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Resources;
+
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class PushoverIntegration : MessageIntegration
@@ -22,7 +24,7 @@ internal sealed class PushoverIntegration : MessageIntegration
 
     protected override string? SettingsProblem(IntegrationSettings settings) =>
         string.IsNullOrEmpty(settings.GetString("token")) || string.IsNullOrEmpty(settings.GetString("user_key"))
-            ? "The API token or user key is missing"
+            ? ApplicationStrings.PushoverSettingsMissing
             : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)

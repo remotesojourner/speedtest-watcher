@@ -8,11 +8,11 @@
 @inject IDialogService DialogService
 @implements IDisposable
 
-<PageTitle>Speedtest Watcher - History</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.HistoryTitle</PageTitle>
 
 <MudPaper Elevation="1" Class="@($"{HeroClass()} pa-6 mb-6")">
     <div class="d-flex flex-wrap align-end justify-space-between gap-6">
-        <MudTooltip Text="Download speed affects your browsing experience. The more you get, the faster your computer can receive data."
+        <MudTooltip Text="@WebStrings.HistoryDownloadTooltip"
                     Placement="Placement.Top">
             <MetricDisplay Size="MetricSize.Hero" Color="@DownloadColor"
                            Value="@(LatestReading != null ? $"{PreferencesService.ConvertSpeed(LatestReading.Download):F1}" : "—")"
@@ -21,18 +21,18 @@
         </MudTooltip>
 
         <div class="d-flex flex-wrap gap-6">
-            <MudTooltip Text="Upload speed affects your browsing experience. The more you get, the faster your computer can send data."
+            <MudTooltip Text="@WebStrings.HistoryUploadTooltip"
                         Placement="Placement.Top">
                 <MetricDisplay Size="MetricSize.Large" Color="@UploadColor" Icon="@Icons.Material.Filled.Upload"
                                Value="@(LatestReading != null ? $"{PreferencesService.ConvertSpeed(LatestReading.Upload):F1}" : "—")"
-                               Label="@($"{PreferencesService.SpeedUnit} upload")" />
+                               Label="@WebStrings.Format(WebStrings.UploadUnit, PreferencesService.SpeedUnit)" />
             </MudTooltip>
 
-            <MudTooltip Text="Ping shows how fast the provider responds — shorter is better. Jitter is how much it varies; lower means a more stable connection."
+            <MudTooltip Text="@WebStrings.HistoryPingTooltip"
                         Placement="Placement.Top">
                 <MetricDisplay Size="MetricSize.Large" Color="@PingColor" Icon="@Icons.Material.Filled.NetworkPing"
                                Value="@(LatestReading != null ? $"{LatestReading.Ping}" : "—")"
-                               Label="@($"ms ping{(LatestReading?.Jitter != null ? $" (±{LatestReading.Jitter:F1})" : "")}")" />
+                               Label="@(LatestReading?.Jitter is { } jitter ? WebStrings.Format(WebStrings.PingMsWithJitter, jitter) : WebStrings.PingMs)" />
             </MudTooltip>
         </div>
     </div>
@@ -41,47 +41,47 @@
 </MudPaper>
 
 <div class="d-flex flex-wrap align-center justify-space-between gap-3 mb-3">
-    <MudText Typo="Typo.h6" Class="font-weight-bold">Recent Tests</MudText>
+    <MudText Typo="Typo.h6" Class="font-weight-bold">@WebStrings.HistoryRecentTests</MudText>
 
     <div class="d-flex flex-wrap align-center gap-2">
         <MudSelect T="FilterChoice<TestStatus>" Value="_status" ValueChanged="SetStatusAsync!" ToStringFunc="@(choice => choice?.Label)"
-                   Label="Status" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in _statusChoices)
+                   Label="@WebStrings.HistoryFilterStatus" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in StatusChoices)
             {
                 <MudSelectItem T="FilterChoice<TestStatus>" Value="choice">@choice.Label</MudSelectItem>
             }
         </MudSelect>
 
         <MudSelect T="FilterChoice<TestType>" Value="_type" ValueChanged="SetTypeAsync!" ToStringFunc="@(choice => choice?.Label)"
-                   Label="Started by" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in _typeChoices)
+                   Label="@WebStrings.HistoryFilterStartedBy" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in TypeChoices)
             {
                 <MudSelectItem T="FilterChoice<TestType>" Value="choice">@choice.Label</MudSelectItem>
             }
         </MudSelect>
 
         <MudSelect T="FilterChoice<bool>" Value="_healthy" ValueChanged="SetHealthAsync!" ToStringFunc="@(choice => choice?.Label)"
-                   Label="Targets" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
-            @foreach (var choice in _healthChoices)
+                   Label="@WebStrings.HistoryFilterTargets" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="sw-filter">
+            @foreach (var choice in HealthChoices)
             {
                 <MudSelectItem T="FilterChoice<bool>" Value="choice">@choice.Label</MudSelectItem>
             }
         </MudSelect>
 
-        <MudTooltip Text="@(_selecting ? "Stop selecting" : "Select results")" Placement="Placement.Bottom">
+        <MudTooltip Text="@(_selecting ? WebStrings.HistoryStopSelecting : WebStrings.HistorySelectResults)" Placement="Placement.Bottom">
             <MudIconButton Icon="@Icons.Material.Filled.Checklist" Color="@(_selecting ? Color.Primary : Color.Default)"
-                           OnClick="ToggleSelecting" aria-label="Select results" />
+                           OnClick="ToggleSelecting" aria-label="@WebStrings.HistorySelectResults" />
         </MudTooltip>
-        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="OpenExportAsync">Export</MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="OpenExportAsync">@WebStrings.ExportButton</MudButton>
     </div>
 </div>
 
 @if (_selecting)
 {
     <div class="d-flex flex-wrap align-center gap-3 mb-3">
-        <MudText Typo="Typo.body2" Class="sw-muted">@_selected.Count selected</MudText>
-        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="SelectAllVisible">Select all shown</MudButton>
-        <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="@(_selected.Count == 0)" OnClick="ClearSelection">Clear</MudButton>
+        <MudText Typo="Typo.body2" Class="sw-muted">@WebStrings.Format(WebStrings.SelectedCount, _selected.Count)</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="SelectAllVisible">@WebStrings.HistorySelectAllShown</MudButton>
+        <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="@(_selected.Count == 0)" OnClick="ClearSelection">@WebStrings.HistoryClearSelection</MudButton>
     </div>
 }
 
@@ -90,11 +90,11 @@
     <EmptyContent>
         @if (_list.Filter.IsActive)
         {
-            <span>No results match these filters.</span>
+            <span>@WebStrings.HistoryNoMatches</span>
         }
         else
         {
-            <span>There are currently no tests. Click <strong>Run Test</strong> above to run your first one.</span>
+            <span><FormattedText Format="@WebStrings.HistoryNoTests" Arguments="@([RunTestButtonName])" /></span>
         }
     </EmptyContent>
     <ChildContent>
@@ -128,7 +128,7 @@
                             {
                                 <MudItem xs="12" sm="9">
                                     <div class="d-flex align-center gap-2">
-                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Skipped</MudChip>
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">@WebStrings.StatusSkipped</MudChip>
                                         <MudText Typo="Typo.caption" Class="sw-muted">@test.Error</MudText>
                                     </div>
                                 </MudItem>
@@ -137,7 +137,7 @@
                             {
                                 <MudItem xs="12" sm="9">
                                     <div class="d-flex align-center gap-2">
-                                        <MudChip T="string" Color="Color.Error" Size="Size.Small">Failed</MudChip>
+                                        <MudChip T="string" Color="Color.Error" Size="Size.Small">@WebStrings.StatusFailed</MudChip>
                                         <MudText Typo="Typo.caption" Color="Color.Error">@SpeedtestErrors.Describe(test.Error)</MudText>
                                     </div>
                                 </MudItem>
@@ -151,7 +151,7 @@
                                             @test.Ping ms
                                             @if (test.Jitter is { } jitter)
                                             {
-                                                <span class="sw-muted font-weight-regular" title="Jitter">±@($"{jitter:F1}")</span>
+                                                <span class="sw-muted font-weight-regular" title="@WebStrings.Jitter">±@($"{jitter:F1}")</span>
                                             }
                                         </MudText>
                                     </div>
@@ -188,10 +188,10 @@
         else if (_list.LoadMoreFailed)
         {
             <div class="d-flex flex-wrap align-center justify-center gap-3 pa-4">
-                <MudText Typo="Typo.body2" Color="Color.Error">Couldn't load more tests.</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Error">@WebStrings.HistoryLoadMoreFailed</MudText>
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
                            OnClick="LoadMoreAsync">
-                    Try again
+                    @WebStrings.TryAgain
                 </MudButton>
             </div>
         }
@@ -201,11 +201,11 @@
         }
         else
         {
-            <MudText Typo="Typo.caption" Class="sw-muted text-center d-block pa-4">No more tests to load</MudText>
+            <MudText Typo="Typo.caption" Class="sw-muted text-center d-block pa-4">@WebStrings.HistoryNoMoreTests</MudText>
         }
 
         <MudScrollToTop TopOffset="400">
-            <MudFab Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ArrowUpward" aria-label="Back to top" />
+            <MudFab Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ArrowUpward" aria-label="@WebStrings.HistoryBackToTop" />
         </MudScrollToTop>
     </ChildContent>
 </StateView>
@@ -215,35 +215,37 @@
 
     private sealed record FilterChoice<TValue>(TValue? Value, string Label) where TValue : struct;
 
-    private static readonly FilterChoice<TestStatus>[] _statusChoices =
+    private static FilterChoice<TestStatus>[] StatusChoices =>
     [
-        new(null, "All results"),
-        new(TestStatus.Completed, "Completed"),
-        new(TestStatus.Failed, "Failed"),
-        new(TestStatus.Skipped, "Skipped")
+        new(null, WebStrings.AllResults),
+        new(TestStatus.Completed, WebStrings.StatusCompleted),
+        new(TestStatus.Failed, WebStrings.StatusFailed),
+        new(TestStatus.Skipped, WebStrings.StatusSkipped)
     ];
 
-    private static readonly FilterChoice<TestType>[] _typeChoices =
+    private static FilterChoice<TestType>[] TypeChoices =>
     [
-        new(null, "Anything"),
-        new(TestType.Auto, "Schedule"),
-        new(TestType.Custom, "By hand")
+        new(null, WebStrings.HistoryStartedByAnything),
+        new(TestType.Auto, WebStrings.HistoryStartedBySchedule),
+        new(TestType.Custom, WebStrings.HistoryStartedByHand)
     ];
 
-    private static readonly FilterChoice<bool>[] _healthChoices =
+    private static FilterChoice<bool>[] HealthChoices =>
     [
-        new(null, "Any result"),
-        new(true, "Met targets"),
-        new(false, "Missed targets")
+        new(null, WebStrings.HistoryTargetsAny),
+        new(true, WebStrings.HistoryTargetsMet),
+        new(false, WebStrings.HistoryTargetsMissed)
     ];
+
+    private static RenderFragment RunTestButtonName => @<strong>@WebStrings.RunTestButton</strong>;
 
     private PagedTestList _list = null!;
     private Timer? _timer;
     private List<double> _downloadHistory = [];
 
-    private FilterChoice<TestStatus> _status = _statusChoices[0];
-    private FilterChoice<TestType> _type = _typeChoices[0];
-    private FilterChoice<bool> _healthy = _healthChoices[0];
+    private FilterChoice<TestStatus> _status = StatusChoices[0];
+    private FilterChoice<TestType> _type = TypeChoices[0];
+    private FilterChoice<bool> _healthy = HealthChoices[0];
 
     private bool _selecting;
     private readonly HashSet<int> _selected = [];
@@ -251,7 +253,7 @@
     private SpeedtestDto? LatestReading => RecentResults.LatestCompleted;
 
     private string? LoadError => _list.LoadFailed
-        ? (_list.Filter.IsActive ? "Couldn't load the results for these filters." : "Couldn't load your tests.")
+        ? (_list.Filter.IsActive ? WebStrings.HistoryFilteredLoadFailed : WebStrings.HistoryLoadFailed)
         : null;
 
     private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, Settings.Current.Targets.Ping);
@@ -376,28 +378,28 @@
             { x => x.SelectedIds, _selected.ToList() }
         };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
-        await DialogService.ShowAsync<ExportDialog>("Export results", parameters, options);
+        await DialogService.ShowAsync<ExportDialog>(WebStrings.HistoryExportDialogTitle, parameters, options);
     }
 
     private string TargetsTooltip(SpeedtestDto test)
     {
         var parts = new List<string>();
-        if (test.ThresholdPing is { } ping) parts.Add($"ping {ping} ms");
-        if (test.ThresholdDownload is { } download) parts.Add($"download {PreferencesService.ConvertSpeed(download):F1} {PreferencesService.SpeedUnit}");
-        if (test.ThresholdUpload is { } upload) parts.Add($"upload {PreferencesService.ConvertSpeed(upload):F1} {PreferencesService.SpeedUnit}");
-        return parts.Count > 0 ? $"Missed your targets: {string.Join(", ", parts)}" : "Missed your targets";
+        if (test.ThresholdPing is { } ping) parts.Add(WebStrings.Format(WebStrings.HistoryTargetPing, ping));
+        if (test.ThresholdDownload is { } download) parts.Add(WebStrings.Format(WebStrings.HistoryTargetDownload, PreferencesService.ConvertSpeed(download), PreferencesService.SpeedUnit));
+        if (test.ThresholdUpload is { } upload) parts.Add(WebStrings.Format(WebStrings.HistoryTargetUpload, PreferencesService.ConvertSpeed(upload), PreferencesService.SpeedUnit));
+        return parts.Count > 0 ? WebStrings.Format(WebStrings.HistoryMissedTargetsList, string.Join(", ", parts)) : WebStrings.MissedYourTargets;
     }
 
     private string DownloadLabel() =>
         LatestReading != null
-            ? $"Download speed · last test {DisplayFormat.ToRelativeTime(TimeZones.ParseUtcTimestamp(LatestReading.Created))}"
-            : "Download speed";
+            ? WebStrings.Format(WebStrings.HistoryDownloadSpeedLastTest, DisplayFormat.ToRelativeTime(TimeZones.ParseUtcTimestamp(LatestReading.Created)))
+            : WebStrings.DownloadSpeed;
 
     private string DayLabel(DateTime day)
     {
         var today = PreferencesService.Now.Date;
-        if (day == today) return "Today";
-        if (day == today.AddDays(-1)) return "Yesterday";
+        if (day == today) return WebStrings.HistoryToday;
+        if (day == today.AddDays(-1)) return WebStrings.HistoryYesterday;
         return day.ToString(day.Year == today.Year ? "dddd, d MMMM" : "dddd, d MMMM yyyy", CultureInfo.CurrentCulture);
     }
 
@@ -405,7 +407,7 @@
     {
         var parameters = new DialogParameters<TestDetailDialog> { { x => x.Test, test } };
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<TestDetailDialog>("Test Details", parameters, options);
+        var dialog = await DialogService.ShowAsync<TestDetailDialog>(WebStrings.HistoryTestDetailsDialogTitle, parameters, options);
         var result = await dialog.Result;
 
         if (result is { Canceled: false })

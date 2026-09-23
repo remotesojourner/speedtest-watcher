@@ -1,8 +1,10 @@
+using SpeedtestWatcher.Application.Resources;
+
 namespace SpeedtestWatcher.Application.Common;
 
 public class OperationResult
 {
-    public const string DeniedMessage = "Authentication required";
+    public static string DeniedMessage => ApplicationStrings.AuthenticationRequired;
 
     protected OperationResult(OperationOutcome outcome, string? message)
     {

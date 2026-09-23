@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -22,7 +23,7 @@ internal sealed partial class OoklaTool : ISpeedtestTool
 
     public string Title => "Ookla";
 
-    public string Description => "Popular provider with a global server network";
+    public string Description => ApplicationStrings.OoklaDescription;
 
     public string BinaryName => "speedtest";
 

@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Application.SignIn;
@@ -24,13 +25,13 @@ public sealed class SignInService
 
         var authority = Clean(request.Authority);
         if (authority != null && !WebAddress.IsHttp(authority))
-            return OperationResult.Invalid("The provider URL must be a full http(s) URL");
+            return OperationResult.Invalid(ApplicationStrings.SignInProviderUrlInvalid);
 
         var clientId = Clean(request.ClientId);
         if (request.Enabled)
         {
             if (authority == null || clientId == null)
-                return OperationResult.Invalid("Sign-in needs the provider URL and a client ID");
+                return OperationResult.Invalid(ApplicationStrings.SignInIncomplete);
 
             if (await _discovery.FindProblemAsync(authority, cancellationToken) is { } problem)
                 return OperationResult.Invalid(problem);

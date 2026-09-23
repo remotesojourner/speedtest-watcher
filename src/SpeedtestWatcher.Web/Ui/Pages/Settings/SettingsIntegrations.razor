@@ -6,11 +6,11 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
-<SurfaceCard Icon="@Icons.Material.Filled.Hub" Title="Integrations" FullHeight="false"
-             Description="Send results and alerts to other services.">
+<SurfaceCard Icon="@Icons.Material.Filled.Hub" Title="@WebStrings.IntegrationsTitle" FullHeight="false"
+             Description="@WebStrings.IntegrationsDescription">
     <StateView Loading="_loading" Compact="true" Empty="@(_instances.Count == 0)"
-               EmptyMessage="No integrations yet. Add one to send test results or alerts to another service."
-               ErrorMessage="@(_loadFailed ? "Couldn't load your integrations." : null)" OnRetry="LoadAsync">
+               EmptyMessage="@WebStrings.IntegrationsEmpty"
+               ErrorMessage="@(_loadFailed ? WebStrings.IntegrationsLoadFailed : null)" OnRetry="LoadAsync">
         <MudExpansionPanels Elevation="0" MultiExpansion="true" Class="sw-card rounded-lg">
             @foreach (var instance in _instances)
             {
@@ -35,7 +35,7 @@
                         <MudGrid Spacing="3" Class="mb-3">
                             <MudItem xs="12" sm="6">
                                 <MudTextField T="string" Value="@instance.DisplayName" ValueChanged="@(value => instance.DisplayName = value ?? "")"
-                                              Label="Integration name" Placeholder="@instance.Schema.Title"
+                                              Label="@WebStrings.IntegrationsName" Placeholder="@instance.Schema.Title"
                                               Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" />
                             </MudItem>
                             @foreach (var field in instance.Schema.Fields)
@@ -68,15 +68,15 @@
                         <div class="d-flex flex-wrap gap-2">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@(!CanSave(instance))"
                                        OnClick="@(() => SaveAsync(instance))">
-                                @(instance.Saving ? "Saving..." : "Save")
+                                @(instance.Saving ? WebStrings.Saving : WebStrings.Save)
                             </MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Send"
                                        Disabled="@(!CanSendTest(instance))" OnClick="@(() => SendTestAsync(instance))">
-                                @(instance.Testing ? "Sending..." : "Send test")
+                                @(instance.Testing ? WebStrings.IntegrationsSending : WebStrings.IntegrationsSendTest)
                             </MudButton>
                             <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete"
                                        OnClick="@(() => DeleteAsync(instance))">
-                                Delete
+                                @WebStrings.Delete
                             </MudButton>
                         </div>
                     </ChildContent>
@@ -85,7 +85,7 @@
         </MudExpansionPanels>
     </StateView>
 
-    <MudMenu Label="Add integration" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary"
+    <MudMenu Label="@WebStrings.IntegrationsAdd" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary"
              Class="mt-4" Disabled="@(_loading || _loadFailed)">
         @foreach (var schema in _schemas)
         {
@@ -228,19 +228,19 @@
     };
 
     private static string? ValidateNumber(IntegrationFieldSchemaDto field, int? value) =>
-        field.Required && value == null ? "Required" : null;
+        field.Required && value == null ? WebStrings.IntegrationsRequired : null;
 
     private static string? ValidateText(IntegrationFieldSchemaDto field, string? value)
     {
-        if (string.IsNullOrEmpty(value)) return field.Required ? "Required" : null;
+        if (string.IsNullOrEmpty(value)) return field.Required ? WebStrings.IntegrationsRequired : null;
 
         var maxLength = field.Type == "textarea" ? 2000 : 255;
-        if (value.Length > maxLength) return $"At most {maxLength} characters";
+        if (value.Length > maxLength) return WebStrings.Format(WebStrings.IntegrationsTooLong, maxLength);
 
         if (string.IsNullOrEmpty(field.Regex)) return null;
         try
         {
-            return Regex.IsMatch(value, field.Regex, RegexOptions.None, TimeSpan.FromMilliseconds(200)) ? null : "Invalid format";
+            return Regex.IsMatch(value, field.Regex, RegexOptions.None, TimeSpan.FromMilliseconds(200)) ? null : WebStrings.IntegrationsInvalidFormat;
         }
         catch (Exception ex) when (ex is ArgumentException or RegexMatchTimeoutException)
         {
@@ -290,11 +290,11 @@
         if (outcome.Succeeded)
         {
             instance.SavedSnapshot = instance.Snapshot;
-            Snackbar.Add($"{DisplayTitle(instance)} saved", Severity.Success);
+            Snackbar.Add(WebStrings.Format(WebStrings.IntegrationsSaved, DisplayTitle(instance)), Severity.Success);
         }
         else
         {
-            Snackbar.Add(outcome.Message ?? "Could not save the integration. Check the highlighted fields.", Severity.Error);
+            Snackbar.Add(outcome.Message ?? WebStrings.IntegrationsSaveFailed, Severity.Error);
         }
     }
 
@@ -310,15 +310,15 @@
         instance.Testing = false;
         if (result.Value is { Success: true })
         {
-            Snackbar.Add($"{DisplayTitle(instance)} test succeeded", Severity.Success);
+            Snackbar.Add(WebStrings.Format(WebStrings.IntegrationsTestSucceeded, DisplayTitle(instance)), Severity.Success);
         }
         else if (result.Value is { } failed)
         {
-            Snackbar.Add($"{DisplayTitle(instance)} test failed. {failed.Message}", Severity.Error, options => options.RequireInteraction = true);
+            Snackbar.Add(WebStrings.Format(WebStrings.IntegrationsTestFailed, DisplayTitle(instance), failed.Message), Severity.Error, options => options.RequireInteraction = true);
         }
         else
         {
-            Snackbar.Add(result.Message ?? "Could not send the test", Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.IntegrationsSendTestFailed, Severity.Error);
         }
     }
 
@@ -327,20 +327,20 @@
         if (!string.IsNullOrEmpty(instance.Id))
         {
             var confirmed = await DialogService.ShowMessageBoxAsync(
-                "Delete integration",
-                $"Delete \"{DisplayTitle(instance)}\"? It will stop sending notifications.",
-                yesText: "Delete", cancelText: "Cancel");
+                WebStrings.IntegrationsDeleteTitle,
+                WebStrings.Format(WebStrings.IntegrationsDeleteMessage, DisplayTitle(instance)),
+                yesText: WebStrings.Delete, cancelText: WebStrings.Cancel);
             if (confirmed != true) return;
 
             if (!(await Integrations.DeleteAsync(instance.Id)).Succeeded)
             {
-                Snackbar.Add("Could not delete the integration", Severity.Error);
+                Snackbar.Add(WebStrings.IntegrationsDeleteFailed, Severity.Error);
                 return;
             }
         }
 
         _instances.Remove(instance);
-        Snackbar.Add("Integration removed", Severity.Success);
+        Snackbar.Add(WebStrings.IntegrationsRemoved, Severity.Success);
     }
 
     private static string DisplayTitle(IntegrationInstance instance) =>
@@ -348,11 +348,11 @@
 
     private static string StatusText(IntegrationInstance instance)
     {
-        if (string.IsNullOrEmpty(instance.Id)) return "Not saved yet";
-        if (instance.ActivityFailed) return "Last run failed";
+        if (string.IsNullOrEmpty(instance.Id)) return WebStrings.IntegrationsNotSaved;
+        if (instance.ActivityFailed) return WebStrings.IntegrationsLastRunFailed;
         return instance.LastActivity.HasValue
-            ? $"Last run {DisplayFormat.ToRelativeTime(instance.LastActivity.Value)}"
-            : "Never executed";
+            ? WebStrings.Format(WebStrings.IntegrationsLastRun, DisplayFormat.ToRelativeTime(instance.LastActivity.Value))
+            : WebStrings.IntegrationsNeverRun;
     }
 
     private static bool HasRun(IntegrationInstance instance) =>

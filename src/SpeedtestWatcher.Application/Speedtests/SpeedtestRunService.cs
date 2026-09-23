@@ -6,6 +6,7 @@ using SpeedtestWatcher.Application.Integrations;
 using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 
@@ -13,7 +14,7 @@ namespace SpeedtestWatcher.Application.Speedtests;
 
 public sealed partial class SpeedtestRunService
 {
-    public const string AlreadyRunning = "Speedtest is already running";
+    public static string AlreadyRunning => ApplicationStrings.SpeedtestAlreadyRunning;
 
     private readonly RunState _state;
     private readonly ISettingsStore _settings;
@@ -81,9 +82,9 @@ public sealed partial class SpeedtestRunService
         if (_state.IsRunning) return OperationResult.Conflict(AlreadyRunning);
 
         if ((await _settings.GetAsync(cancellationToken)).Provider.Selected == SpeedtestProvider.None)
-            return OperationResult.Conflict("No speedtest provider selected");
+            return OperationResult.Conflict(ApplicationStrings.NoProviderSelected);
 
-        if (_state.IsPaused) return OperationResult.Conflict("Speedtests are paused");
+        if (_state.IsPaused) return OperationResult.Conflict(ApplicationStrings.SpeedtestsPaused);
         if (!_state.TryStartRun()) return OperationResult.Conflict(AlreadyRunning);
 
         _ = Task.Run(() => RunClaimedInOwnScopeAsync(serverId), CancellationToken.None);

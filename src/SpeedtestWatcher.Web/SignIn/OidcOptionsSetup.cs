@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using SpeedtestWatcher.Web.Resources;
 
 namespace SpeedtestWatcher.Web.SignIn;
 
@@ -47,7 +48,7 @@ public sealed partial class OidcOptionsSetup : IConfigureNamedOptions<OpenIdConn
         options.Events.OnRemoteFailure = context =>
         {
             LogSignInFailed(context.Failure);
-            context.Response.Redirect($"/auth/failed?reason={Uri.EscapeDataString(context.Failure?.Message ?? "Unknown error")}");
+            context.Response.Redirect($"/auth/failed?reason={Uri.EscapeDataString(context.Failure?.Message ?? WebStrings.UnknownError)}");
             context.HandleResponse();
             return Task.CompletedTask;
         };

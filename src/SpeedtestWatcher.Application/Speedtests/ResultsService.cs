@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Text;
 using Cronos;
 using SpeedtestWatcher.Application.Common;
@@ -26,7 +27,7 @@ public sealed class ResultsService
     public async Task<OperationResult<SpeedtestDto>> GetAsync(int id, CancellationToken cancellationToken = default) =>
         await _results.GetByIdAsync(id, cancellationToken) is { } test
             ? OperationResult.Ok(Visible(test))
-            : OperationResult.NotFound("Speedtest not found");
+            : OperationResult.NotFound(ApplicationStrings.SpeedtestNotFound);
 
     private SpeedtestDto Visible(Speedtest test)
     {
@@ -44,7 +45,7 @@ public sealed class ResultsService
 
         return await _results.DeleteByIdAsync(id, cancellationToken)
             ? OperationResult.Ok()
-            : OperationResult.NotFound("Speedtest not found");
+            : OperationResult.NotFound(ApplicationStrings.SpeedtestNotFound);
     }
 
     public async Task<ExportFile> ExportAsync(ExportRequest request, CancellationToken cancellationToken = default) =>
@@ -53,7 +54,7 @@ public sealed class ResultsService
     public async Task<OperationResult<TestImportResultDto>> ImportAsync(IReadOnlyList<SpeedtestImportRow>? rows, CancellationToken cancellationToken = default)
     {
         if (!_access.HasFullAccess) return OperationResult.Denied();
-        if (rows == null || rows.Count == 0) return OperationResult.Invalid("No tests provided");
+        if (rows == null || rows.Count == 0) return OperationResult.Invalid(ApplicationStrings.NoTestsProvided);
 
         var imported = await _results.ImportTestsAsync(rows.Select(row => row.ToSpeedtest()), cancellationToken);
         return OperationResult.Ok(new TestImportResultDto { Imported = imported, Skipped = rows.Count - imported });

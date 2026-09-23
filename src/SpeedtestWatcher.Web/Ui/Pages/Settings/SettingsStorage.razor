@@ -14,15 +14,15 @@
 
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Storage" Title="Database">
+        <SurfaceCard Icon="@Icons.Material.Filled.Storage" Title="@WebStrings.StorageDatabase">
             @if (_storageInfo != null)
             {
-                <DataRow Label="Stored tests" Value="@_storageInfo.TestCount.ToString("N0", CultureInfo.CurrentCulture)" />
-                <DataRow Label="Database size" Value="@ByteSize.Describe(_storageInfo.Size)" />
+                <DataRow Label="@WebStrings.StorageStoredTests" Value="@_storageInfo.TestCount.ToString("N0", CultureInfo.CurrentCulture)" />
+                <DataRow Label="@WebStrings.StorageDatabaseSize" Value="@ByteSize.Describe(_storageInfo.Size)" />
             }
             else if (_storageInfoFailed)
             {
-                <StateView ErrorMessage="Couldn't load the database details." OnRetry="LoadStorageInfoAsync" />
+                <StateView ErrorMessage="@WebStrings.StorageInfoFailed" OnRetry="LoadStorageInfoAsync" />
             }
             else
             {
@@ -32,43 +32,43 @@
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.History" Title="Data Retention"
-                     Description="How long results are kept before they're deleted automatically.">
-            <MudSelect T="string" @bind-Value="_retentionChoice" Label="Keep speedtests for" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3">
-                @foreach (var preset in _retentionPresets)
+        <SurfaceCard Icon="@Icons.Material.Filled.History" Title="@WebStrings.StorageRetentionTitle"
+                     Description="@WebStrings.StorageRetentionDescription">
+            <MudSelect T="string" @bind-Value="_retentionChoice" Label="@WebStrings.StorageKeepFor" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3">
+                @foreach (var preset in RetentionPresets)
                 {
                     <MudSelectItem T="string" Value="@preset.Days.ToString(CultureInfo.InvariantCulture)">@preset.Label</MudSelectItem>
                 }
-                <MudSelectItem T="string" Value="@CustomChoice">Custom...</MudSelectItem>
+                <MudSelectItem T="string" Value="@CustomChoice">@WebStrings.StorageRetentionCustom</MudSelectItem>
             </MudSelect>
             @if (_retentionChoice == CustomChoice)
             {
-                <MudNumericField T="int" @bind-Value="_customDays" Label="Days" Min="0" Max="10000" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                 Immediate="true" HelperText="0 keeps results forever"
-                                 Error="@(SelectedRetentionDays == null)" ErrorText="Enter 0 to 10000 days" Class="mb-3" />
+                <MudNumericField T="int" @bind-Value="_customDays" Label="@WebStrings.StorageDays" Min="0" Max="10000" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Immediate="true" HelperText="@WebStrings.StorageDaysHelp"
+                                 Error="@(SelectedRetentionDays == null)" ErrorText="@WebStrings.StorageDaysInvalid" Class="mb-3" />
             }
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!RetentionDirty)" OnClick="SaveRetentionAsync">
-                Save Retention
+                @WebStrings.StorageSaveRetention
             </MudButton>
         </SurfaceCard>
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Results"
-                     Description="Export your results, or import results exported from Speedtest Watcher.">
+        <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="@WebStrings.StorageResultsTitle"
+                     Description="@WebStrings.Format(WebStrings.StorageResultsDescription, ProjectInfo.Name)">
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.TableChart" OnClick="@(() => ExportTestsAsync("csv"))">
-                    Export CSV
+                    @WebStrings.StorageExportCsv
                 </MudButton>
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DataObject" OnClick="@(() => ExportTestsAsync("json"))">
-                    Export JSON
+                    @WebStrings.StorageExportJson
                 </MudButton>
                 <MudFileUpload T="IBrowserFile" @ref="_testsUpload" Accept=".json" MaxFileSize="MaxImportBytes" FilesChanged="ImportTestsAsync">
                     <SelectedTemplate />
                     <CustomContent>
                         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile" Disabled="_importing"
                                    OnClick="@(() => _testsUpload!.OpenFilePickerAsync())">
-                            Import JSON
+                            @WebStrings.StorageImportJson
                         </MudButton>
                     </CustomContent>
                 </MudFileUpload>
@@ -77,18 +77,18 @@
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Backup" Title="Settings Backup"
-                     Description="Settings, integrations and recommendations as a JSON file.">
+        <SurfaceCard Icon="@Icons.Material.Filled.Backup" Title="@WebStrings.StorageBackupTitle"
+                     Description="@WebStrings.StorageBackupDescription">
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportConfigAsync">
-                    Export settings
+                    @WebStrings.StorageExportSettings
                 </MudButton>
                 <MudFileUpload T="IBrowserFile" @ref="_configUpload" Accept=".json" MaxFileSize="MaxImportBytes" FilesChanged="ImportConfigAsync">
                     <SelectedTemplate />
                     <CustomContent>
                         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile" Disabled="_importing"
                                    OnClick="@(() => _configUpload!.OpenFilePickerAsync())">
-                            Import settings
+                            @WebStrings.StorageImportSettings
                         </MudButton>
                     </CustomContent>
                 </MudFileUpload>
@@ -97,14 +97,14 @@
     </MudItem>
 
     <MudItem xs="12">
-        <SurfaceCard Icon="@Icons.Material.Filled.Warning" Title="Danger Zone" Danger="true" FullHeight="false"
-                     Description="Permanent operations. They cannot be undone.">
+        <SurfaceCard Icon="@Icons.Material.Filled.Warning" Title="@WebStrings.StorageDangerZone" Danger="true" FullHeight="false"
+                     Description="@WebStrings.StorageDangerZoneDescription">
             <div class="d-flex flex-wrap gap-3">
                 <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever" OnClick="ClearHistoryAsync">
-                    Clear history
+                    @WebStrings.StorageClearHistory
                 </MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="FactoryResetAsync">
-                    Factory reset
+                    @WebStrings.StorageFactoryReset
                 </MudButton>
             </div>
         </SurfaceCard>
@@ -115,14 +115,14 @@
     private const string CustomChoice = "custom";
     private const long MaxImportBytes = 50 * 1024 * 1024;
 
-    private static readonly (int Days, string Label)[] _retentionPresets =
+    private static (int Days, string Label)[] RetentionPresets =>
     [
-        (7, "7 days"),
-        (30, "30 days"),
-        (90, "90 days"),
-        (180, "180 days"),
-        (365, "1 year (default)"),
-        (0, "Keep forever")
+        (7, WebStrings.SevenDays),
+        (30, WebStrings.ThirtyDays),
+        (90, WebStrings.StorageRetention90Days),
+        (180, WebStrings.StorageRetention180Days),
+        (365, WebStrings.StorageRetentionOneYear),
+        (0, WebStrings.StorageRetentionForever)
     ];
 
     private static readonly JsonSerializerOptions _webJson = new(JsonSerializerDefaults.Web);
@@ -152,7 +152,7 @@
     private void ResetRetentionFromSettings()
     {
         var days = SavedRetentionDays;
-        _retentionChoice = _retentionPresets.Any(p => p.Days == days) ? days.ToString(CultureInfo.InvariantCulture) : CustomChoice;
+        _retentionChoice = RetentionPresets.Any(p => p.Days == days) ? days.ToString(CultureInfo.InvariantCulture) : CustomChoice;
         _customDays = days;
     }
 
@@ -168,7 +168,7 @@
         if (SelectedRetentionDays is not { } days) return;
 
         var result = await Settings.SaveAsync(("retentionDays", days.ToString(CultureInfo.InvariantCulture)));
-        if (result.Succeeded) Snackbar.Add("Retention period updated", Severity.Success);
+        if (result.Succeeded) Snackbar.Add(WebStrings.StorageRetentionSaved, Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 
@@ -187,9 +187,9 @@
     private async Task DownloadAsync(string fileName, byte[]? content)
     {
         if (content != null && await Browser.DownloadAsync(fileName, content))
-            Snackbar.Add($"Exported {fileName}", Severity.Success);
+            Snackbar.Add(WebStrings.Format(WebStrings.Exported, fileName), Severity.Success);
         else
-            Snackbar.Add("Export failed", Severity.Error);
+            Snackbar.Add(WebStrings.StorageExportFailed, Severity.Error);
     }
 
     private async Task ImportTestsAsync(IBrowserFile? file)
@@ -197,14 +197,14 @@
         var rows = Deserialize<List<SpeedtestImportRow>>(await ReadJsonAsync(file, JsonValueKind.Array));
         if (rows == null)
         {
-            Snackbar.Add("That file isn't a Speedtest Watcher test export", Severity.Error);
+            Snackbar.Add(WebStrings.Format(WebStrings.StorageNotATestExport, ProjectInfo.Name), Severity.Error);
             return;
         }
 
         var result = await Results.ImportAsync(rows);
         if (result.Value is not { } counts)
         {
-            Snackbar.Add(result.Message ?? "An error occurred while importing the test file", Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.StorageTestImportFailed, Severity.Error);
             return;
         }
 
@@ -215,24 +215,30 @@
 
     private static string TestImportSummary(TestImportResultDto counts) => (counts.Imported, counts.Skipped) switch
     {
-        (0, var skipped) => $"Nothing new to import: {Count(skipped, "result was", "results were")} already stored",
-        (var imported, 0) => $"Imported {Count(imported, "result", "results")}",
-        var (imported, skipped) => $"Imported {Count(imported, "result", "results")}. {Count(skipped, "result was", "results were")} already stored"
+        (0, var skipped) => WebStrings.Format(WebStrings.StorageNothingNew, AlreadyStored(skipped)),
+        (var imported, 0) => WebStrings.Format(WebStrings.StorageImported, ResultCount(imported)),
+        var (imported, skipped) => WebStrings.Format(WebStrings.StorageImportedSomeStored, ResultCount(imported), AlreadyStored(skipped))
     };
+
+    private static string ResultCount(int count) =>
+        count == 1 ? WebStrings.StorageOneResult : WebStrings.Format(WebStrings.StorageResultCount, count);
+
+    private static string AlreadyStored(int count) =>
+        count == 1 ? WebStrings.StorageOneAlreadyStored : WebStrings.Format(WebStrings.StorageAlreadyStored, count);
 
     private async Task ImportConfigAsync(IBrowserFile? file)
     {
         var backup = Deserialize<SettingsBackupDto>(await ReadJsonAsync(file, JsonValueKind.Object));
         if (backup == null)
         {
-            Snackbar.Add("That file isn't a Speedtest Watcher settings export", Severity.Error);
+            Snackbar.Add(WebStrings.Format(WebStrings.StorageNotASettingsExport, ProjectInfo.Name), Severity.Error);
             return;
         }
 
         var result = await Backup.ImportAsync(backup);
         if (result.Value is not { } counts)
         {
-            Snackbar.Add(result.Message ?? "An error occurred while importing the settings file", Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.StorageSettingsImportFailed, Severity.Error);
             return;
         }
 
@@ -243,18 +249,25 @@
 
     private static string SettingsImportSummary(SettingsImportResultDto counts)
     {
-        var restored = new List<string> { Count(counts.Settings, "setting", "settings") };
-        if (counts.Integrations > 0) restored.Add(Count(counts.Integrations, "integration", "integrations"));
-        if (counts.Recommendations) restored.Add("recommendations");
+        var restored = new List<string>
+        {
+            counts.Settings == 1 ? WebStrings.StorageOneSetting : WebStrings.Format(WebStrings.StorageSettingCount, counts.Settings)
+        };
+        if (counts.Integrations > 0)
+        {
+            restored.Add(counts.Integrations == 1 ? WebStrings.StorageOneIntegration : WebStrings.Format(WebStrings.StorageIntegrationCount, counts.Integrations));
+        }
+        if (counts.Recommendations) restored.Add(WebStrings.StorageRecommendations);
 
-        var summary = $"Imported {string.Join(", ", restored.SkipLast(1))}{(restored.Count > 1 ? " and " : "")}{restored[^1]}.";
-        return counts.Skipped > 0
-            ? $"{summary} {Count(counts.Skipped, "item wasn't", "items weren't")} valid and {(counts.Skipped == 1 ? "was" : "were")} skipped."
-            : summary;
+        var list = restored.Count > 1
+            ? WebStrings.Format(WebStrings.ListAnd, string.Join(", ", restored.SkipLast(1)), restored[^1])
+            : restored[0];
+        var summary = WebStrings.Format(WebStrings.StorageImportedList, list);
+        if (counts.Skipped == 0) return summary;
+
+        var skipped = counts.Skipped == 1 ? WebStrings.StorageOneSkipped : WebStrings.Format(WebStrings.StorageSkippedCount, counts.Skipped);
+        return $"{summary} {skipped}";
     }
-
-    private static string Count(int count, string singular, string plural) =>
-        count == 1 ? $"1 {singular}" : $"{count.ToString("N0", CultureInfo.CurrentCulture)} {plural}";
 
     private static T? Deserialize<T>(string? json) where T : class
     {
@@ -301,33 +314,33 @@
     private async Task ClearHistoryAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Clear history",
-            "Delete all stored speedtest results? This cannot be undone.",
-            yesText: "Delete all", cancelText: "Cancel");
+            WebStrings.StorageClearHistory,
+            WebStrings.StorageClearHistoryMessage,
+            yesText: WebStrings.StorageDeleteAll, cancelText: WebStrings.Cancel);
         if (confirmed != true) return;
 
         if (!(await Storage.DeleteAllResultsAsync()).Succeeded)
         {
-            Snackbar.Add("Could not clear the history", Severity.Error);
+            Snackbar.Add(WebStrings.StorageClearHistoryFailed, Severity.Error);
             return;
         }
 
         RecentResults.Clear();
         await LoadStorageInfoAsync();
-        Snackbar.Add("The history has been cleared", Severity.Success);
+        Snackbar.Add(WebStrings.StorageHistoryCleared, Severity.Success);
     }
 
     private async Task FactoryResetAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Factory reset",
-            "Reset all settings, including sign-in, and remove every integration? Your speedtest results are kept.",
-            yesText: "Reset", cancelText: "Cancel");
+            WebStrings.StorageFactoryReset,
+            WebStrings.StorageFactoryResetMessage,
+            yesText: WebStrings.StorageReset, cancelText: WebStrings.Cancel);
         if (confirmed != true) return;
 
         if (!(await Storage.FactoryResetAsync()).Succeeded)
         {
-            Snackbar.Add("Could not reset the settings", Severity.Error);
+            Snackbar.Add(WebStrings.StorageFactoryResetFailed, Severity.Error);
             return;
         }
 

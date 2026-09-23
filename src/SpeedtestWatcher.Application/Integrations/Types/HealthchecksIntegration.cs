@@ -1,10 +1,11 @@
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class HealthchecksIntegration : HttpIntegration
 {
-    private const string MissingUrl = "The ping URL is missing";
+    private static string MissingUrl => ApplicationStrings.HealthchecksUrlMissing;
 
     public HealthchecksIntegration(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
     {

@@ -6,30 +6,30 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Results</MudText>
+        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.ExportResults</MudText>
         <div class="sw-option-list mb-4">
-            <OptionCard Title="Shown results" Description="@ShownDescription" Icon="@Icons.Material.Filled.FilterList"
+            <OptionCard Title="@WebStrings.ExportShownResults" Description="@ShownDescription" Icon="@Icons.Material.Filled.FilterList"
                         Active="@(_scope == ExportScope.Shown)" OnClick="@(() => _scope = ExportScope.Shown)" />
-            <OptionCard Title="Selected results" Description="@SelectedDescription" Icon="@Icons.Material.Filled.Checklist"
+            <OptionCard Title="@WebStrings.ExportSelectedResults" Description="@SelectedDescription" Icon="@Icons.Material.Filled.Checklist"
                         Active="@(_scope == ExportScope.Selected)" Disabled="@(SelectedIds.Count == 0)"
                         OnClick="@(() => _scope = ExportScope.Selected)" />
-            <OptionCard Title="All results" Description="@AllDescription" Icon="@Icons.Material.Filled.AllInclusive"
+            <OptionCard Title="@WebStrings.AllResults" Description="@AllDescription" Icon="@Icons.Material.Filled.AllInclusive"
                         Active="@(_scope == ExportScope.All)" OnClick="@(() => _scope = ExportScope.All)" />
         </div>
 
-        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Format</MudText>
+        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.ExportFormat</MudText>
         <div class="sw-option-grid">
-            <OptionCard Title="CSV" Description="Opens in a spreadsheet" Icon="@Icons.Material.Filled.TableChart"
+            <OptionCard Title="CSV" Description="@WebStrings.ExportCsvDescription" Icon="@Icons.Material.Filled.TableChart"
                         Active="@(_format == "csv")" OnClick="@(() => _format = "csv")" />
-            <OptionCard Title="JSON" Description="Can be imported again" Icon="@Icons.Material.Filled.DataObject"
+            <OptionCard Title="JSON" Description="@WebStrings.ExportJsonDescription" Icon="@Icons.Material.Filled.DataObject"
                         Active="@(_format == "json")" OnClick="@(() => _format = "json")" />
         </div>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
+        <MudButton OnClick="@(() => MudDialog.Cancel())">@WebStrings.Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download"
                    Disabled="@(_exporting || ExportCount == 0)" OnClick="ExportAsync">
-            @(_exporting ? "Exporting..." : "Export")
+            @(_exporting ? WebStrings.ExportExporting : WebStrings.ExportButton)
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -53,15 +53,17 @@
 
     private bool FiltersActive => Status != null || Type != null || Healthy != null;
 
-    private string CountPlaceholder => _counting ? "Counting..." : "Couldn't count the results";
+    private string CountPlaceholder => _counting ? WebStrings.ExportCounting : WebStrings.ExportCountFailed;
 
     private string ShownDescription => _shownCount is not { } count
         ? CountPlaceholder
-        : FiltersActive ? $"{ResultCount(count)} matching the current filters" : $"No filters applied, so all {ResultCount(count)}";
+        : FiltersActive
+            ? WebStrings.Format(WebStrings.ExportMatchingFilters, ResultCount(count))
+            : WebStrings.Format(WebStrings.ExportNoFilters, ResultCount(count));
 
     private string SelectedDescription => SelectedIds.Count == 0
-        ? "Select results in the list first"
-        : $"{SelectedIds.Count} selected";
+        ? WebStrings.ExportSelectFirst
+        : WebStrings.Format(WebStrings.SelectedCount, SelectedIds.Count);
 
     private string AllDescription => _allCount is { } count ? ResultCount(count) : CountPlaceholder;
 
@@ -110,13 +112,14 @@
 
         if (!downloaded)
         {
-            Snackbar.Add("Could not export the results", Severity.Error);
+            Snackbar.Add(WebStrings.ExportFailed, Severity.Error);
             return;
         }
 
-        Snackbar.Add($"Exported {ResultCount(ExportCount ?? 0)}", Severity.Success);
+        Snackbar.Add(WebStrings.Format(WebStrings.Exported, ResultCount(ExportCount ?? 0)), Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }
 
-    private static string ResultCount(int count) => count == 1 ? "1 result" : $"{count} results";
+    private static string ResultCount(int count) =>
+        count == 1 ? WebStrings.ExportOneResult : WebStrings.Format(WebStrings.ExportResultCount, count);
 }

@@ -1,3 +1,5 @@
+using SpeedtestWatcher.Application.Resources;
+
 namespace SpeedtestWatcher.Application.Settings;
 
 public sealed record SettingDefinition(string Key, string Default, SettingVisibility Visibility, Func<string, string?>? Validate = null)
@@ -12,5 +14,5 @@ public sealed record SettingDefinition(string Key, string Default, SettingVisibi
     };
 
     public string? ProblemWith(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? "You need to provide the new value" : Validate?.Invoke(value);
+        string.IsNullOrWhiteSpace(value) ? ApplicationStrings.SettingValueRequired : Validate?.Invoke(value);
 }

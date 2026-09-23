@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Integrations;
@@ -65,7 +66,7 @@ internal partial class IntegrationDispatcher : IIntegrationDispatcher
     public async Task<IntegrationResult> TestAsync(string name, string id, string settingsJson, Speedtest sample, CancellationToken cancellationToken = default)
     {
         if (!_integrations.TryGetValue(name, out var integration)) return UnknownType(name);
-        if (IntegrationSettings.Parse(settingsJson) is not { } settings) return IntegrationResult.Failed("The settings can't be read");
+        if (IntegrationSettings.Parse(settingsJson) is not { } settings) return IntegrationResult.Failed(ApplicationStrings.IntegrationSettingsUnreadable);
 
         try
         {
@@ -78,7 +79,7 @@ internal partial class IntegrationDispatcher : IIntegrationDispatcher
         }
     }
 
-    private static IntegrationResult UnknownType(string name) => IntegrationResult.Failed($"{name} isn't a known integration type");
+    private static IntegrationResult UnknownType(string name) => IntegrationResult.Failed(ApplicationStrings.Format(ApplicationStrings.IntegrationUnknownType, name));
 
     private Task<IntegrationResult> HandleAsync(IntegrationData integration, IntegrationEvent integrationEvent, IntegrationSettings settings, CancellationToken cancellationToken) =>
         _integrations.TryGetValue(integration.Name, out var handler)

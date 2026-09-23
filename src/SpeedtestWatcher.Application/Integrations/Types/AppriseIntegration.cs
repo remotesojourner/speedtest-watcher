@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Net;
 using System.Text.Json;
 
@@ -30,10 +31,10 @@ internal sealed class AppriseIntegration : MessageIntegration
 
     protected override string? SettingsProblem(IntegrationSettings settings)
     {
-        if (string.IsNullOrEmpty(settings.GetString("url"))) return "The server URL is missing";
+        if (string.IsNullOrEmpty(settings.GetString("url"))) return ApplicationStrings.AppriseServerUrlMissing;
 
         return settings.GetString("urls").Length > 0 && settings.GetString("key").Length > 0
-            ? "Use either Apprise URLs or a config key, not both"
+            ? ApplicationStrings.AppriseUrlsOrKey
             : null;
     }
 
@@ -57,8 +58,8 @@ internal sealed class AppriseIntegration : MessageIntegration
 
         return SendAsync(request, cancellationToken, (status, reply) => status switch
         {
-            HttpStatusCode.NoContent when key.Length == 0 => IntegrationResult.Failed("Apprise found no valid URLs to send to"),
-            HttpStatusCode.NoContent => IntegrationResult.Failed($"Apprise has no configuration for the key {key}"),
+            HttpStatusCode.NoContent when key.Length == 0 => IntegrationResult.Failed(ApplicationStrings.AppriseNoValidUrls),
+            HttpStatusCode.NoContent => IntegrationResult.Failed(ApplicationStrings.Format(ApplicationStrings.AppriseNoConfiguration, key)),
             _ when IsSuccess(status) => null,
             _ => IntegrationResult.Failed(Explain(status, reply, tags))
         });
@@ -70,8 +71,8 @@ internal sealed class AppriseIntegration : MessageIntegration
 
         if (status == HttpStatusCode.FailedDependency && parsed.Problems.Count == 0)
             return tags.Length > 0
-                ? $"Apprise has nothing tagged {tags} to notify"
-                : "Apprise has nothing untagged to notify. Add tags, or all, to choose what to notify";
+                ? ApplicationStrings.Format(ApplicationStrings.AppriseNothingTagged, tags)
+                : ApplicationStrings.AppriseNothingUntagged;
 
         return Answered(status, parsed.Problems.Count == 0 ? parsed.Error : $"{parsed.Error}: {string.Join("; ", parsed.Problems)}");
     }

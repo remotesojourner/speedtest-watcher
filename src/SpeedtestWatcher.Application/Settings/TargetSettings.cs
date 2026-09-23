@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Resources;
 
 namespace SpeedtestWatcher.Application.Settings;
 
@@ -25,12 +25,15 @@ public sealed record TargetSettings(int? Ping, double? Download, double? Upload,
     {
         0 => "",
         1 => Wording(targets[0]),
-        _ => $"{string.Join(", ", targets.SkipLast(1).Select(Wording))} and {Wording(targets[^1])}"
+        _ => ApplicationStrings.Format(ApplicationStrings.ListAnd, string.Join(", ", targets.SkipLast(1).Select(Wording)), Wording(targets[^1]))
     };
 
     private static string Wording(TargetKind kind) => kind switch
     {
-        TargetKind.PacketLoss => "packet loss",
-        _ => kind.ToName()
+        TargetKind.Ping => ApplicationStrings.TargetPing,
+        TargetKind.Download => ApplicationStrings.TargetDownload,
+        TargetKind.Upload => ApplicationStrings.TargetUpload,
+        TargetKind.PacketLoss => ApplicationStrings.TargetPacketLoss,
+        _ => ApplicationStrings.TargetBufferbloat
     };
 }

@@ -11,7 +11,7 @@
             @if (Expandable)
             {
                 <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Size="Size.Small" OnClick="ExpandAsync"
-                               aria-label="@($"Expand {Title}")" />
+                               aria-label="@WebStrings.Format(WebStrings.ChartCardExpand, Title)" />
             }
         </div>
     </div>

@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -45,11 +46,11 @@ internal abstract class HttpIntegration : IIntegration
         }
         catch (HttpRequestException ex)
         {
-            return IntegrationResult.Failed($"Couldn't reach {Schema.Title}: {ex.Message}");
+            return IntegrationResult.Failed(ApplicationStrings.Format(ApplicationStrings.IntegrationUnreachable, Schema.Title, ex.Message));
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return IntegrationResult.Failed($"{Schema.Title} didn't answer within {_requestTimeout.TotalSeconds:F0} seconds");
+            return IntegrationResult.Failed(ApplicationStrings.Format(ApplicationStrings.IntegrationTimeout, Schema.Title, _requestTimeout.TotalSeconds));
         }
     }
 
@@ -69,8 +70,8 @@ internal abstract class HttpIntegration : IIntegration
     {
         var excerpt = Excerpt(reply);
         return excerpt.Length == 0
-            ? $"{Schema.Title} answered HTTP {(int)status}"
-            : $"{Schema.Title} answered HTTP {(int)status}: {excerpt}";
+            ? ApplicationStrings.Format(ApplicationStrings.IntegrationAnswered, Schema.Title, (int)status)
+            : ApplicationStrings.Format(ApplicationStrings.IntegrationAnsweredWithReply, Schema.Title, (int)status, excerpt);
     }
 
     private static string Excerpt(string reply)

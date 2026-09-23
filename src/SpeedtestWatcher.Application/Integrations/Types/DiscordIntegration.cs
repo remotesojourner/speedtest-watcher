@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Resources;
 
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
@@ -23,7 +24,7 @@ internal sealed class DiscordIntegration : MessageIntegration
     protected override MessageTemplates Templates => MessageTemplates.DiscordMarkdown;
 
     protected override string? SettingsProblem(IntegrationSettings settings) =>
-        string.IsNullOrEmpty(settings.GetString("url")) ? "The webhook URL is missing" : null;
+        string.IsNullOrEmpty(settings.GetString("url")) ? ApplicationStrings.WebhookUrlMissing : null;
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)
     {

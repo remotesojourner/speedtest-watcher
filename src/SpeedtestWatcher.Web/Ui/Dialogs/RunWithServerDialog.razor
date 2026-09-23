@@ -5,10 +5,10 @@
 <MudDialog>
     <DialogContent>
         <MudText Typo="Typo.body2" Class="sw-muted mb-3">
-            Runs one test against the server you pick here. Your saved server settings aren't changed.
+            @WebStrings.RunWithServerIntro
         </MudText>
 
-        <MudSelect T="string" @bind-Value="_serverId" Label="Server" Variant="Variant.Outlined" Margin="Margin.Dense"
+        <MudSelect T="string" @bind-Value="_serverId" Label="@WebStrings.Server" Variant="Variant.Outlined" Margin="Margin.Dense"
                    Disabled="_loading" HelperText="@ServerListHelp">
             @foreach (var server in _servers)
             {
@@ -16,14 +16,14 @@
             }
         </MudSelect>
 
-        <MudTextField T="string" @bind-Value="_serverId" Label="Server ID" Placeholder="e.g. 12345"
+        <MudTextField T="string" @bind-Value="_serverId" Label="@WebStrings.ServerId" Placeholder="@WebStrings.ServerIdPlaceholder"
                       Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" Class="mt-3"
-                      Error="@(!ServerIdValid)" ErrorText="Server IDs are numbers"
-                      HelperText="Or type an ID that isn't listed" />
+                      Error="@(!ServerIdValid)" ErrorText="@WebStrings.ServerIdInvalid"
+                      HelperText="@WebStrings.RunWithServerServerIdHelp" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanRun)" OnClick="RunAsync">Run test</MudButton>
+        <MudButton OnClick="Cancel">@WebStrings.Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanRun)" OnClick="RunAsync">@WebStrings.RunWithServerRun</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -41,8 +41,8 @@
     private bool _serversUnavailable;
 
     private string ServerListHelp => _loading
-        ? "Loading servers..."
-        : _serversUnavailable ? "Couldn't load the server list. Enter a server ID below." : "Nearest servers are listed first";
+        ? WebStrings.LoadingServers
+        : _serversUnavailable ? WebStrings.RunWithServerListFailed : WebStrings.NearestServersFirst;
 
     private bool ServerIdValid => string.IsNullOrWhiteSpace(_serverId) || _serverId.Trim().All(char.IsDigit);
 
@@ -64,11 +64,11 @@
 
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.Message ?? "Could not start the speedtest", Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.RunWithServerFailed, Severity.Error);
             return;
         }
 
-        Snackbar.Add("Speedtest started", Severity.Success);
+        Snackbar.Add(WebStrings.SpeedtestStarted, Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }
 

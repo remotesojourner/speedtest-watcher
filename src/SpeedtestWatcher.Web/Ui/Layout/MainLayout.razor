@@ -20,10 +20,10 @@
 
 <MudLayout>
     <MudAppBar Elevation="1" Dense="true" Class="px-3">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" aria-label="Toggle navigation" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" aria-label="@WebStrings.LayoutToggleNavigation" />
         <a href="" class="d-flex align-center" style="color:inherit;text-decoration:none;">
             <img src="img/logo.svg" style="width:28px;height:28px;object-fit:contain;margin-left:8px;" alt="" />
-            <MudText Typo="Typo.h6" Class="ml-2 font-weight-bold" Style="letter-spacing:-0.5px;">Speedtest Watcher</MudText>
+            <MudText Typo="Typo.h6" Class="ml-2 font-weight-bold" Style="letter-spacing:-0.5px;">@ProjectInfo.Name</MudText>
         </a>
 
         <MudSpacer />
@@ -35,17 +35,17 @@
             }
             @if (StatusService.Connection.IsDown)
             {
-                <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small" Href="uptime">Offline</MudChip>
+                <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small" Href="uptime">@WebStrings.Offline</MudChip>
             }
             @if (StatusService.Paused)
             {
-                <MudChip T="string" Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
+                <MudChip T="string" Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small">@WebStrings.Paused</MudChip>
             }
             @if (_state == AppState.Ready && !FullAccess)
             {
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
-                    Sign in
+                    @WebStrings.SignIn
                 </MudButton>
             }
             else if (_state == AppState.Ready)
@@ -61,16 +61,16 @@
             <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="Color.Inherit"
                            OnClick="ToggleThemeAsync"
-                           aria-label="Toggle theme" />
+                           aria-label="@WebStrings.LayoutToggleTheme" />
         </div>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="DrawerVariant.Responsive">
         <MudNavMenu Class="pa-2">
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-            <MudNavLink Href="history" Icon="@Icons.Material.Filled.History">History</MudNavLink>
-            <MudNavLink Href="uptime" Icon="@Icons.Material.Filled.MonitorHeart">Uptime</MudNavLink>
-            <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Settings</MudNavLink>
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">@WebStrings.DashboardTitle</MudNavLink>
+            <MudNavLink Href="history" Icon="@Icons.Material.Filled.History">@WebStrings.HistoryTitle</MudNavLink>
+            <MudNavLink Href="uptime" Icon="@Icons.Material.Filled.MonitorHeart">@WebStrings.UptimeTitle</MudNavLink>
+            <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">@WebStrings.SettingsTitle</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
@@ -83,20 +83,20 @@
                     break;
                 case AppState.SignInRequired:
                     <div class="d-flex justify-center mt-12">
-                        <SurfaceCard Icon="@Icons.Material.Filled.Lock" Title="Sign in required" FullHeight="false" Class="sw-narrow-card"
-                                     Description="This Speedtest Watcher instance is protected. Sign in to continue.">
+                        <SurfaceCard Icon="@Icons.Material.Filled.Lock" Title="@WebStrings.LayoutSignInRequired" FullHeight="false" Class="sw-narrow-card"
+                                     Description="@WebStrings.Format(WebStrings.LayoutInstanceProtected, ProjectInfo.Name)">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                        StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
-                                Sign in
+                                @WebStrings.SignIn
                             </MudButton>
                         </SurfaceCard>
                     </div>
                     break;
                 case AppState.LoadFailed:
                     <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
-                        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Couldn't load Speedtest Watcher</MudText>
-                        <MudText Typo="Typo.body2">The settings and results couldn't be read. Please try again.</MudText>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="mt-3" OnClick="LoadAsync">Try again</MudButton>
+                        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@WebStrings.Format(WebStrings.LayoutLoadFailedTitle, ProjectInfo.Name)</MudText>
+                        <MudText Typo="Typo.body2">@WebStrings.LayoutLoadFailedDescription</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="mt-3" OnClick="LoadAsync">@WebStrings.TryAgain</MudButton>
                     </MudAlert>
                     break;
                 default:
@@ -106,9 +106,9 @@
                         </ChildContent>
                         <ErrorContent>
                             <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
-                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Something went wrong</MudText>
-                                <MudText Typo="Typo.body2">This page couldn't finish what it was doing. Please try again.</MudText>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="mt-3" OnClick="RecoverPage">Try again</MudButton>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@WebStrings.LayoutPageErrorTitle</MudText>
+                                <MudText Typo="Typo.body2">@WebStrings.LayoutPageErrorDescription</MudText>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" Class="mt-3" OnClick="RecoverPage">@WebStrings.TryAgain</MudButton>
                             </MudAlert>
                         </ErrorContent>
                     </ErrorBoundary>
@@ -196,11 +196,11 @@
     private void OnResultArrived(SpeedtestDto test)
     {
         if (test.Status == TestStatus.Skipped)
-            Snackbar.Add($"Speedtest skipped: {test.Error}", Severity.Info);
+            Snackbar.Add(WebStrings.Format(WebStrings.LayoutTestSkipped, test.Error), Severity.Info);
         else if (test.Status == TestStatus.Failed)
             Snackbar.Add(SpeedtestErrors.Describe(test.Error), Severity.Error);
         else
-            Snackbar.Add($"Speedtest complete: ↓ {test.Download:F1} Mbps  ↑ {test.Upload:F1} Mbps", Severity.Success);
+            Snackbar.Add(WebStrings.Format(WebStrings.LayoutTestComplete, test.Download, test.Upload), Severity.Success);
     }
 
     private void SignIn()

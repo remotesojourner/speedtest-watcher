@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Text.Json;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.SignIn;
@@ -7,7 +8,7 @@ namespace SpeedtestWatcher.Application.Integrations;
 
 public sealed class IntegrationService
 {
-    private const string NotFoundMessage = "Integration not found";
+    private static string NotFoundMessage => ApplicationStrings.IntegrationNotFound;
 
     private readonly IIntegrationRepository _integrations;
     private readonly IIntegrationDispatcher _dispatcher;
@@ -51,7 +52,7 @@ public sealed class IntegrationService
     {
         if (!_access.HasFullAccess) return OperationResult.Denied();
         if (await _integrations.GetByIdAsync(id, cancellationToken) is not { } existing) return OperationResult.NotFound(NotFoundMessage);
-        if (!_dispatcher.Schemas.TryGetValue(existing.Name, out var schema)) return OperationResult.Invalid($"{existing.Name} isn't a known integration type");
+        if (!_dispatcher.Schemas.TryGetValue(existing.Name, out var schema)) return OperationResult.Invalid(ApplicationStrings.Format(ApplicationStrings.IntegrationUnknownType, existing.Name));
 
         var merged = ReadSettings(existing.Data);
         foreach (var (key, value) in settings) merged[key] = value;

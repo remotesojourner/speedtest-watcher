@@ -4,18 +4,18 @@
 @inject NavigationManager Navigation
 @inject ICurrentAccess Access
 
-<PageTitle>Speedtest Watcher - Settings</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.SettingsTitle</PageTitle>
 
 @if (!Access.HasFullAccess)
 {
-    <PageHeader Title="Settings" Subtitle="This instance is read-only. Display preferences are saved in this browser." />
+    <PageHeader Title="@WebStrings.SettingsTitle" Subtitle="@WebStrings.SettingsReadOnlySubtitle" />
 
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">
         <div class="d-flex flex-wrap align-center justify-space-between gap-3">
-            <span>Sign in to change the schedule, provider, integrations and storage.</span>
+            <span>@WebStrings.SettingsReadOnlySignIn</span>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
                        StartIcon="@Icons.Material.Filled.Login" OnClick="SignIn">
-                Sign in
+                @WebStrings.SignIn
             </MudButton>
         </div>
     </MudAlert>
@@ -24,37 +24,37 @@
 }
 else
 {
-    <PageHeader Title="Settings" Subtitle="Schedule, provider, display, monitoring, integrations, security, storage and app info." />
+    <PageHeader Title="@WebStrings.SettingsTitle" Subtitle="@WebStrings.SettingsSubtitle" />
 
     <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
         <MudTabs Position="@_tabPosition" Rounded="true" ApplyEffectsToContainer="true"
                  Class="sw-settings-tabs" TabPanelsClass="sw-settings-panels"
                  ActivePanelIndex="_activeIndex" ActivePanelIndexChanged="OnTabChanged">
-            <MudTabPanel Text="General" Icon="@Icons.Material.Filled.Tune">
+            <MudTabPanel Text="@WebStrings.SettingsTabGeneral" Icon="@Icons.Material.Filled.Tune">
                 <SettingsGeneral />
             </MudTabPanel>
-            <MudTabPanel Text="Schedule" Icon="@Icons.Material.Filled.Schedule">
+            <MudTabPanel Text="@WebStrings.SettingsTabSchedule" Icon="@Icons.Material.Filled.Schedule">
                 <SettingsSchedule />
             </MudTabPanel>
-            <MudTabPanel Text="Provider" Icon="@Icons.Material.Filled.Speed">
+            <MudTabPanel Text="@WebStrings.SettingsTabProvider" Icon="@Icons.Material.Filled.Speed">
                 <SettingsProvider />
             </MudTabPanel>
-            <MudTabPanel Text="Display" Icon="@Icons.Material.Filled.DisplaySettings">
+            <MudTabPanel Text="@WebStrings.SettingsTabDisplay" Icon="@Icons.Material.Filled.DisplaySettings">
                 <SettingsDisplay />
             </MudTabPanel>
-            <MudTabPanel Text="Monitoring" Icon="@Icons.Material.Filled.MonitorHeart">
+            <MudTabPanel Text="@WebStrings.SettingsTabMonitoring" Icon="@Icons.Material.Filled.MonitorHeart">
                 <SettingsMonitoring />
             </MudTabPanel>
-            <MudTabPanel Text="Integrations" Icon="@Icons.Material.Filled.Hub">
+            <MudTabPanel Text="@WebStrings.SettingsTabIntegrations" Icon="@Icons.Material.Filled.Hub">
                 <SettingsIntegrations />
             </MudTabPanel>
-            <MudTabPanel Text="Security" Icon="@Icons.Material.Filled.Security">
+            <MudTabPanel Text="@WebStrings.SettingsTabSecurity" Icon="@Icons.Material.Filled.Security">
                 <SettingsSecurity />
             </MudTabPanel>
-            <MudTabPanel Text="Storage" Icon="@Icons.Material.Filled.Storage">
+            <MudTabPanel Text="@WebStrings.SettingsTabStorage" Icon="@Icons.Material.Filled.Storage">
                 <SettingsStorage />
             </MudTabPanel>
-            <MudTabPanel Text="About" Icon="@Icons.Material.Filled.Info">
+            <MudTabPanel Text="@WebStrings.SettingsTabAbout" Icon="@Icons.Material.Filled.Info">
                 <SettingsAbout />
             </MudTabPanel>
         </MudTabs>

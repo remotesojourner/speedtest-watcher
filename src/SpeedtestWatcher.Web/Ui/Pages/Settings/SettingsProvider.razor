@@ -4,8 +4,8 @@
 @inject SettingsState Settings
 @inject ISnackbar Snackbar
 
-<SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="Speedtest Provider" FullHeight="false"
-             Description="Choose who runs your tests and how they connect.">
+<SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="@WebStrings.ProviderTitle" FullHeight="false"
+             Description="@WebStrings.ProviderDescription">
     <div class="sw-option-grid mb-5">
         @foreach (var tool in Tools)
         {
@@ -16,9 +16,9 @@
 
     <MudGrid Spacing="3" Class="mb-2">
         <MudItem xs="12" md="6">
-            <MudSelect T="string" @bind-Value="_interface" Label="Network interface" Variant="Variant.Outlined" Margin="Margin.Dense"
-                       HelperText="@(_interfacesUnavailable ? "Couldn't list this machine's network interfaces" : "The local address tests are sent from")">
-                <MudSelectItem T="string" Value="@SettingDefinitions.Unset">Default route</MudSelectItem>
+            <MudSelect T="string" @bind-Value="_interface" Label="@WebStrings.ProviderInterface" Variant="Variant.Outlined" Margin="Margin.Dense"
+                       HelperText="@(_interfacesUnavailable ? WebStrings.ProviderInterfacesFailed : WebStrings.ProviderInterfaceHelp)">
+                <MudSelectItem T="string" Value="@SettingDefinitions.Unset">@WebStrings.ProviderDefaultRoute</MudSelectItem>
                 @foreach (var option in _interfaceOptions)
                 {
                     <MudSelectItem T="string" Value="@option.Value">@option.Label</MudSelectItem>
@@ -29,23 +29,23 @@
         @if (_provider == SpeedtestProvider.Libre)
         {
             <MudItem xs="12" md="6">
-                <MudTextField T="string" Value="_libreUrl" ValueChanged="SetLibreUrl" Label="Custom LibreSpeed server URL"
+                <MudTextField T="string" Value="_libreUrl" ValueChanged="SetLibreUrl" Label="@WebStrings.ProviderLibreUrl"
                               Placeholder="https://speed.test/backend/" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                              Error="@(!LibreUrlValid)" ErrorText="Enter a full http(s) URL"
-                              HelperText="Replaces the server selection" />
+                              Error="@(!LibreUrlValid)" ErrorText="@WebStrings.EnterHttpUrl"
+                              HelperText="@WebStrings.ProviderLibreUrlHelp" />
             </MudItem>
         }
     </MudGrid>
 
     @if (SupportsServerChoice)
     {
-        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">Which server to test against</MudText>
+        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.ProviderServerChoice</MudText>
         <div class="sw-option-list mb-4">
-            <OptionCard Title="Automatically" Description="@($"{ProviderTitle} picks the best server for each test")" Icon="@Icons.Material.Filled.AutoAwesome"
+            <OptionCard Title="@WebStrings.ProviderServerAuto" Description="@WebStrings.Format(WebStrings.ProviderServerAutoDescription, ProviderTitle)" Icon="@Icons.Material.Filled.AutoAwesome"
                         Active="@(_serverMode == ServerMode.Auto)" OnClick="@(() => _serverMode = ServerMode.Auto)" />
-            <OptionCard Title="Random" Description="A different server each test, chosen from your list" Icon="@Icons.Material.Filled.Shuffle"
+            <OptionCard Title="@WebStrings.ProviderServerRandom" Description="@WebStrings.ProviderServerRandomDescription" Icon="@Icons.Material.Filled.Shuffle"
                         Active="@(_serverMode == ServerMode.Random)" OnClick="@(() => _serverMode = ServerMode.Random)" />
-            <OptionCard Title="Single" Description="Always test against the same server" Icon="@Icons.Material.Filled.PushPin"
+            <OptionCard Title="@WebStrings.ProviderServerSingle" Description="@WebStrings.ProviderServerSingleDescription" Icon="@Icons.Material.Filled.PushPin"
                         Active="@(_serverMode == ServerMode.Pinned)" OnClick="@(() => _serverMode = ServerMode.Pinned)" />
         </div>
 
@@ -53,8 +53,8 @@
         {
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
-                    <MudSelect T="string" Value="@(_serverId == SettingDefinitions.Unset ? null : _serverId)" ValueChanged="SetServerId" Label="Server"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="Choose a server"
+                    <MudSelect T="string" Value="@(_serverId == SettingDefinitions.Unset ? null : _serverId)" ValueChanged="SetServerId" Label="@WebStrings.Server"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="@WebStrings.ProviderChooseServer"
                                Disabled="_serversLoading" HelperText="@ServerListHelp">
                         @foreach (var server in CurrentServers)
                         {
@@ -64,27 +64,27 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Value="@(_serverId == SettingDefinitions.Unset ? "" : _serverId)" ValueChanged="SetServerId"
-                                  Label="Server ID" Placeholder="e.g. 12345" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                                  Required="true" RequiredError="Enter or choose a server"
-                                  Error="@(!ServerIdValid)" ErrorText="Server IDs are numbers"
-                                  HelperText="Use a specific server that isn't listed" />
+                                  Label="@WebStrings.ServerId" Placeholder="@WebStrings.ServerIdPlaceholder" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  Required="true" RequiredError="@WebStrings.ProviderEnterOrChooseServer"
+                                  Error="@(!ServerIdValid)" ErrorText="@WebStrings.ServerIdInvalid"
+                                  HelperText="@WebStrings.ProviderServerIdHelp" />
                 </MudItem>
             </MudGrid>
         }
         else if (_serverMode == ServerMode.Random)
         {
             <div class="sw-option-list mb-3">
-                <OptionCard Title="Only these servers" Description="Each test picks randomly from the list below" Icon="@Icons.Material.Filled.PlaylistAddCheck"
+                <OptionCard Title="@WebStrings.ProviderAllowList" Description="@WebStrings.ProviderAllowListDescription" Icon="@Icons.Material.Filled.PlaylistAddCheck"
                             Active="@(_listMode == ServerListMode.Allow)" OnClick="@(() => _listMode = ServerListMode.Allow)" />
-                <OptionCard Title="Any server except these" Description="Each test picks randomly from the nearby servers, skipping the list below" Icon="@Icons.Material.Filled.Block"
+                <OptionCard Title="@WebStrings.ProviderDenyList" Description="@WebStrings.ProviderDenyListDescription" Icon="@Icons.Material.Filled.Block"
                             Active="@(_listMode == ServerListMode.Deny)" OnClick="@(() => _listMode = ServerListMode.Deny)" />
             </div>
 
             <MudGrid Spacing="3" Class="mb-2">
                 <MudItem xs="12" md="6">
-                    <MudSelect T="string" Label="Servers" MultiSelection="true" SelectedValues="SelectedIds" SelectedValuesChanged="SetSelectedIds"
+                    <MudSelect T="string" Label="@WebStrings.ProviderServers" MultiSelection="true" SelectedValues="SelectedIds" SelectedValuesChanged="SetSelectedIds"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="_serversLoading"
-                               MultiSelectionTextFunc="@(selected => $"{selected?.Count ?? 0} selected")"
+                               MultiSelectionTextFunc="@(selected => WebStrings.Format(WebStrings.SelectedCount, selected?.Count ?? 0))"
                                HelperText="@ServerListHelp">
                         @foreach (var server in CurrentServers)
                         {
@@ -93,12 +93,12 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField T="string" @bind-Value="_customId" Label="Add a server ID" Placeholder="e.g. 12345"
+                    <MudTextField T="string" @bind-Value="_customId" Label="@WebStrings.ProviderAddServerId" Placeholder="@WebStrings.ServerIdPlaceholder"
                                   Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                                  Error="@(!CustomIdValid)" ErrorText="Server IDs are numbers"
-                                  HelperText="For servers that aren't in the list"
+                                  Error="@(!CustomIdValid)" ErrorText="@WebStrings.ServerIdInvalid"
+                                  HelperText="@WebStrings.ProviderAddServerIdHelp"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
-                                  AdornmentAriaLabel="Add server ID" OnAdornmentClick="AddCustomId"
+                                  AdornmentAriaLabel="@WebStrings.ProviderAddServerIdLabel" OnAdornmentClick="AddCustomId"
                                   OnKeyDown="@(e => { if (e.Key == "Enter") AddCustomId(); })" />
                 </MudItem>
             </MudGrid>
@@ -118,8 +118,8 @@
             {
                 <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">
                     @(_listMode == ServerListMode.Deny
-                        ? "Nothing excluded yet, so any nearby server can be used."
-                        : "No servers chosen yet, so the provider picks for each test.")
+                        ? WebStrings.ProviderNothingExcluded
+                        : WebStrings.ProviderNothingChosen)
                 </MudText>
             }
         }
@@ -130,22 +130,25 @@
         <div class="d-flex align-center mt-4">
             <MudCheckBox T="bool" @bind-Value="_acceptedOokla" Color="Color.Primary" Dense="true" />
             <MudText Typo="Typo.body2">
-                I have read and accept Ookla's
-                <MudLink Href="@OoklaTerms.EulaUrl" Target="_blank">EULA</MudLink>,
-                <MudLink Href="@OoklaTerms.PrivacyPolicyUrl" Target="_blank">privacy policy</MudLink> and
-                <MudLink Href="@OoklaTerms.TermsOfServiceUrl" Target="_blank">terms of service</MudLink>.
+                <FormattedText Format="@WebStrings.ProviderAcceptOoklaTerms" Arguments="@([OoklaEulaLink, OoklaPrivacyPolicyLink, OoklaTermsOfServiceLink])" />
             </MudText>
         </div>
     }
 
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Disabled="@(!CanSave)" OnClick="SaveAsync">
-        @(_saving ? "Saving..." : "Save")
+        @(_saving ? WebStrings.Saving : WebStrings.Save)
     </MudButton>
 </SurfaceCard>
 
 @code {
     private sealed record ServerOption(string Id, string Label);
     private sealed record InterfaceOption(string Value, string Label);
+
+    private static RenderFragment OoklaEulaLink => @<MudLink Href="@OoklaTerms.EulaUrl" Target="_blank">@WebStrings.ProviderEula</MudLink>;
+
+    private static RenderFragment OoklaPrivacyPolicyLink => @<MudLink Href="@OoklaTerms.PrivacyPolicyUrl" Target="_blank">@WebStrings.ProviderPrivacyPolicy</MudLink>;
+
+    private static RenderFragment OoklaTermsOfServiceLink => @<MudLink Href="@OoklaTerms.TermsOfServiceUrl" Target="_blank">@WebStrings.ProviderTermsOfService</MudLink>;
 
     private SpeedtestProvider _provider = SpeedtestProvider.Ookla;
     private string _interface = SettingDefinitions.Unset;
@@ -166,10 +169,10 @@
     private IReadOnlyList<ServerOption> CurrentServers => _servers.TryGetValue(_provider, out var list) ? list : [];
 
     private string ServerListHelp => _serversLoading
-        ? "Loading servers..."
+        ? WebStrings.LoadingServers
         : _serverListsUnavailable.Contains(_provider)
-            ? "Couldn't load the server list. You can still enter a server ID."
-            : "Nearest servers are listed first";
+            ? WebStrings.ProviderServerListFailed
+            : WebStrings.NearestServersFirst;
 
     private List<string> SelectedIdList => _serverIds.TryGetValue(_provider, out var ids) ? ids : [];
 
@@ -254,7 +257,7 @@
     }
 
     private string ServerLabel(string id) =>
-        CurrentServers.FirstOrDefault(s => s.Id == id)?.Label ?? $"Server {id}";
+        CurrentServers.FirstOrDefault(s => s.Id == id)?.Label ?? WebStrings.Format(WebStrings.ProviderServerFallback, id);
 
     private void SetLibreUrl(string? value)
     {
@@ -280,7 +283,7 @@
 
         if (_interface != SettingDefinitions.Unset && _interfaceOptions.All(o => o.Value != _interface))
         {
-            _interfaceOptions.Insert(0, new InterfaceOption(_interface, $"{_interface} (currently saved)"));
+            _interfaceOptions.Insert(0, new InterfaceOption(_interface, WebStrings.Format(WebStrings.ProviderInterfaceSaved, _interface)));
         }
     }
 
@@ -339,7 +342,7 @@
 
         var result = await Settings.SaveAsync([.. changes]);
         _saving = false;
-        if (result.Succeeded) Snackbar.Add("The provider settings have been saved", Severity.Success);
+        if (result.Succeeded) Snackbar.Add(WebStrings.ProviderSaved, Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 }

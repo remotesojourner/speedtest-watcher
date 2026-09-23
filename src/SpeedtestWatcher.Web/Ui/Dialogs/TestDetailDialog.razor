@@ -9,7 +9,7 @@
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@(IsSkipped ? Icons.Material.Filled.RemoveCircleOutline : IsFailed ? Icons.Material.Filled.ErrorOutline : Icons.Material.Filled.Speed)"
                      Color="@(IsSkipped ? Color.Default : IsFailed ? Color.Error : Color.Primary)" />
-            <MudText Typo="Typo.h6">@(IsSkipped ? "Test Skipped" : IsFailed ? "Test Failed" : "Test Result")</MudText>
+            <MudText Typo="Typo.h6">@(IsSkipped ? WebStrings.TestDetailSkippedTitle : IsFailed ? WebStrings.TestDetailFailedTitle : WebStrings.TestDetailTitle)</MudText>
         </div>
     </TitleContent>
     <DialogContent>
@@ -18,7 +18,7 @@
             @if (IsSkipped)
             {
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-                    <MudText Typo="Typo.body2" Class="font-weight-bold">This test was skipped before it ran.</MudText>
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">@WebStrings.TestDetailSkipped</MudText>
                     <MudText Typo="Typo.caption" Class="d-block mt-1">@Test.Error</MudText>
                 </MudAlert>
             }
@@ -26,9 +26,9 @@
             {
                 <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">
                     <MudText Typo="Typo.body2" Class="font-weight-bold">@SpeedtestErrors.Describe(Test.Error)</MudText>
-                    <MudText Typo="Typo.caption" Class="d-block mt-1">Please check whether this happens often.</MudText>
+                    <MudText Typo="Typo.caption" Class="d-block mt-1">@WebStrings.TestDetailFailedHint</MudText>
                 </MudAlert>
-                <DataRow Label="Error details">
+                <DataRow Label="@WebStrings.TestDetailErrorDetails">
                     <MudText Typo="Typo.caption" Class="sw-muted text-end" Style="max-width:70%;word-break:break-word;">@Test.Error</MudText>
                 </DataRow>
             }
@@ -38,20 +38,20 @@
                     <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@MetricStatus.Download(Test.Download, Test.ThresholdDownload)"
                                    Value="@($"{PreferencesService.ConvertSpeed(Test.Download):F1}")"
                                    Unit="@PreferencesService.SpeedUnit"
-                                   Label="Download speed" />
+                                   Label="@WebStrings.DownloadSpeed" />
 
                     <div class="d-flex flex-wrap gap-5">
                         <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Upload(Test.Upload, Test.ThresholdUpload)" Icon="@Icons.Material.Filled.Upload"
                                        Value="@($"{PreferencesService.ConvertSpeed(Test.Upload):F1}")"
-                                       Label="@($"{PreferencesService.SpeedUnit} upload")" />
+                                       Label="@WebStrings.Format(WebStrings.UploadUnit, PreferencesService.SpeedUnit)" />
 
                         <MetricDisplay Size="MetricSize.Large" Dense="true" Color="@MetricStatus.Ping(Test.Ping, Test.ThresholdPing)" Icon="@Icons.Material.Filled.NetworkPing"
                                        Value="@($"{Test.Ping}")"
-                                       Label="@($"ms ping{(Test.Jitter.HasValue ? $" (±{Test.Jitter:F1})" : "")}")" />
+                                       Label="@(Test.Jitter.HasValue ? WebStrings.Format(WebStrings.PingMsWithJitter, Test.Jitter) : WebStrings.PingMs)" />
 
                         <MetricDisplay Size="MetricSize.Large" Dense="true" Icon="@Icons.Material.Filled.Timer"
                                        Value="@($"{Test.Time}")"
-                                       Label="sec duration" />
+                                       Label="@WebStrings.TestDetailDuration" />
                     </div>
                 </div>
                 <MudDivider Class="mb-3" />
@@ -59,13 +59,13 @@
 
             @if (Test.PacketLoss is { } packetLoss)
             {
-                <DataRow Label="Packet loss">
+                <DataRow Label="@WebStrings.PacketLoss">
                     <MudText Typo="Typo.body2" Color="@MetricStatus.PacketLoss(packetLoss, Test.ThresholdPacketLoss)">@($"{packetLoss:F2}%")</MudText>
                 </DataRow>
             }
             @if (Test.Bufferbloat is { } bufferbloat)
             {
-                <DataRow Label="Bufferbloat">
+                <DataRow Label="@WebStrings.Bufferbloat">
                     <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloat, Test.ThresholdBufferbloat)">
                         @($"+{bufferbloat:F0} ms")
                     </MudText>
@@ -74,30 +74,30 @@
             }
             @if (Test.DownloadBytes + Test.UploadBytes is { } dataUsed)
             {
-                <DataRow Label="Data used" Value="@ByteSize.Describe(dataUsed)" />
+                <DataRow Label="@WebStrings.TestDetailDataUsed" Value="@ByteSize.Describe(dataUsed)" />
             }
             @if (Access.HasFullAccess && !string.IsNullOrEmpty(Test.PublicIp))
             {
-                <DataRow Label="Public IP" Value="@Test.PublicIp" />
+                <DataRow Label="@WebStrings.TestDetailPublicIp" Value="@Test.PublicIp" />
             }
             @if (MissedTargets.Count > 0)
             {
-                <DataRow Label="Missed targets" Value="@MissedTargetsText" />
+                <DataRow Label="@WebStrings.TestDetailMissedTargets" Value="@MissedTargetsText" />
             }
-            <DataRow Label="Time" Value="@PreferencesService.FormatDateTime(PreferencesService.ToLocal(Test.Created))" />
-            <DataRow Label="Started">
+            <DataRow Label="@WebStrings.TestDetailTime" Value="@PreferencesService.FormatDateTime(PreferencesService.ToLocal(Test.Created))" />
+            <DataRow Label="@WebStrings.TestDetailStarted">
                 <MudChip T="string" Size="Size.Small" Color="@(IsManual ? Color.Info : Color.Default)">
-                    @(IsManual ? "Manually, by you" : "Automatically")
+                    @(IsManual ? WebStrings.TestDetailStartedManually : WebStrings.TestDetailStartedAutomatically)
                 </MudChip>
             </DataRow>
             @if (!string.IsNullOrEmpty(Test.ServerName))
             {
-                <DataRow Label="Server" Value="@Test.ServerName" />
+                <DataRow Label="@WebStrings.Server" Value="@Test.ServerName" />
             }
             @if (!string.IsNullOrEmpty(Test.ResultId))
             {
-                <DataRow Label="Result">
-                    <MudLink Href="@($"https://www.speedtest.net/result/c/{Test.ResultId}")" Target="_blank">View on Speedtest.net</MudLink>
+                <DataRow Label="@WebStrings.TestDetailResult">
+                    <MudLink Href="@($"https://www.speedtest.net/result/c/{Test.ResultId}")" Target="_blank">@WebStrings.TestDetailViewOnSpeedtestNet</MudLink>
                 </DataRow>
             }
         }
@@ -107,11 +107,11 @@
         {
             <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Delete"
                        Disabled="_deleting" OnClick="DeleteTestAsync">
-                Delete Test
+                @WebStrings.TestDetailDelete
             </MudButton>
         }
         <MudSpacer />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => MudDialog.Close())">Close</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => MudDialog.Close())">@WebStrings.Close</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -128,10 +128,10 @@
             if (Test is not { } test) return "";
 
             List<string> parts = [];
-            if (test.BufferbloatDown is { } down) parts.Add($"+{down:F0} ms down");
-            if (test.BufferbloatUp is { } up) parts.Add($"+{up:F0} ms up");
-            if (test.LatencyIdle is { } idle && test.LatencyLoaded is { } loaded) parts.Add($"{idle:F0} → {loaded:F0} ms");
-            if (test.LatencyLoadedTail is { } tail) parts.Add($"worst 5% {tail:F0} ms");
+            if (test.BufferbloatDown is { } down) parts.Add(WebStrings.Format(WebStrings.TestDetailBufferbloatDown, down));
+            if (test.BufferbloatUp is { } up) parts.Add(WebStrings.Format(WebStrings.TestDetailBufferbloatUp, up));
+            if (test.LatencyIdle is { } idle && test.LatencyLoaded is { } loaded) parts.Add(WebStrings.Format(WebStrings.TestDetailLatencyIdleToLoaded, idle, loaded));
+            if (test.LatencyLoadedTail is { } tail) parts.Add(WebStrings.Format(WebStrings.TestDetailLatencyWorst, tail));
             return string.Join(", ", parts);
         }
     }
@@ -161,12 +161,12 @@
 
         if (!result.Succeeded)
         {
-            Snackbar.Add("Could not delete the test", Severity.Error);
+            Snackbar.Add(WebStrings.TestDetailDeleteFailed, Severity.Error);
             return;
         }
 
         RecentResults.Remove(Test.Id);
-        Snackbar.Add("The test has been deleted", Severity.Success);
+        Snackbar.Add(WebStrings.TestDetailDeleted, Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

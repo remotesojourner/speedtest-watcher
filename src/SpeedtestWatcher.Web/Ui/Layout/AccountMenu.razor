@@ -1,11 +1,11 @@
 @inject NavigationManager Navigation
 
 <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight"
-         TransformOrigin="Origin.TopRight" aria-label="Account">
-    <MudText Typo="Typo.caption" Class="sw-muted d-block px-4 pt-2 pb-1">Signed in as</MudText>
+         TransformOrigin="Origin.TopRight" aria-label="@WebStrings.AccountMenuLabel">
+    <MudText Typo="Typo.caption" Class="sw-muted d-block px-4 pt-2 pb-1">@WebStrings.AccountMenuSignedInAs</MudText>
     <MudText Typo="Typo.body2" Class="font-weight-bold d-block px-4 pb-2">@Name</MudText>
     <MudDivider />
-    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="SignOut">Sign out</MudMenuItem>
+    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="SignOut">@WebStrings.SignOut</MudMenuItem>
 </MudMenu>
 
 @code {

@@ -12,21 +12,21 @@
 @inject ISnackbar Snackbar
 @implements IDisposable
 
-<PageTitle>Speedtest Watcher - Dashboard</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.DashboardTitle</PageTitle>
 
-<PageHeader Title="Dashboard" Subtitle="@RangeSubtitle">
+<PageHeader Title="@WebStrings.DashboardTitle" Subtitle="@RangeSubtitle">
     <Actions>
         @if (_range == CustomRange)
         {
             <MudDateRangePicker DateRange="@(new DateRange(_from, _to))" DateRangeChanged="SetCustomRangeAsync"
-                                PlaceholderStart="From" PlaceholderEnd="To" AutoClose="true"
+                                PlaceholderStart="@WebStrings.DashboardFrom" PlaceholderEnd="@WebStrings.DashboardTo" AutoClose="true"
                                 DateFormat="@DisplayFormat.DatePattern(Settings.Current.Display.DateFormat)"
                                 Variant="Variant.Outlined" Margin="Margin.Dense" Class="sw-range-picker" />
         }
         <MudToggleGroup T="string" Value="_range" ValueChanged="SelectRangeAsync!" SelectionMode="SelectionMode.SingleSelection"
                         Color="Color.Primary" Size="Size.Small" Outlined="true" Delimiters="true" CheckMark="false"
                         SelectedClass="sw-range-selected" Class="sw-range-toggle">
-            @foreach (var option in _rangeOptions)
+            @foreach (var option in RangeOptions)
             {
                 <MudToggleItem Value="@option.Id" Text="@option.Title" />
             }
@@ -38,12 +38,12 @@
 {
     <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
         <div class="d-flex flex-wrap align-center justify-space-between gap-3">
-            <span>Speedtests are currently paused.</span>
+            <span>@WebStrings.PausedNotice</span>
             @if (Access.HasFullAccess)
             {
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="Resume">
-                    Resume
+                    @WebStrings.Resume
                 </MudButton>
             }
         </div>
@@ -51,64 +51,64 @@
 }
 
 <StateView Loading="_loading" Empty="@(_stats == null || _stats.Tests.Total == 0)"
-           EmptyMessage="There are no tests in the selected period."
-           ErrorMessage="@(_loadFailed ? "Couldn't load the statistics for this period." : null)" OnRetry="LoadStatisticsAsync">
+           EmptyMessage="@WebStrings.DashboardNoTests"
+           ErrorMessage="@(_loadFailed ? WebStrings.DashboardLoadFailed : null)" OnRetry="LoadStatisticsAsync">
     <ChildContent>
         @if (_stats != null)
         {
             <MudGrid Spacing="4" Class="mb-4">
                 <MudItem xs="12" md="8">
-                    <SurfaceCard Icon="@Icons.Material.Filled.Insights" Title="Overview">
+                    <SurfaceCard Icon="@Icons.Material.Filled.Insights" Title="@WebStrings.DashboardOverview">
                         <div class="d-flex flex-wrap justify-space-around gap-6 mb-4">
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Download"
                                            Color="@MetricStatus.Download(_stats.Download?.Avg, Targets.Download)"
                                            Value="@(_stats.Download != null ? $"{PreferencesService.ConvertSpeed(_stats.Download.Avg):F1}" : "—")"
-                                           Label="@($"{PreferencesService.SpeedUnit} avg download")" />
+                                           Label="@WebStrings.Format(WebStrings.DashboardAvgDownload, PreferencesService.SpeedUnit)" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Upload"
                                            Color="@MetricStatus.Upload(_stats.Upload?.Avg, Targets.Upload)"
                                            Value="@(_stats.Upload != null ? $"{PreferencesService.ConvertSpeed(_stats.Upload.Avg):F1}" : "—")"
-                                           Label="@($"{PreferencesService.SpeedUnit} avg upload")" />
+                                           Label="@WebStrings.Format(WebStrings.DashboardAvgUpload, PreferencesService.SpeedUnit)" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
                                            Color="@MetricStatus.Ping(_stats.Ping?.Avg, Targets.Ping)"
                                            Value="@(_stats.Ping != null ? $"{_stats.Ping.Avg}" : "—")"
-                                           Label="ms avg ping" />
+                                           Label="@WebStrings.DashboardAvgPing" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.GraphicEq"
                                            Value="@(_stats.Jitter != null ? $"{_stats.Jitter.Avg:F1}" : "—")"
-                                           Label="ms avg jitter" />
+                                           Label="@WebStrings.DashboardAvgJitter" />
                         </div>
                         <MudDivider Class="mb-3" />
                         <div class="d-flex flex-wrap justify-space-around gap-4">
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Speed"
                                            Value="@_stats.Tests.Total.ToString(CultureInfo.CurrentCulture)"
-                                           Label="@(_stats.Tests.Total == 1 ? "test run" : "tests run")" />
+                                           Label="@(_stats.Tests.Total == 1 ? WebStrings.DashboardTestRun : WebStrings.DashboardTestsRun)" />
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.ErrorOutline"
                                            Color="@(_stats.Tests.Failed > 0 ? Color.Error : Color.Default)"
-                                           Value="@_stats.Tests.Failed.ToString(CultureInfo.CurrentCulture)" Label="failed" />
+                                           Value="@_stats.Tests.Failed.ToString(CultureInfo.CurrentCulture)" Label="@WebStrings.DashboardFailed" />
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Timer"
-                                           Value="@(_stats.Time != null ? $"{_stats.Time.Avg}s" : "—")" Label="average duration" />
+                                           Value="@(_stats.Time != null ? $"{_stats.Time.Avg}s" : "—")" Label="@WebStrings.DashboardAverageDuration" />
                             @if (_stats.PacketLoss != null)
                             {
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.CallSplit"
                                                Color="@MetricStatus.PacketLoss(_stats.PacketLoss.Avg, Targets.PacketLoss)"
-                                               Value="@($"{_stats.PacketLoss.Avg:F2}%")" Label="avg packet loss" />
+                                               Value="@($"{_stats.PacketLoss.Avg:F2}%")" Label="@WebStrings.DashboardAvgPacketLoss" />
                             }
                             @if (_stats.Bufferbloat != null)
                             {
-                                <MudTooltip Text="How much longer the line takes to answer while a test saturates it. Under 30 ms is good; a lot more means calls and games suffer while something big is downloading."
+                                <MudTooltip Text="@WebStrings.DashboardBufferbloatTooltip"
                                             Placement="Placement.Top">
                                     <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Waves"
                                                    Color="@MetricStatus.Bufferbloat(_stats.Bufferbloat.Avg, Targets.Bufferbloat)"
-                                                   Value="@($"{_stats.Bufferbloat.Avg:F0} ms")" Label="avg bufferbloat" />
+                                                   Value="@($"{_stats.Bufferbloat.Avg:F0} ms")" Label="@WebStrings.DashboardAvgBufferbloat" />
                                 </MudTooltip>
                             }
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.DataUsage"
-                                           Value="@ByteSize.Describe(_stats.DataUsedBytes)" Label="data used" />
+                                           Value="@ByteSize.Describe(_stats.DataUsedBytes)" Label="@WebStrings.DashboardDataUsed" />
                             @if (_uptime is { Percent: { } percent })
                             {
                                 <MudLink Href="uptime" Underline="Underline.None">
                                     <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.MonitorHeart"
                                                    Color="@(percent >= 99.9 ? Color.Success : Color.Warning)"
-                                                   Value="@($"{percent:F2}%")" Label="uptime, 7 days" />
+                                                   Value="@($"{percent:F2}%")" Label="@WebStrings.DashboardUptime7Days" />
                                 </MudLink>
                             }
                         </div>
@@ -116,15 +116,15 @@
                 </MudItem>
 
                 <MudItem xs="12" md="4">
-                    <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="Latest Test"
+                    <SurfaceCard Icon="@Icons.Material.Filled.Schedule" Title="@WebStrings.DashboardLatestTest"
                                  Class="@(StatusService.Running ? "sw-running" : null)" Description="@LatestDescription">
                         @if (Latest == null)
                         {
-                            <MudText Typo="Typo.body2" Class="sw-muted">No tests yet.</MudText>
+                            <MudText Typo="Typo.body2" Class="sw-muted">@WebStrings.DashboardNoTestsYet</MudText>
                         }
                         else if (Latest.Status == TestStatus.Skipped)
                         {
-                            <MudText Typo="Typo.body2" Class="sw-muted" Style="overflow-wrap:anywhere;">Skipped — @Latest.Error</MudText>
+                            <MudText Typo="Typo.body2" Class="sw-muted" Style="overflow-wrap:anywhere;">@WebStrings.Format(WebStrings.DashboardLatestSkipped, Latest.Error)</MudText>
                         }
                         else if (!string.IsNullOrEmpty(Latest.Error))
                         {
@@ -142,7 +142,7 @@
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.NetworkPing"
                                                Color="@MetricStatus.Ping(Latest.Ping, Targets.Ping)"
                                                Value="@($"{Latest.Ping}")"
-                                               Label="@(Latest.Jitter is { } jitter ? $"ms ping (±{jitter:F1})" : "ms ping")" />
+                                               Label="@(Latest.Jitter is { } jitter ? WebStrings.Format(WebStrings.PingMsWithJitter, jitter) : WebStrings.PingMs)" />
                             </div>
 
                             @if (Latest.Healthy is { } healthy)
@@ -150,7 +150,7 @@
                                 <MudChip T="string" Size="Size.Small" Class="mt-3"
                                          Color="@(healthy ? Color.Success : Color.Warning)"
                                          Icon="@(healthy ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.TrendingDown)">
-                                    @(healthy ? "Met your targets" : "Missed your targets")
+                                    @(healthy ? WebStrings.MetYourTargets : WebStrings.MissedYourTargets)
                                 </MudChip>
                             }
                         }
@@ -158,40 +158,40 @@
                 </MudItem>
 
                 <MudItem xs="12" md="6">
-                    <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="Connection Stability"
-                                 Description="How consistent results were across the period.">
+                    <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="@WebStrings.DashboardStability"
+                                 Description="@WebStrings.DashboardStabilityDescription">
                         <div class="d-flex flex-wrap justify-space-around gap-6">
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Download"
                                            Color="@ConsistencyColor(_stats.Consistency.Download.Consistency)"
                                            Value="@($"{_stats.Consistency.Download.Consistency:F0}%")"
-                                           Label="@($"download ±{Speed(_stats.Consistency.Download.StdDev)}")" />
+                                           Label="@WebStrings.Format(WebStrings.DashboardDownloadDeviation, Speed(_stats.Consistency.Download.StdDev))" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.Upload"
                                            Color="@ConsistencyColor(_stats.Consistency.Upload.Consistency)"
                                            Value="@($"{_stats.Consistency.Upload.Consistency:F0}%")"
-                                           Label="@($"upload ±{Speed(_stats.Consistency.Upload.StdDev)}")" />
+                                           Label="@WebStrings.Format(WebStrings.DashboardUploadDeviation, Speed(_stats.Consistency.Upload.StdDev))" />
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
-                                           Value="@($"±{_stats.Consistency.Ping.StdDev:F1}")" Label="ms ping variance" />
+                                           Value="@($"±{_stats.Consistency.Ping.StdDev:F1}")" Label="@WebStrings.DashboardPingVariance" />
                         </div>
-                        <MudText Typo="Typo.caption" Class="sw-muted d-block text-center mt-3">Overall: @StabilityVerdict</MudText>
+                        <MudText Typo="Typo.caption" Class="sw-muted d-block text-center mt-3">@WebStrings.Format(WebStrings.DashboardStabilityOverall, StabilityVerdict)</MudText>
                     </SurfaceCard>
                 </MudItem>
 
                 <MudItem xs="12" md="6">
-                    <SurfaceCard Icon="@Icons.Material.Filled.StackedLineChart" Title="Value Ranges">
+                    <SurfaceCard Icon="@Icons.Material.Filled.StackedLineChart" Title="@WebStrings.DashboardValueRanges">
                         <MudSimpleTable Dense="true" Class="sw-range-table" Style="background:transparent;">
                             <thead>
                                 <tr>
                                     <th></th>
-                                    <th class="text-end">Min</th>
-                                    <th class="text-end">Average</th>
-                                    <th class="text-end">Max</th>
+                                    <th class="text-end">@WebStrings.DashboardMin</th>
+                                    <th class="text-end">@WebStrings.Average</th>
+                                    <th class="text-end">@WebStrings.DashboardMax</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (_stats.Download != null)
                                 {
                                     <tr>
-                                        <td>Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
+                                        <td>@WebStrings.Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Min):F1}")</td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Avg):F1}")</td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Download.Max):F1}")</td>
@@ -200,7 +200,7 @@
                                 @if (_stats.Upload != null)
                                 {
                                     <tr>
-                                        <td>Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
+                                        <td>@WebStrings.Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Min):F1}")</td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Avg):F1}")</td>
                                         <td class="text-end">@($"{PreferencesService.ConvertSpeed(_stats.Upload.Max):F1}")</td>
@@ -209,7 +209,7 @@
                                 @if (_stats.Ping != null)
                                 {
                                     <tr>
-                                        <td>Ping <span class="sw-muted">ms</span></td>
+                                        <td>@WebStrings.Ping <span class="sw-muted">ms</span></td>
                                         <td class="text-end">@_stats.Ping.Min</td>
                                         <td class="text-end">@_stats.Ping.Avg</td>
                                         <td class="text-end">@_stats.Ping.Max</td>
@@ -218,7 +218,7 @@
                                 @if (_stats.Jitter != null)
                                 {
                                     <tr>
-                                        <td>Jitter <span class="sw-muted">ms</span></td>
+                                        <td>@WebStrings.Jitter <span class="sw-muted">ms</span></td>
                                         <td class="text-end">@($"{_stats.Jitter.Min:F1}")</td>
                                         <td class="text-end">@($"{_stats.Jitter.Avg:F1}")</td>
                                         <td class="text-end">@($"{_stats.Jitter.Max:F1}")</td>
@@ -227,7 +227,7 @@
                                 @if (_stats.PacketLoss != null)
                                 {
                                     <tr>
-                                        <td>Packet loss <span class="sw-muted">%</span></td>
+                                        <td>@WebStrings.PacketLoss <span class="sw-muted">%</span></td>
                                         <td class="text-end">@($"{_stats.PacketLoss.Min:F2}")</td>
                                         <td class="text-end">@($"{_stats.PacketLoss.Avg:F2}")</td>
                                         <td class="text-end">@($"{_stats.PacketLoss.Max:F2}")</td>
@@ -236,7 +236,7 @@
                                 @if (_stats.Bufferbloat != null)
                                 {
                                     <tr>
-                                        <td>Bufferbloat <span class="sw-muted">ms</span></td>
+                                        <td>@WebStrings.Bufferbloat <span class="sw-muted">ms</span></td>
                                         <td class="text-end">@($"{_stats.Bufferbloat.Min:F0}")</td>
                                         <td class="text-end">@($"{_stats.Bufferbloat.Avg:F0}")</td>
                                         <td class="text-end">@($"{_stats.Bufferbloat.Max:F0}")</td>
@@ -253,17 +253,17 @@
                 {
                     <MudGrid Class="mb-4">
                         <MudItem xs="12" md="6" lg="4">
-                            <ChartCard Title="Download Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
+                            <ChartCard Title="@WebStrings.DashboardDownloadChart" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
                                        ChartType="ChartType.Line" ChartSeries="@_charts.Download" ChartLabels="@_charts.Labels" ChartOptions="@_downloadOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
                         <MudItem xs="12" md="6" lg="4">
-                            <ChartCard Title="Upload Speed" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
+                            <ChartCard Title="@WebStrings.DashboardUploadChart" ValueText="@PreferencesService.SpeedUnit" Class="sw-chart-average"
                                        ChartType="ChartType.Line" ChartSeries="@_charts.Upload" ChartLabels="@_charts.Labels" ChartOptions="@_uploadOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
                         <MudItem xs="12" md="12" lg="4">
-                            <ChartCard Title="Ping &amp; Jitter" ValueText="ms" Class="sw-chart-average"
+                            <ChartCard Title="@WebStrings.DashboardPingChart" ValueText="ms" Class="sw-chart-average"
                                        ChartType="ChartType.Line" ChartSeries="@_charts.Ping" ChartLabels="@_charts.Labels" ChartOptions="@_pingOptions"
                                        MaxLabels="2" Expandable="@(!_compact)" />
                         </MudItem>
@@ -272,8 +272,8 @@
 
                 @if (_stats.HourlyAverages.Any(h => h.Count > 0))
                 {
-                    <SurfaceCard Icon="@Icons.Material.Filled.AccessTime" Title="By Time of Day" FullHeight="false" Class="mb-4"
-                                 Description="Averages for each hour of the day across the selected period.">
+                    <SurfaceCard Icon="@Icons.Material.Filled.AccessTime" Title="@WebStrings.DashboardByTimeOfDay" FullHeight="false" Class="mb-4"
+                                 Description="@WebStrings.DashboardByTimeOfDayDescription">
                         <div class="sw-hourly-scroll">
                             <table class="sw-hourly-table">
                                 <colgroup>
@@ -294,21 +294,21 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th scope="row" class="sw-hourly-name">Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
+                                        <th scope="row" class="sw-hourly-name">@WebStrings.Download <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
                                             <td style="@CellColor(MetricStatus.Download(hour.Download, Targets.Download))">@SpeedCell(hour.Download)</td>
                                         }
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="sw-hourly-name">Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
+                                        <th scope="row" class="sw-hourly-name">@WebStrings.Upload <span class="sw-muted">@PreferencesService.SpeedUnit</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
                                             <td style="@CellColor(MetricStatus.Upload(hour.Upload, Targets.Upload))">@SpeedCell(hour.Upload)</td>
                                         }
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="sw-hourly-name">Ping <span class="sw-muted">ms</span></th>
+                                        <th scope="row" class="sw-hourly-name">@WebStrings.Ping <span class="sw-muted">ms</span></th>
                                         @foreach (var hour in _stats.HourlyAverages)
                                         {
                                             <td style="@CellColor(MetricStatus.Ping(hour.Ping, Targets.Ping))">@(hour.Ping?.ToString(CultureInfo.CurrentCulture) ?? "—")</td>
@@ -323,8 +323,8 @@
 
             @if (_failures.Count > 0)
             {
-                <SurfaceCard Icon="@Icons.Material.Filled.ErrorOutline" Title="Failed Tests" FullHeight="false"
-                             Description="@($"{_failures.Count} failed in this period")">
+                <SurfaceCard Icon="@Icons.Material.Filled.ErrorOutline" Title="@WebStrings.DashboardFailedTests" FullHeight="false"
+                             Description="@WebStrings.Format(WebStrings.DashboardFailedInPeriod, _failures.Count)">
                     @foreach (var failure in _failures)
                     {
                         <DataRow Label="@failure.Time">
@@ -342,12 +342,12 @@
 
     private const string CustomRange = "custom";
 
-    private static readonly (string Id, string Title)[] _rangeOptions =
+    private static (string Id, string Title)[] RangeOptions =>
     [
-        ("24h", "24h"),
-        ("7d", "7 days"),
-        ("30d", "30 days"),
-        (CustomRange, "Custom")
+        ("24h", WebStrings.DashboardRange24Hours),
+        ("7d", WebStrings.SevenDays),
+        ("30d", WebStrings.ThirtyDays),
+        (CustomRange, WebStrings.Custom)
     ];
 
     private string _range = "7d";
@@ -387,10 +387,10 @@
             var worst = Math.Min(_stats.Consistency.Download.Consistency, _stats.Consistency.Upload.Consistency);
             return worst switch
             {
-                >= 90 => "Excellent",
-                >= 70 => "Good",
-                >= 50 => "Fair",
-                _ => "Poor"
+                >= 90 => WebStrings.DashboardStabilityExcellent,
+                >= 70 => WebStrings.DashboardStabilityGood,
+                >= 50 => WebStrings.DashboardStabilityFair,
+                _ => WebStrings.DashboardStabilityPoor
             };
         }
     }
@@ -402,7 +402,7 @@
         Settings.OnChange += OnStateChanged;
 
         var configured = Settings.Current.Display.ChartRange;
-        _range = _rangeOptions.Any(option => option.Id == configured) ? configured : "7d";
+        _range = RangeOptions.Any(option => option.Id == configured) ? configured : "7d";
         ApplyRange();
 
         await LoadStatisticsAsync();
@@ -513,10 +513,11 @@
     }
 
     private string HourHeader(int hour) => PreferencesService.TimeFormat == "12h"
-        ? $"{(hour % 12 == 0 ? 12 : hour % 12)}{(hour < 12 ? "a" : "p")}"
+        ? WebStrings.Format(hour < 12 ? WebStrings.DashboardHourAm : WebStrings.DashboardHourPm, hour % 12 == 0 ? 12 : hour % 12)
         : $"{hour:D2}";
 
-    private static string TestCount(int count) => count == 1 ? "1 test" : $"{count} tests";
+    private static string TestCount(int count) =>
+        count == 1 ? WebStrings.DashboardOneTest : WebStrings.Format(WebStrings.DashboardTestCount, count);
 
     private string SpeedCell(double? mbps) => mbps is { } value ? $"{PreferencesService.ConvertSpeed(value):F0}" : "—";
 
@@ -533,11 +534,11 @@
     {
         if (!Pause.Resume().Succeeded)
         {
-            Snackbar.Add("Could not resume speedtests", Severity.Error);
+            Snackbar.Add(WebStrings.ResumeFailed, Severity.Error);
             return;
         }
 
-        Snackbar.Add("Speedtests resumed", Severity.Success);
+        Snackbar.Add(WebStrings.Resumed, Severity.Success);
     }
 
     public void Dispose()

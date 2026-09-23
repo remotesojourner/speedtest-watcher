@@ -6,91 +6,91 @@
 
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.TrendingUp" Title="Optimal Values"
-                     Description="Your contracted speeds. Results are colour-coded against these, marked healthy or not, and integrations can alert you when a test misses them.">
-            <MudNumericField T="double" @bind-Value="_optPing" Label="Ping (ms)" Variant="Variant.Outlined" Margin="Margin.Dense"
+        <SurfaceCard Icon="@Icons.Material.Filled.TrendingUp" Title="@WebStrings.GeneralTargetsTitle"
+                     Description="@WebStrings.GeneralTargetsDescription">
+            <MudNumericField T="double" @bind-Value="_optPing" Label="@WebStrings.PingTargetLabel" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Ping, "ms")" Class="mb-3" />
-            <MudNumericField T="double" @bind-Value="_optDownload" Label="Download (Mbps)" Variant="Variant.Outlined" Margin="Margin.Dense"
+            <MudNumericField T="double" @bind-Value="_optDownload" Label="@WebStrings.DownloadTargetLabel" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Download, "Mbps")" Class="mb-3" />
-            <MudNumericField T="double" @bind-Value="_optUpload" Label="Upload (Mbps)" Variant="Variant.Outlined" Margin="Margin.Dense"
+            <MudNumericField T="double" @bind-Value="_optUpload" Label="@WebStrings.UploadTargetLabel" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Upload, "Mbps")" Class="mb-4" />
 
-            <MudText Typo="Typo.body2" Class="font-weight-bold mb-1">Optional maximums</MudText>
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-1">@WebStrings.GeneralMaximums</MudText>
             <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">
-                Judged only when a test measured the figure, so a provider that doesn't report one can never miss it. Leave empty for no target.
+                @WebStrings.GeneralMaximumsDescription
             </MudText>
 
-            <MudNumericField T="double?" @bind-Value="_maxPacketLoss" Label="Packet loss (%)" Variant="Variant.Outlined" Margin="Margin.Dense"
+            <MudNumericField T="double?" @bind-Value="_maxPacketLoss" Label="@WebStrings.GeneralMaxPacketLoss" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Max="100" Immediate="true" Clearable="true"
-                             HelperText="Only Ookla measures packet loss" Class="mb-3" />
-            <MudNumericField T="double?" @bind-Value="_maxBufferbloat" Label="Bufferbloat (ms)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             HelperText="@WebStrings.GeneralMaxPacketLossHelp" Class="mb-3" />
+            <MudNumericField T="double?" @bind-Value="_maxBufferbloat" Label="@WebStrings.GeneralMaxBufferbloat" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Immediate="true" Clearable="true"
-                             HelperText="Added latency under load. Under 30 ms is good" Class="mb-4" />
+                             HelperText="@WebStrings.GeneralMaxBufferbloatHelp" Class="mb-4" />
 
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!OptimalDirty)" OnClick="SaveOptimalValuesAsync">
-                    Save Values
+                    @WebStrings.GeneralSaveTargets
                 </MudButton>
                 @if (_recommendation != null)
                 {
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AutoFixHigh" OnClick="UseRecommended">
-                        Use recommended
+                        @WebStrings.GeneralUseRecommended
                     </MudButton>
                 }
             </div>
             @if (_recommendationUnavailable)
             {
-                <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-3">Couldn't load recommendations.</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-3">@WebStrings.GeneralRecommendationsFailed</MudText>
             }
             else if (_recommendation == null)
             {
-                <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">Recommendations appear after at least 10 tests.</MudText>
+                <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">@WebStrings.GeneralRecommendationsLater</MudText>
             }
         </SurfaceCard>
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.NetworkCheck" Title="Before Each Test"
-                     Description="Checks that run before a speedtest starts. A test that doesn't run is recorded as skipped.">
+        <SurfaceCard Icon="@Icons.Material.Filled.NetworkCheck" Title="@WebStrings.GeneralChecksTitle"
+                     Description="@WebStrings.GeneralChecksDescription">
             <div class="d-flex align-center justify-space-between mb-3">
                 <div>
-                    <MudText Typo="Typo.body2">Check the connection first</MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Skips the test instead of recording a failure when the line is down</MudText>
+                    <MudText Typo="Typo.body2">@WebStrings.GeneralCheckConnection</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.GeneralCheckConnectionDescription</MudText>
                 </div>
                 <MudSwitch @bind-Value="_internetCheck" Color="Color.Primary" />
             </div>
 
-            <MudTextField @bind-Value="_internetCheckUrl" Label="Check URL" Placeholder="https://icanhazip.com"
+            <MudTextField @bind-Value="_internetCheckUrl" Label="@WebStrings.GeneralCheckUrl" Placeholder="https://icanhazip.com"
                           Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                          Error="@(!CheckUrlValid)" ErrorText="Enter a full http(s) URL"
-                          HelperText="Must return your public IP address, which the skip list below is compared against" Class="mb-3" />
+                          Error="@(!CheckUrlValid)" ErrorText="@WebStrings.EnterHttpUrl"
+                          HelperText="@WebStrings.GeneralCheckUrlHelp" Class="mb-3" />
 
-            <MudTextField @bind-Value="_skipIps" Label="Skip tests when the public IP is" Placeholder="203.0.113.10, 198.51.100.4"
+            <MudTextField @bind-Value="_skipIps" Label="@WebStrings.GeneralSkipIps" Placeholder="203.0.113.10, 198.51.100.4"
                           Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                          HelperText="Comma separated. Useful while a VPN or backup line is up. Leave empty to always test." Class="mb-4" />
+                          HelperText="@WebStrings.GeneralSkipIpsHelp" Class="mb-4" />
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!ChecksDirty || !CheckUrlValid)" OnClick="SaveChecksAsync">
-                Save Checks
+                @WebStrings.GeneralSaveChecks
             </MudButton>
         </SurfaceCard>
     </MudItem>
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Router" Title="Probe Targets"
-                     Description="The hosts Speedtest Watcher opens a TCP connection to. Connection monitoring uses them to tell whether the line is up, and every speedtest uses them to measure bufferbloat.">
-            <MudTextField @bind-Value="_probeTargets" Label="Probe targets" Placeholder="@MonitoringSettings.DefaultTargets"
+        <SurfaceCard Icon="@Icons.Material.Filled.Router" Title="@WebStrings.GeneralProbeTargetsTitle"
+                     Description="@WebStrings.Format(WebStrings.GeneralProbeTargetsDescription, ProjectInfo.Name)">
+            <MudTextField @bind-Value="_probeTargets" Label="@WebStrings.GeneralProbeTargets" Placeholder="@MonitoringSettings.DefaultTargets"
                           Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                          Error="@(!ProbeTargetsValid)" ErrorText="Each target needs to look like host:port"
-                          HelperText="Comma separated. Three or more is best: with one, a single slow answer looks like an outage." Class="mb-2" />
+                          Error="@(!ProbeTargetsValid)" ErrorText="@WebStrings.GeneralProbeTargetsInvalid"
+                          HelperText="@WebStrings.GeneralProbeTargetsHelp" Class="mb-2" />
 
             <div class="d-flex flex-wrap justify-space-between align-center gap-2">
                 <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Restore"
                            Disabled="@(_probeTargets == MonitoringSettings.DefaultTargets)"
                            OnClick="@(() => _probeTargets = MonitoringSettings.DefaultTargets)">
-                    Reset to defaults
+                    @WebStrings.GeneralResetProbeTargets
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary"
                            Disabled="@(!ProbeTargetsDirty || !ProbeTargetsValid)" OnClick="SaveProbeTargetsAsync">
-                    Save Targets
+                    @WebStrings.GeneralSaveProbeTargets
                 </MudButton>
             </div>
         </SurfaceCard>
@@ -185,7 +185,7 @@
 
         var result = await Settings.SaveAsync([.. changes]);
         if (result.Succeeded) ResetOptimalValues();
-        ShowSaveResult(result, "Optimal values saved");
+        ShowSaveResult(result, WebStrings.GeneralTargetsSaved);
     }
 
     private async Task SaveChecksAsync()
@@ -195,13 +195,13 @@
             ("internetCheckEnabled", _internetCheck ? "true" : "false"),
             ("internetCheckUrl", _internetCheckUrl.Trim()),
             ("skipIps", skipIps.Count > 0 ? string.Join(", ", skipIps) : SettingDefinitions.Unset));
-        ShowSaveResult(result, "Pre-test checks saved");
+        ShowSaveResult(result, WebStrings.GeneralChecksSaved);
     }
 
     private async Task SaveProbeTargetsAsync()
     {
         var result = await Settings.SaveAsync(("monitoringTargets", string.Join(",", ProbeTargetList)));
-        ShowSaveResult(result, "Probe targets saved");
+        ShowSaveResult(result, WebStrings.GeneralProbeTargetsSaved);
     }
 
     private void ShowSaveResult(OperationResult result, string successMessage)
@@ -215,5 +215,5 @@
     private static bool Differs(double value, double? saved) => Math.Abs(value - (saved ?? 0)) > 0.0000001;
 
     private static string? RecommendedHint(double? value, string unit) =>
-        value.HasValue ? $"Recommended: {value.Value.ToString(CultureInfo.InvariantCulture)} {unit}" : null;
+        value.HasValue ? WebStrings.Format(WebStrings.GeneralRecommended, value.Value.ToString(CultureInfo.InvariantCulture), unit) : null;
 }

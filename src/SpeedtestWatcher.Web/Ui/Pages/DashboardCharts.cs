@@ -1,5 +1,6 @@
 using MudBlazor;
 using SpeedtestWatcher.Application.Statistics;
+using SpeedtestWatcher.Web.Resources;
 using SpeedtestWatcher.Web.Ui.Display;
 
 namespace SpeedtestWatcher.Web.Ui.Pages;
@@ -55,14 +56,14 @@ public sealed class DashboardCharts
         var hasBufferbloat = readings.Any(point => point.Bufferbloat.HasValue);
         var bufferbloat = readings.Select(point => point.Bufferbloat ?? 0).ToArray();
 
-        List<ChartSeries<double>> latency = [new ChartSeries<double> { Name = "Ping", Data = ping }, new ChartSeries<double> { Name = "Jitter", Data = jitter }];
-        if (hasBufferbloat) latency.Add(new ChartSeries<double> { Name = "Bufferbloat", Data = bufferbloat });
+        List<ChartSeries<double>> latency = [new ChartSeries<double> { Name = WebStrings.Ping, Data = ping }, new ChartSeries<double> { Name = WebStrings.Jitter, Data = jitter }];
+        if (hasBufferbloat) latency.Add(new ChartSeries<double> { Name = WebStrings.Bufferbloat, Data = bufferbloat });
         latency.Add(Average(ping));
 
         return new DashboardCharts(
             readings.Select(point => label(point.Time)).ToArray(),
-            [new ChartSeries<double> { Name = "Download", Data = download }, Average(download)],
-            [new ChartSeries<double> { Name = "Upload", Data = upload }, Average(upload)],
+            [new ChartSeries<double> { Name = WebStrings.Download, Data = download }, Average(download)],
+            [new ChartSeries<double> { Name = WebStrings.Upload, Data = upload }, Average(upload)],
             latency,
             (ChartAxisHelper.TickStep(download, beginAtZero), ChartAxisHelper.TickStep(upload, beginAtZero), ChartAxisHelper.TickStep(ping.Concat(jitter).Concat(hasBufferbloat ? bufferbloat : []), beginAtZero)),
             ChartAxisHelper.HasRoomForMarkers(readings.Count),
@@ -72,7 +73,7 @@ public sealed class DashboardCharts
 
     private static ChartSeries<double> Average(double[] values) => new()
     {
-        Name = "Average",
+        Name = WebStrings.Average,
         Data = values.Length == 0 ? [] : Enumerable.Repeat(Math.Round(values.Average(), 2), values.Length).ToArray()
     };
 }

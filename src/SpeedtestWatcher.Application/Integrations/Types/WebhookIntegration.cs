@@ -1,10 +1,11 @@
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Integrations.Types;
 
 internal sealed class WebhookIntegration : HttpIntegration
 {
-    private const string MissingUrl = "The webhook URL is missing";
+    private static string MissingUrl => ApplicationStrings.WebhookUrlMissing;
 
     public WebhookIntegration(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
     {

@@ -1,11 +1,12 @@
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Web.Resources;
 
 namespace SpeedtestWatcher.Web.Ui.State;
 
 public sealed class SettingsState
 {
-    public const string SaveFailed = "Could not save your changes. Try again.";
+    public static string SaveFailed => WebStrings.SettingsSaveFailed;
 
     private readonly SettingsService _settings;
 

@@ -9,9 +9,9 @@
 @inject ISnackbar Snackbar
 @implements IDisposable
 
-<PageTitle>Speedtest Watcher - Uptime</PageTitle>
+<PageTitle>@ProjectInfo.Name - @WebStrings.UptimeTitle</PageTitle>
 
-<PageHeader Title="Uptime" Subtitle="How often your line was down, as the connection monitor saw it." />
+<PageHeader Title="@WebStrings.UptimeTitle" Subtitle="@WebStrings.UptimeSubtitle" />
 
 <StateView Loading="@(_status == null)">
     @if (_status is { } status)
@@ -19,35 +19,35 @@
         @if (!status.Watching)
         {
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">
-                Connection monitoring is off, so nothing is being watched. Turn it on under Settings → Monitoring.
+                @WebStrings.UptimeMonitoringOff
             </MudAlert>
         }
 
         <MudGrid Spacing="4" Class="mb-2">
             <MudItem xs="12" md="6">
-                <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="Right Now"
-                             Description="@($"The monitor probes every {Duration.Describe(TimeSpan.FromSeconds(Interval))}.")">
+                <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="@WebStrings.UptimeRightNow"
+                             Description="@WebStrings.Format(WebStrings.UptimeProbesEvery, Duration.Describe(TimeSpan.FromSeconds(Interval)))">
                     <div class="d-flex flex-wrap align-center gap-6">
                         <MetricDisplay Size="MetricSize.Hero" Dense="true" Color="@StateColor(status.Health)"
                                        Value="@StateText(status.Health)" Label="@SinceLabel(status)" />
                         @if (status.FastestMilliseconds is { } fastest)
                         {
                             <MetricDisplay Size="MetricSize.Large" Icon="@Icons.Material.Filled.NetworkPing"
-                                           Value="@($"{fastest:F0}")" Label="ms to answer" />
+                                           Value="@($"{fastest:F0}")" Label="@WebStrings.UptimeMsToAnswer" />
                         }
                     </div>
                     @if (status.CurrentOutage is { } current)
                     {
                         <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-4">
-                            Down for @Duration.Describe(TimeSpan.FromSeconds(current.Seconds ?? 0)), since @PreferencesService.FormatDateTime(PreferencesService.ToLocal(current.StartedAt)).
+                            @WebStrings.Format(WebStrings.UptimeDownFor, Duration.Describe(TimeSpan.FromSeconds(current.Seconds ?? 0)), PreferencesService.FormatDateTime(PreferencesService.ToLocal(current.StartedAt)))
                         </MudAlert>
                     }
                 </SurfaceCard>
             </MudItem>
 
             <MudItem xs="12" md="6">
-                <SurfaceCard Icon="@Icons.Material.Filled.Percent" Title="Uptime"
-                             Description="Only the time the app was watching counts, so a restart is neither uptime nor downtime.">
+                <SurfaceCard Icon="@Icons.Material.Filled.Percent" Title="@WebStrings.UptimeTitle"
+                             Description="@WebStrings.UptimeWatchedTimeOnly">
                     <div class="d-flex flex-wrap justify-space-between gap-4">
                         @foreach (var (label, uptime) in Periods(status))
                         {
@@ -56,14 +56,14 @@
                         }
                     </div>
                     <MudDivider Class="my-3" />
-                    <DataRow Label="Down in the last 30 days" Value="@Duration.Describe(TimeSpan.FromSeconds(status.Last30Days.DownSeconds))" />
-                    <DataRow Label="Outages in the last 30 days" Value="@status.Last30Days.Outages.ToString(CultureInfo.InvariantCulture)" />
+                    <DataRow Label="@WebStrings.UptimeDownLast30Days" Value="@Duration.Describe(TimeSpan.FromSeconds(status.Last30Days.DownSeconds))" />
+                    <DataRow Label="@WebStrings.UptimeOutagesLast30Days" Value="@status.Last30Days.Outages.ToString(CultureInfo.InvariantCulture)" />
                 </SurfaceCard>
             </MudItem>
         </MudGrid>
 
-        <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="Connection Latency"
-                     Description="How long the quickest probe target took to answer. Rounds are averaged into slots, so a week is a few hundred points."
+        <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="@WebStrings.UptimeLatency"
+                     Description="@WebStrings.UptimeLatencyDescription"
                      Class="mb-6">
             <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
                 <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" OverrideStyles="false">
@@ -79,8 +79,8 @@
                 <MudText Typo="Typo.caption" Class="sw-muted">@LatencySummary</MudText>
             </div>
 
-            <StateView Empty="@(_readings.Count == 0)" EmptyMessage="No probe rounds in this period yet." Compact="true">
-                <ChartCard Title="Answer time" ValueText="ms" ChartType="ChartType.Line"
+            <StateView Empty="@(_readings.Count == 0)" EmptyMessage="@WebStrings.UptimeNoRounds" Compact="true">
+                <ChartCard Title="@WebStrings.UptimeAnswerTime" ValueText="ms" ChartType="ChartType.Line"
                            ChartSeries="@_latencySeries" ChartLabels="@_latencyLabels" ChartOptions="@_latencyOptions"
                            MaxLabels="2" Height="220px" />
 
@@ -94,19 +94,19 @@
                 </div>
                 <div class="d-flex flex-wrap align-center gap-2 mt-2">
                     <div class="sw-latency-slot sw-latency-key sw-latency-answered"></div>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Answered</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyAnswered</MudText>
                     <div class="sw-latency-slot sw-latency-key sw-latency-partly"></div>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Some rounds failed</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeySomeFailed</MudText>
                     <div class="sw-latency-slot sw-latency-key sw-latency-silent"></div>
-                    <MudText Typo="Typo.caption" Class="sw-muted">No answer</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyNoAnswer</MudText>
                     <div class="sw-latency-slot sw-latency-key sw-latency-testing"></div>
-                    <MudText Typo="Typo.caption" Class="sw-muted">A speedtest was running</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyTesting</MudText>
                 </div>
             </StateView>
         </SurfaceCard>
 
-        <SurfaceCard Icon="@Icons.Material.Filled.CalendarMonth" Title="The Last Year"
-                     Description="One square a day. The darker the square, the longer the line was down." Class="mb-6">
+        <SurfaceCard Icon="@Icons.Material.Filled.CalendarMonth" Title="@WebStrings.UptimeLastYear"
+                     Description="@WebStrings.UptimeLastYearDescription" Class="mb-6">
             <div class="sw-uptime-calendar">
                 @foreach (var week in Weeks())
                 {
@@ -128,27 +128,27 @@
                 }
             </div>
             <div class="d-flex align-center gap-2 mt-3">
-                <MudText Typo="Typo.caption" Class="sw-muted">No outage</MudText>
+                <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyNoOutage</MudText>
                 <div class="sw-uptime-day sw-uptime-none"></div>
                 <div class="sw-uptime-day sw-uptime-brief"></div>
                 <div class="sw-uptime-day sw-uptime-short"></div>
                 <div class="sw-uptime-day sw-uptime-long"></div>
-                <MudText Typo="Typo.caption" Class="sw-muted">Hours down</MudText>
+                <MudText Typo="Typo.caption" Class="sw-muted">@WebStrings.UptimeKeyHoursDown</MudText>
             </div>
         </SurfaceCard>
 
-        <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Outages</MudText>
-        <StateView Empty="@(_outages.Count == 0)" EmptyMessage="No outages recorded yet.">
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">@WebStrings.UptimeOutages</MudText>
+        <StateView Empty="@(_outages.Count == 0)" EmptyMessage="@WebStrings.UptimeNoOutages">
             <MudPaper Elevation="1" Class="sw-surface">
                 <MudSimpleTable Dense="true" Hover="true" Class="sw-table">
                     <thead>
                         <tr>
-                            <th>Started</th>
-                            <th>Ended</th>
-                            <th>Down for</th>
+                            <th>@WebStrings.UptimeStarted</th>
+                            <th>@WebStrings.UptimeEnded</th>
+                            <th>@WebStrings.UptimeDownForColumn</th>
                             @if (FullAccess)
                             {
-                                <th class="text-right">Remove</th>
+                                <th class="text-right">@WebStrings.UptimeRemove</th>
                             }
                         </tr>
                     </thead>
@@ -157,13 +157,13 @@
                         {
                             <tr>
                                 <td>@PreferencesService.FormatDateTime(PreferencesService.ToLocal(outage.StartedAt))</td>
-                                <td>@(outage.EndedAt is { } ended ? PreferencesService.FormatDateTime(PreferencesService.ToLocal(ended)) : "Still down")</td>
+                                <td>@(outage.EndedAt is { } ended ? PreferencesService.FormatDateTime(PreferencesService.ToLocal(ended)) : WebStrings.UptimeStillDown)</td>
                                 <td>@Duration.Describe(TimeSpan.FromSeconds(outage.Seconds ?? 0))</td>
                                 @if (FullAccess)
                                 {
                                     <td class="text-right">
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                       aria-label="@($"Delete the outage that started {outage.StartedAt:u}")"
+                                                       aria-label="@WebStrings.Format(WebStrings.UptimeDeleteOutageLabel, outage.StartedAt)"
                                                        OnClick="@(() => DeleteAsync(outage))" />
                                     </td>
                                 }
@@ -217,7 +217,7 @@
     {
         _latency = await Monitoring.LatencyAsync(_latencyRange);
         var answers = _readings.Select(point => point.Milliseconds!.Value).ToArray();
-        _latencySeries = [new ChartSeries<double> { Name = "Answer time", Data = answers }];
+        _latencySeries = [new ChartSeries<double> { Name = WebStrings.UptimeAnswerTime, Data = answers }];
         _latencyLabels = [.. _readings.Select(point => LatencyLabel(point.At))];
         _latencyOptions.YAxisTicks = ChartAxisHelper.TickStep(answers);
         _latencyOptions.ShowDataMarkers = ChartAxisHelper.HasRoomForMarkers(answers.Length);
@@ -239,9 +239,10 @@
 
             var failed = _latency.Sum(point => point.Failed);
             var median = _readings.Select(point => point.Milliseconds!.Value).Order().ElementAt(_readings.Count / 2);
+            var typical = WebStrings.Format(WebStrings.UptimeTypical, median);
             return failed == 0
-                ? $"{median:F0} ms typical"
-                : $"{median:F0} ms typical · {failed} failed round{(failed == 1 ? "" : "s")}";
+                ? typical
+                : $"{typical} · {WebStrings.Format(failed == 1 ? WebStrings.UptimeFailedRound : WebStrings.UptimeFailedRounds, failed)}";
         }
     }
 
@@ -261,16 +262,18 @@
     private string SlotText(LatencyPointDto point)
     {
         var when = PreferencesService.FormatDateTime(PreferencesService.ToLocal(point.At));
-        var answer = point.Milliseconds is { } milliseconds ? $"{milliseconds:F1} ms" : "no answer";
-        var testing = point.DuringTest > 0 ? $", {point.DuringTest} during a speedtest" : "";
-        return $"{when} · {point.Rounds} round{(point.Rounds == 1 ? "" : "s")}, {point.Failed} failed{testing} · {answer}";
+        var answer = point.Milliseconds is { } milliseconds ? $"{milliseconds:F1} ms" : WebStrings.UptimeSlotNoAnswer;
+        var rounds = WebStrings.Format(point.Rounds == 1 ? WebStrings.UptimeSlotRound : WebStrings.UptimeSlotRounds, point.Rounds);
+        var failed = WebStrings.Format(WebStrings.UptimeSlotFailed, point.Failed);
+        var testing = point.DuringTest > 0 ? $", {WebStrings.Format(WebStrings.UptimeSlotDuringTest, point.DuringTest)}" : "";
+        return $"{when} · {rounds}, {failed}{testing} · {answer}";
     }
 
     private IEnumerable<(string Label, UptimeDto Uptime)> Periods(MonitoringStatusDto status) =>
     [
-        ("24 hours", status.Last24Hours),
-        ("7 days", status.Last7Days),
-        ("30 days", status.Last30Days)
+        (WebStrings.Uptime24Hours, status.Last24Hours),
+        (WebStrings.SevenDays, status.Last7Days),
+        (WebStrings.ThirtyDays, status.Last30Days)
     ];
 
     private static string Percent(UptimeDto uptime) =>
@@ -286,9 +289,9 @@
 
     private static string StateText(ConnectionHealth health) => health switch
     {
-        ConnectionHealth.Up => "Online",
-        ConnectionHealth.Down => "Offline",
-        _ => "Unknown"
+        ConnectionHealth.Up => WebStrings.UptimeOnline,
+        ConnectionHealth.Down => WebStrings.Offline,
+        _ => WebStrings.UptimeUnknown
     };
 
     private static Color StateColor(ConnectionHealth health) => health switch
@@ -299,7 +302,9 @@
     };
 
     private string SinceLabel(MonitoringStatusDto status) =>
-        status.Since is { } since ? $"since {PreferencesService.FormatDateTime(PreferencesService.ToLocal(since))}" : "no rounds yet";
+        status.Since is { } since
+            ? WebStrings.Format(WebStrings.UptimeSince, PreferencesService.FormatDateTime(PreferencesService.ToLocal(since)))
+            : WebStrings.UptimeNoRoundsYet;
 
     private IEnumerable<IReadOnlyList<UptimeDayDto?>> Weeks()
     {
@@ -324,25 +329,26 @@
 
     private string DayText(UptimeDayDto day) =>
         day.Outages == 0
-            ? $"{day.Date:d MMM yyyy}: no outages"
-            : $"{day.Date:d MMM yyyy}: {day.Outages} outage{(day.Outages == 1 ? "" : "s")}, {Duration.Describe(TimeSpan.FromSeconds(day.DownSeconds))} down";
+            ? WebStrings.Format(WebStrings.UptimeDayNoOutages, day.Date)
+            : WebStrings.Format(day.Outages == 1 ? WebStrings.UptimeDayOneOutage : WebStrings.UptimeDayOutages,
+                day.Date, day.Outages, Duration.Describe(TimeSpan.FromSeconds(day.DownSeconds)));
 
     private async Task DeleteAsync(OutageDto outage)
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Delete this outage?",
-            "It stops counting against your uptime. This can't be undone.",
-            yesText: "Delete", cancelText: "Cancel");
+            WebStrings.UptimeDeleteTitle,
+            WebStrings.UptimeDeleteMessage,
+            yesText: WebStrings.Delete, cancelText: WebStrings.Cancel);
         if (confirmed != true) return;
 
         var result = await Monitoring.DeleteOutageAsync(outage.Id);
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.Message ?? "Could not delete the outage", Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.UptimeDeleteFailed, Severity.Error);
             return;
         }
 
-        Snackbar.Add("Outage deleted", Severity.Success);
+        Snackbar.Add(WebStrings.UptimeDeleted, Severity.Success);
         await LoadAsync();
     }
 }

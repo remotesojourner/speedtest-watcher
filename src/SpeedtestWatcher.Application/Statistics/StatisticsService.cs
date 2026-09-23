@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Globalization;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Speedtests;
@@ -19,7 +20,7 @@ public sealed class StatisticsService
     {
         var timeZone = TimeZoneInfo.Utc;
         if (!string.IsNullOrWhiteSpace(timeZoneId) && !TimeZones.TryFindTimeZone(timeZoneId, out timeZone))
-            return OperationResult.Invalid($"{timeZoneId} isn't a time zone this server knows. Use an IANA name such as Europe/London.");
+            return OperationResult.Invalid(ApplicationStrings.Format(ApplicationStrings.StatisticsUnknownTimeZone, timeZoneId));
 
         var now = DateTime.UtcNow;
         var today = TimeZones.InTimeZone(now, timeZone).Date;
@@ -180,7 +181,7 @@ public sealed class StatisticsService
             if (valid.Count == 0 && failedCount == 0) continue;
 
             var midpoint = DateTimeOffset.FromUnixTimeMilliseconds(bucket.Start + (long)(bucketSize / 2)).UtcDateTime;
-            var failedSummary = failedCount > 0 ? $"{failedCount} failed in period" : null;
+            var failedSummary = failedCount > 0 ? ApplicationStrings.Format(ApplicationStrings.StatisticsFailedInPeriod, failedCount) : null;
 
             if (valid.Count == 0)
             {

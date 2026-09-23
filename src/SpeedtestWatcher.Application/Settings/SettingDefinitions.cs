@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Collections.Frozen;
 using System.Globalization;
 using System.Net;
@@ -16,8 +17,6 @@ public static partial class SettingDefinitions
 
     public const int MaxRetentionDays = 10000;
 
-    private const string NumberNeeded = "You need to provide a number in order to change this";
-    private const string UrlNeeded = "You need to provide a valid URL in order to change this";
 
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
@@ -31,11 +30,11 @@ public static partial class SettingDefinitions
         new("scheduleOffset", "true", SettingVisibility.FullAccessOnly, Boolean),
         new("unhealthyCron", Unset, SettingVisibility.FullAccessOnly, UnsetOr(Cron)),
 
-        new("provider", SpeedtestProvider.None.ToName(), SettingVisibility.Everyone, OneOf<SpeedtestProvider>("You need to provide a valid provider")),
+        new("provider", SpeedtestProvider.None.ToName(), SettingVisibility.Everyone, OneOf<SpeedtestProvider>(() => ApplicationStrings.SettingInvalidProvider)),
         new("interface", Unset, SettingVisibility.Everyone),
         new("libreUrl", Unset, SettingVisibility.FullAccessOnly, UnsetOr(HttpUrl)),
-        new("serverMode", ServerMode.Auto.ToName(), SettingVisibility.Everyone, OneOf<ServerMode>("You need to provide a valid server mode")),
-        new("serverListMode", ServerListMode.Allow.ToName(), SettingVisibility.Everyone, OneOf<ServerListMode>("You need to provide a valid server list mode")),
+        new("serverMode", ServerMode.Auto.ToName(), SettingVisibility.Everyone, OneOf<ServerMode>(() => ApplicationStrings.SettingInvalidServerMode)),
+        new("serverListMode", ServerListMode.Allow.ToName(), SettingVisibility.Everyone, OneOf<ServerListMode>(() => ApplicationStrings.SettingInvalidServerListMode)),
         new("ooklaId", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerId)),
         new("libreId", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerId)),
         new("ooklaServerIds", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerIds)),
@@ -52,14 +51,14 @@ public static partial class SettingDefinitions
         new("internetCheckUrl", "https://icanhazip.com", SettingVisibility.FullAccessOnly, HttpUrl),
         new("skipIps", Unset, SettingVisibility.FullAccessOnly, UnsetOr(IpAddresses)),
 
-        new("chartRange", "7d", SettingVisibility.Everyone, OneOf("You need to provide a valid chart range", "24h", "7d", "30d")),
+        new("chartRange", "7d", SettingVisibility.Everyone, OneOf(() => ApplicationStrings.SettingInvalidChartRange, "24h", "7d", "30d")),
         new("chartBeginAtZero", "false", SettingVisibility.Everyone, Boolean),
-        new("dateFormat", "dmy", SettingVisibility.Everyone, OneOf("You need to provide a valid date format", "dmy", "mdy", "ymd")),
+        new("dateFormat", "dmy", SettingVisibility.Everyone, OneOf(() => ApplicationStrings.SettingInvalidDateFormat, "dmy", "mdy", "ymd")),
 
         new("retentionDays", "365", SettingVisibility.Everyone, RetentionDays),
 
         new("authEnabled", "false", SettingVisibility.SecurityTab, Boolean),
-        new("visitorAccess", VisitorAccess.None.ToName(), SettingVisibility.SecurityTab, OneOf<VisitorAccess>("You need to provide a valid visitor access level")),
+        new("visitorAccess", VisitorAccess.None.ToName(), SettingVisibility.SecurityTab, OneOf<VisitorAccess>(() => ApplicationStrings.SettingInvalidVisitorAccess)),
         new("oidcAuthority", Unset, SettingVisibility.SecurityTab, UnsetOr(HttpUrl)),
         new("oidcClientId", Unset, SettingVisibility.SecurityTab),
         new("oidcClientSecret", Unset, SettingVisibility.Secret),
@@ -73,42 +72,42 @@ public static partial class SettingDefinitions
 
     public static SettingDefinition? Find(string key) => _byKey.GetValueOrDefault(key);
 
-    private static string? Number(string value) => NumberPattern().IsMatch(value) ? null : NumberNeeded;
+    private static string? Number(string value) => NumberPattern().IsMatch(value) ? null : ApplicationStrings.SettingNumberNeeded;
 
-    private static string? ServerId(string value) => DigitsPattern().IsMatch(value) ? null : NumberNeeded;
+    private static string? ServerId(string value) => DigitsPattern().IsMatch(value) ? null : ApplicationStrings.SettingNumberNeeded;
 
     private static string? ServerIds(string value) =>
-        DigitListPattern().IsMatch(value) ? null : "Server IDs need to be numbers separated by commas";
+        DigitListPattern().IsMatch(value) ? null : ApplicationStrings.SettingServerIdsInvalid;
 
-    private static string? HttpUrl(string value) => WebAddress.IsHttp(value) ? null : UrlNeeded;
+    private static string? HttpUrl(string value) => WebAddress.IsHttp(value) ? null : ApplicationStrings.SettingUrlNeeded;
 
     private static string? Boolean(string value) =>
-        value is "true" or "false" ? null : "You need to provide a boolean in order to change this";
+        value is "true" or "false" ? null : ApplicationStrings.SettingBooleanNeeded;
 
     private static string? ProbeTargets(string value) =>
         value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } parts
         && parts.All(part => ProbeTarget.Parse(part) != null)
             ? null
-            : "Probe targets need to look like host:port, separated by commas";
+            : ApplicationStrings.SettingProbeTargetsInvalid;
 
     private static string? Seconds(string value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
         && seconds is >= MonitoringSettings.ShortestInterval and <= MonitoringSettings.LongestInterval
             ? null
-            : $"You need to provide a number of seconds between {MonitoringSettings.ShortestInterval} and {MonitoringSettings.LongestInterval}";
+            : ApplicationStrings.Format(ApplicationStrings.SettingSecondsRange, MonitoringSettings.ShortestInterval, MonitoringSettings.LongestInterval);
 
     private static string? Rounds(string value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rounds) && rounds is >= 1 and <= MonitoringSettings.MostRounds
             ? null
-            : $"You need to provide a number of rounds between 1 and {MonitoringSettings.MostRounds}";
+            : ApplicationStrings.Format(ApplicationStrings.SettingRoundsRange, MonitoringSettings.MostRounds);
 
     private static string? IpAddresses(string value) =>
-        value.Split(',').All(part => IPAddress.TryParse(part.Trim(), out _)) ? null : "The skip list needs IP addresses separated by commas";
+        value.Split(',').All(part => IPAddress.TryParse(part.Trim(), out _)) ? null : ApplicationStrings.SettingSkipIpsInvalid;
 
     private static string? RetentionDays(string value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days) && days is >= 0 and <= MaxRetentionDays
             ? null
-            : $"You need to provide a number between 0 and {MaxRetentionDays} in order to change this";
+            : ApplicationStrings.Format(ApplicationStrings.SettingRetentionRange, MaxRetentionDays);
 
     private static string? Cron(string value)
     {
@@ -119,18 +118,18 @@ public static partial class SettingDefinitions
         }
         catch (CronFormatException)
         {
-            return "You need to provide a valid cron expression";
+            return ApplicationStrings.SettingCronInvalid;
         }
     }
 
     private static Func<string, string?> UnsetOr(Func<string, string?> validate) =>
         value => value == Unset ? null : validate(value);
 
-    private static Func<string, string?> OneOf(string problem, params string[] allowed) =>
-        value => allowed.Contains(value) ? null : problem;
+    private static Func<string, string?> OneOf(Func<string> problem, params string[] allowed) =>
+        value => allowed.Contains(value) ? null : problem();
 
-    private static Func<string, string?> OneOf<TEnum>(string problem) where TEnum : struct, Enum =>
-        value => EnumNames.TryParse<TEnum>(value, out _) ? null : problem;
+    private static Func<string, string?> OneOf<TEnum>(Func<string> problem) where TEnum : struct, Enum =>
+        value => EnumNames.TryParse<TEnum>(value, out _) ? null : problem();
 
     [GeneratedRegex(@"^[0-9]+(\.[0-9]+)?$")]
     private static partial Regex NumberPattern();

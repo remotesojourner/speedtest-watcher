@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Resources;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -8,7 +9,7 @@ namespace SpeedtestWatcher.Application.Integrations.Types;
 internal sealed class InfluxDbIntegration : HttpIntegration
 {
     private const string HostTag = "host";
-    private const string MissingDestination = "The URL, organization or bucket is missing";
+    private static string MissingDestination => ApplicationStrings.InfluxDbDestinationMissing;
 
     public InfluxDbIntegration(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
     {
@@ -50,7 +51,7 @@ internal sealed class InfluxDbIntegration : HttpIntegration
         var request = new HttpRequestMessage(HttpMethod.Get, $"{destination.Url}/api/v2/buckets?{destination.OrgQuery}&name={Uri.EscapeDataString(destination.Bucket)}");
         return SendAsync(Authorized(request, context.Settings), cancellationToken, (status, reply) =>
             IsSuccess(status) && !BucketExists(reply, destination.Bucket)
-                ? IntegrationResult.Failed($"InfluxDB has no bucket named {destination.Bucket} in {destination.Org}")
+                ? IntegrationResult.Failed(ApplicationStrings.Format(ApplicationStrings.InfluxDbNoBucket, destination.Bucket, destination.Org))
                 : null);
     }
 

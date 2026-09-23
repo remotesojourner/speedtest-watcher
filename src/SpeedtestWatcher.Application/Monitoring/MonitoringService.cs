@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 
@@ -9,12 +10,12 @@ public sealed class MonitoringService
     public const int MostOutagesListed = 200;
     public const int DaysInTheYearView = 365;
 
-    public static IReadOnlyList<LatencyRange> LatencyRanges { get; } =
+    public static IReadOnlyList<LatencyRange> LatencyRanges =>
     [
-        new("1h", "1 hour", TimeSpan.FromHours(1), 1),
-        new("6h", "6 hours", TimeSpan.FromHours(6), 2),
-        new("24h", "24 hours", TimeSpan.FromHours(24), 5),
-        new("7d", "7 days", TimeSpan.FromDays(7), 30)
+        new("1h", ApplicationStrings.LatencyRange1Hour, TimeSpan.FromHours(1), 1),
+        new("6h", ApplicationStrings.LatencyRange6Hours, TimeSpan.FromHours(6), 2),
+        new("24h", ApplicationStrings.LatencyRange24Hours, TimeSpan.FromHours(24), 5),
+        new("7d", ApplicationStrings.LatencyRange7Days, TimeSpan.FromDays(7), 30)
     ];
 
     private readonly IMonitoringRepository _monitoring;
@@ -82,7 +83,7 @@ public sealed class MonitoringService
 
         return await _monitoring.DeleteOutageAsync(id, cancellationToken)
             ? OperationResult.Ok()
-            : OperationResult.NotFound("Outage not found");
+            : OperationResult.NotFound(ApplicationStrings.OutageNotFound);
     }
 
     private static OutageDto Describe(Outage outage, DateTime now) => new(

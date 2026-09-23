@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Web.Resources;
 
 namespace SpeedtestWatcher.Web.SignIn;
 
@@ -39,20 +41,20 @@ public class AuthController : ControllerBase
     [HttpGet("/auth/signed-out")]
     [AllowAnonymous]
     public ContentResult SignedOut() => MessagePage(
-        "You've signed out",
-        "You're signed out of Speedtest Watcher. Your identity provider may still have you signed in there.",
+        WebStrings.AuthSignedOutTitle,
+        WebStrings.Format(WebStrings.AuthSignedOutMessage, ProjectInfo.Name),
         null,
         "/auth/login",
-        "Sign in again");
+        WebStrings.AuthSignInAgain);
 
     [HttpGet("/auth/failed")]
     [AllowAnonymous]
     public ContentResult Failed([FromQuery] string? reason) => MessagePage(
-        "Sign-in didn't work",
-        string.IsNullOrWhiteSpace(reason) ? "The identity provider didn't complete the sign-in." : reason,
-        "If the sign-in settings are wrong, start Speedtest Watcher with DISABLE_AUTH=true. Sign-in is then off, so you can correct the settings on the Security tab and remove the variable again.",
+        WebStrings.AuthFailedTitle,
+        string.IsNullOrWhiteSpace(reason) ? WebStrings.AuthFailedReason : reason,
+        WebStrings.Format(WebStrings.AuthFailedNote, ProjectInfo.Name, "DISABLE_AUTH=true"),
         "/auth/login",
-        "Try again");
+        WebStrings.TryAgain);
 
     private static ContentResult MessagePage(string title, string message, string? note, string actionHref, string actionText)
     {
@@ -60,11 +62,11 @@ public class AuthController : ControllerBase
         var noteHtml = note == null ? "" : $"<p class=\"note\">{encoder.Encode(note)}</p>";
         var html = $$"""
             <!DOCTYPE html>
-            <html lang="en">
+            <html lang="{{encoder.Encode(WebStrings.HtmlLanguage)}}">
             <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Speedtest Watcher - {{encoder.Encode(title)}}</title>
+            <title>{{encoder.Encode(ProjectInfo.Name)}} - {{encoder.Encode(title)}}</title>
             <link rel="icon" type="image/svg+xml" href="/img/logo.svg" />
             <style>
               body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0f14; color: #e2e8f0;

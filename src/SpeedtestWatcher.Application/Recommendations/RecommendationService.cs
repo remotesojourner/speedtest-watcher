@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Resources;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Recommendations;
@@ -23,7 +24,7 @@ public sealed class RecommendationService
     public async Task<OperationResult<Recommendation>> GetAsync(CancellationToken cancellationToken = default) =>
         await _recommendations.GetAsync(cancellationToken) is { } recommendation
             ? OperationResult.Ok(recommendation)
-            : OperationResult.NotFound("No recommendations found");
+            : OperationResult.NotFound(ApplicationStrings.RecommendationsNotFound);
 
     public async Task<Recommendation?> RecalculateAsync(CancellationToken cancellationToken = default)
     {
