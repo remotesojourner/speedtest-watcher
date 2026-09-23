@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
@@ -18,6 +19,22 @@ internal static class SampleData
         {
             await results.CreateAsync(result, cancellationToken);
         }
+    }
+
+    public static async Task SeedOutagesAsync(IServiceProvider services, CancellationToken cancellationToken)
+    {
+        var monitoring = services.GetRequiredService<IMonitoringRepository>();
+        var now = DateTime.UtcNow;
+        await monitoring.StartWatchingAsync(now.AddDays(-9), cancellationToken);
+
+        foreach (var (daysAgo, minutes) in new[] { (8, 6), (5, 42), (1, 3) })
+        {
+            var outage = await monitoring.StartOutageAsync(now.AddDays(-daysAgo), cancellationToken);
+            outage.EndedAt = now.AddDays(-daysAgo).AddMinutes(minutes);
+            await monitoring.EndOpenOutageAsync(outage.EndedAt.Value, cancellationToken);
+        }
+
+        await monitoring.KeepWatchingAsync(1, now, cancellationToken);
     }
 
     public static async Task SeedRecentResultsAsync(IServiceProvider services, CancellationToken cancellationToken)

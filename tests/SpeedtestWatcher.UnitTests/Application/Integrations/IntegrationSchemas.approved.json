@@ -111,6 +111,42 @@
         "required": false,
         "placeholder": null,
         "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
       }
     ]
   },
@@ -220,6 +256,42 @@
       },
       {
         "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -344,6 +416,42 @@
       },
       {
         "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -510,6 +618,42 @@
         "required": false,
         "placeholder": null,
         "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
       }
     ]
   },
@@ -619,6 +763,42 @@
       },
       {
         "name": "skipped_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
         "type": "textarea",
         "description": "",
         "regex": null,
@@ -767,6 +947,42 @@
         "required": false,
         "placeholder": null,
         "default": null
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_lost_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
+      },
+      {
+        "name": "send_connection_restored",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "connection_restored_message",
+        "type": "textarea",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": null
       }
     ]
   },
@@ -849,6 +1065,24 @@
       },
       {
         "name": "send_skipped",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_connection_lost",
+        "type": "boolean",
+        "description": "",
+        "regex": null,
+        "required": false,
+        "placeholder": null,
+        "default": true
+      },
+      {
+        "name": "send_connection_restored",
         "type": "boolean",
         "description": "",
         "regex": null,

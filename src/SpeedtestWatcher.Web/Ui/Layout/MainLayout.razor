@@ -33,6 +33,10 @@
             {
                 <UpdateNotice />
             }
+            @if (StatusService.Connection.IsDown)
+            {
+                <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small" Href="uptime">Offline</MudChip>
+            }
             @if (StatusService.Paused)
             {
                 <MudChip T="string" Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
@@ -65,6 +69,7 @@
         <MudNavMenu Class="pa-2">
             <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
             <MudNavLink Href="history" Icon="@Icons.Material.Filled.History">History</MudNavLink>
+            <MudNavLink Href="uptime" Icon="@Icons.Material.Filled.MonitorHeart">Uptime</MudNavLink>
             <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Settings</MudNavLink>
         </MudNavMenu>
     </MudDrawer>

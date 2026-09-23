@@ -1,5 +1,6 @@
 using System.Globalization;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.SignIn;
 
@@ -10,6 +11,7 @@ public sealed record AppSettings(
     ScheduleSettings Schedule,
     ProviderSettings Provider,
     PreTestCheckSettings PreTestChecks,
+    MonitoringSettings Monitoring,
     DisplaySettings Display,
     int RetentionDays,
     SignInSettings SignIn)
@@ -38,6 +40,8 @@ public sealed record AppSettings(
 
         bool Flag(string key) => Text(key) == "true";
 
+        int Whole(string key) => int.Parse(Text(key), NumberStyles.Integer, CultureInfo.InvariantCulture);
+
         TEnum Choice<TEnum>(string key) where TEnum : struct, Enum =>
             EnumNames.TryParse<TEnum>(Optional(key), out var choice) ? choice : default;
 
@@ -62,6 +66,13 @@ public sealed record AppSettings(
                 Ookla: new ServerChoice(Optional("ooklaId"), List("ooklaServerIds")),
                 Libre: new ServerChoice(Optional("libreId"), List("libreServerIds"))),
             PreTestChecks: new PreTestCheckSettings(Flag("internetCheckEnabled"), Text("internetCheckUrl"), List("skipIps")),
+            Monitoring: new MonitoringSettings(
+                Enabled: Flag("monitoringEnabled"),
+                Targets: ProbeTarget.ParseList(List("monitoringTargets")),
+                IntervalSeconds: Whole("monitoringInterval"),
+                RoundsToGoDown: Whole("monitoringRoundsDown"),
+                RoundsToGoUp: Whole("monitoringRoundsUp"),
+                TestAfterReconnect: Flag("monitoringTestAfterReconnect")),
             Display: new DisplaySettings(Text("chartRange"), Flag("chartBeginAtZero"), Text("dateFormat")),
             RetentionDays: int.TryParse(Optional("retentionDays"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var days) ? days : 0,
             SignIn: new SignInSettings(

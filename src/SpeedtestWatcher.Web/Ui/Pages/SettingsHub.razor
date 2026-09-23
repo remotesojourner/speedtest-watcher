@@ -24,7 +24,7 @@
 }
 else
 {
-    <PageHeader Title="Settings" Subtitle="Schedule, provider, display, integrations, security, storage and app info." />
+    <PageHeader Title="Settings" Subtitle="Schedule, provider, display, monitoring, integrations, security, storage and app info." />
 
     <MudBreakpointProvider OnBreakpointChanged="OnBreakpointChanged">
         <MudTabs Position="@_tabPosition" Rounded="true" ApplyEffectsToContainer="true"
@@ -41,6 +41,9 @@ else
             </MudTabPanel>
             <MudTabPanel Text="Display" Icon="@Icons.Material.Filled.DisplaySettings">
                 <SettingsDisplay />
+            </MudTabPanel>
+            <MudTabPanel Text="Monitoring" Icon="@Icons.Material.Filled.MonitorHeart">
+                <SettingsMonitoring />
             </MudTabPanel>
             <MudTabPanel Text="Integrations" Icon="@Icons.Material.Filled.Hub">
                 <SettingsIntegrations />
@@ -59,7 +62,7 @@ else
 }
 
 @code {
-    private static readonly string[] _sections = ["general", "schedule", "provider", "display", "integrations", "security", "storage", "about"];
+    private static readonly string[] _sections = ["general", "schedule", "provider", "display", "monitoring", "integrations", "security", "storage", "about"];
 
     [Parameter] public string? Section { get; set; }
 

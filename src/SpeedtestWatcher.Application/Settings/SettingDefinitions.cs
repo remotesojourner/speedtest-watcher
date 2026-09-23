@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Cronos;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.SignIn;
 
@@ -37,6 +38,13 @@ public static partial class SettingDefinitions
         new("libreId", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerId)),
         new("ooklaServerIds", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerIds)),
         new("libreServerIds", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerIds)),
+
+        new("monitoringEnabled", "true", SettingVisibility.Everyone, Boolean),
+        new("monitoringTargets", MonitoringSettings.DefaultTargets, SettingVisibility.FullAccessOnly, ProbeTargets),
+        new("monitoringInterval", "15", SettingVisibility.FullAccessOnly, Seconds),
+        new("monitoringRoundsDown", "3", SettingVisibility.FullAccessOnly, Rounds),
+        new("monitoringRoundsUp", "2", SettingVisibility.FullAccessOnly, Rounds),
+        new("monitoringTestAfterReconnect", "false", SettingVisibility.Everyone, Boolean),
 
         new("internetCheckEnabled", "true", SettingVisibility.Everyone, Boolean),
         new("internetCheckUrl", "https://icanhazip.com", SettingVisibility.FullAccessOnly, HttpUrl),
@@ -74,6 +82,23 @@ public static partial class SettingDefinitions
 
     private static string? Boolean(string value) =>
         value is "true" or "false" ? null : "You need to provide a boolean in order to change this";
+
+    private static string? ProbeTargets(string value) =>
+        value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } parts
+        && parts.All(part => ProbeTarget.Parse(part) != null)
+            ? null
+            : "Probe targets need to look like host:port, separated by commas";
+
+    private static string? Seconds(string value) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+        && seconds is >= MonitoringSettings.ShortestInterval and <= MonitoringSettings.LongestInterval
+            ? null
+            : $"You need to provide a number of seconds between {MonitoringSettings.ShortestInterval} and {MonitoringSettings.LongestInterval}";
+
+    private static string? Rounds(string value) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rounds) && rounds is >= 1 and <= MonitoringSettings.MostRounds
+            ? null
+            : $"You need to provide a number of rounds between 1 and {MonitoringSettings.MostRounds}";
 
     private static string? IpAddresses(string value) =>
         value.Split(',').All(part => IPAddress.TryParse(part.Trim(), out _)) ? null : "The skip list needs IP addresses separated by commas";

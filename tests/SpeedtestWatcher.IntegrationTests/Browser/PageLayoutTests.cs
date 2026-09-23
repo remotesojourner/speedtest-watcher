@@ -10,10 +10,12 @@ public sealed class PageLayoutTests : BrowserTest, IClassFixture<BrowserAppWithR
     [
         ("/", "dashboard", "Overview"),
         ("/history", "history", "Recent Tests"),
+        ("/uptime", "uptime", "Outages"),
         ("/settings/general", "general", "Before Each Test"),
         ("/settings/schedule", "schedule", "Pause Speedtests"),
         ("/settings/provider", "provider", "Speedtest Provider"),
         ("/settings/display", "display", "Display Preferences"),
+        ("/settings/monitoring", "monitoring", "Connection Monitoring"),
         ("/settings/integrations", "integrations", "Add integration"),
         ("/settings/security", "security", "API Token"),
         ("/settings/storage", "storage", "Data Retention"),

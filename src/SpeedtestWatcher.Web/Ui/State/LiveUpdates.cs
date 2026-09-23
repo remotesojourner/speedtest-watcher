@@ -1,4 +1,5 @@
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
 
@@ -7,6 +8,7 @@ namespace SpeedtestWatcher.Web.Ui.State;
 public sealed partial class LiveUpdates : IDisposable
 {
     private readonly IAppEvents _events;
+    private readonly ConnectionState _connection;
     private readonly StatusStateService _status;
     private readonly RecentResults _results;
     private readonly SettingsState _settings;
@@ -14,9 +16,10 @@ public sealed partial class LiveUpdates : IDisposable
     private readonly ILogger<LiveUpdates> _logger;
     private Func<Func<Task>, Task>? _dispatch;
 
-    public LiveUpdates(IAppEvents events, StatusStateService status, RecentResults results, SettingsState settings, ICurrentAccess access, ILogger<LiveUpdates> logger)
+    public LiveUpdates(IAppEvents events, ConnectionState connection, StatusStateService status, RecentResults results, SettingsState settings, ICurrentAccess access, ILogger<LiveUpdates> logger)
     {
         _events = events;
+        _connection = connection;
         _status = status;
         _results = results;
         _settings = settings;
@@ -31,6 +34,8 @@ public sealed partial class LiveUpdates : IDisposable
         if (_dispatch != null) return;
 
         _dispatch = dispatch;
+        _status.UpdateConnection(_connection.Current);
+        _events.ConnectionChanged += OnConnectionChanged;
         _events.TestStarted += OnTestStarted;
         _events.TestFinished += OnTestFinished;
         _events.RunStatusChanged += OnRunStatusChanged;
@@ -39,12 +44,15 @@ public sealed partial class LiveUpdates : IDisposable
 
     public void Dispose()
     {
+        _events.ConnectionChanged -= OnConnectionChanged;
         _events.TestStarted -= OnTestStarted;
         _events.TestFinished -= OnTestFinished;
         _events.RunStatusChanged -= OnRunStatusChanged;
         _events.SettingsChanged -= OnSettingsChanged;
         _dispatch = null;
     }
+
+    private void OnConnectionChanged(ConnectionSnapshot connection) => Dispatch(() => _status.UpdateConnection(connection));
 
     private void OnTestStarted() => Dispatch(() => _status.UpdateStatus(true, _status.Paused));
 

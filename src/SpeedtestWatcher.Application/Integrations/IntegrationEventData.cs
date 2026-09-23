@@ -10,6 +10,8 @@ internal static class IntegrationEventData
         TestHealthyAgain healthyAgain => healthyAgain.Result,
         TestFailed failed => failed.Result,
         TestSkipped skipped => skipped.Result,
+        ConnectionLost lost => new { since = lost.Since },
+        ConnectionRestored restored => new { at = restored.At, downtimeSeconds = (long)restored.Downtime.TotalSeconds },
         RecommendationsUpdated updated => updated.Recommendation,
         ConfigUpdated updated => new { key = updated.Key, value = updated.Value },
         _ => null

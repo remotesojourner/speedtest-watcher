@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedtestWatcher.Application.Storage;
 
+#nullable disable
+
 namespace SpeedtestWatcher.Application.Storage.Migrations
 {
     [DbContext(typeof(SpeedtestWatcherDbContext))]
@@ -53,6 +55,88 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("integration_data", (string)null);
+                });
+
+            modelBuilder.Entity("SpeedtestWatcher.Application.Monitoring.Outage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("endedAt");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("startedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartedAt");
+
+                    b.ToTable("outages", (string)null);
+                });
+
+            modelBuilder.Entity("SpeedtestWatcher.Application.Monitoring.ProbeRound", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Answered")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("answered");
+
+                    b.Property<int>("Asked")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("asked");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("at");
+
+                    b.Property<bool>("DuringTest")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("duringTest");
+
+                    b.Property<double?>("FastestMilliseconds")
+                        .HasColumnType("REAL")
+                        .HasColumnName("fastestMs");
+
+                    b.Property<bool>("Passed")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("passed");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.ToTable("probe_rounds", (string)null);
+                });
+
+            modelBuilder.Entity("SpeedtestWatcher.Application.Monitoring.WatchSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("lastSeenAt");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("startedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastSeenAt");
+
+                    b.ToTable("watch_sessions", (string)null);
                 });
 
             modelBuilder.Entity("SpeedtestWatcher.Application.Recommendations.Recommendation", b =>

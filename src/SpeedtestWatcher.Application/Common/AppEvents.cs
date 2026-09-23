@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Common;
@@ -12,6 +13,8 @@ public sealed class AppEvents : IAppEvents
 
     public event Action<IReadOnlyDictionary<string, string>>? SettingsChanged;
 
+    public event Action<ConnectionSnapshot>? ConnectionChanged;
+
     public void PublishTestStarted() => TestStarted?.Invoke();
 
     public void PublishTestFinished(SpeedtestDto result) => TestFinished?.Invoke(result);
@@ -19,4 +22,6 @@ public sealed class AppEvents : IAppEvents
     public void PublishRunStatusChanged(RunStatus status) => RunStatusChanged?.Invoke(status);
 
     public void PublishSettingsChanged(IReadOnlyDictionary<string, string> changes) => SettingsChanged?.Invoke(changes);
+
+    public void PublishConnectionChanged(ConnectionSnapshot connection) => ConnectionChanged?.Invoke(connection);
 }

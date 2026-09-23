@@ -16,6 +16,9 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     internal static IReadOnlyList<string> VisitorEndpoints { get; } =
     [
         "GET /api/config",
+        "GET /api/monitoring/days",
+        "GET /api/monitoring/outages",
+        "GET /api/monitoring/status",
         "GET /api/opengraph/image",
         "GET /api/prometheus/metrics",
         "GET /api/speedtests",
@@ -27,6 +30,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
 
     internal static IReadOnlyList<string> FullAccessEndpoints { get; } =
     [
+        "DELETE /api/monitoring/outages/{id:int}",
         "DELETE /api/speedtests/{id:int}",
         "DELETE /api/storage/tests/history",
         "GET /api/info/version",

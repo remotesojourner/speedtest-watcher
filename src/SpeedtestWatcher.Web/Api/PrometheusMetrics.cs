@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Web.Api;
@@ -9,7 +10,7 @@ public static class PrometheusMetrics
 {
     public const string ContentType = "text/plain; version=0.0.4; charset=utf-8";
 
-    public static string Format(ResultsSummary summary, DataUsedDto dataUsed)
+    public static string Format(ResultsSummary summary, DataUsedDto dataUsed, MonitoringStatusDto monitoring)
     {
         var completed = summary.LatestCompleted;
         var latest = summary.Latest;
@@ -24,7 +25,7 @@ public static class PrometheusMetrics
         Gauge(sb, "time", "Duration of the latest completed test in seconds", completed?.Time, completedLabels, "F0");
         Gauge(sb, "packet_loss", "Packet loss of the latest completed test as a percentage, when the provider measured it", completed?.PacketLoss, completedLabels, "F2");
         Gauge(sb, "last_test_bytes", "Bytes the latest completed test moved, download and upload together, when the provider reported them", BytesMoved(completed), completedLabels, "F0");
-        GaugeFamily(sb, "data_used_bytes", "Bytes the tests in a period moved, download and upload together",
+        GaugeFamily(sb, "data_used_bytes", "Bytes the tests in a period moved, download and upload together", "F0",
         [
             ("period=\"24h\"", dataUsed.Last24Hours),
             ("period=\"7d\"", dataUsed.Last7Days),
@@ -45,6 +46,15 @@ public static class PrometheusMetrics
         Gauge(sb, "server", "Server id of the latest completed test", completed?.ServerId ?? 0, "", "F0");
         Gauge(sb, "server_info", "Static info about the latest completed test (always 1).", 1, completedLabels, "F0");
 
+        Gauge(sb, "connection_up", "Whether the connection monitor last saw the line up (1 up, 0 down)", UpOrDown(monitoring.Health), "", "F0");
+        Gauge(sb, "outages_total", "Outages the monitor recorded in the last 30 days", monitoring.Last30Days.Outages, "", "F0");
+        Gauge(sb, "outage_seconds_total", "Seconds the line was down in the last 30 days", monitoring.Last30Days.DownSeconds, "", "F0");
+        GaugeFamily(sb, "uptime_percent", "Share of the watched time the line was up, as a percentage", "F3",
+        [
+            ("period=\"24h\"", monitoring.Last24Hours.Percent),
+            ("period=\"7d\"", monitoring.Last7Days.Percent)
+        ]);
+
         return sb.ToString();
     }
 
@@ -64,14 +74,25 @@ public static class PrometheusMetrics
             ? null
             : (test.DownloadBytes ?? 0) + (test.UploadBytes ?? 0);
 
-    private static void GaugeFamily(StringBuilder sb, string name, string help, IReadOnlyList<(string Labels, long Value)> series)
+    private static void GaugeFamily(StringBuilder sb, string name, string help, string format, IReadOnlyList<(string Labels, double? Value)> series)
     {
+        if (series.All(point => point.Value == null)) return;
+
         Describe(sb, name, help);
         foreach (var (labels, value) in series)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"speedtest_watcher_{name}{{{labels}}} {value}");
+            if (value is not { } number) continue;
+
+            sb.AppendLine(CultureInfo.InvariantCulture, $"speedtest_watcher_{name}{{{labels}}} {number.ToString(format, CultureInfo.InvariantCulture)}");
         }
     }
+
+    private static double? UpOrDown(ConnectionHealth health) => health switch
+    {
+        ConnectionHealth.Up => 1,
+        ConnectionHealth.Down => 0,
+        _ => null
+    };
 
     private static void Describe(StringBuilder sb, string name, string help)
     {

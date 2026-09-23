@@ -2,6 +2,7 @@
 @using System.Data.Common
 @using System.Globalization
 @inject StatisticsService Statistics
+@inject MonitoringService Monitoring
 @inject PauseService Pause
 @inject ICurrentAccess Access
 @inject PreferencesService PreferencesService
@@ -93,6 +94,14 @@
                             }
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.DataUsage"
                                            Value="@ByteSize.Describe(_stats.DataUsedBytes)" Label="data used" />
+                            @if (_uptime is { Percent: { } percent })
+                            {
+                                <MudLink Href="uptime" Underline="Underline.None">
+                                    <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.MonitorHeart"
+                                                   Color="@(percent >= 99.9 ? Color.Success : Color.Warning)"
+                                                   Value="@($"{percent:F2}%")" Label="uptime, 7 days" />
+                                </MudLink>
+                            }
                         </div>
                     </SurfaceCard>
                 </MudItem>
@@ -327,6 +336,7 @@
     private DateTime? _from;
     private DateTime? _to;
     private SpeedtestStatistics? _stats;
+    private UptimeDto? _uptime;
     private bool _loading;
     private bool _loadFailed;
 
@@ -378,6 +388,13 @@
         ApplyRange();
 
         await LoadStatisticsAsync();
+        await LoadUptimeAsync();
+    }
+
+    private async Task LoadUptimeAsync()
+    {
+        var status = await Monitoring.StatusAsync();
+        _uptime = status.Watching ? status.Last7Days : null;
     }
 
     private async Task SelectRangeAsync(string range)

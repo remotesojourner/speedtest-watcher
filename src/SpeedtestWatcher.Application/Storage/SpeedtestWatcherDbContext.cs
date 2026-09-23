@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.Speedtests;
@@ -16,6 +17,9 @@ internal class SpeedtestWatcherDbContext : DbContext
     public DbSet<ConfigEntry> Configs => Set<ConfigEntry>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
     public DbSet<IntegrationData> Integrations => Set<IntegrationData>();
+    public DbSet<ProbeRound> ProbeRounds => Set<ProbeRound>();
+    public DbSet<Outage> Outages => Set<Outage>();
+    public DbSet<WatchSession> WatchSessions => Set<WatchSession>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -73,6 +77,41 @@ internal class SpeedtestWatcherDbContext : DbContext
             entity.Property(e => e.Ping).HasColumnName("ping").IsRequired();
             entity.Property(e => e.Download).HasColumnName("download").IsRequired();
             entity.Property(e => e.Upload).HasColumnName("upload").IsRequired();
+        });
+
+        modelBuilder.Entity<ProbeRound>(entity =>
+        {
+            entity.ToTable("probe_rounds");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.At).HasColumnName("at");
+            entity.Property(e => e.Passed).HasColumnName("passed");
+            entity.Property(e => e.Answered).HasColumnName("answered");
+            entity.Property(e => e.Asked).HasColumnName("asked");
+            entity.Property(e => e.FastestMilliseconds).HasColumnName("fastestMs");
+            entity.Property(e => e.DuringTest).HasColumnName("duringTest");
+            entity.HasIndex(e => e.At);
+        });
+
+        modelBuilder.Entity<Outage>(entity =>
+        {
+            entity.ToTable("outages");
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.Length);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.StartedAt).HasColumnName("startedAt");
+            entity.Property(e => e.EndedAt).HasColumnName("endedAt");
+            entity.HasIndex(e => e.StartedAt);
+        });
+
+        modelBuilder.Entity<WatchSession>(entity =>
+        {
+            entity.ToTable("watch_sessions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.StartedAt).HasColumnName("startedAt");
+            entity.Property(e => e.LastSeenAt).HasColumnName("lastSeenAt");
+            entity.HasIndex(e => e.LastSeenAt);
         });
 
         modelBuilder.Entity<IntegrationData>(entity =>

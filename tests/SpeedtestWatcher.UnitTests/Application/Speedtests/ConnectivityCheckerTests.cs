@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.TestSupport;
@@ -12,7 +14,7 @@ public sealed class ConnectivityCheckerTests : IDisposable
 
     public ConnectivityCheckerTests()
     {
-        _checker = new ConnectivityChecker(new StubHttpClientFactory(_handler), NullLogger<ConnectivityChecker>.Instance);
+        _checker = new ConnectivityChecker(new StubHttpClientFactory(_handler), new ConnectionState(new AppEvents()), NullLogger<ConnectivityChecker>.Instance);
     }
 
     [Fact]
@@ -41,6 +43,19 @@ public sealed class ConnectivityCheckerTests : IDisposable
         var check = await _checker.CheckAsync(new PreTestCheckSettings(false, "https://localhost/ip", []), TestContext.Current.CancellationToken);
 
         Assert.Equal((true, null), (check.Proceed, check.PublicIp));
+        Assert.Empty(_handler.Requests);
+    }
+
+    [Fact]
+    public async Task AMonitorThatHasTheLineDownStopsTheTestBeforeAnyLookup()
+    {
+        var connection = new ConnectionState(new AppEvents());
+        connection.Update(ConnectionHealth.Down, DateTime.UtcNow, null);
+        var checker = new ConnectivityChecker(new StubHttpClientFactory(_handler), connection, NullLogger<ConnectivityChecker>.Instance);
+
+        var check = await checker.CheckAsync(Settings([]), TestContext.Current.CancellationToken);
+
+        Assert.Equal((false, "No internet connection: the monitor has the line down"), (check.Proceed, check.SkipReason));
         Assert.Empty(_handler.Requests);
     }
 

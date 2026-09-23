@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Speedtests;
 
 namespace SpeedtestWatcher.Application.Common;
@@ -12,6 +13,8 @@ public interface IAppEvents
 
     event Action<IReadOnlyDictionary<string, string>>? SettingsChanged;
 
+    event Action<ConnectionSnapshot>? ConnectionChanged;
+
     void PublishTestStarted();
 
     void PublishTestFinished(SpeedtestDto result);
@@ -19,4 +22,6 @@ public interface IAppEvents
     void PublishRunStatusChanged(RunStatus status);
 
     void PublishSettingsChanged(IReadOnlyDictionary<string, string> changes);
+
+    void PublishConnectionChanged(ConnectionSnapshot connection);
 }

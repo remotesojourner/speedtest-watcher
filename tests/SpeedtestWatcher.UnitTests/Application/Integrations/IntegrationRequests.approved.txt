@@ -36,6 +36,20 @@ Content-Length: 262
 Content-Type: application/json; charset=utf-8
 {"username":"Watcher","embeds":[{"description":":fast_forward: **A speedtest was skipped**\n \u003E \u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
+## discord · connection lost
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 249
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":red_circle: **The internet connection is down**\n \u003E \u0060Since\u0060: 2026-09-16 12:05:00 UTC","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord · connection restored
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 240
+Content-Type: application/json; charset=utf-8
+{"username":"Watcher","embeds":[{"description":":green_circle: **The internet connection is back**\n \u003E \u0060Down for\u0060: 7 minutes","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
 ## discord · recommendations updated
 activity: unchanged
 
@@ -90,6 +104,20 @@ Content-Length: 245
 Content-Type: application/json; charset=utf-8
 {"username":"Speedtest Watcher","embeds":[{"description":"-1|0|-1.00|-1.00|skipped|unknown||-|-|-||-|-|Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
+## discord with every template variable · connection lost
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 259
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":red_circle: **The internet connection is down**\n \u003E \u0060Since\u0060: 2026-09-16 12:05:00 UTC","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord with every template variable · connection restored
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 250
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":green_circle: **The internet connection is back**\n \u003E \u0060Down for\u0060: 7 minutes","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
 ## discord with every template variable · recommendations updated
 activity: unchanged
 
@@ -122,6 +150,12 @@ activity: failed
 activity: failed
 
 ## discord without a url · test skipped
+activity: failed
+
+## discord without a url · connection lost
+activity: failed
+
+## discord without a url · connection restored
 activity: failed
 
 ## discord without a url · recommendations updated
@@ -173,6 +207,20 @@ POST https://localhost/discord.com/api/webhooks/1/x
 Content-Length: 272
 Content-Type: application/json; charset=utf-8
 {"username":"Speedtest Watcher","embeds":[{"description":":fast_forward: **A speedtest was skipped**\n \u003E \u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · connection lost
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 259
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":red_circle: **The internet connection is down**\n \u003E \u0060Since\u0060: 2026-09-16 12:05:00 UTC","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
+
+## discord saved from the settings form · connection restored
+activity: sent
+POST https://localhost/discord.com/api/webhooks/1/x
+Content-Length: 250
+Content-Type: application/json; charset=utf-8
+{"username":"Speedtest Watcher","embeds":[{"description":":green_circle: **The internet connection is back**\n \u003E \u0060Down for\u0060: 7 minutes","color":9807270,"footer":{"text":"Speedtest Watcher"},"timestamp":"<send time>"}]}
 
 ## discord saved from the settings form · recommendations updated
 activity: unchanged
@@ -242,6 +290,22 @@ Content-Type: text/plain; charset=utf-8
 Priority: 3
 A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list
 
+## ntfy saved from the settings form · connection lost
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 63
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+The internet connection is down. Since: 2026-09-16 12:05:00 UTC
+
+## ntfy saved from the settings form · connection restored
+activity: sent
+POST https://localhost/ntfy/alerts
+Content-Length: 48
+Content-Type: text/plain; charset=utf-8
+Priority: 3
+The internet connection is back after 7 minutes.
+
 ## ntfy saved from the settings form · recommendations updated
 activity: unchanged
 
@@ -299,6 +363,20 @@ POST https://api.telegram.org/bot1:abc/sendMessage
 Content-Length: 151
 Content-Type: application/json; charset=utf-8
 {"chat_id":"42","text":"\u23ED\uFE0F *A speedtest was skipped*\n\u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","parse_mode":"markdown"}
+
+## telegram · connection lost
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 140
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\uD83D\uDD34 *The internet connection is down*\n\u0060Since\u0060: 2026-09-16 12:05:00 UTC","parse_mode":"markdown"}
+
+## telegram · connection restored
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 129
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\uD83D\uDFE2 *The internet connection is back*\n\u0060Down for\u0060: 7 minutes","parse_mode":"markdown"}
 
 ## telegram · recommendations updated
 activity: unchanged
@@ -359,6 +437,22 @@ Content-Length: 101
 Content-Type: application/json; charset=utf-8
 {"message":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","priority":4}
 
+## gotify · connection lost
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 90
+Content-Type: application/json; charset=utf-8
+{"message":"The internet connection is down. Since: 2026-09-16 12:05:00 UTC","priority":4}
+
+## gotify · connection restored
+activity: sent
+POST https://localhost/gotify/message
+Authorization: Bearer AAAAAAAAAAAAAAA
+Content-Length: 75
+Content-Type: application/json; charset=utf-8
+{"message":"The internet connection is back after 7 minutes.","priority":4}
+
 ## gotify · recommendations updated
 activity: unchanged
 
@@ -392,6 +486,12 @@ activity: unchanged
 activity: unchanged
 
 ## gotify with every message turned off · test skipped
+activity: unchanged
+
+## gotify with every message turned off · connection lost
+activity: unchanged
+
+## gotify with every message turned off · connection restored
 activity: unchanged
 
 ## gotify with every message turned off · recommendations updated
@@ -478,6 +578,28 @@ Tags: warning
 Title: Speedtest
 A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list
 
+## ntfy · connection lost
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 63
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+The internet connection is down. Since: 2026-09-16 12:05:00 UTC
+
+## ntfy · connection restored
+activity: sent
+POST https://localhost/ntfy/alerts
+Authorization: Bearer tk_1
+Content-Length: 48
+Content-Type: text/plain; charset=utf-8
+Priority: 2
+Tags: warning
+Title: Speedtest
+The internet connection is back after 7 minutes.
+
 ## ntfy · recommendations updated
 activity: unchanged
 
@@ -539,6 +661,20 @@ Content-Length: 169
 Content-Type: application/json; charset=utf-8
 {"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list"}
 
+## pushover · connection lost
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 158
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"The internet connection is down. Since: 2026-09-16 12:05:00 UTC"}
+
+## pushover · connection restored
+activity: sent
+POST https://api.pushover.net/1/messages.json
+Content-Length: 143
+Content-Type: application/json; charset=utf-8
+{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","message":"The internet connection is back after 7 minutes."}
+
 ## pushover · recommendations updated
 activity: unchanged
 
@@ -597,6 +733,22 @@ Accept: application/json
 Content-Length: 191
 Content-Type: application/json; charset=utf-8
 {"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","type":"info","format":"text"}
+
+## apprise with urls · connection lost
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 180
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"The internet connection is down. Since: 2026-09-16 12:05:00 UTC","type":"info","format":"text"}
+
+## apprise with urls · connection restored
+activity: sent
+POST https://localhost/apprise/notify/
+Accept: application/json
+Content-Length: 165
+Content-Type: application/json; charset=utf-8
+{"urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest","body":"The internet connection is back after 7 minutes.","type":"info","format":"text"}
 
 ## apprise with urls · recommendations updated
 activity: unchanged
@@ -658,6 +810,22 @@ Content-Length: 137
 Content-Type: application/json; charset=utf-8
 {"tag":"admin, devops","body":"A speedtest was skipped. Reason: Public IP 203.0.113.9 is on the skip list","type":"info","format":"text"}
 
+## apprise with a config key and tags · connection lost
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 126
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"The internet connection is down. Since: 2026-09-16 12:05:00 UTC","type":"info","format":"text"}
+
+## apprise with a config key and tags · connection restored
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 111
+Content-Type: application/json; charset=utf-8
+{"tag":"admin, devops","body":"The internet connection is back after 7 minutes.","type":"info","format":"text"}
+
 ## apprise with a config key and tags · recommendations updated
 activity: unchanged
 
@@ -691,6 +859,12 @@ activity: failed
 activity: failed
 
 ## apprise with urls and a config key · test skipped
+activity: failed
+
+## apprise with urls and a config key · connection lost
+activity: failed
+
+## apprise with urls and a config key · connection restored
 activity: failed
 
 ## apprise with urls and a config key · recommendations updated
@@ -742,6 +916,22 @@ Content-Type: application/json; charset=utf-8
 
 ## apprise saved from the settings form · test skipped
 activity: unchanged
+
+## apprise saved from the settings form · connection lost
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 104
+Content-Type: application/json; charset=utf-8
+{"body":"The internet connection is down. Since: 2026-09-16 12:05:00 UTC","type":"info","format":"text"}
+
+## apprise saved from the settings form · connection restored
+activity: sent
+POST https://localhost/apprise/notify/home
+Accept: application/json
+Content-Length: 89
+Content-Type: application/json; charset=utf-8
+{"body":"The internet connection is back after 7 minutes.","type":"info","format":"text"}
 
 ## apprise saved from the settings form · recommendations updated
 activity: unchanged
@@ -807,6 +997,22 @@ Content-Length: 425
 Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/WebhookAgent
 {"event":"TEST_SKIPPED","data":{"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}}
+
+## webhook · connection lost
+activity: sent
+POST https://localhost/hook
+Content-Length: 66
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"CONNECTION_LOST","data":{"since":"2026-09-16T12:05:00"}}
+
+## webhook · connection restored
+activity: sent
+POST https://localhost/hook
+Content-Length: 89
+Content-Type: application/json; charset=utf-8
+User-Agent: SpeedtestWatcher/WebhookAgent
+{"event":"CONNECTION_RESTORED","data":{"at":"2026-09-16T12:12:00","downtimeSeconds":420}}
 
 ## webhook · recommendations updated
 activity: sent
@@ -883,6 +1089,12 @@ Content-Type: application/json; charset=utf-8
 User-Agent: SpeedtestWatcher/HealthAgent
 {"Id":43,"ServerId":0,"ServerName":null,"ServerHost":null,"Ping":-1,"Jitter":null,"Download":-1,"Upload":-1,"Error":"Public IP 203.0.113.9 is on the skip list","PacketLoss":null,"DownloadBytes":null,"UploadBytes":null,"Status":"skipped","Healthy":null,"ThresholdPing":null,"ThresholdDownload":null,"ThresholdUpload":null,"Type":"auto","ResultId":null,"Time":0,"Created":"2026-09-16T10:05:00Z"}
 
+## healthChecks · connection lost
+activity: unchanged
+
+## healthChecks · connection restored
+activity: unchanged
+
 ## healthChecks · recommendations updated
 activity: sent
 POST https://localhost/hc/uuid
@@ -938,6 +1150,12 @@ activity: unchanged
 ## influxdb · test skipped
 activity: unchanged
 
+## influxdb · connection lost
+activity: unchanged
+
+## influxdb · connection restored
+activity: unchanged
+
 ## influxdb · recommendations updated
 activity: unchanged
 
@@ -976,6 +1194,12 @@ activity: unchanged
 ## influxdb with tags and names that need escaping · test skipped
 activity: unchanged
 
+## influxdb with tags and names that need escaping · connection lost
+activity: unchanged
+
+## influxdb with tags and names that need escaping · connection restored
+activity: unchanged
+
 ## influxdb with tags and names that need escaping · recommendations updated
 activity: unchanged
 
@@ -1007,6 +1231,12 @@ activity: failed
 activity: failed
 
 ## unknown type · test skipped
+activity: failed
+
+## unknown type · connection lost
+activity: failed
+
+## unknown type · connection restored
 activity: failed
 
 ## unknown type · recommendations updated

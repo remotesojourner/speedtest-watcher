@@ -58,7 +58,7 @@ public partial class IntegrationRequestTests
         ("ntfy saved from the settings form", "ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","token":"","title":"","tags":"","priority":"","error_priority":"","send_finished":true,"finished_message":"","send_failed":true,"error_message":"","send_unhealthy":true,"unhealthy_message":"","send_healthy_again":true,"healthy_again_message":"","send_skipped":true,"skipped_message":""}"""),
         ("telegram", "telegram", """{"token":"1:abc","chat_id":"42"}"""),
         ("gotify", "gotify", """{"url":"https://localhost/gotify/","key":"AAAAAAAAAAAAAAA","priority":"4"}"""),
-        ("gotify with every message turned off", "gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false,"send_failed":false,"send_unhealthy":false,"send_healthy_again":false,"send_skipped":false}"""),
+        ("gotify with every message turned off", "gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false,"send_failed":false,"send_unhealthy":false,"send_healthy_again":false,"send_skipped":false,"send_connection_lost":false,"send_connection_restored":false}"""),
         ("ntfy", "ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","token":"tk_1","title":"Speedtest","tags":"warning","priority":"2","error_priority":"4"}"""),
         ("pushover", "pushover", """{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user_key":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}"""),
         ("apprise with urls", "apprise", """{"url":"https://localhost/apprise/","urls":"json://localhost/hook, mailto://me@example.com","title":"Speedtest"}"""),
@@ -127,6 +127,8 @@ public partial class IntegrationRequestTests
         ("test met targets again", (dispatcher, ct) => dispatcher.PublishAsync(new TestHealthyAgain(_healthy), ct)),
         ("test failed", (dispatcher, ct) => dispatcher.PublishAsync(new TestFailed(_failed), ct)),
         ("test skipped", (dispatcher, ct) => dispatcher.PublishAsync(new TestSkipped(_skipped), ct)),
+        ("connection lost", (dispatcher, ct) => dispatcher.PublishAsync(new ConnectionLost(_tested.AddHours(4)), ct)),
+        ("connection restored", (dispatcher, ct) => dispatcher.PublishAsync(new ConnectionRestored(_tested.AddHours(4).AddMinutes(7), TimeSpan.FromMinutes(7)), ct)),
         ("recommendations updated", (dispatcher, ct) => dispatcher.PublishAsync(new RecommendationsUpdated(_recommendation), ct)),
         ("config updated", (dispatcher, ct) => dispatcher.PublishAsync(new ConfigUpdated("cron", "0 * * * *"), ct)),
         ("heartbeat", (dispatcher, ct) => dispatcher.PublishAsync(new Heartbeat(), ct))

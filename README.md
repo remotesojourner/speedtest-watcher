@@ -18,6 +18,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
   - Server choice for Ookla and LibreSpeed: automatic, random from an allow or deny list, or a single pinned server
   - One-off tests against any Ookla or LibreSpeed server, without changing your saved settings
 - **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history. An optional faster schedule kicks in while your line is missing those targets
+- **Connection monitoring** — a TCP probe to a few internet hosts every 15 seconds records every outage with its start and end, an **Uptime** page with a year of days at a glance, and alerts when the line drops and when it comes back
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
 - **Dashboard** — averages, min/max, jitter, packet loss, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
@@ -133,6 +134,19 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | **While unhealthy** | An optional faster schedule, used while the last completed test missed your targets, and dropped again as soon as a test meets them. Presets from every 5 minutes to hourly, or your own cron expression. Off unless you choose a pace, and the card shows what that pace costs an hour |
 | **Pause Speedtests** | Pause indefinitely, for 1, 6 or 12 hours, or for a custom number of hours up to 720 (30 days). A pause ends when the app restarts |
 
+### Tab: Monitoring
+
+| Field | Description |
+|---|---|
+| **Watch the connection** | Turns the connection monitor on. On by default |
+| **Probe targets** | `host:port` pairs, comma separated. Default: `1.1.1.1:443, 8.8.8.8:443, 9.9.9.9:443`. A round opens a plain TCP connection to each one at the same time, with a 2-second timeout, and passes when most of them answer. Three or more is best — with one, a single slow answer looks like an outage |
+| **Probe interval** | Seconds between rounds, 5 to 3600. Default: 15 |
+| **Failed rounds before down** | How many rounds in a row have to fail before an outage starts. Default: 3, so about 30 seconds of silence |
+| **Good rounds before up again** | How many rounds in a row have to pass before the line counts as back. Default: 2 |
+| **Test after a reconnect** | Runs a speedtest when the line comes back, at most once an hour. Off by default |
+
+Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
+
 ### Tab: Provider
 
 | Field | Description |
@@ -204,6 +218,9 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla measures it |
 | `last_test_bytes` | Data the latest completed test moved, download and upload together |
 | `data_used_bytes` | Data all tests moved, one series per `period` label: `24h`, `7d`, `30d` and `stored` |
+| `connection_up` | Whether the connection monitor last saw the line up (1 or 0). Missing until it has enough rounds |
+| `outages_total`, `outage_seconds_total` | Outages in the last 30 days, and how many seconds they lasted |
+| `uptime_percent` | Uptime as a percentage, one series per `period` label: `24h` and `7d` |
 | `healthy` | Whether that test met its targets (1 or 0) |
 | `threshold_ping`, `threshold_download`, `threshold_upload` | The targets it was judged against |
 | `last_test_timestamp_seconds` | When the latest test ran, whatever its outcome |

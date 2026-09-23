@@ -26,7 +26,7 @@ internal sealed class HealthchecksIntegration : HttpIntegration
 
     public override Task<IntegrationResult> HandleAsync(IntegrationEvent integrationEvent, IntegrationContext context, CancellationToken cancellationToken)
     {
-        if (integrationEvent is TestHealthyAgain) return Task.FromResult(IntegrationResult.NotApplicable);
+        if (integrationEvent is TestHealthyAgain or ConnectionLost or ConnectionRestored) return Task.FromResult(IntegrationResult.NotApplicable);
 
         var pingUrl = PingUrl(context.Settings);
         if (string.IsNullOrEmpty(pingUrl)) return Task.FromResult(IntegrationResult.Failed(MissingUrl));

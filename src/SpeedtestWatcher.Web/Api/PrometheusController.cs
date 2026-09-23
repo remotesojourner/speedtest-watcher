@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Web.SignIn;
 
@@ -11,10 +12,12 @@ namespace SpeedtestWatcher.Web.Api;
 public class PrometheusController : ControllerBase
 {
     private readonly ResultsService _results;
+    private readonly MonitoringService _monitoring;
 
-    public PrometheusController(ResultsService results)
+    public PrometheusController(ResultsService results, MonitoringService monitoring)
     {
         _results = results;
+        _monitoring = monitoring;
     }
 
     /// <summary>
@@ -28,5 +31,10 @@ public class PrometheusController : ControllerBase
     [Authorize(Policy = AccessPolicies.Read)]
     [ProducesResponseType<string>(StatusCodes.Status200OK, "text/plain")]
     public async Task<IActionResult> GetMetrics(CancellationToken cancellationToken) =>
-        Content(PrometheusMetrics.Format(await _results.SummarizeAsync(cancellationToken), await _results.DataUsedAsync(cancellationToken)), PrometheusMetrics.ContentType);
+        Content(
+            PrometheusMetrics.Format(
+                await _results.SummarizeAsync(cancellationToken),
+                await _results.DataUsedAsync(cancellationToken),
+                await _monitoring.StatusAsync(cancellationToken)),
+            PrometheusMetrics.ContentType);
 }

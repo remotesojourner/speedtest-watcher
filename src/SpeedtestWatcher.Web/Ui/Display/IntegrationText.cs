@@ -15,6 +15,10 @@ public static class IntegrationText
         ["send_healthy_again"] = "Send a message when tests meet your targets again",
         ["healthy_again_message"] = "Targets met again message",
         ["send_skipped"] = "Send alerts when a test is skipped",
+        ["send_connection_lost"] = "Send an alert when the connection goes down",
+        ["connection_lost_message"] = "Connection lost message",
+        ["send_connection_restored"] = "Send a message when the connection comes back",
+        ["connection_restored_message"] = "Connection restored message",
         ["skipped_message"] = "Skipped message",
         ["send_finished"] = "Send finished messages",
         ["finished_message"] = "Finished message",
@@ -49,6 +53,8 @@ public static class IntegrationText
             ["send_unhealthy"] = "Send target-missed alerts",
             ["send_healthy_again"] = "Send targets-met-again messages",
             ["send_skipped"] = "Send skipped-test messages",
+            ["send_connection_lost"] = "Send connection-lost messages",
+            ["send_connection_restored"] = "Send connection-restored messages",
             ["send_config_updates"] = "Send configuration updates",
             ["interval"] = "Keep-alive interval (minutes)"
         }
@@ -60,6 +66,8 @@ public static class IntegrationText
         ["unhealthy_message"] = "%download% Mbps down, %upload% Mbps up, %ping% ms — targets %threshold_download%/%threshold_upload%/%threshold_ping%",
         ["healthy_again_message"] = "Back within your targets: %download% Mbps down, %upload% Mbps up, %ping% ms",
         ["skipped_message"] = "[%year%-%month%-%day% %hour%:%minute%] Skipped: %error%",
+        ["connection_lost_message"] = "The line has been down since %since%",
+        ["connection_restored_message"] = "The line is back after %downtime%",
         ["error_message"] = "[%year%-%month%-%day% %hour%:%minute%] Error: %error%"
     };
 

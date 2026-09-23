@@ -8,5 +8,6 @@ public sealed class BrowserAppWithResults : BrowserApp
     {
         await SampleData.ChooseOoklaAsync(services, cancellationToken);
         await SampleData.SeedRecentResultsAsync(services, cancellationToken);
+        await SampleData.SeedOutagesAsync(services, cancellationToken);
     }
 }

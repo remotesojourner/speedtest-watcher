@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Settings;
 
 namespace SpeedtestWatcher.Application.Speedtests;
@@ -6,16 +7,19 @@ namespace SpeedtestWatcher.Application.Speedtests;
 internal partial class ConnectivityChecker : IConnectivityChecker
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ConnectionState _connection;
     private readonly ILogger<ConnectivityChecker> _logger;
 
-    public ConnectivityChecker(IHttpClientFactory httpClientFactory, ILogger<ConnectivityChecker> logger)
+    public ConnectivityChecker(IHttpClientFactory httpClientFactory, ConnectionState connection, ILogger<ConnectivityChecker> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _connection = connection;
         _logger = logger;
     }
 
     public async Task<PreTestCheck> CheckAsync(PreTestCheckSettings settings, CancellationToken cancellationToken = default)
     {
+        if (_connection.Current.IsDown) return new PreTestCheck(false, "No internet connection: the monitor has the line down");
         if (!settings.InternetCheckEnabled && settings.SkipIps.Count == 0) return PreTestCheck.Ok;
 
         var url = settings.InternetCheckUrl;

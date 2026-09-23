@@ -16,6 +16,12 @@
   "libreId": "none",
   "libreServerIds": "none",
   "libreUrl": "none",
+  "monitoringEnabled": "true",
+  "monitoringInterval": "15",
+  "monitoringRoundsDown": "3",
+  "monitoringRoundsUp": "2",
+  "monitoringTargets": "1.1.1.1:443,8.8.8.8:443,9.9.9.9:443",
+  "monitoringTestAfterReconnect": "false",
   "oidcAuthority": "none",
   "oidcClientId": "none",
   "oidcClientSecretSet": false,
@@ -646,4 +652,10 @@ speedtest_watcher_server 12345
 # HELP speedtest_watcher_server_info Static info about the latest completed test (always 1).
 # TYPE speedtest_watcher_server_info gauge
 speedtest_watcher_server_info{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 1
+# HELP speedtest_watcher_outages_total Outages the monitor recorded in the last 30 days
+# TYPE speedtest_watcher_outages_total gauge
+speedtest_watcher_outages_total 0
+# HELP speedtest_watcher_outage_seconds_total Seconds the line was down in the last 30 days
+# TYPE speedtest_watcher_outage_seconds_total gauge
+speedtest_watcher_outage_seconds_total 0
 

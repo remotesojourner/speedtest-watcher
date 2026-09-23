@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Settings;
@@ -20,6 +21,7 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddSingleton<IAppEvents, AppEvents>();
         services.AddSingleton<RunState>();
+        services.AddSingleton<ConnectionState>();
 
         services.AddScoped<ServerSelector>();
         services.AddScoped<SpeedtestRunService>();
@@ -34,6 +36,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<StorageService>();
         services.AddScoped<VersionService>();
         services.AddScoped<ProviderOptionsService>();
+        services.AddScoped<MonitoringService>();
 
         services.AddDbContext<SpeedtestWatcherDbContext>((provider, options) =>
         {
@@ -46,6 +49,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<IStorageRepository, StorageRepository>();
+        services.AddScoped<IMonitoringRepository, MonitoringRepository>();
 
         services.AddHttpClient();
         services.TryAddSingleton(TimeProvider.System);
@@ -61,10 +65,12 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IConnectivityChecker, ConnectivityChecker>();
         services.AddScoped<IOidcDiscovery, OidcDiscoveryChecker>();
         services.AddSingleton<IReleaseChecker, GitHubReleaseChecker>();
+        services.AddSingleton<IConnectionProbe, TcpConnectionProbe>();
 
         services.AddIntegrations();
 
         services.AddHostedService<SpeedtestSchedulerService>();
+        services.AddHostedService<ConnectivityMonitorService>();
         services.AddHostedService<RetentionCleanupService>();
         services.AddHostedService<IntegrationTickerService>();
         services.AddHostedService<InterfaceRefreshService>();

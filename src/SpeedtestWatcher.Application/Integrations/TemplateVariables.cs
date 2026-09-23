@@ -14,6 +14,15 @@ internal static class TemplateVariables
         TestHealthyAgain healthyAgain => From(healthyAgain.Result),
         TestFailed failed => From(failed.Result),
         TestSkipped skipped => From(skipped.Result),
+        ConnectionLost lost => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["since"] = lost.Since.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC"
+        },
+        ConnectionRestored restored => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["since"] = (restored.At - restored.Downtime).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC",
+            ["downtime"] = Duration.Describe(restored.Downtime)
+        },
         _ => new(StringComparer.OrdinalIgnoreCase)
     };
 

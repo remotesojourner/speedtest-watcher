@@ -374,3 +374,46 @@
     vertical-align: -2px;
     margin-right: 3px;
 }
+
+.sw-uptime-calendar {
+    display: flex;
+    gap: 3px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.sw-uptime-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sw-uptime-day {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background-color: var(--mud-palette-action-disabled-background);
+}
+
+.sw-uptime-none {
+    background-color: var(--mud-palette-success);
+    opacity: 0.35;
+}
+
+.sw-uptime-brief {
+    background-color: var(--mud-palette-warning);
+    opacity: 0.6;
+}
+
+.sw-uptime-short {
+    background-color: var(--mud-palette-error);
+    opacity: 0.6;
+}
+
+.sw-uptime-long {
+    background-color: var(--mud-palette-error);
+}
+
+.sw-uptime-empty {
+    background-color: transparent;
+}

@@ -1,6 +1,7 @@
 using FakeItEasy;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.Application.Speedtests;
@@ -26,14 +27,14 @@ public sealed class LiveUpdatesTests : IDisposable
         _runState = new RunState(_events);
         _recent = new RecentResults(new ResultsService(A.Fake<ISpeedtestRepository>(), FixedAccess.Full));
         _settings = new SettingsState(new SettingsService(_store, A.Fake<IIntegrationDispatcher>(), _events, A.Fake<ISignInState>(), FixedAccess.Full));
-        _live = new LiveUpdates(_events, _status, _recent, _settings, FixedAccess.Full, _logger);
+        _live = new LiveUpdates(_events, new ConnectionState(_events), _status, _recent, _settings, FixedAccess.Full, _logger);
         _live.ResultArrived += _announced.Add;
     }
 
     [Fact]
     public void AReadOnlyVisitorIsNotToldThePublicIp()
     {
-        var visitor = new LiveUpdates(_events, _status, _recent, _settings, FixedAccess.ReadOnly, _logger);
+        var visitor = new LiveUpdates(_events, new ConnectionState(_events), _status, _recent, _settings, FixedAccess.ReadOnly, _logger);
         var announced = new List<SpeedtestDto>();
         visitor.ResultArrived += announced.Add;
         visitor.Start(work => work());

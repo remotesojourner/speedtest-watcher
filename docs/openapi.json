@@ -104,6 +104,184 @@
         "x-access": "full"
       }
     },
+    "/api/monitoring/status": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Get the connection state",
+        "description": "The monitor opens a TCP connection to each probe target every interval. The line counts as down after the configured number of failed rounds, and up again after the configured number of good ones.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "responses": {
+          "200": {
+            "description": "The current state and uptime for the last 24 hours, 7 days and 30 days.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/monitoring/outages": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "List outages",
+        "description": "**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many outages to return, newest first. At most 200.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The outages of the last year that are still stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/monitoring/days": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Get the uptime calendar",
+        "description": "One entry for each of the last 365 days, oldest first, for the calendar on the Uptime page.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "tz",
+            "in": "query",
+            "description": "An IANA time zone, such as `Europe/London`, for day boundaries. Defaults to UTC.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The days.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UptimeDayResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
+    "/api/monitoring/outages/{id}": {
+      "delete": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Delete an outage",
+        "description": "For planned maintenance you don't want counted against your uptime.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The outage's id.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The outage was deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No outage has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
     "/api/opengraph/image": {
       "get": {
         "tags": [
@@ -1266,6 +1444,36 @@
             "description": "Left out for read-only visitors.",
             "default": "none"
           },
+          "monitoringEnabled": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "true"
+          },
+          "monitoringTargets": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "1.1.1.1:443,8.8.8.8:443,9.9.9.9:443"
+          },
+          "monitoringInterval": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "15"
+          },
+          "monitoringRoundsDown": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "3"
+          },
+          "monitoringRoundsUp": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "2"
+          },
+          "monitoringTestAfterReconnect": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "false"
+          },
           "internetCheckEnabled": {
             "type": "string",
             "description": "Visible to everyone who can read the settings.",
@@ -1545,6 +1753,140 @@
           }
         },
         "description": "The lowest, average and highest value of one reading."
+      },
+      "MonitoringStatusResponse": {
+        "required": [
+          "state",
+          "watching",
+          "since",
+          "lastRoundAt",
+          "fastestMilliseconds",
+          "currentOutage",
+          "last24Hours",
+          "last7Days",
+          "last30Days"
+        ],
+        "type": "object",
+        "properties": {
+          "state": {
+            "examples": [
+              "up"
+            ],
+            "type": "string",
+            "description": "The line as the monitor last saw it: `up`, `down`, or `unknown` before it has enough rounds."
+          },
+          "watching": {
+            "examples": [
+              true
+            ],
+            "type": "boolean",
+            "description": "Whether the monitor is watching at all. It is off when monitoring is switched off or no targets are set."
+          },
+          "since": {
+            "examples": [
+              "2026-09-14T20:41:30Z"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Since when the line has been in this state, in UTC.",
+            "format": "date-time"
+          },
+          "lastRoundAt": {
+            "examples": [
+              "2026-09-14T20:42:00Z"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the last probe round ran, in UTC.",
+            "format": "date-time"
+          },
+          "fastestMilliseconds": {
+            "examples": [
+              12.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The quickest connect time of the last round, in milliseconds.",
+            "format": "double"
+          },
+          "currentOutage": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OutageResponse"
+              }
+            ],
+            "description": "The outage in progress, when the line is down."
+          },
+          "last24Hours": {
+            "description": "Uptime over the last 24 hours.",
+            "$ref": "#/components/schemas/UptimeResponse"
+          },
+          "last7Days": {
+            "description": "Uptime over the last 7 days.",
+            "$ref": "#/components/schemas/UptimeResponse"
+          },
+          "last30Days": {
+            "description": "Uptime over the last 30 days.",
+            "$ref": "#/components/schemas/UptimeResponse"
+          }
+        },
+        "description": "What the connection monitor sees right now, with uptime for the usual periods."
+      },
+      "OutageResponse": {
+        "required": [
+          "id",
+          "startedAt",
+          "endedAt",
+          "seconds"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "examples": [
+              7
+            ],
+            "type": "integer",
+            "description": "The outage's id.",
+            "format": "int32"
+          },
+          "startedAt": {
+            "examples": [
+              "2026-09-14T20:35:00Z"
+            ],
+            "type": "string",
+            "description": "When the line went down, in UTC.",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "examples": [
+              "2026-09-14T20:41:30Z"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it came back, in UTC, or `null` while it is still down.",
+            "format": "date-time"
+          },
+          "seconds": {
+            "examples": [
+              390
+            ],
+            "type": "integer",
+            "description": "How long it lasted in seconds. For an outage that hasn't ended, how long it has lasted so far.",
+            "format": "int64"
+          }
+        },
+        "description": "One stretch of time the connection monitor saw the line down."
       },
       "PauseRequest": {
         "type": "object",
@@ -2499,6 +2841,88 @@
           "auto",
           "custom"
         ]
+      },
+      "UptimeDayResponse": {
+        "required": [
+          "date",
+          "outages",
+          "downSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "examples": [
+              "2026-09-14"
+            ],
+            "type": "string",
+            "description": "The day, in the time zone the request asked for.",
+            "format": "date"
+          },
+          "outages": {
+            "examples": [
+              2
+            ],
+            "type": "integer",
+            "description": "How many outages touched this day.",
+            "format": "int32"
+          },
+          "downSeconds": {
+            "examples": [
+              420
+            ],
+            "type": "integer",
+            "description": "How many seconds of this day the line was down.",
+            "format": "int64"
+          }
+        },
+        "description": "One day of the uptime calendar."
+      },
+      "UptimeResponse": {
+        "required": [
+          "percent",
+          "watchedSeconds",
+          "downSeconds",
+          "outages"
+        ],
+        "type": "object",
+        "properties": {
+          "percent": {
+            "examples": [
+              99.86
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The share of the watched time the line was up, as a percentage, or `null` when nothing was watched.",
+            "format": "double"
+          },
+          "watchedSeconds": {
+            "examples": [
+              86400
+            ],
+            "type": "integer",
+            "description": "How many seconds of this period the monitor was watching.",
+            "format": "int64"
+          },
+          "downSeconds": {
+            "examples": [
+              120
+            ],
+            "type": "integer",
+            "description": "How many of those seconds the line was down.",
+            "format": "int64"
+          },
+          "outages": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "How many outages fall in this period.",
+            "format": "int32"
+          }
+        },
+        "description": "Uptime over a period. Only time the monitor was watching counts, so a restart is neither uptime nor downtime."
       },
       "VersionResponse": {
         "required": [

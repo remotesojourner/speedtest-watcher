@@ -115,6 +115,22 @@ curl "http://speedtest-watcher:2003/api/speedtests/statistics?from=2026-09-01&to
 - `hourlyAverages`: one entry for each hour of the day, 0 to 23.
 - `points`: chart points, oldest first. Up to 300 tests give one point each. Longer periods are averaged into at most 300 points, and `downsampled` is `true`.
 
+## Connection monitoring
+
+```bash
+curl http://speedtest-watcher:2003/api/monitoring/status
+```
+
+`state` is `up`, `down`, or `unknown` before the monitor has enough rounds, and `watching` says whether the monitor is on at all. The response also carries the outage in progress, if any, and uptime for the last 24 hours, 7 days and 30 days. Uptime counts only the time the app was watching, so `watchedSeconds` is what the percentage is a share of, and a restart is neither uptime nor downtime.
+
+```bash
+curl "http://speedtest-watcher:2003/api/monitoring/outages?limit=20"
+curl "http://speedtest-watcher:2003/api/monitoring/days?tz=Europe/London"
+curl -X DELETE -H "Authorization: Bearer $TOKEN" http://speedtest-watcher:2003/api/monitoring/outages/7
+```
+
+`days` is the uptime calendar: one entry for each of the last 365 days, oldest first. Deleting an outage stops it counting against your uptime, which is there for planned maintenance.
+
 ## Running and pausing tests
 
 ```bash

@@ -1,0 +1,123 @@
+@using System.Globalization
+@inject SettingsState Settings
+@inject ISnackbar Snackbar
+
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="Connection Monitoring"
+                     Description="Opens a TCP connection to each target on a short interval, so outages are recorded with their start and end even when no speedtest is running.">
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div>
+                    <MudText Typo="Typo.body2">Watch the connection</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Off means no probes, no outages and no uptime</MudText>
+                </div>
+                <MudSwitch @bind-Value="_enabled" Color="Color.Primary" />
+            </div>
+
+            <MudTextField @bind-Value="_targets" Label="Probe targets" Placeholder="@MonitoringSettings.DefaultTargets"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          Error="@(!TargetsValid)" ErrorText="Each target needs to look like host:port"
+                          HelperText="Comma separated. Three or more is best: with one, a single slow answer looks like an outage." Class="mb-2" />
+
+            <div class="d-flex justify-end mb-3">
+                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Restore"
+                           Disabled="@(_targets == MonitoringSettings.DefaultTargets)" OnClick="@(() => _targets = MonitoringSettings.DefaultTargets)">
+                    Reset to defaults
+                </MudButton>
+            </div>
+
+            <MudNumericField T="int" @bind-Value="_interval" Label="Probe interval (seconds)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="MonitoringSettings.ShortestInterval" Max="MonitoringSettings.LongestInterval" Immediate="true"
+                             HelperText="@($"Between {MonitoringSettings.ShortestInterval} and {MonitoringSettings.LongestInterval} seconds")" Class="mb-3" />
+
+            <MudNumericField T="int" @bind-Value="_roundsDown" Label="Failed rounds before down" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="1" Max="MonitoringSettings.MostRounds" Immediate="true"
+                             HelperText="@DownHint" Class="mb-3" />
+
+            <MudNumericField T="int" @bind-Value="_roundsUp" Label="Good rounds before up again" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="1" Max="MonitoringSettings.MostRounds" Immediate="true" Class="mb-4" />
+
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div>
+                    <MudText Typo="Typo.body2">Test after a reconnect</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Runs a speedtest when the line comes back, at most once an hour</MudText>
+                </div>
+                <MudSwitch @bind-Value="_testAfterReconnect" Color="Color.Primary" />
+            </div>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!Dirty || !Valid)" OnClick="SaveAsync">
+                Save Monitoring
+            </MudButton>
+        </SurfaceCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.Insights" Title="What Gets Stored"
+                     Description="Every round is kept for 30 days for the latency history. Outages are kept as long as your results.">
+            <DataRow Label="A round passes when" Value="most targets answer within 2 seconds" />
+            <DataRow Label="Rounds during a speedtest" Value="count for latency, never start an outage" />
+            <DataRow Label="Uptime counts" Value="only the time the app was watching" />
+            <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">
+                A restart or a stopped container is neither uptime nor downtime, so a week away doesn't show as a week offline.
+            </MudText>
+            <MudLink Href="uptime" Class="d-block mt-3">See the Uptime page</MudLink>
+        </SurfaceCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _enabled;
+    private string _targets = MonitoringSettings.DefaultTargets;
+    private int _interval = 15;
+    private int _roundsDown = 3;
+    private int _roundsUp = 2;
+    private bool _testAfterReconnect;
+
+    private MonitoringSettings Saved => Settings.Current.Monitoring;
+
+    private bool TargetsValid =>
+        _targets.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } parts
+        && parts.All(part => ProbeTarget.Parse(part) != null);
+
+    private bool Valid =>
+        TargetsValid
+        && _interval is >= MonitoringSettings.ShortestInterval and <= MonitoringSettings.LongestInterval
+        && _roundsDown is >= 1 and <= MonitoringSettings.MostRounds
+        && _roundsUp is >= 1 and <= MonitoringSettings.MostRounds;
+
+    private bool Dirty =>
+        _enabled != Saved.Enabled
+        || _targets != TargetText(Saved)
+        || _interval != Saved.IntervalSeconds
+        || _roundsDown != Saved.RoundsToGoDown
+        || _roundsUp != Saved.RoundsToGoUp
+        || _testAfterReconnect != Saved.TestAfterReconnect;
+
+    private string DownHint => $"About {Duration.Describe(TimeSpan.FromSeconds(_interval * Math.Max(_roundsDown - 1, 0)))} of silence before an outage starts";
+
+    protected override void OnInitialized()
+    {
+        _enabled = Saved.Enabled;
+        _targets = TargetText(Saved);
+        _interval = Saved.IntervalSeconds;
+        _roundsDown = Saved.RoundsToGoDown;
+        _roundsUp = Saved.RoundsToGoUp;
+        _testAfterReconnect = Saved.TestAfterReconnect;
+    }
+
+    private static string TargetText(MonitoringSettings settings) => string.Join(", ", settings.Targets);
+
+    private async Task SaveAsync()
+    {
+        var result = await Settings.SaveAsync(
+            ("monitoringEnabled", _enabled ? "true" : "false"),
+            ("monitoringTargets", string.Join(",", _targets.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))),
+            ("monitoringInterval", _interval.ToString(CultureInfo.InvariantCulture)),
+            ("monitoringRoundsDown", _roundsDown.ToString(CultureInfo.InvariantCulture)),
+            ("monitoringRoundsUp", _roundsUp.ToString(CultureInfo.InvariantCulture)),
+            ("monitoringTestAfterReconnect", _testAfterReconnect ? "true" : "false"));
+
+        if (result.Succeeded) Snackbar.Add("Monitoring saved", Severity.Success);
+        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+    }
+}

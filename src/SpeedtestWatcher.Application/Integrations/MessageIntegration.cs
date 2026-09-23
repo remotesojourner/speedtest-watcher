@@ -8,7 +8,9 @@ public enum MessageKind
     Failed,
     Unhealthy,
     HealthyAgain,
-    Skipped
+    Skipped,
+    ConnectionLost,
+    ConnectionRestored
 }
 
 internal sealed record OutgoingMessage(MessageKind Kind, string Text);
@@ -26,7 +28,11 @@ internal abstract class MessageIntegration : HttpIntegration
         new() { Name = HealthyAgainToggle.Key, Type = "boolean", Required = false, Default = true },
         new() { Name = "healthy_again_message", Type = "textarea", Required = false },
         new() { Name = "send_skipped", Type = "boolean", Required = false, Default = true },
-        new() { Name = "skipped_message", Type = "textarea", Required = false }
+        new() { Name = "skipped_message", Type = "textarea", Required = false },
+        new() { Name = "send_connection_lost", Type = "boolean", Required = false, Default = true },
+        new() { Name = "connection_lost_message", Type = "textarea", Required = false },
+        new() { Name = "send_connection_restored", Type = "boolean", Required = false, Default = true },
+        new() { Name = "connection_restored_message", Type = "textarea", Required = false }
     ];
 
     protected MessageIntegration(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
@@ -60,6 +66,8 @@ internal abstract class MessageIntegration : HttpIntegration
             TestUnhealthy => MessageKind.Unhealthy,
             TestHealthyAgain => MessageKind.HealthyAgain,
             TestSkipped => MessageKind.Skipped,
+            ConnectionLost => MessageKind.ConnectionLost,
+            ConnectionRestored => MessageKind.ConnectionRestored,
             _ => null
         };
 
@@ -91,6 +99,8 @@ internal abstract class MessageIntegration : HttpIntegration
         MessageKind.Failed => "send_failed",
         MessageKind.Unhealthy => "send_unhealthy",
         MessageKind.HealthyAgain => HealthyAgainToggle.Key,
+        MessageKind.ConnectionLost => "send_connection_lost",
+        MessageKind.ConnectionRestored => "send_connection_restored",
         _ => "send_skipped"
     };
 
@@ -100,6 +110,8 @@ internal abstract class MessageIntegration : HttpIntegration
         MessageKind.Failed => "error_message",
         MessageKind.Unhealthy => "unhealthy_message",
         MessageKind.HealthyAgain => "healthy_again_message",
+        MessageKind.ConnectionLost => "connection_lost_message",
+        MessageKind.ConnectionRestored => "connection_restored_message",
         _ => "skipped_message"
     };
 }
