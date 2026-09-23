@@ -25,7 +25,7 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 - **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, Apprise, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets, is skipped, or meets your targets again
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
 - **Your data** — export results as CSV or JSON, import them again, back up your settings, and clean up old results automatically
-- **Monitoring** — Prometheus metrics and a generated link-preview image
+- **Monitoring** — Prometheus metrics, a ready-made Grafana dashboard, a `/healthz` endpoint for Docker, and a generated link-preview image
 - **REST API** — results, statistics, settings and backups for your own scripts, described by an OpenAPI document and a built-in reference page
 
 ---
@@ -121,6 +121,8 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | Field | Description |
 |---|---|
 | **Optimal Values** | Your contracted ping, download and upload speeds. Results are colour-coded against these, marked healthy or not, and integrations can alert you when a test misses them. Recommendations appear after at least 10 tests |
+| **Optional maximums** | A highest acceptable packet loss and bufferbloat. Each is judged only when a test measured it, so a provider that doesn't report one can never miss it, and a test from before you set a maximum keeps the verdict it was given. Leave empty for no target |
+| **Probe targets** | The `host:port` list the app opens TCP connections to. Connection monitoring uses them to tell whether the line is up, and every speedtest uses them to measure bufferbloat. Default: `1.1.1.1:443, 8.8.8.8:443, 9.9.9.9:443`. Three or more is best — with one, a single slow answer looks like an outage |
 | **Check the connection first** | Skips the test instead of recording a failure when the line is down |
 | **Check URL** | Must return your public IP address. Default: `https://icanhazip.com` |
 | **Skip tests when the public IP is** | Comma-separated IP addresses. Leave empty to always test |
@@ -138,14 +140,13 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 
 | Field | Description |
 |---|---|
-| **Watch the connection** | Turns the connection monitor on. On by default |
-| **Probe targets** | `host:port` pairs, comma separated. Default: `1.1.1.1:443, 8.8.8.8:443, 9.9.9.9:443`. A round opens a plain TCP connection to each one at the same time, with a 2-second timeout, and passes when most of them answer. Three or more is best — with one, a single slow answer looks like an outage |
+| **Watch the connection** | Turns the connection monitor on. On by default. The targets it probes are under **General**, because bufferbloat uses them too |
 | **Probe interval** | Seconds between rounds, 5 to 3600. Default: 15 |
 | **Failed rounds before down** | How many rounds in a row have to fail before an outage starts. Default: 3, so about 30 seconds of silence |
 | **Good rounds before up again** | How many rounds in a row have to pass before the line counts as back. Default: 2 |
 | **Test after a reconnect** | Runs a speedtest when the line comes back, at most once an hour. Off by default |
 
-Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Bufferbloat is measured too: Speedtest Watcher samples the probe targets for three seconds before each test and for as long as it runs, and stores the difference between the two medians, along with the 95th percentile under load — the tail that calls and games feel. A lost handshake retransmits after about a second, so samples that shape are dropped from the idle baseline, where they would hide real bufferbloat, and kept under load, where they are the thing being measured. It works the same way whatever provider you use, and it needs the probe targets but not the monitor, so it still happens when monitoring is switched off. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a latency chart of the probe rounds over 1 hour, 6 hours, 24 hours or 7 days with a strip marking failed rounds and rounds that ran during a speedtest, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
+Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Bufferbloat is measured too: Speedtest Watcher samples the probe targets for three seconds before each test and for as long as it runs, and stores the difference between the two medians, along with the 95th percentile under load — the tail that calls and games feel. It is also stored per direction: while it samples, the app watches its own network counters and labels each sample as download or upload, so you can see that pulling data down costs 5 ms while pushing it up costs 40. Upstream buffers usually bloat worse. A lost handshake retransmits after about a second, so samples that shape are dropped from the idle baseline, where they would hide real bufferbloat, and kept under load, where they are the thing being measured. It works the same way whatever provider you use, and it needs the probe targets but not the monitor, so it still happens when monitoring is switched off. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a latency chart of the probe rounds over 1 hour, 6 hours, 24 hours or 7 days with a strip marking failed rounds and rounds that ran during a speedtest, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
 
 ### Tab: Provider
 
@@ -241,6 +242,50 @@ When sign-in is on, create a token under **Settings → Security → API Token**
     credentials: YOUR_TOKEN
   static_configs:
     - targets: ["speedtest-watcher:2003"]
+```
+
+### Grafana
+
+[`docs/grafana-dashboard.json`](docs/grafana-dashboard.json) is a ready-made dashboard: speed against your targets, ping, jitter and bufferbloat, the connection state, uptime and outages, packet loss, the data the tests used, and how long it has been since the last one. Import it under **Dashboards → New → Import**, upload the file, and pick your Prometheus.
+
+A gauge that hasn't been measured is left out of the metrics rather than sent as zero, so panels for packet loss or bufferbloat stay empty until a test measures them, and the connection panels stay empty while monitoring is off.
+
+### Alerting
+
+Example rules for Prometheus, to adapt to your line:
+
+```yaml
+groups:
+  - name: speedtest-watcher
+    rules:
+      - alert: InternetDown
+        expr: speedtest_watcher_connection_up == 0
+        for: 2m
+        annotations:
+          summary: The line has been down for two minutes
+
+      - alert: UptimeBelowTarget
+        expr: speedtest_watcher_uptime_percent{period="24h"} < 99.5
+        for: 15m
+        annotations:
+          summary: Uptime over the last 24 hours is {{ $value | printf "%.2f" }}%
+
+      - alert: SlowLine
+        expr: speedtest_watcher_download < speedtest_watcher_threshold_download * 0.8
+        for: 30m
+        annotations:
+          summary: Download is more than 20% under your target
+
+      - alert: Bufferbloat
+        expr: speedtest_watcher_bufferbloat_ms > 100
+        for: 30m
+        annotations:
+          summary: The line adds {{ $value | printf "%.0f" }} ms of latency under load
+
+      - alert: TestsStopped
+        expr: time() - speedtest_watcher_last_test_timestamp_seconds > 7200
+        annotations:
+          summary: No speedtest has run for two hours
 ```
 
 ---

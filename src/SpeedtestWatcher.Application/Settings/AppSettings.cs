@@ -45,6 +45,9 @@ public sealed record AppSettings(
         TEnum Choice<TEnum>(string key) where TEnum : struct, Enum =>
             EnumNames.TryParse<TEnum>(Optional(key), out var choice) ? choice : default;
 
+        double? Figure(string key) =>
+            double.TryParse(Optional(key), NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && number >= 0 ? number : null;
+
         double? PositiveNumber(string key) =>
             double.TryParse(Optional(key), NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && number > 0 ? number : null;
 
@@ -55,7 +58,9 @@ public sealed record AppSettings(
             Targets: new TargetSettings(
                 PositiveNumber("ping") is { } ping ? (int)Math.Round(ping) : null,
                 PositiveNumber("download"),
-                PositiveNumber("upload")),
+                PositiveNumber("upload"),
+                Figure("maxPacketLoss"),
+                Figure("maxBufferbloat")),
             Schedule: new ScheduleSettings(Text("cron"), Flag("scheduleOffset"), Valid("unhealthyCron")),
             Provider: new ProviderSettings(
                 Selected: Choice<SpeedtestProvider>("provider"),

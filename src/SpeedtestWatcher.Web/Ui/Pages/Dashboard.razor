@@ -89,7 +89,7 @@
                             @if (_stats.PacketLoss != null)
                             {
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.CallSplit"
-                                               Color="@(_stats.PacketLoss.Avg > 0 ? Color.Warning : Color.Default)"
+                                               Color="@MetricStatus.PacketLoss(_stats.PacketLoss.Avg, Targets.PacketLoss)"
                                                Value="@($"{_stats.PacketLoss.Avg:F2}%")" Label="avg packet loss" />
                             }
                             @if (_stats.Bufferbloat != null)
@@ -97,7 +97,7 @@
                                 <MudTooltip Text="How much longer the line takes to answer while a test saturates it. Under 30 ms is good; a lot more means calls and games suffer while something big is downloading."
                                             Placement="Placement.Top">
                                     <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Waves"
-                                                   Color="@MetricStatus.Bufferbloat(_stats.Bufferbloat.Avg)"
+                                                   Color="@MetricStatus.Bufferbloat(_stats.Bufferbloat.Avg, Targets.Bufferbloat)"
                                                    Value="@($"{_stats.Bufferbloat.Avg:F0} ms")" Label="avg bufferbloat" />
                                 </MudTooltip>
                             }

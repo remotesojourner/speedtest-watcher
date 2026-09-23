@@ -23,12 +23,21 @@ public static class MetricStatus
         };
     }
 
-    public static Color Bufferbloat(double? milliseconds) => milliseconds switch
+    public static Color Bufferbloat(double? milliseconds, double? maximum = null) => (milliseconds, maximum) switch
     {
-        null => Color.Default,
-        < 30 => Color.Success,
-        < 100 => Color.Warning,
+        (null, _) => Color.Default,
+        ({ } value, { } max) => value > max ? Color.Error : Color.Success,
+        ( < 30, _) => Color.Success,
+        ( < 100, _) => Color.Warning,
         _ => Color.Error
+    };
+
+    public static Color PacketLoss(double? percent, double? maximum = null) => (percent, maximum) switch
+    {
+        (null, _) => Color.Default,
+        ({ } value, { } max) => value > max ? Color.Error : Color.Success,
+        (0, _) => Color.Default,
+        _ => Color.Warning
     };
 
     public const string ChartDownload = "#06b6d4";

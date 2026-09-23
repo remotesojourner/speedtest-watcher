@@ -14,6 +14,9 @@ internal class StorageRepository : IStorageRepository
         _db = db;
     }
 
+    public Task<bool> CanConnectAsync(CancellationToken cancellationToken = default) =>
+        _db.Database.CanConnectAsync(cancellationToken);
+
     public async Task<long> GetDatabaseSizeAsync(CancellationToken cancellationToken = default)
     {
         var sizes = await _db.Database.SqlQueryRaw<long>(LogicalSizeQuery).ToListAsync(cancellationToken);

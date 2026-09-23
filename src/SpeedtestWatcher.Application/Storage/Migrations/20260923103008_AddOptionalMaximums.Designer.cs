@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedtestWatcher.Application.Storage;
 
@@ -10,9 +11,11 @@ using SpeedtestWatcher.Application.Storage;
 namespace SpeedtestWatcher.Application.Storage.Migrations
 {
     [DbContext(typeof(SpeedtestWatcherDbContext))]
-    partial class SpeedtestWatcherDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923103008_AddOptionalMaximums")]
+    partial class AddOptionalMaximums
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
@@ -189,14 +192,6 @@ namespace SpeedtestWatcher.Application.Storage.Migrations
                     b.Property<double?>("Bufferbloat")
                         .HasColumnType("REAL")
                         .HasColumnName("bufferbloat");
-
-                    b.Property<double?>("BufferbloatDown")
-                        .HasColumnType("REAL")
-                        .HasColumnName("bufferbloatDown");
-
-                    b.Property<double?>("BufferbloatUp")
-                        .HasColumnType("REAL")
-                        .HasColumnName("bufferbloatUp");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT")

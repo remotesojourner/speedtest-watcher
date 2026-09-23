@@ -67,6 +67,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IOidcDiscovery, OidcDiscoveryChecker>();
         services.AddSingleton<IReleaseChecker, GitHubReleaseChecker>();
         services.AddSingleton<IConnectionProbe, TcpConnectionProbe>();
+        services.AddSingleton<INetworkTraffic, NetworkInterfaceTraffic>();
         services.TryAddSingleton(BufferbloatSampling.Default);
 
         services.AddIntegrations();

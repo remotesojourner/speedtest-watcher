@@ -84,6 +84,18 @@ public sealed record SpeedtestResponse
     public required double? ThresholdUpload { get; init; }
 
     /// <summary>
+    /// The highest acceptable packet loss, as a percentage, when the test ran. <c>null</c> when no maximum was set. It is only judged when the test measured packet loss.
+    /// </summary>
+    /// <example>0.5</example>
+    public required double? ThresholdPacketLoss { get; init; }
+
+    /// <summary>
+    /// The highest acceptable bufferbloat, in milliseconds, when the test ran. <c>null</c> when no maximum was set. It is only judged when the test measured bufferbloat.
+    /// </summary>
+    /// <example>30</example>
+    public required double? ThresholdBufferbloat { get; init; }
+
+    /// <summary>
     /// Why the test failed or was skipped.
     /// </summary>
     public required string? Error { get; init; }
@@ -122,6 +134,18 @@ public sealed record SpeedtestResponse
     /// </summary>
     /// <example>18.5</example>
     public required double? Bufferbloat { get; init; }
+
+    /// <summary>
+    /// Bufferbloat measured only while the test was pulling data down, in milliseconds. <c>null</c> when too few samples fell in that phase.
+    /// </summary>
+    /// <example>5.1</example>
+    public required double? BufferbloatDown { get; init; }
+
+    /// <summary>
+    /// Bufferbloat measured only while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones.
+    /// </summary>
+    /// <example>42.8</example>
+    public required double? BufferbloatUp { get; init; }
 
     /// <summary>
     /// The median answer time in the three seconds before the test started, in milliseconds.
@@ -174,6 +198,8 @@ public sealed record SpeedtestResponse
         ThresholdPing = test.ThresholdPing,
         ThresholdDownload = test.ThresholdDownload,
         ThresholdUpload = test.ThresholdUpload,
+        ThresholdPacketLoss = test.ThresholdPacketLoss,
+        ThresholdBufferbloat = test.ThresholdBufferbloat,
         Error = test.Error,
         ServerId = test.ServerId,
         ServerName = test.ServerName,
@@ -181,6 +207,8 @@ public sealed record SpeedtestResponse
         ResultId = test.ResultId,
         PacketLoss = test.PacketLoss,
         Bufferbloat = test.Bufferbloat,
+        BufferbloatDown = test.BufferbloatDown,
+        BufferbloatUp = test.BufferbloatUp,
         LatencyIdle = test.LatencyIdle,
         LatencyLoaded = test.LatencyLoaded,
         LatencyLoadedTail = test.LatencyLoadedTail,

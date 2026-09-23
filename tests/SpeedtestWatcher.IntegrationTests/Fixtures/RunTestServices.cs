@@ -36,6 +36,7 @@ internal static class RunTestServices
         services.AddScoped<IConnectivityChecker, ConnectivityChecker>();
         services.AddSingleton<IServerListProvider>(new NoServerLists());
         services.AddSingleton<IConnectionProbe>(new OfflineProbe());
+        services.AddSingleton<INetworkTraffic>(new ScriptedTraffic());
         services.AddSingleton(TestSampling.Bufferbloat);
         services.AddSingleton(runner);
         services.AddSingleton(access ?? FixedAccess.Full);

@@ -59,20 +59,17 @@
 
             @if (Test.PacketLoss is { } packetLoss)
             {
-                <DataRow Label="Packet loss" Value="@($"{packetLoss:F2}%")" />
+                <DataRow Label="Packet loss">
+                    <MudText Typo="Typo.body2" Color="@MetricStatus.PacketLoss(packetLoss, Test.ThresholdPacketLoss)">@($"{packetLoss:F2}%")</MudText>
+                </DataRow>
             }
             @if (Test.Bufferbloat is { } bufferbloat)
             {
                 <DataRow Label="Bufferbloat">
-                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloat)">
+                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloat, Test.ThresholdBufferbloat)">
                         @($"+{bufferbloat:F0} ms")
                     </MudText>
-                    @if (Test.LatencyIdle is { } idle && Test.LatencyLoaded is { } loaded)
-                    {
-                        <MudText Typo="Typo.caption" Class="sw-muted ml-2">
-                            @($"{idle:F0} → {loaded:F0} ms{(Test.LatencyLoadedTail is { } tail ? $", worst 5% {tail:F0} ms" : "")}")
-                        </MudText>
-                    }
+                    <MudText Typo="Typo.caption" Class="sw-muted ml-2">@BufferbloatDetail</MudText>
                 </DataRow>
             }
             @if (Test.DownloadBytes + Test.UploadBytes is { } dataUsed)
@@ -124,6 +121,21 @@
 
     private bool _deleting;
 
+    private string BufferbloatDetail
+    {
+        get
+        {
+            if (Test is not { } test) return "";
+
+            List<string> parts = [];
+            if (test.BufferbloatDown is { } down) parts.Add($"+{down:F0} ms down");
+            if (test.BufferbloatUp is { } up) parts.Add($"+{up:F0} ms up");
+            if (test.LatencyIdle is { } idle && test.LatencyLoaded is { } loaded) parts.Add($"{idle:F0} → {loaded:F0} ms");
+            if (test.LatencyLoadedTail is { } tail) parts.Add($"worst 5% {tail:F0} ms");
+            return string.Join(", ", parts);
+        }
+    }
+
     private bool IsManual => Test?.Type == TestType.Custom;
 
     private bool IsSkipped => Test?.Status == TestStatus.Skipped;
@@ -131,7 +143,8 @@
     private bool IsFailed => !IsSkipped && !string.IsNullOrEmpty(Test?.Error);
 
     private IReadOnlyList<TargetKind> MissedTargets => Test is { Status: TestStatus.Completed } test
-        ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload).Missed(test.Ping, test.Download, test.Upload)
+        ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload, test.ThresholdPacketLoss, test.ThresholdBufferbloat)
+            .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.Bufferbloat))
         : [];
 
     private string MissedTargetsText => TargetSettings.Describe(MissedTargets) is { Length: > 0 } text

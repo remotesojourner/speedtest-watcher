@@ -47,7 +47,8 @@ internal static class TemplateVariables
 
     private static IReadOnlyList<TargetKind> Missed(Speedtest test) =>
         test.Status == TestStatus.Completed
-            ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload).Missed(test.Ping, test.Download, test.Upload)
+            ? new TargetSettings(test.ThresholdPing, test.ThresholdDownload, test.ThresholdUpload, test.ThresholdPacketLoss, test.ThresholdBufferbloat)
+                .Missed(new Readings(test.Ping, test.Download, test.Upload, test.PacketLoss, test.Bufferbloat))
             : [];
 
     private static string? Decimal(double? value) => value?.ToString("F2", CultureInfo.InvariantCulture);

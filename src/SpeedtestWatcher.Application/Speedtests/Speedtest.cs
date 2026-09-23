@@ -19,6 +19,10 @@ public class Speedtest
 
     public double? Bufferbloat { get; set; }
 
+    public double? BufferbloatDown { get; set; }
+
+    public double? BufferbloatUp { get; set; }
+
     public double? LatencyIdle { get; set; }
 
     public double? LatencyLoaded { get; set; }
@@ -39,6 +43,10 @@ public class Speedtest
     public int? ThresholdPing { get; set; }
     public double? ThresholdDownload { get; set; }
     public double? ThresholdUpload { get; set; }
+
+    public double? ThresholdPacketLoss { get; set; }
+
+    public double? ThresholdBufferbloat { get; set; }
 
     public TestType Type { get; set; } = TestType.Auto;
     public string? ResultId { get; set; }

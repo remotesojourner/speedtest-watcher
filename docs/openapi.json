@@ -1441,6 +1441,16 @@
             "description": "Visible to everyone who can read the settings.",
             "default": "50"
           },
+          "maxPacketLoss": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "none"
+          },
+          "maxBufferbloat": {
+            "type": "string",
+            "description": "Visible to everyone who can read the settings.",
+            "default": "none"
+          },
           "cron": {
             "type": "string",
             "description": "Left out for read-only visitors.",
@@ -2316,6 +2326,8 @@
           "thresholdPing",
           "thresholdDownload",
           "thresholdUpload",
+          "thresholdPacketLoss",
+          "thresholdBufferbloat",
           "error",
           "serverId",
           "serverName",
@@ -2323,6 +2335,8 @@
           "resultId",
           "packetLoss",
           "bufferbloat",
+          "bufferbloatDown",
+          "bufferbloatUp",
           "latencyIdle",
           "latencyLoaded",
           "latencyLoadedTail",
@@ -2439,6 +2453,28 @@
             "description": "The lowest acceptable upload speed, in Mbps, when the test ran.",
             "format": "double"
           },
+          "thresholdPacketLoss": {
+            "examples": [
+              0.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The highest acceptable packet loss, as a percentage, when the test ran. `null` when no maximum was set. It is only judged when the test measured packet loss.",
+            "format": "double"
+          },
+          "thresholdBufferbloat": {
+            "examples": [
+              30
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The highest acceptable bufferbloat, in milliseconds, when the test ran. `null` when no maximum was set. It is only judged when the test measured bufferbloat.",
+            "format": "double"
+          },
           "error": {
             "type": [
               "null",
@@ -2501,6 +2537,28 @@
               "number"
             ],
             "description": "How much longer the line took to answer under load than when idle, in milliseconds. The app measures this itself around every test, the same way for every provider.",
+            "format": "double"
+          },
+          "bufferbloatDown": {
+            "examples": [
+              5.1
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat measured only while the test was pulling data down, in milliseconds. `null` when too few samples fell in that phase.",
+            "format": "double"
+          },
+          "bufferbloatUp": {
+            "examples": [
+              42.8
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat measured only while the test was pushing data up, in milliseconds. Upstream buffers usually bloat worse than downstream ones.",
             "format": "double"
           },
           "latencyIdle": {

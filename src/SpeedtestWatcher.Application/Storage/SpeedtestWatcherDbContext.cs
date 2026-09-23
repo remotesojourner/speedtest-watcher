@@ -48,6 +48,8 @@ internal class SpeedtestWatcherDbContext : DbContext
             entity.Property(e => e.Error).HasColumnName("error");
             entity.Property(e => e.PacketLoss).HasColumnName("packetLoss");
             entity.Property(e => e.Bufferbloat).HasColumnName("bufferbloat");
+            entity.Property(e => e.BufferbloatDown).HasColumnName("bufferbloatDown");
+            entity.Property(e => e.BufferbloatUp).HasColumnName("bufferbloatUp");
             entity.Property(e => e.LatencyIdle).HasColumnName("latencyIdle");
             entity.Property(e => e.LatencyLoaded).HasColumnName("latencyLoaded");
             entity.Property(e => e.LatencyLoadedTail).HasColumnName("latencyLoadedTail");
@@ -59,6 +61,8 @@ internal class SpeedtestWatcherDbContext : DbContext
             entity.Property(e => e.ThresholdPing).HasColumnName("thresholdPing");
             entity.Property(e => e.ThresholdDownload).HasColumnName("thresholdDownload");
             entity.Property(e => e.ThresholdUpload).HasColumnName("thresholdUpload");
+            entity.Property(e => e.ThresholdPacketLoss).HasColumnName("thresholdPacketLoss");
+            entity.Property(e => e.ThresholdBufferbloat).HasColumnName("thresholdBufferbloat");
             entity.Property(e => e.Type).HasColumnName("type").HasDefaultValue(TestType.Auto);
             entity.Property(e => e.ResultId).HasColumnName("resultId");
             entity.Property(e => e.Time).HasColumnName("time").HasDefaultValue(0);

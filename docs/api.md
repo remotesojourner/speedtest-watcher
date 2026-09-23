@@ -61,7 +61,9 @@ The message is written for people, so you can show it as it is.
 - Timestamps are UTC in ISO 8601, such as `2026-09-14T20:35:00Z`.
 - Speeds are in Mbps. Ping and jitter are in milliseconds, and a test's `time` is its duration in seconds.
 - `packetLoss` is a percentage, and `downloadBytes` and `uploadBytes` are the data the test itself moved. A provider that doesn't measure them leaves them `null`.
-- `bufferbloat` is in milliseconds: how much longer the connection took to answer while the test ran than it did in the three seconds before it started. `latencyIdle` and `latencyLoaded` are those two medians, and `latencyLoadedTail` is the 95th percentile under load. A test that failed, one with too few samples, or one too short to saturate the line leaves all four `null`.
+- `bufferbloat` is in milliseconds: how much longer the connection took to answer while the test ran than it did in the three seconds before it started. `latencyIdle` and `latencyLoaded` are those two medians, and `latencyLoadedTail` is the 95th percentile under load. A test that failed, one with too few samples, or one too short to saturate the line leaves them `null`.
+- `bufferbloatDown` and `bufferbloatUp` split that figure by the direction the bytes were going, which the app reads from its own network counters. Either is `null` when too few samples fell in that phase.
+- `thresholdPacketLoss` and `thresholdBufferbloat` are the optional maximums in force when the test ran, or `null` when none was set. Like the speed targets, they are stored on the result, so changing them later never rewrites history. A maximum is judged only when the test measured the figure.
 - Failed and skipped results store `-1` for ping, download and upload. Check `status` before using the readings.
 - Settings are strings, as they are stored. `none` means unset.
 - Enums use lowercase names: status is `completed`, `failed` or `skipped`, and type is `auto` (the schedule) or `custom` (started by hand).
@@ -202,6 +204,8 @@ The restore answers with how many settings and integrations were restored, and h
 `GET /api/prometheus/metrics` serves the metrics described in the [README](../README.md#prometheus-metrics). `GET /api/opengraph/image` is the PNG that chat apps show when someone shares a link to your instance. Every page names it, by its full address, in its Open Graph tags.
 
 `GET /api/info/version` returns this instance's version and the latest release on GitHub. The release is checked at most every six hours, and `remote` is `0` when it couldn't be checked.
+
+`GET /healthz` answers `200 Healthy` while the app is up and the database answers, and `503 Unhealthy` when it doesn't. It needs no token and no sign-in, because that is what Docker's health check calls.
 
 ## Upgrading from an earlier version
 

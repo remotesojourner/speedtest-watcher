@@ -17,6 +17,7 @@ public class BufferbloatMeterTests
         LeastLoadTime: TimeSpan.FromMilliseconds(100));
 
     private readonly OfflineProbe _probe = new(10);
+    private readonly ScriptedTraffic _traffic = new();
 
     [Fact]
     public async Task ALineThatSlowsUnderLoadIsMeasuredAgainstItsIdleSelf()
@@ -30,6 +31,25 @@ public class BufferbloatMeterTests
 
         Assert.NotNull(reading);
         Assert.Equal((50, 10, 60), (reading.Milliseconds, reading.IdleMilliseconds, reading.LoadedMilliseconds));
+    }
+
+    [Fact]
+    public async Task EachDirectionIsMeasuredWhileTheBytesAreGoingThatWay()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var measuring = await Meter(_quickly).StartAsync(cancellationToken);
+
+        _traffic.Moving = LoadDirection.Download;
+        _probe.Milliseconds = 30;
+        await Task.Delay(250, cancellationToken);
+        _traffic.Moving = LoadDirection.Upload;
+        _probe.Milliseconds = 90;
+        await Task.Delay(250, cancellationToken);
+
+        var reading = await measuring.StopAsync();
+
+        Assert.Equal((20, 80), (reading!.DownloadMilliseconds, reading.UploadMilliseconds));
+        Assert.Equal(10, reading.IdleMilliseconds);
     }
 
     [Fact]
@@ -70,6 +90,6 @@ public class BufferbloatMeterTests
         var store = A.Fake<ISettingsStore>();
         var settings = AppSettings.From(new Dictionary<string, string> { ["monitoringTargets"] = targets });
         A.CallTo(() => store.GetAsync(A<CancellationToken>._)).Returns(settings);
-        return new BufferbloatMeter(_probe, store, TimeProvider.System, sampling, NullLogger<BufferbloatMeter>.Instance);
+        return new BufferbloatMeter(_probe, _traffic, store, TimeProvider.System, sampling, NullLogger<BufferbloatMeter>.Instance);
     }
 }

@@ -15,6 +15,10 @@ public class SpeedtestDto
 
     public double? Bufferbloat { get; set; }
 
+    public double? BufferbloatDown { get; set; }
+
+    public double? BufferbloatUp { get; set; }
+
     public double? LatencyIdle { get; set; }
 
     public double? LatencyLoaded { get; set; }
@@ -28,6 +32,10 @@ public class SpeedtestDto
     public int? ThresholdPing { get; set; }
     public double? ThresholdDownload { get; set; }
     public double? ThresholdUpload { get; set; }
+
+    public double? ThresholdPacketLoss { get; set; }
+
+    public double? ThresholdBufferbloat { get; set; }
     public TestType Type { get; set; } = TestType.Auto;
     public string? ResultId { get; set; }
     public int Time { get; set; }
@@ -53,6 +61,8 @@ public class SpeedtestDto
         Error = test.Error,
         PacketLoss = test.PacketLoss,
         Bufferbloat = test.Bufferbloat,
+        BufferbloatDown = test.BufferbloatDown,
+        BufferbloatUp = test.BufferbloatUp,
         LatencyIdle = test.LatencyIdle,
         LatencyLoaded = test.LatencyLoaded,
         LatencyLoadedTail = test.LatencyLoadedTail,
@@ -64,6 +74,8 @@ public class SpeedtestDto
         ThresholdPing = test.ThresholdPing,
         ThresholdDownload = test.ThresholdDownload,
         ThresholdUpload = test.ThresholdUpload,
+        ThresholdPacketLoss = test.ThresholdPacketLoss,
+        ThresholdBufferbloat = test.ThresholdBufferbloat,
         Type = test.Type,
         ResultId = test.ResultId,
         Time = test.Time,

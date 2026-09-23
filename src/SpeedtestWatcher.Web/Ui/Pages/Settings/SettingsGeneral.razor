@@ -15,6 +15,18 @@
             <MudNumericField T="double" @bind-Value="_optUpload" Label="Upload (Mbps)" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="0" Immediate="true" HelperText="@RecommendedHint(_recommendation?.Upload, "Mbps")" Class="mb-4" />
 
+            <MudText Typo="Typo.body2" Class="font-weight-bold mb-1">Optional maximums</MudText>
+            <MudText Typo="Typo.caption" Class="sw-muted d-block mb-3">
+                Judged only when a test measured the figure, so a provider that doesn't report one can never miss it. Leave empty for no target.
+            </MudText>
+
+            <MudNumericField T="double?" @bind-Value="_maxPacketLoss" Label="Packet loss (%)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" Max="100" Immediate="true" Clearable="true"
+                             HelperText="Only Ookla measures packet loss" Class="mb-3" />
+            <MudNumericField T="double?" @bind-Value="_maxBufferbloat" Label="Bufferbloat (ms)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Min="0" Immediate="true" Clearable="true"
+                             HelperText="Added latency under load. Under 30 ms is good" Class="mb-4" />
+
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!OptimalDirty)" OnClick="SaveOptimalValuesAsync">
                     Save Values
@@ -62,28 +74,65 @@
             </MudButton>
         </SurfaceCard>
     </MudItem>
+    <MudItem xs="12" md="6">
+        <SurfaceCard Icon="@Icons.Material.Filled.Router" Title="Probe Targets"
+                     Description="The hosts Speedtest Watcher opens a TCP connection to. Connection monitoring uses them to tell whether the line is up, and every speedtest uses them to measure bufferbloat.">
+            <MudTextField @bind-Value="_probeTargets" Label="Probe targets" Placeholder="@MonitoringSettings.DefaultTargets"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          Error="@(!ProbeTargetsValid)" ErrorText="Each target needs to look like host:port"
+                          HelperText="Comma separated. Three or more is best: with one, a single slow answer looks like an outage." Class="mb-2" />
+
+            <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Restore"
+                           Disabled="@(_probeTargets == MonitoringSettings.DefaultTargets)"
+                           OnClick="@(() => _probeTargets = MonitoringSettings.DefaultTargets)">
+                    Reset to defaults
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           Disabled="@(!ProbeTargetsDirty || !ProbeTargetsValid)" OnClick="SaveProbeTargetsAsync">
+                    Save Targets
+                </MudButton>
+            </div>
+        </SurfaceCard>
+    </MudItem>
+
 </MudGrid>
 
 @code {
     private double _optPing;
     private double _optDownload;
     private double _optUpload;
+    private double? _maxPacketLoss;
+    private double? _maxBufferbloat;
     private Recommendation? _recommendation;
     private bool _recommendationUnavailable;
 
     private bool _internetCheck = true;
     private string _internetCheckUrl = "https://icanhazip.com";
     private string _skipIps = "";
+    private string _probeTargets = MonitoringSettings.DefaultTargets;
 
     private TargetSettings Targets => Settings.Current.Targets;
 
     private PreTestCheckSettings Checks => Settings.Current.PreTestChecks;
 
-    private bool OptimalDirty => Differs(_optPing, Targets.Ping) || Differs(_optDownload, Targets.Download) || Differs(_optUpload, Targets.Upload);
+    private bool OptimalDirty =>
+        Differs(_optPing, Targets.Ping)
+        || Differs(_optDownload, Targets.Download)
+        || Differs(_optUpload, Targets.Upload)
+        || _maxPacketLoss != Targets.PacketLoss
+        || _maxBufferbloat != Targets.Bufferbloat;
 
     private bool CheckUrlValid => WebAddress.IsHttp(_internetCheckUrl);
 
     private List<string> SkipIpList => _skipIps.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private IReadOnlyList<string> ProbeTargetList =>
+        [.. _probeTargets.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+
+    private bool ProbeTargetsValid => ProbeTargetList.Count > 0 && ProbeTargetList.All(target => ProbeTarget.Parse(target) != null);
+
+    private bool ProbeTargetsDirty => _probeTargets != string.Join(", ", Settings.Current.Monitoring.Targets);
 
     private bool ChecksDirty =>
         _internetCheck != Checks.InternetCheckEnabled
@@ -96,6 +145,7 @@
         _internetCheck = Checks.InternetCheckEnabled;
         _internetCheckUrl = Checks.InternetCheckUrl;
         _skipIps = string.Join(", ", Checks.SkipIps);
+        _probeTargets = string.Join(", ", Settings.Current.Monitoring.Targets);
 
         try
         {
@@ -112,6 +162,8 @@
         _optPing = Targets.Ping ?? 0;
         _optDownload = Targets.Download ?? 0;
         _optUpload = Targets.Upload ?? 0;
+        _maxPacketLoss = Targets.PacketLoss;
+        _maxBufferbloat = Targets.Bufferbloat;
     }
 
     private void UseRecommended()
@@ -128,6 +180,8 @@
         if (Differs(_optPing, Targets.Ping)) changes.Add(("ping", SettingNumber.Format(_optPing)));
         if (Differs(_optDownload, Targets.Download)) changes.Add(("download", SettingNumber.Format(_optDownload)));
         if (Differs(_optUpload, Targets.Upload)) changes.Add(("upload", SettingNumber.Format(_optUpload)));
+        if (_maxPacketLoss != Targets.PacketLoss) changes.Add(("maxPacketLoss", Maximum(_maxPacketLoss)));
+        if (_maxBufferbloat != Targets.Bufferbloat) changes.Add(("maxBufferbloat", Maximum(_maxBufferbloat)));
 
         var result = await Settings.SaveAsync([.. changes]);
         if (result.Succeeded) ResetOptimalValues();
@@ -144,11 +198,19 @@
         ShowSaveResult(result, "Pre-test checks saved");
     }
 
+    private async Task SaveProbeTargetsAsync()
+    {
+        var result = await Settings.SaveAsync(("monitoringTargets", string.Join(",", ProbeTargetList)));
+        ShowSaveResult(result, "Probe targets saved");
+    }
+
     private void ShowSaveResult(OperationResult result, string successMessage)
     {
         if (result.Succeeded) Snackbar.Add(successMessage, Severity.Success);
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
+
+    private static string Maximum(double? value) => value is { } figure ? SettingNumber.Format(figure) : SettingDefinitions.Unset;
 
     private static bool Differs(double value, double? saved) => Math.Abs(value - (saved ?? 0)) > 0.0000001;
 

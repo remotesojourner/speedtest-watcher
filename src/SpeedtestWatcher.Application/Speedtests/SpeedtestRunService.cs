@@ -196,12 +196,16 @@ public sealed partial class SpeedtestRunService
         ResultId = result.ResultId,
         Error = result.Success ? null : result.Error ?? "Unknown error",
         Status = result.Success ? TestStatus.Completed : TestStatus.Failed,
-        Healthy = result.Success ? targets.Evaluate(result.Ping, result.Download, result.Upload) : null,
+        Healthy = result.Success ? targets.Evaluate(Judged(result, bufferbloat)) : null,
         ThresholdPing = targets.Ping,
         ThresholdDownload = targets.Download,
         ThresholdUpload = targets.Upload,
+        ThresholdPacketLoss = targets.PacketLoss,
+        ThresholdBufferbloat = targets.Bufferbloat,
         PacketLoss = result.Success ? result.PacketLoss : null,
         Bufferbloat = bufferbloat?.Milliseconds,
+        BufferbloatDown = bufferbloat?.DownloadMilliseconds,
+        BufferbloatUp = bufferbloat?.UploadMilliseconds,
         LatencyIdle = bufferbloat?.IdleMilliseconds,
         LatencyLoaded = bufferbloat?.LoadedMilliseconds,
         LatencyLoadedTail = bufferbloat?.LoadedTailMilliseconds,
@@ -210,6 +214,9 @@ public sealed partial class SpeedtestRunService
         PublicIp = publicIp,
         Created = DateTime.UtcNow
     };
+
+    private static Readings Judged(SpeedtestExecutionResult result, BufferbloatReading? bufferbloat) =>
+        new(result.Ping, result.Download, result.Upload, result.PacketLoss, bufferbloat?.Milliseconds);
 
     private async Task RecordSkippedAsync(TestType type, string reason, string? publicIp, CancellationToken cancellationToken)
     {

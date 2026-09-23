@@ -14,17 +14,10 @@
                 <MudSwitch @bind-Value="_enabled" Color="Color.Primary" />
             </div>
 
-            <MudTextField @bind-Value="_targets" Label="Probe targets" Placeholder="@MonitoringSettings.DefaultTargets"
-                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
-                          Error="@(!TargetsValid)" ErrorText="Each target needs to look like host:port"
-                          HelperText="Comma separated. Three or more is best: with one, a single slow answer looks like an outage." Class="mb-2" />
-
-            <div class="d-flex justify-end mb-3">
-                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Restore"
-                           Disabled="@(_targets == MonitoringSettings.DefaultTargets)" OnClick="@(() => _targets = MonitoringSettings.DefaultTargets)">
-                    Reset to defaults
-                </MudButton>
-            </div>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+                Probing @TargetSummary. The targets are under
+                <MudLink Href="settings/general">Settings → General</MudLink>, because bufferbloat uses them too.
+            </MudAlert>
 
             <MudNumericField T="int" @bind-Value="_interval" Label="Probe interval (seconds)" Variant="Variant.Outlined" Margin="Margin.Dense"
                              Min="MonitoringSettings.ShortestInterval" Max="MonitoringSettings.LongestInterval" Immediate="true"
@@ -68,7 +61,6 @@
 
 @code {
     private bool _enabled;
-    private string _targets = MonitoringSettings.DefaultTargets;
     private int _interval = 15;
     private int _roundsDown = 3;
     private int _roundsUp = 2;
@@ -76,19 +68,20 @@
 
     private MonitoringSettings Saved => Settings.Current.Monitoring;
 
-    private bool TargetsValid =>
-        _targets.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } parts
-        && parts.All(part => ProbeTarget.Parse(part) != null);
+    private string TargetSummary => Saved.Targets.Count switch
+    {
+        0 => "nothing, because no targets are set",
+        1 => Saved.Targets[0].ToString(),
+        _ => string.Join(", ", Saved.Targets)
+    };
 
     private bool Valid =>
-        TargetsValid
-        && _interval is >= MonitoringSettings.ShortestInterval and <= MonitoringSettings.LongestInterval
+        _interval is >= MonitoringSettings.ShortestInterval and <= MonitoringSettings.LongestInterval
         && _roundsDown is >= 1 and <= MonitoringSettings.MostRounds
         && _roundsUp is >= 1 and <= MonitoringSettings.MostRounds;
 
     private bool Dirty =>
         _enabled != Saved.Enabled
-        || _targets != TargetText(Saved)
         || _interval != Saved.IntervalSeconds
         || _roundsDown != Saved.RoundsToGoDown
         || _roundsUp != Saved.RoundsToGoUp
@@ -99,20 +92,16 @@
     protected override void OnInitialized()
     {
         _enabled = Saved.Enabled;
-        _targets = TargetText(Saved);
         _interval = Saved.IntervalSeconds;
         _roundsDown = Saved.RoundsToGoDown;
         _roundsUp = Saved.RoundsToGoUp;
         _testAfterReconnect = Saved.TestAfterReconnect;
     }
 
-    private static string TargetText(MonitoringSettings settings) => string.Join(", ", settings.Targets);
-
     private async Task SaveAsync()
     {
         var result = await Settings.SaveAsync(
             ("monitoringEnabled", _enabled ? "true" : "false"),
-            ("monitoringTargets", string.Join(",", _targets.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))),
             ("monitoringInterval", _interval.ToString(CultureInfo.InvariantCulture)),
             ("monitoringRoundsDown", _roundsDown.ToString(CultureInfo.InvariantCulture)),
             ("monitoringRoundsUp", _roundsUp.ToString(CultureInfo.InvariantCulture)),

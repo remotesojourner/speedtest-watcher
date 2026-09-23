@@ -24,6 +24,8 @@ public static partial class SettingDefinitions
         new("ping", "25", SettingVisibility.Everyone, Number),
         new("download", "100", SettingVisibility.Everyone, Number),
         new("upload", "50", SettingVisibility.Everyone, Number),
+        new("maxPacketLoss", Unset, SettingVisibility.Everyone, UnsetOr(Number)),
+        new("maxBufferbloat", Unset, SettingVisibility.Everyone, UnsetOr(Number)),
 
         new("cron", "0 * * * *", SettingVisibility.FullAccessOnly, Cron),
         new("scheduleOffset", "true", SettingVisibility.FullAccessOnly, Boolean),

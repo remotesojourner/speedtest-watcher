@@ -77,6 +77,7 @@ public static class WebServiceCollectionExtensions
             options.InvalidModelStateResponseFactory = context => new BadRequestObjectResult(InvalidRequest.Describe(context.ModelState));
         });
         services.AddApiDocumentation();
+        services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
         return services;
     }
 

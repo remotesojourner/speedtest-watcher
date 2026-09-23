@@ -4,5 +4,7 @@ public enum TargetKind
 {
     Ping,
     Download,
-    Upload
+    Upload,
+    PacketLoss,
+    Bufferbloat
 }

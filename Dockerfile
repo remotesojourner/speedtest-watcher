@@ -34,4 +34,6 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true
 VOLUME ["/app/data", "/app/bin"]
 EXPOSE ${PORT}
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS "http://127.0.0.1:${PORT}/healthz" || exit 1
+
 ENTRYPOINT ["dotnet", "SpeedtestWatcher.Web.dll"]

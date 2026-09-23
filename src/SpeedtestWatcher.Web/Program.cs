@@ -51,6 +51,7 @@ app.UseAntiforgery();
 
 app.MapControllers();
 app.MapApiDocumentation();
+app.MapHealthChecks(HealthEndpoint.Path).AllowAnonymous();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
