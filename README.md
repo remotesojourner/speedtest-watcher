@@ -30,6 +30,22 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 
 ---
 
+## Screenshots
+
+### Dashboard
+
+![Dashboard showing download, upload and latency averages, bufferbloat, the latest test and a week of charts](docs/screenshots/dashboard.png)
+
+### History
+
+![History showing the latest result with a trend line, and every test grouped by day](docs/screenshots/history.png)
+
+### Uptime
+
+![Uptime showing the connection state, uptime over 24 hours, 7 days and 30 days, a year of outages and the probe answer time](docs/screenshots/uptime.png)
+
+---
+
 ## Upcoming Features
 
 Planned, but not built yet. There are no dates.

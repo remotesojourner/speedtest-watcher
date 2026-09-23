@@ -241,7 +241,7 @@
     }
 
     private string LatencyLabel(DateTime at) =>
-        MonitoringService.RangeFor(_latencyRange).Window > TimeSpan.FromHours(24)
+        MonitoringService.RangeFor(_latencyRange).Window >= TimeSpan.FromHours(24)
             ? PreferencesService.ToLocal(at).ToString("d MMM HH:mm", CultureInfo.CurrentCulture)
             : PreferencesService.ToLocal(at).ToString("HH:mm", CultureInfo.CurrentCulture);
 
