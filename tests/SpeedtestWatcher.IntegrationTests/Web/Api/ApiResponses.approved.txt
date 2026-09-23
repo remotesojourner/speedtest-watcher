@@ -673,11 +673,11 @@
 
 ### POST /api/speedtests/export {"format":"csv"}
 200 text/csv
-id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
-4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
-3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
-2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
-1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,5.1,42.8,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
+id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,latencyIdle,latencyLoaded,latencyLoadedTail,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,thresholdPacketLoss,thresholdBufferbloat,resultId,error
+4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,,,Network unreachable
+3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,,,,,0,0,,,,,,,,,Public IP 203.0.113.9 is on the skip list
+2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,,,r-2,
+1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,5.1,42.8,13.2,31.7,64.2,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,0.5,50,r-1,
 
 ### POST /api/speedtests/export {"format":
 400 application/json; charset=utf-8

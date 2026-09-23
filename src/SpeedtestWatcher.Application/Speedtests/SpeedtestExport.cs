@@ -8,7 +8,7 @@ namespace SpeedtestWatcher.Application.Speedtests;
 public static class SpeedtestExport
 {
     public const string CsvHeader =
-        "id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error";
+        "id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,latencyIdle,latencyLoaded,latencyLoadedTail,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,thresholdPacketLoss,thresholdBufferbloat,resultId,error";
 
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
@@ -34,6 +34,9 @@ public static class SpeedtestExport
                     Number(test.PacketLoss),
                     Number(test.BufferbloatDown),
                     Number(test.BufferbloatUp),
+                    Number(test.LatencyIdle),
+                    Number(test.LatencyLoaded),
+                    Number(test.LatencyLoadedTail),
                     Number(test.DownloadBytes),
                     Number(test.UploadBytes),
                     Number(test.Time),
@@ -43,6 +46,8 @@ public static class SpeedtestExport
                     Number(test.ThresholdPing),
                     Number(test.ThresholdDownload),
                     Number(test.ThresholdUpload),
+                    Number(test.ThresholdPacketLoss),
+                    Number(test.ThresholdBufferbloat),
                     Text(test.ResultId),
                     Text(test.Error))
                 .Append("\r\n");
