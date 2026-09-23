@@ -41,6 +41,7 @@ internal static class TemplateVariables
         ["threshold_upload"] = Decimal(test.ThresholdUpload) ?? "-",
         ["missed"] = TargetSettings.Describe(Missed(test)),
         ["packet_loss"] = Decimal(test.PacketLoss) ?? "-",
+        ["bufferbloat"] = Decimal(test.Bufferbloat) ?? "-",
         ["data_used"] = test.DownloadBytes + test.UploadBytes is { } bytes ? ByteSize.Describe(bytes) : "-"
     };
 

@@ -58,6 +58,20 @@ public class MonitoringController : ControllerBase
         Ok((await _monitoring.DaysAsync(tz, cancellationToken)).Select(UptimeDayResponse.From).ToList());
 
     /// <summary>
+    /// Get the latency chart
+    /// </summary>
+    /// <remarks>
+    /// The probe rounds of the period, averaged into slots so a week is a few hundred points instead of tens of thousands. A slot with no answer at all has no figure, and its <c>failed</c> count says why.
+    /// </remarks>
+    /// <param name="range">How far back to go: <c>1h</c>, <c>6h</c>, <c>24h</c> (the default) or <c>7d</c>.</param>
+    /// <response code="200">The points, oldest first.</response>
+    [HttpGet("latency")]
+    [Authorize(Policy = AccessPolicies.Read)]
+    [ProducesResponseType<IReadOnlyList<LatencyPointResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<LatencyPointResponse>>> GetLatency([FromQuery] string? range, CancellationToken cancellationToken) =>
+        Ok((await _monitoring.LatencyAsync(range, cancellationToken)).Select(LatencyPointResponse.From).ToList());
+
+    /// <summary>
     /// Delete an outage
     /// </summary>
     /// <remarks>

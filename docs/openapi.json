@@ -228,6 +228,51 @@
         "x-access": "read"
       }
     },
+    "/api/monitoring/latency": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Get the latency chart",
+        "description": "The probe rounds of the period, averaged into slots so a week is a few hundred points instead of tens of thousands. A slot with no answer at all has no figure, and its `failed` count says why.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "description": "How far back to go: `1h`, `6h`, `24h` (the default) or `7d`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The points, oldest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LatencyPointResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on, people who aren't signed in have no access, and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "read"
+      }
+    },
     "/api/monitoring/outages/{id}": {
       "delete": {
         "tags": [
@@ -1254,6 +1299,7 @@
           "jitter",
           "download",
           "upload",
+          "bufferbloat",
           "duration"
         ],
         "type": "object",
@@ -1319,6 +1365,17 @@
               "number"
             ],
             "description": "Upload speed in Mbps.",
+            "format": "double"
+          },
+          "bufferbloat": {
+            "examples": [
+              18.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat in milliseconds, when the test measured it.",
             "format": "double"
           },
           "duration": {
@@ -1705,6 +1762,62 @@
           }
         },
         "description": "Averages of the completed tests that ran in one hour of the day."
+      },
+      "LatencyPointResponse": {
+        "required": [
+          "at",
+          "milliseconds",
+          "rounds",
+          "failed",
+          "duringTest"
+        ],
+        "type": "object",
+        "properties": {
+          "at": {
+            "examples": [
+              "2026-09-14T20:35:00Z"
+            ],
+            "type": "string",
+            "description": "The start of the slot, in UTC.",
+            "format": "date-time"
+          },
+          "milliseconds": {
+            "examples": [
+              12.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The average of the quickest connect time of each round in the slot, in milliseconds, or `null` when no round answered.",
+            "format": "double"
+          },
+          "rounds": {
+            "examples": [
+              20
+            ],
+            "type": "integer",
+            "description": "How many rounds fall in this slot.",
+            "format": "int32"
+          },
+          "failed": {
+            "examples": [
+              2
+            ],
+            "type": "integer",
+            "description": "How many of them failed.",
+            "format": "int32"
+          },
+          "duringTest": {
+            "examples": [
+              4
+            ],
+            "type": "integer",
+            "description": "How many of them ran while a speedtest was in progress. Those rounds never start an outage.",
+            "format": "int32"
+          }
+        },
+        "description": "One point of the latency chart: the probe rounds of a slot, averaged."
       },
       "MessageResponse": {
         "required": [
@@ -2209,6 +2322,10 @@
           "serverHost",
           "resultId",
           "packetLoss",
+          "bufferbloat",
+          "latencyIdle",
+          "latencyLoaded",
+          "latencyLoadedTail",
           "downloadBytes",
           "uploadBytes",
           "publicIp"
@@ -2375,6 +2492,50 @@
             "description": "Packet loss as a percentage, when the provider measures it. Only Ookla does.",
             "format": "double"
           },
+          "bufferbloat": {
+            "examples": [
+              18.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "How much longer the line took to answer under load than when idle, in milliseconds. The app measures this itself around every test, the same way for every provider.",
+            "format": "double"
+          },
+          "latencyIdle": {
+            "examples": [
+              13.2
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The median answer time in the three seconds before the test started, in milliseconds.",
+            "format": "double"
+          },
+          "latencyLoaded": {
+            "examples": [
+              31.7
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The median answer time while the test was running, in milliseconds.",
+            "format": "double"
+          },
+          "latencyLoadedTail": {
+            "examples": [
+              64.2
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The 95th percentile answer time while the test was running, in milliseconds. This is the tail that calls and games feel, where the median is what the line usually did.",
+            "format": "double"
+          },
           "downloadBytes": {
             "examples": [
               903347628
@@ -2454,6 +2615,7 @@
           "time",
           "consistency",
           "packetLoss",
+          "bufferbloat",
           "dataUsedBytes",
           "hourlyAverages",
           "points",
@@ -2539,6 +2701,17 @@
               }
             ],
             "description": "Packet loss across the completed tests that measured it, as percentages. Only Ookla measures it."
+          },
+          "bufferbloat": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MetricSummaryResponse"
+              }
+            ],
+            "description": "Bufferbloat in milliseconds across the completed tests that have a figure, or `null` when none do."
           },
           "dataUsedBytes": {
             "examples": [
@@ -2776,6 +2949,17 @@
               "number"
             ],
             "description": "Packet loss as a percentage.",
+            "format": "double"
+          },
+          "bufferbloat": {
+            "examples": [
+              18.5
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat in milliseconds, when the export carried it.",
             "format": "double"
           },
           "downloadBytes": {

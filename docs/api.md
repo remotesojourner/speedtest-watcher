@@ -61,6 +61,7 @@ The message is written for people, so you can show it as it is.
 - Timestamps are UTC in ISO 8601, such as `2026-09-14T20:35:00Z`.
 - Speeds are in Mbps. Ping and jitter are in milliseconds, and a test's `time` is its duration in seconds.
 - `packetLoss` is a percentage, and `downloadBytes` and `uploadBytes` are the data the test itself moved. A provider that doesn't measure them leaves them `null`.
+- `bufferbloat` is in milliseconds: how much longer the connection took to answer while the test ran than it did in the three seconds before it started. `latencyIdle` and `latencyLoaded` are those two medians, and `latencyLoadedTail` is the 95th percentile under load. A test that failed, one with too few samples, or one too short to saturate the line leaves all four `null`.
 - Failed and skipped results store `-1` for ping, download and upload. Check `status` before using the readings.
 - Settings are strings, as they are stored. `none` means unset.
 - Enums use lowercase names: status is `completed`, `failed` or `skipped`, and type is `auto` (the schedule) or `custom` (started by hand).
@@ -109,7 +110,7 @@ curl "http://speedtest-watcher:2003/api/speedtests/statistics?from=2026-09-01&to
 `from` and `to` take a date, which covers the whole day, or a date and time. They default to the last seven days. `tz` is an IANA time zone for day boundaries and the hourly averages, and defaults to UTC. The response has:
 
 - `tests`: how many ran and how many failed.
-- `ping`, `jitter`, `download`, `upload`, `time` and `packetLoss`: the lowest, average and highest value of the completed tests, or `null` when none completed. `packetLoss` is also `null` when no test in the period measured it.
+- `ping`, `jitter`, `download`, `upload`, `time`, `packetLoss` and `bufferbloat`: the lowest, average and highest value of the completed tests, or `null` when none completed. `packetLoss` and `bufferbloat` are also `null` when no test in the period measured them.
 - `dataUsedBytes`: how much data the tests in the period moved, download and upload together.
 - `consistency`: the standard deviation of each reading, and for speeds a consistency score from 0 to 100.
 - `hourlyAverages`: one entry for each hour of the day, 0 to 23.
@@ -130,6 +131,12 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" http://speedtest-watcher:2003/a
 ```
 
 `days` is the uptime calendar: one entry for each of the last 365 days, oldest first. Deleting an outage stops it counting against your uptime, which is there for planned maintenance.
+
+```bash
+curl "http://speedtest-watcher:2003/api/monitoring/latency?range=7d"
+```
+
+`latency` is the chart behind the Uptime page: the rounds of the period averaged into slots, oldest first, so a week is a few hundred points instead of tens of thousands. `range` takes `1h`, `6h`, `24h` (the default) or `7d`. A slot carries how many rounds it holds, how many failed and how many ran during a speedtest; `milliseconds` is `null` when no round in the slot answered.
 
 ## Running and pausing tests
 

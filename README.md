@@ -18,9 +18,9 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
   - Server choice for Ookla and LibreSpeed: automatic, random from an allow or deny list, or a single pinned server
   - One-off tests against any Ookla or LibreSpeed server, without changing your saved settings
 - **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history. An optional faster schedule kicks in while your line is missing those targets
-- **Connection monitoring** — a TCP probe to a few internet hosts every 15 seconds records every outage with its start and end, an **Uptime** page with a year of days at a glance, and alerts when the line drops and when it comes back
+- **Connection monitoring** — a TCP probe to a few internet hosts every 15 seconds records every outage with its start and end, an **Uptime** page with a latency chart between tests and a year of days at a glance, and alerts when the line drops and when it comes back
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
-- **Dashboard** — averages, min/max, jitter, packet loss, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
+- **Dashboard** — averages, min/max, jitter, packet loss, bufferbloat, connection stability, how much data the tests themselves used, an hour-by-hour table, and charts with the average marked
 - **Live history** — results appear as soon as a test finishes, grouped by day and filterable by status, by what started the test, and by whether it met your targets
 - **Notifications** — Discord, Telegram, Gotify, ntfy, Pushover, Apprise, webhooks, Healthchecks.io and InfluxDB v2, including alerts when a test misses your targets, is skipped, or meets your targets again
 - **Sign-in** — optional OpenID Connect sign-in (Authentik, Authelia, Keycloak, Pocket ID, …), with a read-only mode for people who aren't signed in
@@ -145,7 +145,7 @@ Behind a reverse proxy, forward the `X-Forwarded-Proto` and `X-Forwarded-Host` h
 | **Good rounds before up again** | How many rounds in a row have to pass before the line counts as back. Default: 2 |
 | **Test after a reconnect** | Runs a speedtest when the line comes back, at most once an hour. Off by default |
 
-Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
+Rounds that run while a speedtest is in progress are recorded but can never start an outage: a busy line answers slowly, and that's bufferbloat, not an outage. Bufferbloat is measured too: Speedtest Watcher samples the probe targets for three seconds before each test and for as long as it runs, and stores the difference between the two medians, along with the 95th percentile under load — the tail that calls and games feel. A lost handshake retransmits after about a second, so samples that shape are dropped from the idle baseline, where they would hide real bufferbloat, and kept under load, where they are the thing being measured. It works the same way whatever provider you use, and it needs the probe targets but not the monitor, so it still happens when monitoring is switched off. Rounds are kept for 30 days; outages are kept as long as your results. The **Uptime** page shows the current state, uptime for 24 hours, 7 days and 30 days, a latency chart of the probe rounds over 1 hour, 6 hours, 24 hours or 7 days with a strip marking failed rounds and rounds that ran during a speedtest, a year of days shaded by how long the line was down, and the outage list, where you can delete an outage that was planned maintenance. Uptime counts only the time the app was watching, so a restart or a stopped container is neither uptime nor downtime.
 
 ### Tab: Provider
 
@@ -216,9 +216,11 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 |---|---|
 | `ping`, `jitter`, `download`, `upload`, `time` | Readings from the latest completed test |
 | `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla measures it |
+| `bufferbloat_ms` | How much longer the line took to answer under load during the latest completed test |
 | `last_test_bytes` | Data the latest completed test moved, download and upload together |
 | `data_used_bytes` | Data all tests moved, one series per `period` label: `24h`, `7d`, `30d` and `stored` |
 | `connection_up` | Whether the connection monitor last saw the line up (1 or 0). Missing until it has enough rounds |
+| `connection_latency_ms` | How long the quickest probe target took to answer in the latest round |
 | `outages_total`, `outage_seconds_total` | Outages in the last 30 days, and how many seconds they lasted |
 | `uptime_percent` | Uptime as a percentage, one series per `period` label: `24h` and `7d` |
 | `healthy` | Whether that test met its targets (1 or 0) |

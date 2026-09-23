@@ -5,11 +5,11 @@
 <MudGrid Spacing="4">
     <MudItem xs="12" md="6">
         <SurfaceCard Icon="@Icons.Material.Filled.MonitorHeart" Title="Connection Monitoring"
-                     Description="Opens a TCP connection to each target on a short interval, so outages are recorded with their start and end even when no speedtest is running.">
+                     Description="Opens a TCP connection to each target on a short interval, so outages are recorded with their start and end even when no speedtest is running. The same targets measure bufferbloat around every test.">
             <div class="d-flex align-center justify-space-between mb-4">
                 <div>
                     <MudText Typo="Typo.body2">Watch the connection</MudText>
-                    <MudText Typo="Typo.caption" Class="sw-muted">Off means no probes, no outages and no uptime</MudText>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Off means no outages and no uptime. Bufferbloat still uses the targets below.</MudText>
                 </div>
                 <MudSwitch @bind-Value="_enabled" Color="Color.Primary" />
             </div>
@@ -57,6 +57,7 @@
             <DataRow Label="A round passes when" Value="most targets answer within 2 seconds" />
             <DataRow Label="Rounds during a speedtest" Value="count for latency, never start an outage" />
             <DataRow Label="Uptime counts" Value="only the time the app was watching" />
+            <DataRow Label="Bufferbloat" Value="sampled around every test, watching or not" />
             <MudText Typo="Typo.caption" Class="sw-muted d-block mt-3">
                 A restart or a stopped container is neither uptime nor downtime, so a week away doesn't show as a week offline.
             </MudText>

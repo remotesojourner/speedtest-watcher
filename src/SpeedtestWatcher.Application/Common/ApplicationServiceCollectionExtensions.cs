@@ -37,6 +37,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<VersionService>();
         services.AddScoped<ProviderOptionsService>();
         services.AddScoped<MonitoringService>();
+        services.AddScoped<BufferbloatMeter>();
 
         services.AddDbContext<SpeedtestWatcherDbContext>((provider, options) =>
         {
@@ -66,6 +67,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IOidcDiscovery, OidcDiscoveryChecker>();
         services.AddSingleton<IReleaseChecker, GitHubReleaseChecker>();
         services.AddSingleton<IConnectionProbe, TcpConnectionProbe>();
+        services.TryAddSingleton(BufferbloatSampling.Default);
 
         services.AddIntegrations();
 

@@ -69,8 +69,8 @@ public class DashboardChartsTests
         DashboardCharts.Build(points, convertSpeed ?? (mbps => mbps), time => time.ToString("HH:mm", CultureInfo.InvariantCulture), beginAtZero);
 
     private static ChartPoint Reading(int hour, double? download, double upload = 10, int ping = 10, double jitter = 1) =>
-        new(_start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, Duration: 20);
+        new(_start.AddHours(hour), Failed: false, Error: null, ping, jitter, download, upload, Bufferbloat: null, Duration: 20);
 
     private static ChartPoint Failure(int hour, string error) =>
-        new(_start.AddHours(hour), Failed: true, error, null, null, null, null, null);
+        new(_start.AddHours(hour), Failed: true, error, null, null, null, null, null, null);
 }

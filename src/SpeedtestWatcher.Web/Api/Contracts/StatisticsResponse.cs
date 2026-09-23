@@ -53,6 +53,11 @@ public sealed record StatisticsResponse
     public required MetricSummaryResponse? PacketLoss { get; init; }
 
     /// <summary>
+    /// Bufferbloat in milliseconds across the completed tests that have a figure, or <c>null</c> when none do.
+    /// </summary>
+    public required MetricSummaryResponse? Bufferbloat { get; init; }
+
+    /// <summary>
     /// Bytes the tests in the period moved, download and upload together, as far as the providers reported them.
     /// </summary>
     /// <example>991777425</example>
@@ -90,6 +95,7 @@ public sealed record StatisticsResponse
         Time = MetricSummaryResponse.From(statistics.Time),
         Consistency = ConsistencyResponse.From(statistics.Consistency),
         PacketLoss = MetricSummaryResponse.From(statistics.PacketLoss),
+        Bufferbloat = MetricSummaryResponse.From(statistics.Bufferbloat),
         DataUsedBytes = statistics.DataUsedBytes,
         HourlyAverages = statistics.HourlyAverages.Select(HourlyAverageResponse.From).ToList(),
         Points = statistics.ChartPoints.Select(ChartPointResponse.From).ToList(),

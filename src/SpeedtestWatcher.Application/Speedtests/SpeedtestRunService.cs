@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Settings;
@@ -19,6 +20,7 @@ public sealed partial class SpeedtestRunService
     private readonly ISpeedtestRepository _results;
     private readonly ISpeedtestRunner _runner;
     private readonly IConnectivityChecker _connectivity;
+    private readonly BufferbloatMeter _bufferbloat;
     private readonly ServerSelector _serverSelector;
     private readonly RecommendationService _recommendations;
     private readonly IIntegrationDispatcher _dispatcher;
@@ -34,6 +36,7 @@ public sealed partial class SpeedtestRunService
         ISpeedtestRepository results,
         ISpeedtestRunner runner,
         IConnectivityChecker connectivity,
+        BufferbloatMeter bufferbloat,
         ServerSelector serverSelector,
         RecommendationService recommendations,
         IIntegrationDispatcher dispatcher,
@@ -48,6 +51,7 @@ public sealed partial class SpeedtestRunService
         _results = results;
         _runner = runner;
         _connectivity = connectivity;
+        _bufferbloat = bufferbloat;
         _serverSelector = serverSelector;
         _recommendations = recommendations;
         _dispatcher = dispatcher;
@@ -138,16 +142,16 @@ public sealed partial class SpeedtestRunService
 
         await _dispatcher.PublishAsync(new TestStarted(provider, type), cancellationToken);
 
-        var result = await _runner.RunTestAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
+        var (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
         if (!result.Success)
         {
             LogRetrying(result.Error);
             serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
-            result = await _runner.RunTestAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
+            (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
         }
 
         var previous = result.Success ? await _results.GetLatestCompletedAsync(cancellationToken) : null;
-        var test = Record(result, type, settings.Targets, check.PublicIp);
+        var test = Record(result, type, settings.Targets, check.PublicIp, bufferbloat);
         test.Id = await _results.CreateAsync(test, cancellationToken);
 
         if (result.Success)
@@ -170,7 +174,15 @@ public sealed partial class SpeedtestRunService
         return result;
     }
 
-    private static Speedtest Record(SpeedtestExecutionResult result, TestType type, TargetSettings targets, string? publicIp) => new()
+    private async Task<(SpeedtestExecutionResult Result, BufferbloatReading? Bufferbloat)> MeasuredRunAsync(
+        SpeedtestProvider provider, string? serverId, string? libreUrl, string? networkInterface, CancellationToken cancellationToken)
+    {
+        await using var measuring = await _bufferbloat.StartAsync(cancellationToken);
+        var result = await _runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
+        return (result, result.Success ? await measuring.StopAsync() : null);
+    }
+
+    private static Speedtest Record(SpeedtestExecutionResult result, TestType type, TargetSettings targets, string? publicIp, BufferbloatReading? bufferbloat) => new()
     {
         ServerId = result.ServerId,
         ServerName = result.ServerName,
@@ -189,6 +201,10 @@ public sealed partial class SpeedtestRunService
         ThresholdDownload = targets.Download,
         ThresholdUpload = targets.Upload,
         PacketLoss = result.Success ? result.PacketLoss : null,
+        Bufferbloat = bufferbloat?.Milliseconds,
+        LatencyIdle = bufferbloat?.IdleMilliseconds,
+        LatencyLoaded = bufferbloat?.LoadedMilliseconds,
+        LatencyLoadedTail = bufferbloat?.LoadedTailMilliseconds,
         DownloadBytes = result.DownloadBytes,
         UploadBytes = result.UploadBytes,
         PublicIp = publicIp,

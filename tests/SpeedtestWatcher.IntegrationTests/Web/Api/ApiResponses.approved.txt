@@ -45,6 +45,7 @@
 200 application/json; charset=utf-8
 [
   {
+    "bufferbloat": null,
     "created": "2026-09-15T07:00:00Z",
     "download": -1,
     "downloadBytes": null,
@@ -52,6 +53,9 @@
     "healthy": null,
     "id": 4,
     "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": -1,
     "publicIp": null,
@@ -69,6 +73,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": null,
     "created": "2026-09-15T06:00:00Z",
     "download": -1,
     "downloadBytes": null,
@@ -76,6 +81,9 @@
     "healthy": null,
     "id": 3,
     "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": -1,
     "publicIp": null,
@@ -93,6 +101,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": null,
     "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
     "downloadBytes": null,
@@ -100,6 +109,9 @@
     "healthy": false,
     "id": 2,
     "jitter": 2.75,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": 31,
     "publicIp": null,
@@ -117,6 +129,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": 18.5,
     "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
     "downloadBytes": 903347628,
@@ -124,6 +137,9 @@
     "healthy": true,
     "id": 1,
     "jitter": 0.4,
+    "latencyIdle": 13.2,
+    "latencyLoaded": 31.7,
+    "latencyLoadedTail": 64.2,
     "packetLoss": 0,
     "ping": 12,
     "publicIp": "203.0.113.9",
@@ -145,6 +161,7 @@
 ### GET /api/speedtests/2
 200 application/json; charset=utf-8
 {
+  "bufferbloat": null,
   "created": "2026-09-14T20:35:00Z",
   "download": 612.5,
   "downloadBytes": null,
@@ -152,6 +169,9 @@
   "healthy": false,
   "id": 2,
   "jitter": 2.75,
+  "latencyIdle": null,
+  "latencyLoaded": null,
+  "latencyLoadedTail": null,
   "packetLoss": null,
   "ping": 31,
   "publicIp": null,
@@ -191,6 +211,11 @@
 ### GET /api/speedtests/statistics?from=2026-09-14&to=2026-09-15&tz=America/New_York
 200 application/json; charset=utf-8
 {
+  "bufferbloat": {
+    "avg": 18.5,
+    "max": 18.5,
+    "min": 18.5
+  },
   "consistency": {
     "download": {
       "consistency": 78.8,
@@ -428,6 +453,7 @@
   },
   "points": [
     {
+      "bufferbloat": 18.5,
       "download": 941.25,
       "duration": 14,
       "error": null,
@@ -438,6 +464,7 @@
       "upload": 110.5
     },
     {
+      "bufferbloat": null,
       "download": 612.5,
       "duration": 15,
       "error": null,
@@ -448,6 +475,7 @@
       "upload": 98.125
     },
     {
+      "bufferbloat": null,
       "download": null,
       "duration": null,
       "error": null,
@@ -458,6 +486,7 @@
       "upload": null
     },
     {
+      "bufferbloat": null,
       "download": null,
       "duration": null,
       "error": "Network unreachable",
@@ -495,6 +524,7 @@
 200 application/json
 [
   {
+    "bufferbloat": null,
     "created": "2026-09-15T07:00:00Z",
     "download": -1,
     "downloadBytes": null,
@@ -502,6 +532,9 @@
     "healthy": null,
     "id": 4,
     "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": -1,
     "resultId": null,
@@ -518,6 +551,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": null,
     "created": "2026-09-15T06:00:00Z",
     "download": -1,
     "downloadBytes": null,
@@ -525,6 +559,9 @@
     "healthy": null,
     "id": 3,
     "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": -1,
     "resultId": null,
@@ -541,6 +578,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": null,
     "created": "2026-09-14T20:35:00Z",
     "download": 612.5,
     "downloadBytes": null,
@@ -548,6 +586,9 @@
     "healthy": false,
     "id": 2,
     "jitter": 2.75,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
     "packetLoss": null,
     "ping": 31,
     "resultId": "r-2",
@@ -564,6 +605,7 @@
     "uploadBytes": null
   },
   {
+    "bufferbloat": 18.5,
     "created": "2026-09-14T08:05:00Z",
     "download": 941.25,
     "downloadBytes": 903347628,
@@ -571,6 +613,9 @@
     "healthy": true,
     "id": 1,
     "jitter": 0.4,
+    "latencyIdle": 13.2,
+    "latencyLoaded": 31.7,
+    "latencyLoadedTail": 64.2,
     "packetLoss": 0,
     "ping": 12,
     "resultId": "r-1",
@@ -590,11 +635,11 @@
 
 ### POST /api/speedtests/export {"format":"csv"}
 200 text/csv
-id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
-4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
-3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
-2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
-1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
+id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloat,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,resultId,error
+4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,Network unreachable
+3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,0,0,,,,,,,Public IP 203.0.113.9 is on the skip list
+2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,r-2,
+1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,18.5,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,r-1,
 
 ### POST /api/speedtests/export {"format":
 400 application/json; charset=utf-8

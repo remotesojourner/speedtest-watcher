@@ -26,6 +26,34 @@ internal class MonitoringRepository : IMonitoringRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<LatencyPointDto>> LatencyAsync(DateTime fromUtc, DateTime toUtc, int slotMinutes, CancellationToken cancellationToken = default)
+    {
+        var buckets = await _db.ProbeRounds
+            .Where(round => round.At >= fromUtc && round.At <= toUtc)
+            .GroupBy(round => new { round.At.Year, round.At.Month, round.At.Day, round.At.Hour, Slot = round.At.Minute / slotMinutes })
+            .Select(rounds => new
+            {
+                rounds.Key,
+                Milliseconds = rounds.Average(round => round.FastestMilliseconds),
+                Rounds = rounds.Count(),
+                Failed = rounds.Count(round => !round.Passed),
+                DuringTest = rounds.Count(round => round.DuringTest)
+            })
+            .ToListAsync(cancellationToken);
+
+        return
+        [
+            .. buckets
+                .Select(bucket => new LatencyPointDto(
+                    new DateTime(bucket.Key.Year, bucket.Key.Month, bucket.Key.Day, bucket.Key.Hour, bucket.Key.Slot * slotMinutes, 0, DateTimeKind.Utc),
+                    bucket.Milliseconds,
+                    bucket.Rounds,
+                    bucket.Failed,
+                    bucket.DuringTest))
+                .OrderBy(point => point.At)
+        ];
+    }
+
     public async Task<Outage> StartOutageAsync(DateTime startedAt, CancellationToken cancellationToken = default)
     {
         var outage = new Outage { StartedAt = startedAt };

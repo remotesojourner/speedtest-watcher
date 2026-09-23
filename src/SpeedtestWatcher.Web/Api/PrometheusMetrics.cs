@@ -24,6 +24,7 @@ public static class PrometheusMetrics
         Gauge(sb, "upload", "Upload speed of the latest completed test in Mbps", completed?.Upload, completedLabels, "F2");
         Gauge(sb, "time", "Duration of the latest completed test in seconds", completed?.Time, completedLabels, "F0");
         Gauge(sb, "packet_loss", "Packet loss of the latest completed test as a percentage, when the provider measured it", completed?.PacketLoss, completedLabels, "F2");
+        Gauge(sb, "bufferbloat_ms", "How much longer the line took to answer under load than when idle during the latest completed test, in ms", completed?.Bufferbloat, completedLabels, "F2");
         Gauge(sb, "last_test_bytes", "Bytes the latest completed test moved, download and upload together, when the provider reported them", BytesMoved(completed), completedLabels, "F0");
         GaugeFamily(sb, "data_used_bytes", "Bytes the tests in a period moved, download and upload together", "F0",
         [
@@ -47,6 +48,7 @@ public static class PrometheusMetrics
         Gauge(sb, "server_info", "Static info about the latest completed test (always 1).", 1, completedLabels, "F0");
 
         Gauge(sb, "connection_up", "Whether the connection monitor last saw the line up (1 up, 0 down)", UpOrDown(monitoring.Health), "", "F0");
+        Gauge(sb, "connection_latency_ms", "Quickest answer from a probe target in the latest round, in ms", monitoring.FastestMilliseconds, "", "F2");
         Gauge(sb, "outages_total", "Outages the monitor recorded in the last 30 days", monitoring.Last30Days.Outages, "", "F0");
         Gauge(sb, "outage_seconds_total", "Seconds the line was down in the last 30 days", monitoring.Last30Days.DownSeconds, "", "F0");
         GaugeFamily(sb, "uptime_percent", "Share of the watched time the line was up, as a percentage", "F3",

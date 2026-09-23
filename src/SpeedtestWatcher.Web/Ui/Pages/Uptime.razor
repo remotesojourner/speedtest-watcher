@@ -62,6 +62,49 @@
             </MudItem>
         </MudGrid>
 
+        <SurfaceCard Icon="@Icons.Material.Filled.Timeline" Title="Connection Latency"
+                     Description="How long the quickest probe target took to answer. Rounds are averaged into slots, so a week is a few hundred points."
+                     Class="mb-6">
+            <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" OverrideStyles="false">
+                    @foreach (var range in MonitoringService.LatencyRanges)
+                    {
+                        <MudButton Color="@(range.Id == _latencyRange ? Color.Primary : Color.Default)"
+                                   Variant="@(range.Id == _latencyRange ? Variant.Filled : Variant.Outlined)"
+                                   OnClick="@(() => SelectRangeAsync(range.Id))">
+                            @range.Title
+                        </MudButton>
+                    }
+                </MudButtonGroup>
+                <MudText Typo="Typo.caption" Class="sw-muted">@LatencySummary</MudText>
+            </div>
+
+            <StateView Empty="@(_readings.Count == 0)" EmptyMessage="No probe rounds in this period yet." Compact="true">
+                <ChartCard Title="Answer time" ValueText="ms" ChartType="ChartType.Line"
+                           ChartSeries="@_latencySeries" ChartLabels="@_latencyLabels" ChartOptions="@_latencyOptions"
+                           MaxLabels="2" Height="220px" />
+
+                <div class="sw-latency-strip mt-3" style="@($"grid-template-columns:repeat({_latency.Count},minmax(0,1fr));")">
+                    @foreach (var point in _latency)
+                    {
+                        <MudTooltip Text="@SlotText(point)" Placement="Placement.Top">
+                            <div class="@SlotClass(point)"></div>
+                        </MudTooltip>
+                    }
+                </div>
+                <div class="d-flex flex-wrap align-center gap-2 mt-2">
+                    <div class="sw-latency-slot sw-latency-key sw-latency-answered"></div>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Answered</MudText>
+                    <div class="sw-latency-slot sw-latency-key sw-latency-partly"></div>
+                    <MudText Typo="Typo.caption" Class="sw-muted">Some rounds failed</MudText>
+                    <div class="sw-latency-slot sw-latency-key sw-latency-silent"></div>
+                    <MudText Typo="Typo.caption" Class="sw-muted">No answer</MudText>
+                    <div class="sw-latency-slot sw-latency-key sw-latency-testing"></div>
+                    <MudText Typo="Typo.caption" Class="sw-muted">A speedtest was running</MudText>
+                </div>
+            </StateView>
+        </SurfaceCard>
+
         <SurfaceCard Icon="@Icons.Material.Filled.CalendarMonth" Title="The Last Year"
                      Description="One square a day. The darker the square, the longer the line was down." Class="mb-6">
             <div class="sw-uptime-calendar">
@@ -135,6 +178,12 @@
 
 @code {
     private MonitoringStatusDto? _status;
+    private IReadOnlyList<LatencyPointDto> _latency = [];
+    private string _latencyRange = "24h";
+    private List<ChartSeries<double>> _latencySeries = [];
+    private string[] _latencyLabels = [];
+
+    private readonly LineChartOptions _latencyOptions = new() { LineStrokeWidth = 2, YAxisLines = true, XAxisLines = false, ChartPalette = [MetricStatus.ChartPing] };
     private IReadOnlyList<OutageDto> _outages = [];
     private IReadOnlyList<UptimeDayDto> _days = [];
 
@@ -161,6 +210,60 @@
         _status = await Monitoring.StatusAsync();
         _outages = await Monitoring.OutagesAsync(50);
         _days = await Monitoring.DaysAsync(PreferencesService.TimeZone.Id);
+        await LoadLatencyAsync();
+    }
+
+    private async Task LoadLatencyAsync()
+    {
+        _latency = await Monitoring.LatencyAsync(_latencyRange);
+        var answers = _readings.Select(point => point.Milliseconds!.Value).ToArray();
+        _latencySeries = [new ChartSeries<double> { Name = "Answer time", Data = answers }];
+        _latencyLabels = [.. _readings.Select(point => LatencyLabel(point.At))];
+        _latencyOptions.YAxisTicks = ChartAxisHelper.TickStep(answers);
+        _latencyOptions.ShowDataMarkers = ChartAxisHelper.HasRoomForMarkers(answers.Length);
+    }
+
+    private async Task SelectRangeAsync(string range)
+    {
+        _latencyRange = range;
+        await LoadLatencyAsync();
+    }
+
+    private IReadOnlyList<LatencyPointDto> _readings => [.. _latency.Where(point => point.Milliseconds.HasValue)];
+
+    private string LatencySummary
+    {
+        get
+        {
+            if (_readings.Count == 0) return "";
+
+            var failed = _latency.Sum(point => point.Failed);
+            var median = _readings.Select(point => point.Milliseconds!.Value).Order().ElementAt(_readings.Count / 2);
+            return failed == 0
+                ? $"{median:F0} ms typical"
+                : $"{median:F0} ms typical · {failed} failed round{(failed == 1 ? "" : "s")}";
+        }
+    }
+
+    private string LatencyLabel(DateTime at) =>
+        MonitoringService.RangeFor(_latencyRange).Window > TimeSpan.FromHours(24)
+            ? PreferencesService.ToLocal(at).ToString("d MMM HH:mm", CultureInfo.CurrentCulture)
+            : PreferencesService.ToLocal(at).ToString("HH:mm", CultureInfo.CurrentCulture);
+
+    private string SlotClass(LatencyPointDto point) => point switch
+    {
+        { Rounds: > 0, Failed: 0 } when point.DuringTest > 0 => "sw-latency-slot sw-latency-testing",
+        { Failed: 0 } => "sw-latency-slot sw-latency-answered",
+        _ when point.Failed == point.Rounds => "sw-latency-slot sw-latency-silent",
+        _ => "sw-latency-slot sw-latency-partly"
+    };
+
+    private string SlotText(LatencyPointDto point)
+    {
+        var when = PreferencesService.FormatDateTime(PreferencesService.ToLocal(point.At));
+        var answer = point.Milliseconds is { } milliseconds ? $"{milliseconds:F1} ms" : "no answer";
+        var testing = point.DuringTest > 0 ? $", {point.DuringTest} during a speedtest" : "";
+        return $"{when} · {point.Rounds} round{(point.Rounds == 1 ? "" : "s")}, {point.Failed} failed{testing} · {answer}";
     }
 
     private IEnumerable<(string Label, UptimeDto Uptime)> Periods(MonitoringStatusDto status) =>

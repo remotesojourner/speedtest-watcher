@@ -6,6 +6,10 @@ public sealed record UptimeDto(double? Percent, long WatchedSeconds, long DownSe
 
 public sealed record UptimeDayDto(DateOnly Date, int Outages, long DownSeconds);
 
+public sealed record LatencyPointDto(DateTime At, double? Milliseconds, int Rounds, int Failed, int DuringTest);
+
+public sealed record LatencyRange(string Id, string Title, TimeSpan Window, int SlotMinutes);
+
 public sealed record MonitoringStatusDto(
     ConnectionHealth Health,
     bool Watching,

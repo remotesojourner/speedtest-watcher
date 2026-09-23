@@ -92,6 +92,15 @@
                                                Color="@(_stats.PacketLoss.Avg > 0 ? Color.Warning : Color.Default)"
                                                Value="@($"{_stats.PacketLoss.Avg:F2}%")" Label="avg packet loss" />
                             }
+                            @if (_stats.Bufferbloat != null)
+                            {
+                                <MudTooltip Text="How much longer the line takes to answer while a test saturates it. Under 30 ms is good; a lot more means calls and games suffer while something big is downloading."
+                                            Placement="Placement.Top">
+                                    <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Waves"
+                                                   Color="@MetricStatus.Bufferbloat(_stats.Bufferbloat.Avg)"
+                                                   Value="@($"{_stats.Bufferbloat.Avg:F0} ms")" Label="avg bufferbloat" />
+                                </MudTooltip>
+                            }
                             <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.DataUsage"
                                            Value="@ByteSize.Describe(_stats.DataUsedBytes)" Label="data used" />
                             @if (_uptime is { Percent: { } percent })
@@ -222,6 +231,15 @@
                                         <td class="text-end">@($"{_stats.PacketLoss.Min:F2}")</td>
                                         <td class="text-end">@($"{_stats.PacketLoss.Avg:F2}")</td>
                                         <td class="text-end">@($"{_stats.PacketLoss.Max:F2}")</td>
+                                    </tr>
+                                }
+                                @if (_stats.Bufferbloat != null)
+                                {
+                                    <tr>
+                                        <td>Bufferbloat <span class="sw-muted">ms</span></td>
+                                        <td class="text-end">@($"{_stats.Bufferbloat.Min:F0}")</td>
+                                        <td class="text-end">@($"{_stats.Bufferbloat.Avg:F0}")</td>
+                                        <td class="text-end">@($"{_stats.Bufferbloat.Max:F0}")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -470,6 +488,9 @@
         _downloadOptions.YAxisTicks = _charts.TickSteps.Download;
         _uploadOptions.YAxisTicks = _charts.TickSteps.Upload;
         _pingOptions.YAxisTicks = _charts.TickSteps.Ping;
+        _pingOptions.ChartPalette = _charts.HasBufferbloat
+            ? [MetricStatus.ChartPing, MetricStatus.ChartJitter, MetricStatus.ChartBufferbloat, MetricStatus.ChartAverage]
+            : [MetricStatus.ChartPing, MetricStatus.ChartJitter, MetricStatus.ChartAverage];
 
         _downloadOptions.YAxisRequireZeroPoint = beginAtZero;
         _uploadOptions.YAxisRequireZeroPoint = beginAtZero;

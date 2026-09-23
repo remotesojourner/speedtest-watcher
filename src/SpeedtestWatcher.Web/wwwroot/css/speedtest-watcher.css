@@ -417,3 +417,45 @@
 .sw-uptime-empty {
     background-color: transparent;
 }
+
+.sw-latency-strip {
+    display: grid;
+    width: 100%;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.sw-latency-strip > * {
+    display: block;
+    min-width: 0;
+}
+
+.sw-latency-slot {
+    width: 100%;
+    height: 10px;
+    background-color: var(--mud-palette-action-disabled-background);
+}
+
+.sw-latency-answered {
+    background-color: var(--mud-palette-success);
+    opacity: 0.45;
+}
+
+.sw-latency-testing {
+    background-color: var(--mud-palette-info);
+    opacity: 0.55;
+}
+
+.sw-latency-partly {
+    background-color: var(--mud-palette-warning);
+}
+
+.sw-latency-silent {
+    background-color: var(--mud-palette-error);
+}
+
+.sw-latency-key {
+    flex: 0 0 14px;
+    width: 14px;
+    border-radius: 2px;
+}

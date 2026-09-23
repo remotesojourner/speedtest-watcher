@@ -118,6 +118,30 @@ public sealed record SpeedtestResponse
     public required double? PacketLoss { get; init; }
 
     /// <summary>
+    /// How much longer the line took to answer under load than when idle, in milliseconds. The app measures this itself around every test, the same way for every provider.
+    /// </summary>
+    /// <example>18.5</example>
+    public required double? Bufferbloat { get; init; }
+
+    /// <summary>
+    /// The median answer time in the three seconds before the test started, in milliseconds.
+    /// </summary>
+    /// <example>13.2</example>
+    public required double? LatencyIdle { get; init; }
+
+    /// <summary>
+    /// The median answer time while the test was running, in milliseconds.
+    /// </summary>
+    /// <example>31.7</example>
+    public required double? LatencyLoaded { get; init; }
+
+    /// <summary>
+    /// The 95th percentile answer time while the test was running, in milliseconds. This is the tail that calls and games feel, where the median is what the line usually did.
+    /// </summary>
+    /// <example>64.2</example>
+    public required double? LatencyLoadedTail { get; init; }
+
+    /// <summary>
     /// Bytes downloaded during the test, when the provider reports them.
     /// </summary>
     /// <example>903347628</example>
@@ -156,6 +180,10 @@ public sealed record SpeedtestResponse
         ServerHost = test.ServerHost,
         ResultId = test.ResultId,
         PacketLoss = test.PacketLoss,
+        Bufferbloat = test.Bufferbloat,
+        LatencyIdle = test.LatencyIdle,
+        LatencyLoaded = test.LatencyLoaded,
+        LatencyLoadedTail = test.LatencyLoadedTail,
         DownloadBytes = test.DownloadBytes,
         UploadBytes = test.UploadBytes,
         PublicIp = test.PublicIp

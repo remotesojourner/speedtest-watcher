@@ -6,6 +6,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SpeedtestWatcher.Application.Common;
+using SpeedtestWatcher.Application.Monitoring;
+using SpeedtestWatcher.TestSupport;
 using SpeedtestWatcher.Web.SignIn;
 using SpeedtestWatcher.Web.Startup;
 
@@ -56,6 +58,8 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services =>
         {
             RemoveTheAppsBackgroundServices(services);
+            services.AddSingleton<IConnectionProbe>(new OfflineProbe());
+            services.AddSingleton(TestSampling.Bufferbloat);
             services.ConfigureHttpClientDefaults(client => client.ConfigurePrimaryHttpMessageHandler(() => new NoNetworkHandler()));
         });
     }

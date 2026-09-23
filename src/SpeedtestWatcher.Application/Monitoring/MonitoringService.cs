@@ -9,6 +9,14 @@ public sealed class MonitoringService
     public const int MostOutagesListed = 200;
     public const int DaysInTheYearView = 365;
 
+    public static IReadOnlyList<LatencyRange> LatencyRanges { get; } =
+    [
+        new("1h", "1 hour", TimeSpan.FromHours(1), 1),
+        new("6h", "6 hours", TimeSpan.FromHours(6), 2),
+        new("24h", "24 hours", TimeSpan.FromHours(24), 5),
+        new("7d", "7 days", TimeSpan.FromDays(7), 30)
+    ];
+
     private readonly IMonitoringRepository _monitoring;
     private readonly ISettingsStore _settings;
     private readonly ConnectionState _state;
@@ -57,6 +65,16 @@ public sealed class MonitoringService
         var outages = await _monitoring.ListOutagesSinceAsync(now.AddDays(-DaysInTheYearView), MostOutagesListed, cancellationToken);
         return Uptime.ByDay(DaysInTheYearView, outages, timeZone, now);
     }
+
+    public async Task<IReadOnlyList<LatencyPointDto>> LatencyAsync(string? rangeId, CancellationToken cancellationToken = default)
+    {
+        var range = RangeFor(rangeId);
+        var now = DateTime.UtcNow;
+        return await _monitoring.LatencyAsync(now - range.Window, now, range.SlotMinutes, cancellationToken);
+    }
+
+    public static LatencyRange RangeFor(string? rangeId) =>
+        LatencyRanges.FirstOrDefault(range => string.Equals(range.Id, rangeId, StringComparison.OrdinalIgnoreCase)) ?? LatencyRanges[2];
 
     public async Task<OperationResult> DeleteOutageAsync(int id, CancellationToken cancellationToken = default)
     {

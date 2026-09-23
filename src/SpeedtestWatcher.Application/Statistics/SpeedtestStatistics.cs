@@ -7,6 +7,7 @@ public sealed record SpeedtestStatistics(
     MetricStatsDto<double>? Download,
     MetricStatsDto<double>? Upload,
     MetricStatsDto<double>? PacketLoss,
+    MetricStatsDto<double>? Bufferbloat,
     MetricStatsDto<int>? Time,
     IReadOnlyList<ChartPoint> ChartPoints,
     IReadOnlyList<HourlyAverageDto> HourlyAverages,

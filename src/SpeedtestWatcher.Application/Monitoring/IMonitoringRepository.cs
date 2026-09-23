@@ -4,6 +4,7 @@ public interface IMonitoringRepository
 {
     Task AddRoundAsync(ProbeRound round, CancellationToken cancellationToken = default);
     Task<List<ProbeRound>> ListRoundsSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default);
+    Task<List<LatencyPointDto>> LatencyAsync(DateTime fromUtc, DateTime toUtc, int slotMinutes, CancellationToken cancellationToken = default);
 
     Task<Outage> StartOutageAsync(DateTime startedAt, CancellationToken cancellationToken = default);
     Task<Outage?> EndOpenOutageAsync(DateTime endedAt, CancellationToken cancellationToken = default);

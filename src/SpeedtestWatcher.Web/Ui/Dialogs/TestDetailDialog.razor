@@ -61,6 +61,20 @@
             {
                 <DataRow Label="Packet loss" Value="@($"{packetLoss:F2}%")" />
             }
+            @if (Test.Bufferbloat is { } bufferbloat)
+            {
+                <DataRow Label="Bufferbloat">
+                    <MudText Typo="Typo.body2" Color="@MetricStatus.Bufferbloat(bufferbloat)">
+                        @($"+{bufferbloat:F0} ms")
+                    </MudText>
+                    @if (Test.LatencyIdle is { } idle && Test.LatencyLoaded is { } loaded)
+                    {
+                        <MudText Typo="Typo.caption" Class="sw-muted ml-2">
+                            @($"{idle:F0} → {loaded:F0} ms{(Test.LatencyLoadedTail is { } tail ? $", worst 5% {tail:F0} ms" : "")}")
+                        </MudText>
+                    }
+                </DataRow>
+            }
             @if (Test.DownloadBytes + Test.UploadBytes is { } dataUsed)
             {
                 <DataRow Label="Data used" Value="@ByteSize.Describe(dataUsed)" />

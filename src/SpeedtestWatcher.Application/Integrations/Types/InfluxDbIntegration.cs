@@ -101,6 +101,7 @@ internal sealed class InfluxDbIntegration : HttpIntegration
             $" download={test.Download:F2},upload={test.Upload:F2},ping={(double)test.Ping:F0},jitter={(test.Jitter ?? 0):F2}");
 
         if (test.PacketLoss is { } packetLoss) line.Append(CultureInfo.InvariantCulture, $",packet_loss={packetLoss:F2}");
+        if (test.Bufferbloat is { } bufferbloat) line.Append(CultureInfo.InvariantCulture, $",bufferbloat={bufferbloat:F2}");
         if (test.DownloadBytes + test.UploadBytes is { } bytes) line.Append(CultureInfo.InvariantCulture, $",bytes={bytes}i");
 
         return line.Append(CultureInfo.InvariantCulture, $" {testedAt}").ToString();

@@ -12,6 +12,14 @@ public class SpeedtestDto
     public double Upload { get; set; }
     public string? Error { get; set; }
     public double? PacketLoss { get; set; }
+
+    public double? Bufferbloat { get; set; }
+
+    public double? LatencyIdle { get; set; }
+
+    public double? LatencyLoaded { get; set; }
+
+    public double? LatencyLoadedTail { get; set; }
     public long? DownloadBytes { get; set; }
     public long? UploadBytes { get; set; }
     public string? PublicIp { get; set; }
@@ -44,6 +52,10 @@ public class SpeedtestDto
         Upload = test.Upload,
         Error = test.Error,
         PacketLoss = test.PacketLoss,
+        Bufferbloat = test.Bufferbloat,
+        LatencyIdle = test.LatencyIdle,
+        LatencyLoaded = test.LatencyLoaded,
+        LatencyLoadedTail = test.LatencyLoadedTail,
         DownloadBytes = test.DownloadBytes,
         UploadBytes = test.UploadBytes,
         PublicIp = test.PublicIp,

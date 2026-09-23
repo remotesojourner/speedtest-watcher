@@ -17,6 +17,7 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     [
         "GET /api/config",
         "GET /api/monitoring/days",
+        "GET /api/monitoring/latency",
         "GET /api/monitoring/outages",
         "GET /api/monitoring/status",
         "GET /api/opengraph/image",

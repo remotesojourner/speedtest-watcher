@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 using SpeedtestWatcher.Application.Recommendations;
 using SpeedtestWatcher.Application.Settings;
@@ -34,6 +35,8 @@ internal static class RunTestServices
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<IConnectivityChecker, ConnectivityChecker>();
         services.AddSingleton<IServerListProvider>(new NoServerLists());
+        services.AddSingleton<IConnectionProbe>(new OfflineProbe());
+        services.AddSingleton(TestSampling.Bufferbloat);
         services.AddSingleton(runner);
         services.AddSingleton(access ?? FixedAccess.Full);
         services.AddSingleton(A.Fake<IHostApplicationLifetime>());

@@ -47,6 +47,10 @@ internal class SpeedtestWatcherDbContext : DbContext
             entity.Property(e => e.Upload).HasColumnName("upload").IsRequired();
             entity.Property(e => e.Error).HasColumnName("error");
             entity.Property(e => e.PacketLoss).HasColumnName("packetLoss");
+            entity.Property(e => e.Bufferbloat).HasColumnName("bufferbloat");
+            entity.Property(e => e.LatencyIdle).HasColumnName("latencyIdle");
+            entity.Property(e => e.LatencyLoaded).HasColumnName("latencyLoaded");
+            entity.Property(e => e.LatencyLoadedTail).HasColumnName("latencyLoadedTail");
             entity.Property(e => e.DownloadBytes).HasColumnName("downloadBytes");
             entity.Property(e => e.UploadBytes).HasColumnName("uploadBytes");
             entity.Property(e => e.PublicIp).HasColumnName("publicIp");

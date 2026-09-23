@@ -48,6 +48,7 @@ public sealed class StatisticsService
             Download: hasCompleted ? DecimalRange(completed.Select(row => row.Download).ToList()) : null,
             Upload: hasCompleted ? DecimalRange(completed.Select(row => row.Upload).ToList()) : null,
             PacketLoss: completed.Any(row => row.PacketLoss.HasValue) ? DecimalRange(completed.Where(row => row.PacketLoss.HasValue).Select(row => row.PacketLoss!.Value).ToList()) : null,
+            Bufferbloat: completed.Any(row => row.Bufferbloat.HasValue) ? DecimalRange(completed.Where(row => row.Bufferbloat.HasValue).Select(row => row.Bufferbloat!.Value).ToList()) : null,
             Time: hasCompleted ? WholeNumberRange(completed.Select(row => row.Time).ToList()) : null,
             ChartPoints: rows.Count <= MaxChartPoints ? PointPerResult(rows) : PointPerTimeBucket(rows, range.FromUtc, range.ToUtc),
             HourlyAverages: HourlyAverages(completed, range.TimeZone),
@@ -150,6 +151,7 @@ public sealed class StatisticsService
             hasReadings ? row.Jitter : null,
             hasReadings ? row.Download : null,
             hasReadings ? row.Upload : null,
+            hasReadings ? row.Bufferbloat : null,
             hasReadings ? row.Time : null);
     }).ToList();
 
@@ -182,11 +184,12 @@ public sealed class StatisticsService
 
             if (valid.Count == 0)
             {
-                points.Add(new ChartPoint(midpoint, true, failedSummary, null, null, null, null, null));
+                points.Add(new ChartPoint(midpoint, true, failedSummary, null, null, null, null, null, null));
                 continue;
             }
 
             var jitters = valid.Where(row => row.Jitter.HasValue).Select(row => row.Jitter!.Value).ToList();
+            var bufferbloats = valid.Where(row => row.Bufferbloat.HasValue).Select(row => row.Bufferbloat!.Value).ToList();
             points.Add(new ChartPoint(
                 midpoint,
                 failedCount > 0,
@@ -195,6 +198,7 @@ public sealed class StatisticsService
                 jitters.Count > 0 ? Math.Round(jitters.Average(), 2) : null,
                 Math.Round(valid.Average(row => row.Download), 2),
                 Math.Round(valid.Average(row => row.Upload), 2),
+                bufferbloats.Count > 0 ? Math.Round(bufferbloats.Average(), 2) : null,
                 (int)Math.Round(valid.Average(row => row.Time))));
         }
 

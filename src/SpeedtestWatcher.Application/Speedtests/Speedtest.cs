@@ -17,6 +17,14 @@ public class Speedtest
 
     public double? PacketLoss { get; set; }
 
+    public double? Bufferbloat { get; set; }
+
+    public double? LatencyIdle { get; set; }
+
+    public double? LatencyLoaded { get; set; }
+
+    public double? LatencyLoadedTail { get; set; }
+
     public long? DownloadBytes { get; set; }
 
     public long? UploadBytes { get; set; }
