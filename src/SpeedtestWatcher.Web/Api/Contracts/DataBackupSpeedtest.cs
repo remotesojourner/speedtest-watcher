@@ -3,15 +3,15 @@ using SpeedtestWatcher.Application.Speedtests;
 namespace SpeedtestWatcher.Web.Api.Contracts;
 
 /// <summary>
-/// One result to import, in the format of a JSON export. Ids in the file are ignored.
+/// One result in a data backup, in the format of a JSON results export.
 /// </summary>
-public sealed record TestImportRow
+public sealed record DataBackupSpeedtest
 {
     /// <summary>
-    /// When the test ran. A time without an offset is read as UTC. A result with the same timestamp as a stored one is skipped.
+    /// When the test ran. A time without an offset is read as UTC. Required: a backup with a result missing it is rejected. A result with the same timestamp as a stored one is skipped.
     /// </summary>
     /// <example>2026-09-14T08:05:00Z</example>
-    public DateTime Created { get; init; } = DateTime.UtcNow;
+    public DateTime? Created { get; init; }
 
     /// <summary>
     /// <c>completed</c>, <c>failed</c> or <c>skipped</c>. Anything else counts as <c>failed</c> when there's an error, and as <c>completed</c> otherwise.
@@ -76,6 +76,16 @@ public sealed record TestImportRow
     public double? ThresholdUpload { get; init; }
 
     /// <summary>
+    /// The packet loss maximum, as a percentage, when the test ran.
+    /// </summary>
+    public double? ThresholdPacketLoss { get; init; }
+
+    /// <summary>
+    /// The bufferbloat maximum, in milliseconds, when the test ran.
+    /// </summary>
+    public double? ThresholdBufferbloat { get; init; }
+
+    /// <summary>
     /// Why the test failed or was skipped.
     /// </summary>
     public string? Error { get; init; }
@@ -99,6 +109,24 @@ public sealed record TestImportRow
     public double? BufferbloatUp { get; init; }
 
     /// <summary>
+    /// The idle median latency, in milliseconds, when the export carried it.
+    /// </summary>
+    /// <example>11.4</example>
+    public double? LatencyIdle { get; init; }
+
+    /// <summary>
+    /// The median latency under load, in milliseconds, when the export carried it.
+    /// </summary>
+    /// <example>13.2</example>
+    public double? LatencyLoaded { get; init; }
+
+    /// <summary>
+    /// The 95th percentile latency under load, in milliseconds, when the export carried it.
+    /// </summary>
+    /// <example>64.2</example>
+    public double? LatencyLoadedTail { get; init; }
+
+    /// <summary>
     /// Bytes downloaded during the test.
     /// </summary>
     /// <example>903347628</example>
@@ -109,6 +137,12 @@ public sealed record TestImportRow
     /// </summary>
     /// <example>88429797</example>
     public long? UploadBytes { get; init; }
+
+    /// <summary>
+    /// The address the connection check saw when the test ran, or <c>null</c> for read-only visitors.
+    /// </summary>
+    /// <example>203.0.113.9</example>
+    public string? PublicIp { get; init; }
 
     /// <summary>
     /// The id of the server the test ran against.
@@ -130,6 +164,38 @@ public sealed record TestImportRow
     /// </summary>
     public string? ResultId { get; init; }
 
+    public static DataBackupSpeedtest From(SpeedtestImportRow row) => new()
+    {
+        Created = row.Created,
+        Status = row.Status,
+        Type = row.Type,
+        Ping = row.Ping,
+        Jitter = row.Jitter,
+        Download = row.Download,
+        Upload = row.Upload,
+        Time = row.Time,
+        Healthy = row.Healthy,
+        ThresholdPing = row.ThresholdPing,
+        ThresholdDownload = row.ThresholdDownload,
+        ThresholdUpload = row.ThresholdUpload,
+        ThresholdPacketLoss = row.ThresholdPacketLoss,
+        ThresholdBufferbloat = row.ThresholdBufferbloat,
+        Error = row.Error,
+        PacketLoss = row.PacketLoss,
+        BufferbloatDown = row.BufferbloatDown,
+        BufferbloatUp = row.BufferbloatUp,
+        LatencyIdle = row.LatencyIdle,
+        LatencyLoaded = row.LatencyLoaded,
+        LatencyLoadedTail = row.LatencyLoadedTail,
+        DownloadBytes = row.DownloadBytes,
+        UploadBytes = row.UploadBytes,
+        PublicIp = row.PublicIp,
+        ServerId = row.ServerId,
+        ServerName = row.ServerName,
+        ServerHost = row.ServerHost,
+        ResultId = row.ResultId
+    };
+
     public SpeedtestImportRow ToImportRow() => new()
     {
         Created = Created,
@@ -144,12 +210,18 @@ public sealed record TestImportRow
         ThresholdPing = ThresholdPing,
         ThresholdDownload = ThresholdDownload,
         ThresholdUpload = ThresholdUpload,
+        ThresholdPacketLoss = ThresholdPacketLoss,
+        ThresholdBufferbloat = ThresholdBufferbloat,
         Error = Error,
         PacketLoss = PacketLoss,
         BufferbloatDown = BufferbloatDown,
         BufferbloatUp = BufferbloatUp,
+        LatencyIdle = LatencyIdle,
+        LatencyLoaded = LatencyLoaded,
+        LatencyLoadedTail = LatencyLoadedTail,
         DownloadBytes = DownloadBytes,
         UploadBytes = UploadBytes,
+        PublicIp = PublicIp,
         ServerId = ServerId,
         ServerName = ServerName,
         ServerHost = ServerHost,

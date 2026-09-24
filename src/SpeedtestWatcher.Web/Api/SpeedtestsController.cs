@@ -102,7 +102,7 @@ public class SpeedtestsController : ControllerBase
     /// Export results
     /// </summary>
     /// <remarks>
-    /// Downloads the matching results as a CSV or JSON file, oldest first. A JSON export can be imported again with <c>PUT /api/storage/tests/history</c>.
+    /// Downloads the matching results as a CSV or JSON file, oldest first. A JSON export can be imported again through the Storage tab's Import data, or wrapped as <c>{ "speedtests": [...] }</c> and sent to <c>PUT /api/storage/data</c>.
     /// </remarks>
     /// <param name="request">Which results to export and in what format.</param>
     /// <response code="200">The file.</response>

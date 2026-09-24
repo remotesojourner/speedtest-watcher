@@ -1,6 +1,6 @@
 # Speedtest Watcher API
 
-Speedtest Watcher has a REST API for scripts, dashboards and backups. It covers stored results, statistics, running and pausing tests, settings, settings backups, and Prometheus metrics. Configuring integrations and sign-in stays in the web UI.
+Speedtest Watcher has a REST API for scripts, dashboards and backups. It covers stored results, statistics, running and pausing tests, settings, data and settings backups, and Prometheus metrics. Configuring integrations and sign-in stays in the web UI.
 
 Every instance describes its API in two places:
 
@@ -79,7 +79,7 @@ List the latest results, newest first:
 curl "http://speedtest-watcher:2003/api/speedtests?limit=20"
 ```
 
-Each result also carries `publicIp`, the address the connection check saw when the test ran. It's `null` for read-only visitors, and it's left out of exports and of the payloads sent to integrations.
+Each result also carries `publicIp`, the address the connection check saw when the test ran. It's `null` for read-only visitors, and it's left out of a results export (`POST /api/speedtests/export`) and of the payloads sent to integrations. The full-access data backup (see [Storage and backups](#storage-and-backups)) includes it.
 
 Filter with `status`, `type` and `healthy`, which is `true` for results that met their targets and `false` for those that missed them. For the next page, pass the `id` of the last result you received as `afterId`:
 
@@ -177,16 +177,26 @@ Sign-in settings can only be changed on the Security tab. Open browser tabs, the
 curl -H "Authorization: Bearer $TOKEN" http://speedtest-watcher:2003/api/storage
 ```
 
-Export every result, or import results from a JSON export. The import skips results whose timestamp is already stored, so importing the same file twice is safe:
+Export or restore a full data backup: every result, and the connection monitoring history (outages, watch sessions and probe rounds). An entry whose timestamp is already stored is skipped, and an outage still open when the backup was made is skipped too, so importing the same file twice is safe:
 
 ```bash
-curl -H "Authorization: Bearer $TOKEN" -o speedtests.json http://speedtest-watcher:2003/api/storage/tests/history/json
-curl -H "Authorization: Bearer $TOKEN" -o speedtests.csv http://speedtest-watcher:2003/api/storage/tests/history/csv
+curl -H "Authorization: Bearer $TOKEN" -o data.json http://speedtest-watcher:2003/api/storage/data
 curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  --data @speedtests.json http://speedtest-watcher:2003/api/storage/tests/history
+  --data @data.json http://speedtest-watcher:2003/api/storage/data
 ```
 
-`DELETE /api/storage/tests/history` deletes every result and can't be undone.
+The backup includes `publicIp`, unlike a results export from `POST /api/speedtests/export`, since only full access can read or write it. A results-only file, such as one from `POST /api/speedtests/export`, imports too once it's wrapped in an object:
+
+```bash
+echo "{\"speedtests\": $(cat speedtests.json)}" | curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  --data @- http://speedtest-watcher:2003/api/storage/data
+```
+
+The restore answers with how many results, outages, watch sessions and probe rounds were stored, and how many entries were already stored or skipped.
+
+`DELETE /api/storage/data` deletes every result, outage, watch session and probe round. Settings, integrations and recommendations stay. This can't be undone.
+
+`DELETE /api/storage/tests/history` deletes every result only. Connection monitoring history isn't affected.
 
 Back up and restore settings, integrations and recommendations. The file is the same as the Storage tab's backup, and sign-in settings are never included:
 

@@ -1620,20 +1620,17 @@
   <data name="StorageSaveRetention" xml:space="preserve">
     <value>Save Retention</value>
   </data>
-  <data name="StorageResultsTitle" xml:space="preserve">
-    <value>Speedtest Results</value>
+  <data name="StorageDataTitle" xml:space="preserve">
+    <value>Data</value>
   </data>
-  <data name="StorageResultsDescription" xml:space="preserve">
-    <value>Export your results, or import results exported from {0}.</value>
+  <data name="StorageDataDescription" xml:space="preserve">
+    <value>Export every result and the connection monitoring history as one JSON file, or import a file exported from {0}.</value>
   </data>
-  <data name="StorageExportCsv" xml:space="preserve">
-    <value>Export CSV</value>
+  <data name="StorageExportData" xml:space="preserve">
+    <value>Export data</value>
   </data>
-  <data name="StorageExportJson" xml:space="preserve">
-    <value>Export JSON</value>
-  </data>
-  <data name="StorageImportJson" xml:space="preserve">
-    <value>Import JSON</value>
+  <data name="StorageImportData" xml:space="preserve">
+    <value>Import data</value>
   </data>
   <data name="StorageBackupTitle" xml:space="preserve">
     <value>Settings Backup</value>
@@ -1653,8 +1650,8 @@
   <data name="StorageDangerZoneDescription" xml:space="preserve">
     <value>Permanent operations. They cannot be undone.</value>
   </data>
-  <data name="StorageClearHistory" xml:space="preserve">
-    <value>Clear history</value>
+  <data name="StorageDeleteData" xml:space="preserve">
+    <value>Delete data</value>
   </data>
   <data name="StorageFactoryReset" xml:space="preserve">
     <value>Factory reset</value>
@@ -1677,20 +1674,11 @@
   <data name="StorageExportFailed" xml:space="preserve">
     <value>Export failed</value>
   </data>
-  <data name="StorageNotATestExport" xml:space="preserve">
-    <value>That file isn't a {0} test export</value>
+  <data name="StorageNotADataExport" xml:space="preserve">
+    <value>That file isn't a {0} data export</value>
   </data>
-  <data name="StorageTestImportFailed" xml:space="preserve">
-    <value>An error occurred while importing the test file</value>
-  </data>
-  <data name="StorageNothingNew" xml:space="preserve">
-    <value>Nothing new to import: {0}</value>
-  </data>
-  <data name="StorageImported" xml:space="preserve">
-    <value>Imported {0}</value>
-  </data>
-  <data name="StorageImportedSomeStored" xml:space="preserve">
-    <value>Imported {0}. {1}</value>
+  <data name="StorageDataImportFailed" xml:space="preserve">
+    <value>An error occurred while importing the data file</value>
   </data>
   <data name="StorageOneResult" xml:space="preserve">
     <value>1 result</value>
@@ -1698,11 +1686,32 @@
   <data name="StorageResultCount" xml:space="preserve">
     <value>{0:N0} results</value>
   </data>
-  <data name="StorageOneAlreadyStored" xml:space="preserve">
-    <value>1 result was already stored</value>
+  <data name="StorageOneOutage" xml:space="preserve">
+    <value>1 outage</value>
   </data>
-  <data name="StorageAlreadyStored" xml:space="preserve">
-    <value>{0:N0} results were already stored</value>
+  <data name="StorageOutageCount" xml:space="preserve">
+    <value>{0:N0} outages</value>
+  </data>
+  <data name="StorageOneWatchSession" xml:space="preserve">
+    <value>1 watch session</value>
+  </data>
+  <data name="StorageWatchSessionCount" xml:space="preserve">
+    <value>{0:N0} watch sessions</value>
+  </data>
+  <data name="StorageOneProbeRound" xml:space="preserve">
+    <value>1 probe round</value>
+  </data>
+  <data name="StorageProbeRoundCount" xml:space="preserve">
+    <value>{0:N0} probe rounds</value>
+  </data>
+  <data name="StorageDataNothingNew" xml:space="preserve">
+    <value>Nothing new to import.</value>
+  </data>
+  <data name="StorageDataOneSkipped" xml:space="preserve">
+    <value>1 entry was already stored or skipped.</value>
+  </data>
+  <data name="StorageDataSkippedCount" xml:space="preserve">
+    <value>{0:N0} entries were already stored or skipped.</value>
   </data>
   <data name="StorageNotASettingsExport" xml:space="preserve">
     <value>That file isn't a {0} settings export</value>
@@ -1734,17 +1743,17 @@
   <data name="StorageSkippedCount" xml:space="preserve">
     <value>{0:N0} items weren't valid and were skipped.</value>
   </data>
-  <data name="StorageClearHistoryMessage" xml:space="preserve">
-    <value>Delete all stored speedtest results? This cannot be undone.</value>
+  <data name="StorageDeleteDataMessage" xml:space="preserve">
+    <value>Delete every result, outage, watch session and probe round? This cannot be undone.</value>
   </data>
   <data name="StorageDeleteAll" xml:space="preserve">
     <value>Delete all</value>
   </data>
-  <data name="StorageClearHistoryFailed" xml:space="preserve">
-    <value>Could not clear the history</value>
+  <data name="StorageDeleteDataFailed" xml:space="preserve">
+    <value>Could not delete the data</value>
   </data>
-  <data name="StorageHistoryCleared" xml:space="preserve">
-    <value>The history has been cleared</value>
+  <data name="StorageDataDeleted" xml:space="preserve">
+    <value>All data has been deleted</value>
   </data>
   <data name="StorageFactoryResetMessage" xml:space="preserve">
     <value>Reset all settings, including sign-in, and remove every integration? Your speedtest results are kept.</value>

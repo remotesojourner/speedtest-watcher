@@ -13,7 +13,7 @@ public interface IMonitoringRepository
     Task<bool> DeleteOutageAsync(int id, CancellationToken cancellationToken = default);
 
     Task<WatchSession> StartWatchingAsync(DateTime at, CancellationToken cancellationToken = default);
-    Task KeepWatchingAsync(int sessionId, DateTime at, CancellationToken cancellationToken = default);
+    Task<bool> KeepWatchingAsync(int sessionId, DateTime at, CancellationToken cancellationToken = default);
     Task<List<WatchSession>> ListWatchSessionsSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default);
 
     Task<int> RemoveOldRoundsAsync(int days, CancellationToken cancellationToken = default);

@@ -46,13 +46,6 @@ public sealed class StorageService
         });
     }
 
-    public async Task<OperationResult<ExportFile>> ExportResultsAsync(string format, CancellationToken cancellationToken = default)
-    {
-        if (!_access.HasFullAccess) return OperationResult.Denied();
-
-        return OperationResult.Ok(ResultsService.Export(await _results.ListAllAsync(cancellationToken), format));
-    }
-
     public async Task<OperationResult> DeleteAllResultsAsync(CancellationToken cancellationToken = default)
     {
         if (!_access.HasFullAccess) return OperationResult.Denied();

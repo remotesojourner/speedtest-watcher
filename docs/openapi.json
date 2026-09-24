@@ -704,7 +704,7 @@
           "Speedtests"
         ],
         "summary": "Export results",
-        "description": "Downloads the matching results as a CSV or JSON file, oldest first. A JSON export can be imported again with `PUT /api/storage/tests/history`.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
+        "description": "Downloads the matching results as a CSV or JSON file, oldest first. A JSON export can be imported again through the Storage tab's Import data, or wrapped as `{ \"speedtests\": [...] }` and sent to `PUT /api/storage/data`.\n\n**Access:** read. Works for everyone while sign-in is off, and for read-only visitors, signed-in users and API tokens while it's on.",
         "requestBody": {
           "description": "Which results to export and in what format.",
           "content": {
@@ -993,13 +993,13 @@
         "x-access": "full"
       }
     },
-    "/api/storage/tests/history/json": {
+    "/api/storage/data": {
       "get": {
         "tags": [
           "Storage"
         ],
-        "summary": "Export every result as JSON",
-        "description": "Downloads `speedtests.json`, oldest first. It can be imported again with `PUT /api/storage/tests/history`.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "summary": "Export a data backup",
+        "description": "Downloads `speedtest-watcher-data.json`: every result, and the connection monitoring history (outages, watch sessions and probe rounds). It can be imported again with `PUT /api/storage/data`.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
         "responses": {
           "200": {
             "description": "The file.",
@@ -1024,97 +1024,42 @@
           }
         },
         "x-access": "full"
-      }
-    },
-    "/api/storage/tests/history/csv": {
-      "get": {
-        "tags": [
-          "Storage"
-        ],
-        "summary": "Export every result as CSV",
-        "description": "Downloads `speedtests.csv`, oldest first. Text that a spreadsheet would run as a formula is escaped.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
-        "responses": {
-          "200": {
-            "description": "The file.",
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "application/json": { }
-            }
-          },
-          "401": {
-            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "x-access": "full"
-      }
-    },
-    "/api/storage/tests/history": {
+      },
       "put": {
         "tags": [
           "Storage"
         ],
-        "summary": "Import results",
-        "description": "Adds results from a JSON export. Ids in the file are ignored, and results whose timestamp is already stored are skipped, so importing the same file twice is safe.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "summary": "Restore a data backup",
+        "description": "Adds every result and every piece of connection monitoring history from a backup. Ids in the file are ignored, an entry whose timestamp is already stored is skipped, and an outage still open when the backup was made is skipped too, so importing the same file twice is safe.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
         "requestBody": {
-          "description": "The results, in the format of a JSON export.",
+          "description": "A backup from `GET /api/storage/data` or the Storage tab. A results-only file wraps as `{ \"speedtests\": [...] }`.",
           "content": {
             "application/json": {
               "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/TestImportRow"
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/DataBackup"
               }
             },
             "application/*+json": {
               "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/TestImportRow"
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/DataBackup"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "How many results were imported and skipped.",
+            "description": "How much was imported and how much was skipped.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TestImportResponse"
+                  "$ref": "#/components/schemas/DataImportResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "The list is empty or isn't valid.",
+            "description": "The backup is empty, isn't valid, or was made by a newer version.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1136,6 +1081,38 @@
         },
         "x-access": "full"
       },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Delete all data",
+        "description": "Deletes every result, outage, watch session and probe round. Settings, integrations and recommendations stay. This can't be undone.\n\n**Access:** full. Needs sign-in to be off, a signed-in browser session, or an API token.",
+        "responses": {
+          "200": {
+            "description": "All data was deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in is on and the request has no valid API token or signed-in session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-access": "full"
+      }
+    },
+    "/api/storage/tests/history": {
       "delete": {
         "tags": [
           "Storage"
@@ -1639,6 +1616,460 @@
         },
         "description": "How steady the readings of the completed tests were. All values are `0` when no test completed."
       },
+      "DataBackup": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "examples": [
+              1
+            ],
+            "type": "integer",
+            "description": "The format version. An import is rejected when this is newer than the running version knows.",
+            "format": "int32"
+          },
+          "exported": {
+            "type": "string",
+            "description": "When the backup was made.",
+            "format": "date-time"
+          },
+          "speedtests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataBackupSpeedtest"
+            },
+            "description": "Every result. Required: a backup with nothing in any of its four lists is rejected."
+          },
+          "outages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataBackupOutage"
+            },
+            "description": "Every connection outage."
+          },
+          "watchSessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataBackupWatchSession"
+            },
+            "description": "Every period the connection monitor was watching."
+          },
+          "probeRounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataBackupProbeRound"
+            },
+            "description": "Every connection check behind the latency chart, kept for 30 days."
+          }
+        },
+        "description": "A full data backup: every result, and the connection monitoring history, in the same format as the file the Storage tab exports."
+      },
+      "DataBackupOutage": {
+        "type": "object",
+        "properties": {
+          "startedAt": {
+            "examples": [
+              "2026-09-14T08:05:00Z"
+            ],
+            "type": "string",
+            "description": "When the outage started.",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "examples": [
+              "2026-09-14T08:11:00Z"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the outage ended. An outage still open when the backup was made, or one that ends before it starts, is skipped on import.",
+            "format": "date-time"
+          }
+        },
+        "description": "One connection outage in a data backup."
+      },
+      "DataBackupProbeRound": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "examples": [
+              "2026-09-14T08:05:00Z"
+            ],
+            "type": "string",
+            "description": "When the check ran.",
+            "format": "date-time"
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether at least one target answered."
+          },
+          "answered": {
+            "examples": [
+              3
+            ],
+            "type": "integer",
+            "description": "How many targets answered.",
+            "format": "int32"
+          },
+          "asked": {
+            "examples": [
+              3
+            ],
+            "type": "integer",
+            "description": "How many targets were asked.",
+            "format": "int32"
+          },
+          "fastestMilliseconds": {
+            "examples": [
+              11.8
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The fastest target's round trip time, in milliseconds, or `null` when none answered.",
+            "format": "double"
+          },
+          "duringTest": {
+            "type": "boolean",
+            "description": "Whether a speedtest was running at the same time."
+          }
+        },
+        "description": "One connection check in a data backup. The latency chart is built from these."
+      },
+      "DataBackupSpeedtest": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "examples": [
+              "2026-09-14T08:05:00Z"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the test ran. A time without an offset is read as UTC. Required: a backup with a result missing it is rejected. A result with the same timestamp as a stored one is skipped.",
+            "format": "date-time"
+          },
+          "status": {
+            "examples": [
+              "completed"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`completed`, `failed` or `skipped`. Anything else counts as `failed` when there's an error, and as `completed` otherwise."
+          },
+          "type": {
+            "examples": [
+              "auto"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`auto` or `custom`. Anything else counts as `auto`."
+          },
+          "ping": {
+            "examples": [
+              12
+            ],
+            "type": "integer",
+            "description": "Latency in milliseconds.",
+            "format": "int32"
+          },
+          "jitter": {
+            "examples": [
+              0.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Jitter in milliseconds.",
+            "format": "double"
+          },
+          "download": {
+            "examples": [
+              941.25
+            ],
+            "type": "number",
+            "description": "Download speed in Mbps.",
+            "format": "double"
+          },
+          "upload": {
+            "examples": [
+              110.5
+            ],
+            "type": "number",
+            "description": "Upload speed in Mbps.",
+            "format": "double"
+          },
+          "time": {
+            "examples": [
+              14
+            ],
+            "type": "integer",
+            "description": "How long the test took, in seconds.",
+            "format": "int32"
+          },
+          "healthy": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the result met its targets."
+          },
+          "thresholdPing": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The ping target, in milliseconds, when the test ran.",
+            "format": "int32"
+          },
+          "thresholdDownload": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The download target, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "thresholdUpload": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The upload target, in Mbps, when the test ran.",
+            "format": "double"
+          },
+          "thresholdPacketLoss": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The packet loss maximum, as a percentage, when the test ran.",
+            "format": "double"
+          },
+          "thresholdBufferbloat": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The bufferbloat maximum, in milliseconds, when the test ran.",
+            "format": "double"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the test failed or was skipped."
+          },
+          "packetLoss": {
+            "examples": [
+              0
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Packet loss as a percentage.",
+            "format": "double"
+          },
+          "bufferbloatDown": {
+            "examples": [
+              5.1
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat while downloading, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "bufferbloatUp": {
+            "examples": [
+              42.8
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Bufferbloat while uploading, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "latencyIdle": {
+            "examples": [
+              11.4
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The idle median latency, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "latencyLoaded": {
+            "examples": [
+              13.2
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The median latency under load, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "latencyLoadedTail": {
+            "examples": [
+              64.2
+            ],
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "The 95th percentile latency under load, in milliseconds, when the export carried it.",
+            "format": "double"
+          },
+          "downloadBytes": {
+            "examples": [
+              903347628
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes downloaded during the test.",
+            "format": "int64"
+          },
+          "uploadBytes": {
+            "examples": [
+              88429797
+            ],
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes uploaded during the test.",
+            "format": "int64"
+          },
+          "publicIp": {
+            "examples": [
+              "203.0.113.9"
+            ],
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address the connection check saw when the test ran, or `null` for read-only visitors."
+          },
+          "serverId": {
+            "type": "integer",
+            "description": "The id of the server the test ran against.",
+            "format": "int32"
+          },
+          "serverName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name of the server the test ran against."
+          },
+          "serverHost": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The host of the server the test ran against."
+          },
+          "resultId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The provider's own id for the result."
+          }
+        },
+        "description": "One result in a data backup, in the format of a JSON results export."
+      },
+      "DataBackupWatchSession": {
+        "type": "object",
+        "properties": {
+          "startedAt": {
+            "examples": [
+              "2026-09-14T08:00:00Z"
+            ],
+            "type": "string",
+            "description": "When the monitor started watching.",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "examples": [
+              "2026-09-14T08:15:00Z"
+            ],
+            "type": "string",
+            "description": "The last time the monitor was seen watching. A session that ends before it starts is skipped on import.",
+            "format": "date-time"
+          }
+        },
+        "description": "One period the connection monitor was watching, in a data backup. Uptime is worked out from these together with the outages."
+      },
+      "DataImportResponse": {
+        "required": [
+          "speedtests",
+          "outages",
+          "watchSessions",
+          "probeRounds",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "speedtests": {
+            "examples": [
+              1204
+            ],
+            "type": "integer",
+            "description": "Results that were stored.",
+            "format": "int32"
+          },
+          "outages": {
+            "examples": [
+              6
+            ],
+            "type": "integer",
+            "description": "Outages that were stored.",
+            "format": "int32"
+          },
+          "watchSessions": {
+            "examples": [
+              40
+            ],
+            "type": "integer",
+            "description": "Watch sessions that were stored.",
+            "format": "int32"
+          },
+          "probeRounds": {
+            "examples": [
+              172800
+            ],
+            "type": "integer",
+            "description": "Probe rounds that were stored.",
+            "format": "int32"
+          },
+          "skipped": {
+            "examples": [
+              0
+            ],
+            "type": "integer",
+            "description": "Entries that were already stored, or left out because they weren't valid, such as an outage still open when the backup was made.",
+            "format": "int32"
+          }
+        },
+        "description": "What a data backup import restored."
+      },
       "ErrorResponse": {
         "required": [
           "message"
@@ -1660,7 +2091,7 @@
               "json"
             ],
             "type": "string",
-            "description": "`csv` or `json`. Anything else gives CSV. The JSON can be imported again."
+            "description": "`csv` or `json`. Anything else gives CSV. The JSON can be imported again through the Storage tab's Import data."
           },
           "status": {
             "oneOf": [
@@ -2871,228 +3302,6 @@
           }
         },
         "description": "How many tests ran in a period."
-      },
-      "TestImportResponse": {
-        "required": [
-          "imported",
-          "skipped"
-        ],
-        "type": "object",
-        "properties": {
-          "imported": {
-            "examples": [
-              40
-            ],
-            "type": "integer",
-            "description": "Results that were stored.",
-            "format": "int32"
-          },
-          "skipped": {
-            "examples": [
-              1
-            ],
-            "type": "integer",
-            "description": "Results that were left out because a result with the same timestamp is already stored.",
-            "format": "int32"
-          }
-        },
-        "description": "What a results import stored."
-      },
-      "TestImportRow": {
-        "type": "object",
-        "properties": {
-          "created": {
-            "examples": [
-              "2026-09-14T08:05:00Z"
-            ],
-            "type": "string",
-            "description": "When the test ran. A time without an offset is read as UTC. A result with the same timestamp as a stored one is skipped.",
-            "format": "date-time"
-          },
-          "status": {
-            "examples": [
-              "completed"
-            ],
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "`completed`, `failed` or `skipped`. Anything else counts as `failed` when there's an error, and as `completed` otherwise."
-          },
-          "type": {
-            "examples": [
-              "auto"
-            ],
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "`auto` or `custom`. Anything else counts as `auto`."
-          },
-          "ping": {
-            "examples": [
-              12
-            ],
-            "type": "integer",
-            "description": "Latency in milliseconds.",
-            "format": "int32"
-          },
-          "jitter": {
-            "examples": [
-              0.4
-            ],
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Jitter in milliseconds.",
-            "format": "double"
-          },
-          "download": {
-            "examples": [
-              941.25
-            ],
-            "type": "number",
-            "description": "Download speed in Mbps.",
-            "format": "double"
-          },
-          "upload": {
-            "examples": [
-              110.5
-            ],
-            "type": "number",
-            "description": "Upload speed in Mbps.",
-            "format": "double"
-          },
-          "time": {
-            "examples": [
-              14
-            ],
-            "type": "integer",
-            "description": "How long the test took, in seconds.",
-            "format": "int32"
-          },
-          "healthy": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "Whether the result met its targets."
-          },
-          "thresholdPing": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "description": "The ping target, in milliseconds, when the test ran.",
-            "format": "int32"
-          },
-          "thresholdDownload": {
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "The download target, in Mbps, when the test ran.",
-            "format": "double"
-          },
-          "thresholdUpload": {
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "The upload target, in Mbps, when the test ran.",
-            "format": "double"
-          },
-          "error": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Why the test failed or was skipped."
-          },
-          "packetLoss": {
-            "examples": [
-              0
-            ],
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Packet loss as a percentage.",
-            "format": "double"
-          },
-          "bufferbloatDown": {
-            "examples": [
-              5.1
-            ],
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Bufferbloat while downloading, in milliseconds, when the export carried it.",
-            "format": "double"
-          },
-          "bufferbloatUp": {
-            "examples": [
-              42.8
-            ],
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Bufferbloat while uploading, in milliseconds, when the export carried it.",
-            "format": "double"
-          },
-          "downloadBytes": {
-            "examples": [
-              903347628
-            ],
-            "type": [
-              "null",
-              "integer"
-            ],
-            "description": "Bytes downloaded during the test.",
-            "format": "int64"
-          },
-          "uploadBytes": {
-            "examples": [
-              88429797
-            ],
-            "type": [
-              "null",
-              "integer"
-            ],
-            "description": "Bytes uploaded during the test.",
-            "format": "int64"
-          },
-          "serverId": {
-            "type": "integer",
-            "description": "The id of the server the test ran against.",
-            "format": "int32"
-          },
-          "serverName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The name of the server the test ran against."
-          },
-          "serverHost": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The host of the server the test ran against."
-          },
-          "resultId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The provider's own id for the result."
-          }
-        },
-        "description": "One result to import, in the format of a JSON export. Ids in the file are ignored."
       },
       "TestStatus": {
         "enum": [

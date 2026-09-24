@@ -2,7 +2,7 @@
 @using System.Text
 @using System.Text.Json
 @inject StorageService Storage
-@inject ResultsService Results
+@inject DataBackupService Data
 @inject SettingsBackupService Backup
 @inject SettingsState Settings
 @inject RecentResults RecentResults
@@ -54,21 +54,18 @@
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="@WebStrings.StorageResultsTitle"
-                     Description="@WebStrings.Format(WebStrings.StorageResultsDescription, ProjectInfo.Name)">
+        <SurfaceCard Icon="@Icons.Material.Filled.Dataset" Title="@WebStrings.StorageDataTitle"
+                     Description="@WebStrings.Format(WebStrings.StorageDataDescription, ProjectInfo.Name)">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.TableChart" OnClick="@(() => ExportTestsAsync("csv"))">
-                    @WebStrings.StorageExportCsv
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportDataAsync">
+                    @WebStrings.StorageExportData
                 </MudButton>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DataObject" OnClick="@(() => ExportTestsAsync("json"))">
-                    @WebStrings.StorageExportJson
-                </MudButton>
-                <MudFileUpload T="IBrowserFile" @ref="_testsUpload" Accept=".json" MaxFileSize="MaxImportBytes" FilesChanged="ImportTestsAsync">
+                <MudFileUpload T="IBrowserFile" @ref="_dataUpload" Accept=".json" MaxFileSize="MaxDataImportBytes" FilesChanged="ImportDataAsync">
                     <SelectedTemplate />
                     <CustomContent>
                         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile" Disabled="_importing"
-                                   OnClick="@(() => _testsUpload!.OpenFilePickerAsync())">
-                            @WebStrings.StorageImportJson
+                                   OnClick="@(() => _dataUpload!.OpenFilePickerAsync())">
+                            @WebStrings.StorageImportData
                         </MudButton>
                     </CustomContent>
                 </MudFileUpload>
@@ -100,8 +97,8 @@
         <SurfaceCard Icon="@Icons.Material.Filled.Warning" Title="@WebStrings.StorageDangerZone" Danger="true" FullHeight="false"
                      Description="@WebStrings.StorageDangerZoneDescription">
             <div class="d-flex flex-wrap gap-3">
-                <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever" OnClick="ClearHistoryAsync">
-                    @WebStrings.StorageClearHistory
+                <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever" OnClick="DeleteDataAsync">
+                    @WebStrings.StorageDeleteData
                 </MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="FactoryResetAsync">
                     @WebStrings.StorageFactoryReset
@@ -114,6 +111,7 @@
 @code {
     private const string CustomChoice = "custom";
     private const long MaxImportBytes = 50 * 1024 * 1024;
+    private const long MaxDataImportBytes = 256 * 1024 * 1024;
 
     private static (int Days, string Label)[] RetentionPresets =>
     [
@@ -129,7 +127,7 @@
 
     private StorageInfoDto? _storageInfo;
     private bool _storageInfoFailed;
-    private MudFileUpload<IBrowserFile>? _testsUpload;
+    private MudFileUpload<IBrowserFile>? _dataUpload;
     private MudFileUpload<IBrowserFile>? _configUpload;
     private string _retentionChoice = "365";
     private int _customDays = 365;
@@ -172,10 +170,10 @@
         else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
     }
 
-    private async Task ExportTestsAsync(string format)
+    private async Task ExportDataAsync()
     {
-        var result = await Storage.ExportResultsAsync(format);
-        await DownloadAsync(result.Value?.FileName ?? $"speedtests.{format}", result.Value?.Content);
+        var result = await Data.ExportAsync();
+        await DownloadAsync(result.Value?.FileName ?? "speedtest-watcher-data.json", result.Value?.Content);
     }
 
     private async Task ExportConfigAsync()
@@ -192,39 +190,48 @@
             Snackbar.Add(WebStrings.StorageExportFailed, Severity.Error);
     }
 
-    private async Task ImportTestsAsync(IBrowserFile? file)
+    private async Task ImportDataAsync(IBrowserFile? file)
     {
-        var rows = Deserialize<List<SpeedtestImportRow>>(await ReadJsonAsync(file, JsonValueKind.Array));
-        if (rows == null)
+        var text = await ReadDataTextAsync(file);
+        var backup = text != null ? DataBackupFile.Parse(text) : null;
+        if (backup == null)
         {
-            Snackbar.Add(WebStrings.Format(WebStrings.StorageNotATestExport, ProjectInfo.Name), Severity.Error);
+            Snackbar.Add(WebStrings.Format(WebStrings.StorageNotADataExport, ProjectInfo.Name), Severity.Error);
             return;
         }
 
-        var result = await Results.ImportAsync(rows);
+        var result = await Data.ImportAsync(backup);
         if (result.Value is not { } counts)
         {
-            Snackbar.Add(result.Message ?? WebStrings.StorageTestImportFailed, Severity.Error);
+            Snackbar.Add(result.Message ?? WebStrings.StorageDataImportFailed, Severity.Error);
             return;
         }
 
-        Snackbar.Add(TestImportSummary(counts), counts.Imported > 0 ? Severity.Success : Severity.Info);
+        var imported = counts.Speedtests + counts.Outages + counts.WatchSessions + counts.ProbeRounds;
+        Snackbar.Add(DataImportSummary(counts), imported > 0 ? Severity.Success : Severity.Info);
         await LoadStorageInfoAsync();
         await RecentResults.ReloadAsync();
     }
 
-    private static string TestImportSummary(TestImportResultDto counts) => (counts.Imported, counts.Skipped) switch
+    private static string DataImportSummary(DataImportResultDto counts)
     {
-        (0, var skipped) => WebStrings.Format(WebStrings.StorageNothingNew, AlreadyStored(skipped)),
-        (var imported, 0) => WebStrings.Format(WebStrings.StorageImported, ResultCount(imported)),
-        var (imported, skipped) => WebStrings.Format(WebStrings.StorageImportedSomeStored, ResultCount(imported), AlreadyStored(skipped))
-    };
+        List<string> imported = [];
+        if (counts.Speedtests > 0) imported.Add(counts.Speedtests == 1 ? WebStrings.StorageOneResult : WebStrings.Format(WebStrings.StorageResultCount, counts.Speedtests));
+        if (counts.Outages > 0) imported.Add(counts.Outages == 1 ? WebStrings.StorageOneOutage : WebStrings.Format(WebStrings.StorageOutageCount, counts.Outages));
+        if (counts.WatchSessions > 0) imported.Add(counts.WatchSessions == 1 ? WebStrings.StorageOneWatchSession : WebStrings.Format(WebStrings.StorageWatchSessionCount, counts.WatchSessions));
+        if (counts.ProbeRounds > 0) imported.Add(counts.ProbeRounds == 1 ? WebStrings.StorageOneProbeRound : WebStrings.Format(WebStrings.StorageProbeRoundCount, counts.ProbeRounds));
 
-    private static string ResultCount(int count) =>
-        count == 1 ? WebStrings.StorageOneResult : WebStrings.Format(WebStrings.StorageResultCount, count);
+        if (imported.Count == 0) return WebStrings.StorageDataNothingNew;
 
-    private static string AlreadyStored(int count) =>
-        count == 1 ? WebStrings.StorageOneAlreadyStored : WebStrings.Format(WebStrings.StorageAlreadyStored, count);
+        var list = imported.Count > 1
+            ? WebStrings.Format(WebStrings.ListAnd, string.Join(", ", imported.SkipLast(1)), imported[^1])
+            : imported[0];
+        var summary = WebStrings.Format(WebStrings.StorageImportedList, list);
+        if (counts.Skipped == 0) return summary;
+
+        var skipped = counts.Skipped == 1 ? WebStrings.StorageDataOneSkipped : WebStrings.Format(WebStrings.StorageDataSkippedCount, counts.Skipped);
+        return $"{summary} {skipped}";
+    }
 
     private async Task ImportConfigAsync(IBrowserFile? file)
     {
@@ -311,23 +318,45 @@
         }
     }
 
-    private async Task ClearHistoryAsync()
+    private async Task<string?> ReadDataTextAsync(IBrowserFile? file)
+    {
+        if (file == null) return null;
+
+        _importing = true;
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxDataImportBytes);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return await reader.ReadToEndAsync();
+        }
+        catch (IOException ex)
+        {
+            Logger.LogWarning(ex, "Could not read the uploaded file {FileName}", file.Name);
+            return null;
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
+    private async Task DeleteDataAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            WebStrings.StorageClearHistory,
-            WebStrings.StorageClearHistoryMessage,
+            WebStrings.StorageDeleteData,
+            WebStrings.StorageDeleteDataMessage,
             yesText: WebStrings.StorageDeleteAll, cancelText: WebStrings.Cancel);
         if (confirmed != true) return;
 
-        if (!(await Storage.DeleteAllResultsAsync()).Succeeded)
+        if (!(await Data.DeleteAllAsync()).Succeeded)
         {
-            Snackbar.Add(WebStrings.StorageClearHistoryFailed, Severity.Error);
+            Snackbar.Add(WebStrings.StorageDeleteDataFailed, Severity.Error);
             return;
         }
 
         RecentResults.Clear();
         await LoadStorageInfoAsync();
-        Snackbar.Add(WebStrings.StorageHistoryCleared, Severity.Success);
+        Snackbar.Add(WebStrings.StorageDataDeleted, Severity.Success);
     }
 
     private async Task FactoryResetAsync()

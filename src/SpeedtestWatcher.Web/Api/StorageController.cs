@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using SpeedtestWatcher.Application.Settings;
-using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.Application.Storage;
 using SpeedtestWatcher.Web.Api.Contracts;
 
@@ -12,14 +11,16 @@ namespace SpeedtestWatcher.Web.Api;
 [Produces("application/json")]
 public class StorageController : ControllerBase
 {
+    private const long MaxDataBackupBytes = 256 * 1024 * 1024;
+
     private readonly StorageService _storage;
-    private readonly ResultsService _results;
+    private readonly DataBackupService _data;
     private readonly SettingsBackupService _backup;
 
-    public StorageController(StorageService storage, ResultsService results, SettingsBackupService backup)
+    public StorageController(StorageService storage, DataBackupService data, SettingsBackupService backup)
     {
         _storage = storage;
-        _results = results;
+        _data = data;
         _backup = backup;
     }
 
@@ -33,42 +34,45 @@ public class StorageController : ControllerBase
         (await _storage.GetInfoAsync(cancellationToken)).ToActionResult(StorageInfoResponse.From);
 
     /// <summary>
-    /// Export every result as JSON
+    /// Export a data backup
     /// </summary>
     /// <remarks>
-    /// Downloads <c>speedtests.json</c>, oldest first. It can be imported again with <c>PUT /api/storage/tests/history</c>.
+    /// Downloads <c>speedtest-watcher-data.json</c>: every result, and the connection monitoring history (outages, watch sessions and probe rounds). It can be imported again with <c>PUT /api/storage/data</c>.
     /// </remarks>
     /// <response code="200">The file.</response>
-    [HttpGet("tests/history/json")]
+    [HttpGet("data")]
     [ProducesResponseType<Stream>(StatusCodes.Status200OK, "application/json")]
-    public Task<IActionResult> ExportTestsJson(CancellationToken cancellationToken) => ExportAsync("json", cancellationToken);
+    public async Task<IActionResult> ExportData(CancellationToken cancellationToken) =>
+        (await _data.ExportAsync(cancellationToken)).ToFileResult();
 
     /// <summary>
-    /// Export every result as CSV
+    /// Restore a data backup
     /// </summary>
     /// <remarks>
-    /// Downloads <c>speedtests.csv</c>, oldest first. Text that a spreadsheet would run as a formula is escaped.
+    /// Adds every result and every piece of connection monitoring history from a backup. Ids in the file are ignored, an entry whose timestamp is already stored is skipped, and an outage still open when the backup was made is skipped too, so importing the same file twice is safe.
     /// </remarks>
-    /// <response code="200">The file.</response>
-    [HttpGet("tests/history/csv")]
-    [ProducesResponseType<Stream>(StatusCodes.Status200OK, "text/csv")]
-    public Task<IActionResult> ExportTestsCsv(CancellationToken cancellationToken) => ExportAsync("csv", cancellationToken);
-
-    /// <summary>
-    /// Import results
-    /// </summary>
-    /// <remarks>
-    /// Adds results from a JSON export. Ids in the file are ignored, and results whose timestamp is already stored are skipped, so importing the same file twice is safe.
-    /// </remarks>
-    /// <param name="tests">The results, in the format of a JSON export.</param>
-    /// <response code="200">How many results were imported and skipped.</response>
-    /// <response code="400">The list is empty or isn't valid.</response>
-    [HttpPut("tests/history")]
+    /// <param name="backup">A backup from <c>GET /api/storage/data</c> or the Storage tab. A results-only file wraps as <c>{ "speedtests": [...] }</c>.</param>
+    /// <response code="200">How much was imported and how much was skipped.</response>
+    /// <response code="400">The backup is empty, isn't valid, or was made by a newer version.</response>
+    [HttpPut("data")]
     [Consumes("application/json")]
-    [ProducesResponseType<TestImportResponse>(StatusCodes.Status200OK)]
+    [RequestSizeLimit(MaxDataBackupBytes)]
+    [ProducesResponseType<DataImportResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TestImportResponse>> ImportTests([FromBody] List<TestImportRow>? tests, CancellationToken cancellationToken) =>
-        (await _results.ImportAsync(tests?.Select(test => test.ToImportRow()).ToList(), cancellationToken)).ToActionResult(TestImportResponse.From);
+    public async Task<ActionResult<DataImportResponse>> ImportData([FromBody] DataBackup backup, CancellationToken cancellationToken) =>
+        (await _data.ImportAsync(backup.ToDto(), cancellationToken)).ToActionResult(DataImportResponse.From);
+
+    /// <summary>
+    /// Delete all data
+    /// </summary>
+    /// <remarks>
+    /// Deletes every result, outage, watch session and probe round. Settings, integrations and recommendations stay. This can't be undone.
+    /// </remarks>
+    /// <response code="200">All data was deleted.</response>
+    [HttpDelete("data")]
+    [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<MessageResponse>> DeleteData(CancellationToken cancellationToken) =>
+        (await _data.DeleteAllAsync(cancellationToken)).ToActionResult("Data deleted");
 
     /// <summary>
     /// Delete every result
@@ -109,7 +113,4 @@ public class StorageController : ControllerBase
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SettingsImportResponse>> ImportFullConfig([FromBody] SettingsBackup backup, CancellationToken cancellationToken) =>
         (await _backup.ImportAsync(backup.ToDto(), cancellationToken)).ToActionResult(SettingsImportResponse.From);
-
-    private async Task<IActionResult> ExportAsync(string format, CancellationToken cancellationToken) =>
-        (await _storage.ExportResultsAsync(format, cancellationToken)).ToFileResult();
 }

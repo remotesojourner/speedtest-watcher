@@ -101,7 +101,8 @@ internal sealed partial class ConnectivityMonitorService : BackgroundService
             FastestMilliseconds = result.FastestMilliseconds,
             DuringTest = duringTest
         }, stoppingToken);
-        await monitoring.KeepWatchingAsync(_sessionId.Value, at, stoppingToken);
+        if (!await monitoring.KeepWatchingAsync(_sessionId.Value, at, stoppingToken))
+            _sessionId = (await monitoring.StartWatchingAsync(at, stoppingToken)).Id;
 
         if (duringTest && !result.Passed) return;
 

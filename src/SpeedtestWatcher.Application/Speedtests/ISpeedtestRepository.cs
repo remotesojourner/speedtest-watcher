@@ -16,7 +16,6 @@ public interface ISpeedtestRepository
     Task<List<Speedtest>> ListCreatedBetweenAsync(DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default);
     Task<bool> DeleteByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> DeleteAllAsync(CancellationToken cancellationToken = default);
-    Task<int> ImportTestsAsync(IEnumerable<Speedtest> tests, CancellationToken cancellationToken = default);
     Task<int> RemoveOldTestsAsync(int retentionDays, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
     Task<long> SumBytesSinceAsync(DateTime? sinceUtc, CancellationToken cancellationToken = default);

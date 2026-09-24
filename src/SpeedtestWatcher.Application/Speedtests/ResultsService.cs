@@ -51,15 +51,6 @@ public sealed class ResultsService
     public async Task<ExportFile> ExportAsync(ExportRequest request, CancellationToken cancellationToken = default) =>
         Export(await _results.ListMatchingAsync(request.Status, request.Type, request.Healthy, request.Ids, cancellationToken), request.Format);
 
-    public async Task<OperationResult<TestImportResultDto>> ImportAsync(IReadOnlyList<SpeedtestImportRow>? rows, CancellationToken cancellationToken = default)
-    {
-        if (!_access.HasFullAccess) return OperationResult.Denied();
-        if (rows == null || rows.Count == 0) return OperationResult.Invalid(ApplicationStrings.NoTestsProvided);
-
-        var imported = await _results.ImportTestsAsync(rows.Select(row => row.ToSpeedtest()), cancellationToken);
-        return OperationResult.Ok(new TestImportResultDto { Imported = imported, Skipped = rows.Count - imported });
-    }
-
     public Task<Speedtest?> GetLatestCompletedAsync(CancellationToken cancellationToken = default) =>
         _results.GetLatestCompletedAsync(cancellationToken);
 

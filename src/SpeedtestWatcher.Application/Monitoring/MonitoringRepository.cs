@@ -106,11 +106,11 @@ internal class MonitoringRepository : IMonitoringRepository
         return session;
     }
 
-    public async Task KeepWatchingAsync(int sessionId, DateTime at, CancellationToken cancellationToken = default)
+    public async Task<bool> KeepWatchingAsync(int sessionId, DateTime at, CancellationToken cancellationToken = default)
     {
-        await _db.WatchSessions
+        return await _db.WatchSessions
             .Where(session => session.Id == sessionId)
-            .ExecuteUpdateAsync(session => session.SetProperty(s => s.LastSeenAt, at), cancellationToken);
+            .ExecuteUpdateAsync(session => session.SetProperty(s => s.LastSeenAt, at), cancellationToken) > 0;
     }
 
     public async Task<List<WatchSession>> ListWatchSessionsSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default)

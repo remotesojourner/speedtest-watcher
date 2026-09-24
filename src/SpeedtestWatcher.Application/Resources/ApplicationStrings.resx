@@ -258,8 +258,14 @@
   <data name="SpeedtestNotFound" xml:space="preserve">
     <value>Speedtest not found</value>
   </data>
-  <data name="NoTestsProvided" xml:space="preserve">
-    <value>No tests provided</value>
+  <data name="NoDataProvided" xml:space="preserve">
+    <value>No data provided</value>
+  </data>
+  <data name="DataBackupUnknownVersion" xml:space="preserve">
+    <value>This backup was made by a newer version of {0}</value>
+  </data>
+  <data name="SpeedtestMissingCreated" xml:space="preserve">
+    <value>Every result needs a created time</value>
   </data>
   <data name="SpeedtestAlreadyRunning" xml:space="preserve">
     <value>Speedtest is already running</value>

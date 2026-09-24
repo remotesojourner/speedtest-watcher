@@ -22,9 +22,8 @@ public sealed class SpeedtestPagingTests : IDisposable
     public async Task ImportedOlderResultsArePagedAfterTheNewerOnesEvenThoughTheirIdsAreHigher()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        foreach (var daysAgo in new[] { 2, 1, 0 })
+        foreach (var daysAgo in new[] { 2, 1, 0, 9, 8, 7 })
             await _repository.CreateAsync(Result(_september10.AddDays(-daysAgo)), cancellationToken);
-        await _repository.ImportTestsAsync([Result(_september10.AddDays(-9)), Result(_september10.AddDays(-8)), Result(_september10.AddDays(-7))], cancellationToken);
 
         var firstPage = await _repository.ListTestsAsync(null, 3, cancellationToken: cancellationToken);
         var secondPage = await _repository.ListTestsAsync(firstPage[^1].Id, 3, cancellationToken: cancellationToken);

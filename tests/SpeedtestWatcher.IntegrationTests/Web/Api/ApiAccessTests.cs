@@ -33,19 +33,19 @@ public sealed partial class ApiAccessTests : IClassFixture<ReadOnlyVisitorsApp>,
     [
         "DELETE /api/monitoring/outages/{id:int}",
         "DELETE /api/speedtests/{id:int}",
+        "DELETE /api/storage/data",
         "DELETE /api/storage/tests/history",
         "GET /api/info/version",
         "GET /api/recommendations",
         "GET /api/storage",
         "GET /api/storage/config",
-        "GET /api/storage/tests/history/csv",
-        "GET /api/storage/tests/history/json",
+        "GET /api/storage/data",
         "PATCH /api/config",
         "POST /api/speedtests/continue",
         "POST /api/speedtests/pause",
         "POST /api/speedtests/run",
         "PUT /api/storage/config",
-        "PUT /api/storage/tests/history"
+        "PUT /api/storage/data"
     ];
 
     private static readonly string[] _documentationPages = ["/api/openapi/v1.json", "/api/docs/"];

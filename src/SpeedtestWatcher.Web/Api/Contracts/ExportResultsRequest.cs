@@ -8,7 +8,7 @@ namespace SpeedtestWatcher.Web.Api.Contracts;
 public sealed record ExportResultsRequest
 {
     /// <summary>
-    /// <c>csv</c> or <c>json</c>. Anything else gives CSV. The JSON can be imported again.
+    /// <c>csv</c> or <c>json</c>. Anything else gives CSV. The JSON can be imported again through the Storage tab's Import data.
     /// </summary>
     /// <example>json</example>
     public string Format { get; init; } = "csv";

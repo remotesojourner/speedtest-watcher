@@ -121,32 +121,6 @@ internal class SpeedtestRepository : ISpeedtestRepository
         return true;
     }
 
-    public async Task<int> ImportTestsAsync(IEnumerable<Speedtest> tests, CancellationToken cancellationToken = default)
-    {
-        var incoming = tests.ToList();
-        if (incoming.Count == 0) return 0;
-
-        var earliest = incoming.Min(t => t.Created);
-        var latest = incoming.Max(t => t.Created);
-        var alreadyStored = (await _db.Speedtests
-                .Where(t => t.Created >= earliest && t.Created <= latest)
-                .Select(t => t.Created)
-                .ToListAsync(cancellationToken))
-            .ToHashSet();
-
-        var count = 0;
-        foreach (var test in incoming)
-        {
-            if (!alreadyStored.Add(test.Created)) continue;
-
-            test.Id = 0;
-            _db.Speedtests.Add(test);
-            count++;
-        }
-        await _db.SaveChangesAsync(cancellationToken);
-        return count;
-    }
-
     public async Task<int> RemoveOldTestsAsync(int retentionDays, CancellationToken cancellationToken = default)
     {
         if (retentionDays <= 0) return 0;

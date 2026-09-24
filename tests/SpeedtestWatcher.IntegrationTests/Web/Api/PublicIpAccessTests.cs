@@ -21,14 +21,17 @@ public sealed class PublicIpAccessTests : IClassFixture<ReadOnlyVisitorsApp>
         var cancellationToken = TestContext.Current.CancellationToken;
         using var owner = _app.CreateClientWithoutRedirects();
         owner.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _app.Token);
-        using var imported = await owner.PutAsJsonAsync("/api/storage/tests/history", new[]
+        using var imported = await owner.PutAsJsonAsync("/api/storage/data", new DataBackup
         {
-            new TestImportRow
-            {
-                Created = new DateTime(2026, 9, 22, 9, 15, 0, DateTimeKind.Utc),
-                Status = "completed", Ping = 14, Download = 941.2, Upload = 108.7,
-                PacketLoss = 0, DownloadBytes = 903347628, UploadBytes = 88429797
-            }
+            Speedtests =
+            [
+                new DataBackupSpeedtest
+                {
+                    Created = new DateTime(2026, 9, 22, 9, 15, 0, DateTimeKind.Utc),
+                    Status = "completed", Ping = 14, Download = 941.2, Upload = 108.7,
+                    PacketLoss = 0, DownloadBytes = 903347628, UploadBytes = 88429797
+                }
+            ]
         }, cancellationToken);
         imported.EnsureSuccessStatusCode();
 

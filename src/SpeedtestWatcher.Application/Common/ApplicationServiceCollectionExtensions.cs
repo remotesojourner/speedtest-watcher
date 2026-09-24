@@ -34,6 +34,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<SignInService>();
         services.AddScoped<IntegrationService>();
         services.AddScoped<StorageService>();
+        services.AddScoped<DataBackupService>();
         services.AddScoped<VersionService>();
         services.AddScoped<ProviderOptionsService>();
         services.AddScoped<MonitoringService>();
@@ -51,6 +52,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<IStorageRepository, StorageRepository>();
         services.AddScoped<IMonitoringRepository, MonitoringRepository>();
+        services.AddScoped<IDataBackupRepository, DataBackupRepository>();
 
         services.AddHttpClient();
         services.TryAddSingleton(TimeProvider.System);

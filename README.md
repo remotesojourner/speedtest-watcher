@@ -212,7 +212,7 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | **Client ID / Client secret** | From the application registered with your provider. Leave the secret empty for a public client |
 | **Scopes** | Space separated. `openid` is always included |
 | **Redirect URI** | Read-only — register this with your provider |
-| **People who aren't signed in** | **No access** (sent to sign in first) or **Read-only** (can see results, but can't run tests or change settings). The public IP recorded with a result is hidden from read-only visitors, and never appears in exports or the payloads sent to integrations |
+| **People who aren't signed in** | **No access** (sent to sign in first) or **Read-only** (can see results, but can't run tests or change settings). The public IP recorded with a result is hidden from read-only visitors, never appears in a results export or the payloads sent to integrations, and is included only in the full-access Data backup |
 | **API Token** | A bearer token for Prometheus and scripts using the [API](#api). It's shown once, and only a hash of it is stored |
 
 ### Tab: Storage
@@ -221,9 +221,9 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 |---|---|
 | **Database** | Number of stored tests and the database size |
 | **Data Retention** | How long results are kept before they're deleted automatically. `0` keeps them forever. Default: 365 days |
-| **Speedtest Results** | Export results as CSV or JSON, or import a JSON export. Results that are already stored are skipped, so importing the same file twice is safe |
+| **Data** | Export every result and the connection monitoring history (outages, watch sessions and probe rounds) as one JSON file, or import a file exported from here. Entries that are already stored are skipped, so importing the same file twice is safe |
 | **Settings Backup** | Export or import settings, integrations and recommendations as a JSON file. Sign-in settings are never included, and anything in a backup that isn't valid is skipped |
-| **Danger Zone** | **Clear history** deletes every result; **Factory reset** returns settings to their defaults and deletes integrations and recommendations |
+| **Danger Zone** | **Delete data** deletes every result and the connection monitoring history; **Factory reset** returns settings to their defaults and deletes integrations and recommendations |
 
 ### Tab: About
 
