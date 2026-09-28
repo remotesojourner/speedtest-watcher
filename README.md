@@ -87,6 +87,8 @@ Planned, but not built yet. There are no dates.
    - `./data` — stores the SQLite database, the keys that protect sign-in cookies and the cached server lists. Created automatically on first run.
    - `./bin` — stores the downloaded Ookla, LibreSpeed and Cloudflare command-line tools, so they aren't downloaded again when the container is recreated. iperf3 is installed in the image itself, not this folder.
 
+   **Image tags:** `latest` is the newest release, and `X.Y.Z`, `X.Y` and `X` pin one. To try changes before they're released, use `beta` (the newest beta build), `X.Y.Z-beta` (the newest build towards that version) or `X.Y.Z-beta.N` (one exact build). Beta builds may change or break between builds.
+
 2. **Start the stack**
 
    ```bash
