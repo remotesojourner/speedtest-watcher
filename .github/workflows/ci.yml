@@ -227,7 +227,7 @@ jobs:
     name: Tag Release
     runs-on: ubuntu-latest
     needs: [version, docker-merge]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
 
     permissions:
       contents: write
@@ -248,9 +248,24 @@ jobs:
       - name: Generate release notes
         id: notes
         run: |
-          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          if [ "$IS_BETA" = "true" ]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          else
+            PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          fi
           VERSION="v${{ needs.version.outputs.semver }}"
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          SEMVER="${{ needs.version.outputs.semver }}"
+          MAJOR_MINOR="${{ needs.version.outputs.major }}.${{ needs.version.outputs.minor }}"
+          BETA_LINE="${{ needs.version.outputs.major }}.${{ needs.version.outputs.minor }}.${{ needs.version.outputs.patch }}-beta"
+
+          if [ "$IS_BETA" = "true" ]; then
+            INTRO="A beta build from the \`beta\` branch, for trying changes before they're released. It may change or break between builds."
+            TAG_ROWS=$(printf '| `beta` | `docker pull %s:beta` |\n| `%s` | `docker pull %s:%s` |\n| `%s` | `docker pull %s:%s` |' "$IMAGE" "$BETA_LINE" "$IMAGE" "$BETA_LINE" "$SEMVER" "$IMAGE" "$SEMVER")
+          else
+            INTRO=""
+            TAG_ROWS=$(printf '| `latest` | `docker pull %s:latest` |\n| `%s` | `docker pull %s:%s` |\n| `%s` | `docker pull %s:%s` |' "$IMAGE" "$SEMVER" "$IMAGE" "$SEMVER" "$MAJOR_MINOR" "$IMAGE" "$MAJOR_MINOR")
+          fi
 
           if [ -n "$PREV_TAG" ]; then
             RANGE="${PREV_TAG}..HEAD"
@@ -274,13 +289,13 @@ jobs:
           fi
 
           cat <<EOF > release_notes.md
+          ${INTRO}
+
           ## Docker Images
 
           | Tag | Pull command |
           |-----|-------------|
-          | \`latest\` | \`docker pull ${IMAGE}:latest\` |
-          | \`${{ needs.version.outputs.semver }}\` | \`docker pull ${IMAGE}:${{ needs.version.outputs.semver }}\` |
-          | \`${{ needs.version.outputs.major }}.${{ needs.version.outputs.minor }}\` | \`docker pull ${IMAGE}:${{ needs.version.outputs.major }}.${{ needs.version.outputs.minor }}\` |
+          ${TAG_ROWS}
 
           Supports **linux/amd64** and **linux/arm64**.
 
@@ -300,4 +315,5 @@ jobs:
           name: v${{ needs.version.outputs.semver }}
           body_path: release_notes.md
           files: openapi.json
-          make_latest: true
+          prerelease: ${{ env.IS_BETA == 'true' }}
+          make_latest: ${{ env.IS_BETA == 'false' }}

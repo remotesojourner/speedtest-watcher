@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/remotesojourner/speedtest-watcher/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/remotesojourner/speedtest-watcher/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/remotesojourner/speedtest-watcher?sort=semver&style=flat&logo=github&label=release)](https://github.com/remotesojourner/speedtest-watcher/releases/latest)
+[![Latest Beta](https://img.shields.io/github/v/release/remotesojourner/speedtest-watcher?include_prereleases&sort=date&style=flat&logo=github&label=beta&color=orange)](https://github.com/remotesojourner/speedtest-watcher/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--v3-blue?style=flat&logo=gnu)](LICENSE)
 
 A self-hosted Blazor Server app that runs internet speed tests on a schedule and keeps the history, so you can see how your connection really performs over time.
