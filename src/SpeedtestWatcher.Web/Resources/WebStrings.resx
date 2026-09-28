@@ -1935,6 +1935,9 @@
   <data name="IntegrationTelegramChatId" xml:space="preserve">
     <value>Chat ID</value>
   </data>
+  <data name="IntegrationTelegramMessageThreadId" xml:space="preserve">
+    <value>Message thread ID</value>
+  </data>
   <data name="IntegrationPushoverUserKey" xml:space="preserve">
     <value>User key</value>
   </data>
@@ -2036,5 +2039,8 @@
   </data>
   <data name="IntegrationExampleChatId" xml:space="preserve">
     <value>Chat ID</value>
+  </data>
+  <data name="IntegrationExampleMessageThreadId" xml:space="preserve">
+    <value>Message Thread ID (optional, for forum topics)</value>
   </data>
 </root>

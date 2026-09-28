@@ -394,6 +394,74 @@ Content-Length: 230
 Content-Type: application/json; charset=utf-8
 {"chat_id":"42","text":"\u2728 *A speedtest is finished*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps","parse_mode":"markdown"}
 
+## telegram with a message thread id · test started
+activity: unchanged
+
+## telegram with a message thread id · test finished
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 252
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2728 *A speedtest is finished*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · test missed targets
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 336
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u26A0\uFE0F *A speedtest missed your targets for ping, download and upload*\n\uD83C\uDFD3 \u0060Ping\u0060: 31 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 612.50 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 98.12 Mbps (target 100.00 Mbps)","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · test met targets again
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 311
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2705 *Speedtests are meeting your targets again*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (target 25 ms)\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps (target 900.00 Mbps)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps (target 100.00 Mbps)","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · test failed
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 144
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u274C *A speedtest has failed*\n\u0060Reason\u0060: Network unreachable","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · test skipped
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 173
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u23ED\uFE0F *A speedtest was skipped*\n\u0060Reason\u0060: Public IP 203.0.113.9 is on the skip list","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · connection lost
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 162
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\uD83D\uDD34 *The internet connection is down*\n\u0060Since\u0060: 2026-09-16 12:05:00 UTC","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · connection restored
+activity: sent
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 151
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\uD83D\uDFE2 *The internet connection is back*\n\u0060Down for\u0060: 7 minutes","parse_mode":"markdown","message_thread_id":7}
+
+## telegram with a message thread id · recommendations updated
+activity: unchanged
+
+## telegram with a message thread id · config updated
+activity: unchanged
+
+## telegram with a message thread id · heartbeat
+activity: unchanged
+
+## telegram with a message thread id · send test
+result: sent, activity: unchanged
+POST https://api.telegram.org/bot1:abc/sendMessage
+Content-Length: 252
+Content-Type: application/json; charset=utf-8
+{"chat_id":"42","text":"\u2728 *A speedtest is finished*\n\uD83C\uDFD3 \u0060Ping\u0060: 12 ms (\u00B10.40 ms)\n\uD83D\uDD3C \u0060Upload\u0060: 110.50 Mbps\n\uD83D\uDD3D \u0060Download\u0060: 941.25 Mbps","parse_mode":"markdown","message_thread_id":7}
+
 ## gotify · test started
 activity: unchanged
 

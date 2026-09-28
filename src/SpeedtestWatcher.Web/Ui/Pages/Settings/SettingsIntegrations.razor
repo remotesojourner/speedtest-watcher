@@ -40,7 +40,7 @@
                             </MudItem>
                             @foreach (var field in instance.Schema.Fields)
                             {
-                                <MudItem xs="12" sm="@(field.Type == "textarea" ? 12 : 6)">
+                                <MudItem xs="12" sm="@(field.Type == "textarea" || IsFirstToggle(instance.Schema, field) ? 12 : 6)">
                                     @switch (field.Type)
                                     {
                                         case "boolean":
@@ -247,6 +247,9 @@
             return null;
         }
     }
+
+    private static bool IsFirstToggle(IntegrationTypeSchemaDto schema, IntegrationFieldSchemaDto field) =>
+        field.Type == "boolean" && ReferenceEquals(field, schema.Fields.First(f => f.Type == "boolean"));
 
     private static bool IsValid(IntegrationInstance instance) =>
         instance.Schema.Fields.All(f => ValidationError(f, instance) == null);

@@ -17,7 +17,8 @@ internal sealed class TelegramIntegration : MessageIntegration
     protected override IReadOnlyList<IntegrationFieldSchemaDto> OwnFields { get; } =
     [
         new() { Name = "token", Type = "text", Required = true, Regex = @"(\d+):[a-zA-Z0-9_-]+", Placeholder = "Bot Token" },
-        new() { Name = "chat_id", Type = "text", Required = true, Regex = @"\d+", Placeholder = "Chat ID" }
+        new() { Name = "chat_id", Type = "text", Required = true, Regex = @"\d+", Placeholder = "Chat ID" },
+        new() { Name = "message_thread_id", Type = "text", Required = false, Regex = @"\d+", Placeholder = "Message Thread ID" }
     ];
 
     protected override MessageTemplates Templates => MessageTemplates.TelegramMarkdown;
@@ -29,7 +30,16 @@ internal sealed class TelegramIntegration : MessageIntegration
 
     protected override Task<IntegrationResult> SendMessageAsync(OutgoingMessage message, IntegrationSettings settings, CancellationToken cancellationToken)
     {
-        var payload = new { chat_id = settings.GetString("chat_id"), text = message.Text, parse_mode = "markdown" };
+        var payload = new Dictionary<string, object?>
+        {
+            ["chat_id"] = settings.GetString("chat_id"),
+            ["text"] = message.Text,
+            ["parse_mode"] = "markdown"
+        };
+
+        var messageThreadId = settings.GetInt("message_thread_id", 0);
+        if (messageThreadId > 0) payload["message_thread_id"] = messageThreadId;
+
         return SendAsync(JsonPost($"https://api.telegram.org/bot{settings.GetString("token")}/sendMessage", payload), cancellationToken);
     }
 }
