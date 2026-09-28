@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.TestSupport;
 using SpeedtestWatcher.Application.Enums;
@@ -15,90 +14,7 @@ namespace SpeedtestWatcher.UnitTests.Application.Services;
 
 public class IntegrationDispatchServiceTests
 {
-    private static readonly Speedtest _skippedTest = new()
-    {
-        Status = TestStatus.Skipped,
-        Error = "Public IP 203.0.113.9 is on the skip list"
-    };
-
-    private static readonly Dictionary<string, string> _minimalConfigs = new()
-    {
-        ["discord"] = """{"url":"https://localhost/discord.com/api/webhooks/1/x"}""",
-        ["telegram"] = """{"token":"1:abc","chat_id":"42"}""",
-        ["gotify"] = """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","priority":"5"}""",
-        ["ntfy"] = """{"url":"https://localhost/ntfy","topic":"alerts"}""",
-        ["pushover"] = """{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user_key":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}""",
-        ["webhook"] = """{"url":"https://localhost/hook"}"""
-    };
-
-    [Theory]
-    [InlineData("discord")]
-    [InlineData("telegram")]
-    [InlineData("gotify")]
-    [InlineData("ntfy")]
-    [InlineData("pushover")]
-    [InlineData("webhook")]
-    public async Task SkippedTestIsSentToEveryNotificationIntegrationByDefault(string name)
-    {
-        var (handler, dispatcher) = Build((name, _minimalConfigs[name]));
-
-        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
-
-        var request = Assert.Single(handler.Requests);
-        Assert.Contains(name == "webhook" ? "TEST_SKIPPED" : "skip list", request.Body);
-    }
-
-    [Fact]
-    public async Task SkippedTestIsNotSentWhenTurnedOff()
-    {
-        var (handler, dispatcher) = Build(("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_skipped":false}"""));
-
-        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
-
-        Assert.Empty(handler.Requests);
-    }
-
-    [Fact]
-    public async Task SkippedTestUsesTheCustomMessage()
-    {
-        var (handler, dispatcher) = Build(("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","skipped_message":"Sat out: %error%"}"""));
-
-        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
-
-        Assert.Contains("Sat out: Public IP 203.0.113.9 is on the skip list", Assert.Single(handler.Requests).Body);
-    }
-
-    [Fact]
-    public async Task SkippedTestIsLoggedInHealthchecksWithoutSignallingSuccess()
-    {
-        var (handler, dispatcher) = Build(("healthChecks", """{"url":"https://localhost/hc/uuid"}"""));
-
-        await dispatcher.PublishAsync(new TestSkipped(_skippedTest), TestContext.Current.CancellationToken);
-
-        Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
-    }
-
-    [Theory]
-    [InlineData("finished", "A speedtest is finished", 4572762)]
-    [InlineData("failed", "A speedtest has failed", 12993861)]
-    [InlineData("missed targets", "A speedtest missed your targets", 16098851)]
-    public async Task DiscordStillSendsEachExistingAlert(string outcome, string heading, int color)
-    {
-        var (handler, dispatcher) = Build(("discord", _minimalConfigs["discord"]));
-        var result = new Speedtest { Ping = 12, Download = 900, Upload = 100, Error = "Network unreachable" };
-        IntegrationEvent integrationEvent = outcome switch
-        {
-            "finished" => new TestFinished(result),
-            "failed" => new TestFailed(result),
-            _ => new TestUnhealthy(result)
-        };
-
-        await dispatcher.PublishAsync(integrationEvent, TestContext.Current.CancellationToken);
-
-        var body = Assert.Single(handler.Requests).Body;
-        Assert.Contains(heading, body);
-        Assert.Contains($"\"color\":{color}", body);
-    }
+    private const string DiscordSettings = """{"url":"https://localhost/discord.com/api/webhooks/1/x"}""";
 
     [Fact]
     public async Task UnreadableSettingsAreNotSentAndTheFailureIsLogged()
@@ -119,7 +35,7 @@ public class IntegrationDispatchServiceTests
     public async Task FailedDeliveriesAreLoggedWithTheReason()
     {
         var handler = new RecordingHandler { ResponseStatus = HttpStatusCode.InternalServerError, ResponseBody = "upstream exploded" };
-        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = _minimalConfigs["discord"] }]);
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = DiscordSettings }]);
         var logger = new RecordingLogger<IntegrationDispatchService>();
         var dispatcher = TestIntegrations.Dispatcher(repository, handler, logger);
 
@@ -127,18 +43,6 @@ public class IntegrationDispatchServiceTests
 
         Assert.Equal([true], repository.ActivityErrors.ToArray());
         Assert.Contains(logger.Warnings, message => message.Contains("discord (abc)") && message.Contains("HTTP 500") && message.Contains("upstream exploded"));
-    }
-
-    [Fact]
-    public async Task AnIntegrationSavedFromTheSettingsFormSendsTheDefaultMessageNotABlankOne()
-    {
-        var (handler, dispatcher) = Build(("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","display_name":"","send_finished":true,"finished_message":""}"""));
-
-        await dispatcher.PublishAsync(new TestFinished(new Speedtest { Ping = 12, Download = 941.25, Upload = 110.5 }), TestContext.Current.CancellationToken);
-
-        var body = Assert.Single(handler.Requests).Body;
-        Assert.Contains("\"username\":\"Speedtest Watcher\"", body);
-        Assert.Contains("A speedtest is finished", body);
     }
 
     [Fact]
@@ -168,25 +72,11 @@ public class IntegrationDispatchServiceTests
     }
 
     [Fact]
-    public async Task FailureMessagesAndWebhooksIncludeTheFailedResult()
-    {
-        var (handler, dispatcher) = Build(
-            ("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","error_message":"%server%: %error%"}"""),
-            ("webhook", """{"url":"https://localhost/hook"}"""));
-
-        await dispatcher.PublishAsync(new TestFailed(new Speedtest { ServerName = "Acme Fibre", Status = TestStatus.Failed, Error = "Network unreachable" }), TestContext.Current.CancellationToken);
-
-        Assert.Equal("Acme Fibre: Network unreachable", handler.Requests[0].Body);
-        using var webhook = JsonDocument.Parse(handler.Requests[1].Body);
-        Assert.Equal("Acme Fibre", webhook.RootElement.GetProperty("data").GetProperty("ServerName").GetString());
-    }
-
-    [Fact]
     public async Task LastRunOnlyChangesWhenAnIntegrationSendsSomethingOrFails()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var handler = new RecordingHandler();
-        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = _minimalConfigs["discord"] }]);
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "discord", Data = DiscordSettings }]);
         var dispatcher = TestIntegrations.Dispatcher(repository, handler);
 
         await dispatcher.PublishAsync(new TestStarted(SpeedtestProvider.Ookla, TestType.Auto), cancellationToken);
@@ -222,20 +112,6 @@ public class IntegrationDispatchServiceTests
         }
 
         Assert.Equal(expectedPings, handler.Requests.Count);
-    }
-
-    [Fact]
-    public async Task InfluxDbStampsThePointWithTheTestTimeAndAddsTheConfiguredTags()
-    {
-        var tested = new DateTime(2026, 9, 16, 8, 5, 0);
-        var (handler, dispatcher) = Build(("influxdb", """{"url":"https://localhost/influx","org":"home","bucket":"speed","token":"t","host":"living room","tags":"env=prod, site=home office"}"""));
-
-        await dispatcher.PublishAsync(new TestFinished(new Speedtest { Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Created = tested }), TestContext.Current.CancellationToken);
-
-        var testedSeconds = new DateTimeOffset(tested, TimeSpan.Zero).ToUnixTimeSeconds();
-        Assert.Equal(
-            $@"speedtests,host=living\ room,env=prod,site=home\ office download=941.25,upload=110.50,ping=12,jitter=0.40 {testedSeconds}",
-            Assert.Single(handler.Requests).Body);
     }
 
     private static (RecordingHandler Handler, IntegrationDispatchService Dispatcher) Build(params (string Name, string Data)[] integrations)

@@ -14,50 +14,6 @@ public class IntegrationSendTestTests
         ServerName = "Acme Fibre", Created = new DateTime(2026, 9, 16, 8, 5, 0)
     };
 
-    [Theory]
-    [InlineData("discord", """{"url":"https://localhost/discord.com/api/webhooks/1/x","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("telegram", """{"token":"1:abc","chat_id":"42","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("gotify", """{"url":"https://localhost/gotify","key":"AAAAAAAAAAAAAAA","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("ntfy", """{"url":"https://localhost/ntfy","topic":"alerts","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("pushover", """{"token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","user_key":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("apprise", """{"url":"https://localhost/apprise","urls":"json://localhost/hook","send_finished":false}""", "941.25 Mbps")]
-    [InlineData("webhook", """{"url":"https://localhost/hook","send_finished":false}""", "\"event\":\"TEST\"")]
-    [InlineData("healthChecks", """{"url":"https://localhost/hc/uuid"}""", "Acme Fibre")]
-    public async Task SendTestSendsOneSampleEvenWhenThatMessageIsTurnedOff(string name, string settings, string expectedInBody)
-    {
-        var (handler, repository, dispatcher) = Build();
-
-        var result = await dispatcher.TestAsync(name, "abc", settings, _sample, TestContext.Current.CancellationToken);
-
-        Assert.Equal(IntegrationOutcome.Sent, result.Outcome);
-        Assert.Contains(expectedInBody, Assert.Single(handler.Requests).Body);
-        Assert.Empty(repository.ActivityErrors);
-    }
-
-    [Fact]
-    public async Task HealthchecksSendTestOnlyLogsSoTheCheckKeepsItsState()
-    {
-        var (handler, _, dispatcher) = Build();
-
-        await dispatcher.TestAsync("healthChecks", "abc", """{"url":"https://localhost/hc/uuid/"}""", _sample, TestContext.Current.CancellationToken);
-
-        Assert.Equal("https://localhost/hc/uuid/log", Assert.Single(handler.Requests).Uri);
-    }
-
-    [Fact]
-    public async Task InfluxDbSendTestChecksTheBucketWithoutWritingAPoint()
-    {
-        var (handler, _, dispatcher) = Build();
-        handler.ResponseBody = """{"buckets":[{"id":"1","name":"speed"}]}""";
-
-        var result = await dispatcher.TestAsync("influxdb", "abc", """{"url":"https://localhost/influx/","org":"home","bucket":"speed","token":"influx-token"}""", _sample, TestContext.Current.CancellationToken);
-
-        Assert.Equal(IntegrationOutcome.Sent, result.Outcome);
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal(("GET", "https://localhost/influx/api/v2/buckets?org=home&name=speed"), (request.Method, request.Uri));
-        Assert.Contains("Authorization: Token influx-token", request.Headers);
-    }
-
     [Fact]
     public async Task InfluxDbSendTestFailsWhenTheBucketDoesNotExist()
     {

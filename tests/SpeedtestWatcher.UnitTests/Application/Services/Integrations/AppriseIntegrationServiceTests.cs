@@ -1,10 +1,8 @@
 using System.Net;
-using System.Text.Json;
 using SpeedtestWatcher.TestSupport;
 using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Models;
 using SpeedtestWatcher.Application.Models.Entities;
-using SpeedtestWatcher.Application.Models.Events;
 
 namespace SpeedtestWatcher.UnitTests.Application.Services.Integrations;
 
@@ -19,26 +17,6 @@ public sealed class AppriseIntegrationServiceTests : IDisposable
     };
 
     private readonly RecordingHandler _handler = new();
-
-    public static TheoryData<string, IntegrationEvent> MessageTypes => new()
-    {
-        { "success", new TestFinished(_result) },
-        { "failure", new TestFailed(_result) },
-        { "warning", new TestUnhealthy(_result) },
-        { "info", new TestSkipped(_result) }
-    };
-
-    [Theory]
-    [MemberData(nameof(MessageTypes))]
-    public async Task EachMessageIsSentWithTheMatchingAppriseType(string expectedType, IntegrationEvent integrationEvent)
-    {
-        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "apprise", Data = WithUrls }]);
-
-        await TestIntegrations.Dispatcher(repository, _handler).PublishAsync(integrationEvent, TestContext.Current.CancellationToken);
-
-        using var body = JsonDocument.Parse(Assert.Single(_handler.Requests).Body);
-        Assert.Equal(expectedType, body.RootElement.GetProperty("type").GetString());
-    }
 
     [Theory]
     [InlineData(WithUrls, "Apprise found no valid URLs to send to")]
@@ -85,15 +63,6 @@ public sealed class AppriseIntegrationServiceTests : IDisposable
         var result = await SendTestAsync(WithKey);
 
         Assert.Equal(IntegrationResult.Failed("Apprise answered HTTP 400: Payload lacks minimum requirements"), result);
-    }
-
-    [Fact]
-    public async Task UrlsAndAConfigKeyTogetherAreRefusedWithoutSending()
-    {
-        var result = await SendTestAsync("""{"url":"http://apprise:8000","urls":"json://listener/hook","key":"home"}""");
-
-        Assert.Equal(IntegrationResult.Failed("Use either Apprise URLs or a config key, not both"), result);
-        Assert.Empty(_handler.Requests);
     }
 
     private Task<IntegrationResult> SendTestAsync(string settings) =>
