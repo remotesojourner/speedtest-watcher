@@ -1,0 +1,104 @@
+using System.Net;
+using System.Text.Json;
+using SpeedtestWatcher.TestSupport;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Models.Entities;
+using SpeedtestWatcher.Application.Models.Events;
+
+namespace SpeedtestWatcher.UnitTests.Application.Services.Integrations;
+
+public sealed class AppriseIntegrationServiceTests : IDisposable
+{
+    private const string WithUrls = """{"url":"http://apprise:8000/","urls":"json://listener/hook"}""";
+    private const string WithKey = """{"url":"http://apprise:8000","key":"home"}""";
+
+    private static readonly Speedtest _result = new()
+    {
+        Ping = 12, Jitter = 0.4, Download = 941.25, Upload = 110.5, Status = TestStatus.Completed, Healthy = true, Error = "Network unreachable"
+    };
+
+    private readonly RecordingHandler _handler = new();
+
+    public static TheoryData<string, IntegrationEvent> MessageTypes => new()
+    {
+        { "success", new TestFinished(_result) },
+        { "failure", new TestFailed(_result) },
+        { "warning", new TestUnhealthy(_result) },
+        { "info", new TestSkipped(_result) }
+    };
+
+    [Theory]
+    [MemberData(nameof(MessageTypes))]
+    public async Task EachMessageIsSentWithTheMatchingAppriseType(string expectedType, IntegrationEvent integrationEvent)
+    {
+        var repository = new InMemoryIntegrations([new IntegrationData { Id = "abc", Name = "apprise", Data = WithUrls }]);
+
+        await TestIntegrations.Dispatcher(repository, _handler).PublishAsync(integrationEvent, TestContext.Current.CancellationToken);
+
+        using var body = JsonDocument.Parse(Assert.Single(_handler.Requests).Body);
+        Assert.Equal(expectedType, body.RootElement.GetProperty("type").GetString());
+    }
+
+    [Theory]
+    [InlineData(WithUrls, "Apprise found no valid URLs to send to")]
+    [InlineData(WithKey, "Apprise has no configuration for the key home")]
+    public async Task NothingToSendToIsAFailureThoughAppriseAnswers204(string settings, string expectedError)
+    {
+        _handler.ResponseStatus = HttpStatusCode.NoContent;
+
+        var result = await SendTestAsync(settings);
+
+        Assert.Equal(IntegrationResult.Failed(expectedError), result);
+    }
+
+    [Fact]
+    public async Task AFailedDeliveryShowsWhatAppriseLogged()
+    {
+        _handler.ResponseStatus = HttpStatusCode.FailedDependency;
+        _handler.ResponseBody = """{"error": "One or more notifications could not be sent", "details": [["INFO", "2026-09-17 03:28:04,050", "Notifying 2 service(s) with threads."], ["WARNING", "2026-09-17 03:28:04,135", "Failed to send JSON POST notification: Verification Failed., error=401."]]}""";
+
+        var result = await SendTestAsync(WithUrls);
+
+        Assert.Equal(IntegrationResult.Failed("Apprise answered HTTP 424: One or more notifications could not be sent: Failed to send JSON POST notification: Verification Failed., error=401."), result);
+    }
+
+    [Theory]
+    [InlineData("""{"url":"http://apprise:8000","key":"home","tags":"admin devops"}""", "Apprise has nothing tagged admin devops to notify")]
+    [InlineData(WithKey, "Apprise has nothing untagged to notify. Add tags, or all, to choose what to notify")]
+    public async Task TagsThatMatchNothingAreExplained(string settings, string expectedError)
+    {
+        _handler.ResponseStatus = HttpStatusCode.FailedDependency;
+        _handler.ResponseBody = """{"error": "One or more notification could not be sent", "details": []}""";
+
+        var result = await SendTestAsync(settings);
+
+        Assert.Equal(IntegrationResult.Failed(expectedError), result);
+    }
+
+    [Fact]
+    public async Task ARejectedRequestShowsApprisesError()
+    {
+        _handler.ResponseStatus = HttpStatusCode.BadRequest;
+        _handler.ResponseBody = """{"error": "Payload lacks minimum requirements"}""";
+
+        var result = await SendTestAsync(WithKey);
+
+        Assert.Equal(IntegrationResult.Failed("Apprise answered HTTP 400: Payload lacks minimum requirements"), result);
+    }
+
+    [Fact]
+    public async Task UrlsAndAConfigKeyTogetherAreRefusedWithoutSending()
+    {
+        var result = await SendTestAsync("""{"url":"http://apprise:8000","urls":"json://listener/hook","key":"home"}""");
+
+        Assert.Equal(IntegrationResult.Failed("Use either Apprise URLs or a config key, not both"), result);
+        Assert.Empty(_handler.Requests);
+    }
+
+    private Task<IntegrationResult> SendTestAsync(string settings) =>
+        TestIntegrations.Dispatcher(new InMemoryIntegrations([]), _handler)
+            .TestAsync("apprise", "abc", settings, _result, TestContext.Current.CancellationToken);
+
+    public void Dispose() => _handler.Dispose();
+}

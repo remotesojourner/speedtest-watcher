@@ -1,7 +1,7 @@
 @using System.Net.NetworkInformation
 @inject ProviderOptionsService ProviderOptions
-@inject IEnumerable<ISpeedtestTool> Tools
-@inject SettingsState Settings
+@inject IEnumerable<ISpeedtestProviderService> Tools
+@inject SettingsStateService Settings
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="@WebStrings.ProviderTitle" FullHeight="false"
@@ -210,7 +210,7 @@
 
     private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
 
-    private ISpeedtestTool CurrentTool => Tools.First(tool => tool.Provider == _provider);
+    private ISpeedtestProviderService CurrentTool => Tools.First(tool => tool.Provider == _provider);
 
     private string ProviderTitle => CurrentTool.Title;
 
@@ -389,6 +389,6 @@
         var result = await Settings.SaveAsync([.. changes]);
         _saving = false;
         if (result.Succeeded) Snackbar.Add(WebStrings.ProviderSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
     }
 }

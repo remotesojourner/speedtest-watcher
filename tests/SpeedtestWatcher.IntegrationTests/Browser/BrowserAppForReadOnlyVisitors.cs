@@ -1,5 +1,6 @@
-using SpeedtestWatcher.Application.SignIn;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Utils;
 
 namespace SpeedtestWatcher.IntegrationTests.Browser;
 

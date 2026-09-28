@@ -1,0 +1,11 @@
+namespace SpeedtestWatcher.Application.Models.Dtos;
+
+public class DataBackupProbeRoundRow
+{
+    public DateTime At { get; set; }
+    public bool Passed { get; set; }
+    public int Answered { get; set; }
+    public int Asked { get; set; }
+    public double? FastestMilliseconds { get; set; }
+    public bool DuringTest { get; set; }
+}

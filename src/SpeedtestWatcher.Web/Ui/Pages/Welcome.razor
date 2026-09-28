@@ -1,6 +1,6 @@
 @page "/welcome"
-@inject SettingsState Settings
-@inject IEnumerable<ISpeedtestTool> Tools
+@inject SettingsStateService Settings
+@inject IEnumerable<ISpeedtestProviderService> Tools
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -130,7 +130,7 @@
 
         if (!result.Succeeded)
         {
-            Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+            Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
             return;
         }
 

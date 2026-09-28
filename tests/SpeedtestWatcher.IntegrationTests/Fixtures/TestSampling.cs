@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Monitoring;
+using SpeedtestWatcher.Application.Configuration;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 

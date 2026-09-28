@@ -1,9 +1,9 @@
 @page "/history"
 @using System.Globalization
-@inject RecentResults RecentResults
+@inject RecentResultsService RecentResultsService
 @inject ResultsService Results
 @inject StatusStateService StatusService
-@inject SettingsState Settings
+@inject SettingsStateService Settings
 @inject PreferencesService PreferencesService
 @inject IDialogService DialogService
 @implements IDisposable
@@ -250,7 +250,7 @@
     private bool _selecting;
     private readonly HashSet<int> _selected = [];
 
-    private SpeedtestDto? LatestReading => RecentResults.LatestCompleted;
+    private SpeedtestDto? LatestReading => RecentResultsService.LatestCompleted;
 
     private string? LoadError => _list.LoadFailed
         ? (_list.Filter.IsActive ? WebStrings.HistoryFilteredLoadFailed : WebStrings.HistoryLoadFailed)
@@ -268,8 +268,8 @@
     protected override async Task OnInitializedAsync()
     {
         _list = new PagedTestList((filter, afterId, limit) => Results.ListAsync(afterId, limit, filter.Status, filter.Type, filter.Healthy));
-        RecentResults.OnChange += OnRecentResultsChanged;
-        RecentResults.ResultAdded += OnResultAdded;
+        RecentResultsService.OnChange += OnRecentResultsChanged;
+        RecentResultsService.ResultAdded += OnResultAdded;
         StatusService.OnChange += OnStateChanged;
         Settings.OnChange += OnStateChanged;
         _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 0, 10000);
@@ -294,7 +294,7 @@
 
     private void BuildDownloadHistory()
     {
-        _downloadHistory = RecentResults.Tests
+        _downloadHistory = RecentResultsService.Tests
             .Where(t => t.Status == TestStatus.Completed)
             .Take(20)
             .Reverse()
@@ -421,8 +421,8 @@
 
     public void Dispose()
     {
-        RecentResults.OnChange -= OnRecentResultsChanged;
-        RecentResults.ResultAdded -= OnResultAdded;
+        RecentResultsService.OnChange -= OnRecentResultsChanged;
+        RecentResultsService.ResultAdded -= OnResultAdded;
         StatusService.OnChange -= OnStateChanged;
         Settings.OnChange -= OnStateChanged;
         _timer?.Dispose();

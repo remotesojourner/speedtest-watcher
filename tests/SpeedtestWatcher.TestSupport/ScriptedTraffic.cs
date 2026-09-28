@@ -1,8 +1,10 @@
-using SpeedtestWatcher.Application.Monitoring;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.TestSupport;
 
-public sealed class ScriptedTraffic : INetworkTraffic
+public sealed class ScriptedTraffic : INetworkTrafficService
 {
     private const long ChunkPerRead = 50_000_000;
 

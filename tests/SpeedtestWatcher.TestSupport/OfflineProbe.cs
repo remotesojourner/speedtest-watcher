@@ -1,8 +1,9 @@
-using SpeedtestWatcher.Application.Monitoring;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.TestSupport;
 
-public sealed class OfflineProbe : IConnectionProbe
+public sealed class OfflineProbe : IConnectionProbeService
 {
     public OfflineProbe(double? milliseconds = 12.5)
     {

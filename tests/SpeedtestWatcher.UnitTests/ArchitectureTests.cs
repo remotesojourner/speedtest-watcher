@@ -6,15 +6,14 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using SpeedtestWatcher.Application.Common;
-using SpeedtestWatcher.Application.Settings;
+using SpeedtestWatcher.Application.Models;
 
 namespace SpeedtestWatcher.UnitTests;
 
 public class ArchitectureTests
 {
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
-    private const string StorageNamespace = "SpeedtestWatcher.Application.Storage";
+    private const string DataNamespace = "SpeedtestWatcher.Application.Data";
 
     private static readonly Assembly _applicationLayer = typeof(OperationResult).Assembly;
     private static readonly Assembly _web = typeof(Program).Assembly;
@@ -64,11 +63,11 @@ public class ArchitectureTests
     }
 
     [Fact]
-    public void InApplicationOnlyRepositoriesAndStorageUseTheDbContext()
+    public void InApplicationOnlyRepositoriesDataAndInstallersUseTheDbContext()
     {
         var offending = _applicationLayer.GetTypes()
             .Select(type => (Type: type, Owner: Outermost(type)))
-            .Where(entry => !IsRepositoryImplementation(entry.Owner) && !InStorage(entry.Owner) && !IsRegistration(entry.Owner))
+            .Where(entry => !IsRepositoryImplementation(entry.Owner) && !InData(entry.Owner) && !IsRegistration(entry.Owner))
             .Where(entry => TypesUsedBy(entry.Type).Any(used => used.IsAssignableTo(typeof(DbContext))))
             .Select(entry => entry.Owner.FullName)
             .Distinct()
@@ -113,14 +112,14 @@ public class ArchitectureTests
             .ToList();
 
     private static bool IsRepository(Type type) =>
-        type.Assembly == _applicationLayer && (type.Name.EndsWith("Repository", StringComparison.Ordinal) || type == typeof(ISettingsStore));
+        type.Assembly == _applicationLayer && type.Name.EndsWith("Repository", StringComparison.Ordinal);
 
     private static bool IsRepositoryImplementation(Type type) => type.GetInterfaces().Any(IsRepository);
 
-    private static bool InStorage(Type type) =>
-        type.Namespace is { } name && (name == StorageNamespace || name.StartsWith(StorageNamespace + ".", StringComparison.Ordinal));
+    private static bool InData(Type type) =>
+        type.Namespace is { } name && (name == DataNamespace || name.StartsWith(DataNamespace + ".", StringComparison.Ordinal));
 
-    private static bool IsRegistration(Type type) => type.Name.EndsWith("ServiceCollectionExtensions", StringComparison.Ordinal);
+    private static bool IsRegistration(Type type) => type.Name.EndsWith("Installer", StringComparison.Ordinal);
 
     private static Type Outermost(Type type)
     {

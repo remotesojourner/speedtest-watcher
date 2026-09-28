@@ -1,9 +1,12 @@
-using SpeedtestWatcher.Application.Integrations;
-using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Models.Dtos;
+using SpeedtestWatcher.Application.Models.Entities;
+using SpeedtestWatcher.Application.Models.Events;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
-internal sealed class RecordingDispatcher : IIntegrationDispatcher
+internal sealed class RecordingDispatcher : IIntegrationDispatchService
 {
     private readonly object _gate = new();
     private readonly List<IntegrationEvent> _events = [];

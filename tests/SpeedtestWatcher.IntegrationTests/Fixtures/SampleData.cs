@@ -1,16 +1,16 @@
 using Microsoft.Extensions.DependencyInjection;
-using SpeedtestWatcher.Application.Common;
-using SpeedtestWatcher.Application.Monitoring;
-using SpeedtestWatcher.Application.Settings;
-using SpeedtestWatcher.Application.SignIn;
-using SpeedtestWatcher.Application.Speedtests;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Extensions;
+using SpeedtestWatcher.Application.Models.Entities;
+using SpeedtestWatcher.Application.Repositories.Interfaces;
+using SpeedtestWatcher.Application.Utils;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
 internal static class SampleData
 {
     public static Task ChooseOoklaAsync(IServiceProvider services, CancellationToken cancellationToken) =>
-        services.GetRequiredService<ISettingsStore>().SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla" }, cancellationToken);
+        services.GetRequiredService<ISettingsRepository>().SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla" }, cancellationToken);
 
     public static async Task SeedResultsAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
@@ -56,7 +56,7 @@ internal static class SampleData
     }
 
     public static Task TurnSignInOnAsync(IServiceProvider services, VisitorAccess visitorAccess, string apiToken, CancellationToken cancellationToken) =>
-        services.GetRequiredService<ISettingsStore>().SaveSignInAsync(new Dictionary<string, string>
+        services.GetRequiredService<ISettingsRepository>().SaveSignInAsync(new Dictionary<string, string>
         {
             ["authEnabled"] = "true",
             ["oidcAuthority"] = "https://localhost/identity-provider",
