@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.Application.Common;
 using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Settings;
 using SpeedtestWatcher.Application.Speedtests;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.TestSupport;
@@ -9,6 +10,8 @@ namespace SpeedtestWatcher.IntegrationTests.Application.Speedtests;
 
 public sealed class SpeedtestRunServiceTests : IDisposable
 {
+    private static readonly string[] _iperf3Servers = ["10.0.0.5:5201", "[2001:db8::5]:5202"];
+
     private readonly TestDatabase _database = new();
     private ServiceProvider? _services;
 
@@ -119,6 +122,45 @@ public sealed class SpeedtestRunServiceTests : IDisposable
         Assert.True(custom.Success, custom.Error);
     }
 
+    [Fact(Timeout = 15000)]
+    public async Task Iperf3WithoutServersRefusesToRun()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var runner = new FailsFirstRunner();
+        var runs = await RunsAsync(runner, cancellationToken);
+        await SaveAsync(cancellationToken, ("provider", "iperf3"));
+
+        var manual = await runs.StartManualRunAsync(null, cancellationToken);
+        var scheduled = await runs.RunAsync(TestType.Auto, cancellationToken: cancellationToken);
+
+        Assert.Equal((OperationOutcome.Conflict, "No iperf3 servers are configured. Add one on the Provider tab."), (manual.Outcome, manual.Message));
+        Assert.Equal("No iperf3 servers are configured. Add one on the Provider tab.", scheduled.Error);
+        Assert.Equal(0, runner.Calls);
+    }
+
+    [Fact(Timeout = 15000)]
+    public async Task Iperf3RunsAgainstOneOfItsServersAndRetriesAgainstOneToo()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var runner = new FailsFirstRunner();
+        var runs = await RunsAsync(runner, cancellationToken);
+        await SaveAsync(cancellationToken, ("provider", "iperf3"), ("iperf3Servers", string.Join(",", _iperf3Servers)));
+
+        var result = await runs.RunAsync(TestType.Custom, cancellationToken: cancellationToken);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Equal(2, runner.CustomUrls.Count);
+        Assert.All(runner.CustomUrls, url => Assert.Contains(url, _iperf3Servers));
+    }
+
+    private async Task SaveAsync(CancellationToken cancellationToken, params (string Key, string Value)[] changes)
+    {
+        using var scope = _services!.CreateScope();
+        var saved = await scope.ServiceProvider.GetRequiredService<ISettingsStore>()
+            .SaveAsync(changes.ToDictionary(change => change.Key, change => change.Value), cancellationToken);
+        Assert.True(saved.Succeeded, saved.Error);
+    }
+
     private async Task<SpeedtestRunService> RunsAsync(ISpeedtestRunner runner, CancellationToken cancellationToken)
     {
         _services = await RunTestServices.BuildAsync(_database, runner, cancellationToken);
@@ -151,6 +193,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
         public int Calls { get; private set; }
         public int MostAtOnce { get; private set; }
         public List<string?> ServerIds { get; } = [];
+        public List<string?> CustomUrls { get; } = [];
         public Task RunStarted => _started.Task;
         public Func<Task>? BeforeRetry { get; set; }
 
@@ -171,6 +214,7 @@ public sealed class SpeedtestRunServiceTests : IDisposable
             {
                 call = ++Calls;
                 ServerIds.Add(serverId);
+                CustomUrls.Add(customUrl);
                 MostAtOnce = Math.Max(MostAtOnce, ++_active);
                 held = _holdNextCall;
                 _holdNextCall = false;

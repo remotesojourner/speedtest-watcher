@@ -14,9 +14,10 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 
 ## Features
 
-- **Scheduled speed tests** — runs tests on a cron schedule with [Ookla Speedtest](https://www.speedtest.net/apps/cli), [LibreSpeed](https://github.com/librespeed/speedtest-cli) or [Cloudflare](https://github.com/code-inflation/cfspeedtest). The command-line tools are downloaded automatically
+- **Scheduled speed tests** — runs tests on a cron schedule with [Ookla Speedtest](https://www.speedtest.net/apps/cli), [LibreSpeed](https://github.com/librespeed/speedtest-cli), [Cloudflare](https://github.com/code-inflation/cfspeedtest) or your own [iperf3](https://iperf.fr/) server. The command-line tools are downloaded automatically, except iperf3 outside Docker, which you install yourself
   - Server choice for Ookla and LibreSpeed: automatic, random from an allow or deny list, or a single pinned server
   - One-off tests against any Ookla or LibreSpeed server, without changing your saved settings
+  - iperf3 tests against a server you run yourself, on your LAN, in a homelab or on a VPS: download, upload, ping, jitter and packet loss, from a list of your servers
 - **Health tracking** — every result is judged against the speeds from your internet contract and marked healthy or not, using the targets that were in force when the test ran, so changing them later doesn't rewrite history. An optional faster schedule kicks in while your line is missing those targets
 - **Connection monitoring** — a TCP probe to a few internet hosts every 15 seconds records every outage with its start and end, an **Uptime** page with a latency chart between tests and a year of days at a glance, and alerts when the line drops and when it comes back
 - **Smart skipping** — skips a test instead of recording a failure when the line is down, or while your public IP is on a skip list (useful while a VPN or backup line is up)
@@ -50,7 +51,6 @@ A self-hosted Blazor Server app that runs internet speed tests on a schedule and
 
 Planned, but not built yet. There are no dates.
 
-- **iperf3 support** — test against an [iperf3](https://iperf.fr/) server you run yourself, on your LAN, in a homelab or on a VPS. The other providers test the whole path to someone else's server; your own server measures the part of it you can do something about. Download, upload, ping, jitter and packet loss, from a list of your servers
 - **Translations** — the interface in languages other than English. All its text is already kept in resource files, ready to be translated
 
 ---
@@ -62,6 +62,7 @@ Planned, but not built yet. There are no dates.
 | Docker + Docker Compose | Recommended deployment method. Images are published for `linux/amd64` and `linux/arm64` |
 | Internet access | Needed for the tests themselves, and to download the speed test command-line tools on first start |
 | OpenID Connect provider | Optional. Only needed if people should sign in |
+| iperf3 | Only for the iperf3 provider when running without Docker (the image includes it). Install it so it's on the `PATH`: `apt install iperf3`, `brew install iperf3` or `winget install ar51an.iPerf3`. You also need an `iperf3 -s` server to test against |
 
 ---
 
@@ -84,7 +85,7 @@ Planned, but not built yet. There are no dates.
 
    **Volume notes:**
    - `./data` — stores the SQLite database, the keys that protect sign-in cookies and the cached server lists. Created automatically on first run.
-   - `./bin` — stores the downloaded Ookla, LibreSpeed and Cloudflare command-line tools, so they aren't downloaded again when the container is recreated.
+   - `./bin` — stores the downloaded Ookla, LibreSpeed and Cloudflare command-line tools, so they aren't downloaded again when the container is recreated. iperf3 is installed in the image itself, not this folder.
 
 2. **Start the stack**
 
@@ -177,10 +178,11 @@ Rounds that run while a speedtest is in progress are recorded but can never star
 
 | Field | Description |
 |---|---|
-| **Speedtest Provider** | Ookla, LibreSpeed or Cloudflare |
+| **Speedtest Provider** | Ookla, LibreSpeed, Cloudflare or iperf3 |
 | **Network interface** | The local address tests are sent from. Default: the default route |
 | **Custom LibreSpeed server URL** | LibreSpeed only. Tests against your own LibreSpeed server instead of choosing from the public list |
 | **Which server to test against** | Ookla and LibreSpeed only. **Automatically**, **Random** (only the servers you list, or any nearby server except them) or **Single**. The list of nearby servers is downloaded again once it is a week old |
+| **Your iperf3 servers** | iperf3 only. The host and port of each `iperf3 -s` server you want to test against. Each test picks one of them at random |
 
 ### Tab: Display
 
@@ -241,7 +243,7 @@ Every integration has a **Send test** button that uses what's in the form, wheth
 | Metric | Meaning |
 |---|---|
 | `ping`, `jitter`, `download`, `upload`, `time` | Readings from the latest completed test |
-| `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla measures it |
+| `packet_loss` | Packet loss of the latest completed test, as a percentage. Only Ookla and iperf3 measure it |
 | `bufferbloat_download_ms`, `bufferbloat_upload_ms` | How much longer the line took to answer while the latest completed test was downloading, and while it was uploading |
 | `last_test_bytes` | Data the latest completed test moved, download and upload together |
 | `data_used_bytes` | Data all tests moved, one series per `period` label: `24h`, `7d`, `30d` and `stored` |
@@ -391,7 +393,7 @@ docker compose up -d --build
 | Database | SQLite via Entity Framework Core |
 | API documentation | OpenAPI 3.1 from `Microsoft.AspNetCore.OpenApi`, reference page by [Scalar](https://github.com/scalar/scalar) |
 | Scheduling | [Cronos](https://github.com/HangfireIO/Cronos) |
-| Speed tests | Ookla Speedtest CLI, LibreSpeed CLI, cfspeedtest |
+| Speed tests | Ookla Speedtest CLI, LibreSpeed CLI, cfspeedtest, iperf3 |
 | Link-preview image | [SkiaSharp](https://github.com/mono/SkiaSharp) |
 | Integration icons | [Dashboard Icons](https://github.com/homarr-labs/dashboard-icons) (Apache License 2.0) |
 | Tests | xUnit v3, FakeItEasy, Playwright for the browser tests |
@@ -409,7 +411,7 @@ This project is licensed under the GNU Affero General Public License v3.0. See [
 
 ### Which provider should I use?
 
-**Ookla** has the largest server network and is what most people know from speedtest.net, but you have to accept Ookla's terms to use it. **LibreSpeed** is open source and can test against your own LibreSpeed server. **Cloudflare** tests against Cloudflare's network and needs no server choice.
+**Ookla** has the largest server network and is what most people know from speedtest.net, but you have to accept Ookla's terms to use it. **LibreSpeed** is open source and can test against your own LibreSpeed server. **Cloudflare** tests against Cloudflare's network and needs no server choice. **iperf3** tests against a server you run yourself, so it measures only the part of the path you control, not the whole route to someone else's server.
 
 ---
 

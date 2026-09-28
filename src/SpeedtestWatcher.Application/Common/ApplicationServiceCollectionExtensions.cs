@@ -60,7 +60,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<ISpeedtestTool, OoklaTool>();
         services.AddSingleton<ISpeedtestTool, LibreSpeedTool>();
         services.AddSingleton<ISpeedtestTool, CloudflareTool>();
+        services.AddSingleton<ISpeedtestTool, Iperf3Tool>();
         services.AddSingleton<ICliManager, CliManager>();
+        services.AddSingleton<ICliProcessRunner, CliProcessRunner>();
         services.AddScoped<ISpeedtestRunner, SpeedtestRunner>();
 
         services.AddSingleton<INetworkInterfaceDetector, InterfaceDetector>();

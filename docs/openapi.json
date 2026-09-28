@@ -835,7 +835,7 @@
             }
           },
           "409": {
-            "description": "A test is already running, tests are paused, or no provider is chosen.",
+            "description": "A test is already running, tests are paused, no provider is chosen, or iperf3 is chosen with no servers.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1496,6 +1496,11 @@
             "default": "none"
           },
           "libreServerIds": {
+            "type": "string",
+            "description": "Left out for read-only visitors.",
+            "default": "none"
+          },
+          "iperf3Servers": {
             "type": "string",
             "description": "Left out for read-only visitors.",
             "default": "none"

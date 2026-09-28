@@ -125,6 +125,38 @@
         }
     }
 
+    @if (_provider == SpeedtestProvider.Iperf3)
+    {
+        <MudText Typo="Typo.body2" Class="font-weight-bold mb-2">@WebStrings.ProviderIperf3Servers</MudText>
+        <MudGrid Spacing="3" Class="mb-2">
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" @bind-Value="_customId" Label="@WebStrings.ProviderAddIperf3Server" Placeholder="192.168.1.10:5201"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                              Error="@(!CustomIdValid)" ErrorText="@WebStrings.Iperf3ServerInvalid"
+                              HelperText="@WebStrings.ProviderAddIperf3ServerHelp"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
+                              AdornmentAriaLabel="@WebStrings.ProviderAddServerIdLabel" OnAdornmentClick="AddCustomId"
+                              OnKeyDown="@(e => { if (e.Key == "Enter") AddCustomId(); })" />
+            </MudItem>
+        </MudGrid>
+
+        @if (SelectedIdList.Count > 0)
+        {
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                @foreach (var id in SelectedIdList)
+                {
+                    <MudChip T="string" Size="Size.Small" OnClose="@(() => RemoveId(id))" CloseIcon="@Icons.Material.Filled.Close">
+                        @id
+                    </MudChip>
+                }
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.caption" Class="sw-muted d-block mb-2">@WebStrings.ProviderNoIperf3Servers</MudText>
+        }
+    }
+
     @if (_provider == SpeedtestProvider.Ookla)
     {
         <div class="d-flex align-center mt-4">
@@ -188,13 +220,17 @@
 
     private bool ServerIdValid => _serverId == SettingDefinitions.Unset || _serverId.All(char.IsDigit);
 
-    private bool CustomIdValid => string.IsNullOrWhiteSpace(_customId) || _customId.Trim().All(char.IsDigit);
+    private bool CustomIdValid => string.IsNullOrWhiteSpace(_customId) || (_provider == SpeedtestProvider.Iperf3
+        ? ProbeTarget.Parse(_customId.Trim()) != null
+        : _customId.Trim().All(char.IsDigit));
 
     private bool LibreUrlValid => string.IsNullOrWhiteSpace(_libreUrl) || WebAddress.IsHttp(_libreUrl);
 
     private bool PinnedServerChosen => !(SupportsServerChoice && _serverMode == ServerMode.Pinned) || _serverId != SettingDefinitions.Unset;
 
-    private bool CanSave => !_saving && ServerIdValid && PinnedServerChosen && CustomIdValid && LibreUrlValid && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
+    private bool Iperf3ServerChosen => _provider != SpeedtestProvider.Iperf3 || SelectedIdList.Count > 0 || !string.IsNullOrWhiteSpace(_customId);
+
+    private bool CanSave => !_saving && ServerIdValid && PinnedServerChosen && CustomIdValid && LibreUrlValid && Iperf3ServerChosen && (_provider != SpeedtestProvider.Ookla || _acceptedOokla);
 
     private ProviderSettings Saved => Settings.Current.Provider;
 
@@ -209,6 +245,7 @@
         _serverId = ConfiguredServerId(_provider);
         _serverIds[SpeedtestProvider.Ookla] = Saved.Ookla.ListedIds.ToList();
         _serverIds[SpeedtestProvider.Libre] = Saved.Libre.ListedIds.ToList();
+        _serverIds[SpeedtestProvider.Iperf3] = Saved.Iperf3Servers.Select(server => server.ToString()).ToList();
 
         await Task.WhenAll(LoadInterfacesAsync(), LoadServersAsync(_provider));
     }
@@ -219,11 +256,15 @@
     private string ConfiguredServerIds(SpeedtestProvider provider) =>
         Saved.ServersFor(provider) is { ListedIds.Count: > 0 } servers ? string.Join(",", servers.ListedIds) : SettingDefinitions.Unset;
 
+    private string ConfiguredIperf3Servers() =>
+        Saved.Iperf3Servers.Count > 0 ? string.Join(",", Saved.Iperf3Servers.Select(server => server.ToString())) : SettingDefinitions.Unset;
+
     private async Task SelectProviderAsync(SpeedtestProvider provider)
     {
         if (_provider == provider) return;
         _provider = provider;
         _serverId = ConfiguredServerId(provider);
+        _customId = "";
         await LoadServersAsync(provider);
     }
 
@@ -243,8 +284,8 @@
 
     private void AddCustomId()
     {
-        var id = _customId.Trim();
-        if (string.IsNullOrEmpty(id) || !CustomIdValid) return;
+        if (string.IsNullOrWhiteSpace(_customId) || !CustomIdValid) return;
+        var id = _provider == SpeedtestProvider.Iperf3 ? ProbeTarget.Parse(_customId)!.ToString() : _customId.Trim();
 
         var ids = _serverIds.TryGetValue(_provider, out var list) ? list : _serverIds[_provider] = [];
         if (!ids.Contains(id)) ids.Add(id);
@@ -337,6 +378,11 @@
         if (_provider == SpeedtestProvider.Libre)
         {
             AddIfChanged("libreUrl", string.IsNullOrWhiteSpace(_libreUrl) ? SettingDefinitions.Unset : _libreUrl.Trim(), Saved.LibreUrl ?? SettingDefinitions.Unset);
+        }
+        if (_provider == SpeedtestProvider.Iperf3)
+        {
+            AddCustomId();
+            AddIfChanged("iperf3Servers", SelectedIdList.Count > 0 ? string.Join(",", SelectedIdList) : SettingDefinitions.Unset, ConfiguredIperf3Servers());
         }
         AddIfChanged("interface", _interface, Saved.Interface ?? SettingDefinitions.Unset);
 

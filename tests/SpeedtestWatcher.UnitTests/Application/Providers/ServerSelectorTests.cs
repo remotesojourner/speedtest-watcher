@@ -41,7 +41,7 @@ public class ServerSelectorTests
     }
 
     private static ProviderSettings Settings(ServerMode mode, ServerListMode listMode, string? pinnedId, IReadOnlyList<string> listed) =>
-        new(SpeedtestProvider.Ookla, null, null, mode, listMode, new ServerChoice(pinnedId, listed), new ServerChoice(null, []));
+        new(SpeedtestProvider.Ookla, null, null, mode, listMode, new ServerChoice(pinnedId, listed), new ServerChoice(null, []), []);
 
     private sealed class NearbyServers : IServerListProvider
     {

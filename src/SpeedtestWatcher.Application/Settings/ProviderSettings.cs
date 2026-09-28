@@ -1,3 +1,4 @@
+using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.Application.Providers;
 
 namespace SpeedtestWatcher.Application.Settings;
@@ -9,7 +10,8 @@ public sealed record ProviderSettings(
     ServerMode ServerMode,
     ServerListMode ServerListMode,
     ServerChoice Ookla,
-    ServerChoice Libre)
+    ServerChoice Libre,
+    IReadOnlyList<ProbeTarget> Iperf3Servers)
 {
     public ServerChoice? ServersFor(SpeedtestProvider provider) => provider switch
     {

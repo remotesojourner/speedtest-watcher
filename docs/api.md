@@ -53,7 +53,7 @@ The message is written for people, so you can show it as it is.
 | `400` | The request isn't valid: an unknown filter value, a setting value that fails validation, a body that isn't valid JSON, or an unknown time zone |
 | `401` | The request needs a valid token. The response has a `WWW-Authenticate: Bearer` header |
 | `404` | The result doesn't exist, or there are no recommendations yet |
-| `409` | A test can't start: one is already running, tests are paused, or no provider is chosen |
+| `409` | A test can't start: one is already running, tests are paused, no provider is chosen, or iperf3 is chosen with no servers |
 | `500` | Something unexpected went wrong. The details are only in the app's log |
 
 ## Units and timestamps

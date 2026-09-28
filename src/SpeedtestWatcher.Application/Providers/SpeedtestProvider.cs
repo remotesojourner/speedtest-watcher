@@ -9,5 +9,6 @@ public enum SpeedtestProvider
     None,
     Ookla,
     Libre,
-    Cloudflare
+    Cloudflare,
+    Iperf3
 }

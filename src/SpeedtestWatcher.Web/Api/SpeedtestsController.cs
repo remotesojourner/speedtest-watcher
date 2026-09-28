@@ -133,7 +133,7 @@ public class SpeedtestsController : ControllerBase
     /// <param name="serverId">Test against this server instead of the configured choice. Only providers with server choice use it.</param>
     /// <response code="200">The test has started.</response>
     /// <response code="400">The server id isn't a number.</response>
-    /// <response code="409">A test is already running, tests are paused, or no provider is chosen.</response>
+    /// <response code="409">A test is already running, tests are paused, no provider is chosen, or iperf3 is chosen with no servers.</response>
     [HttpPost("run")]
     [ProducesResponseType<MessageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorResponse>(StatusCodes.Status400BadRequest)]

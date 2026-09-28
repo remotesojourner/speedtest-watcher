@@ -69,7 +69,8 @@ public sealed record AppSettings(
                 ServerMode: Choice<ServerMode>("serverMode"),
                 ServerListMode: Choice<ServerListMode>("serverListMode"),
                 Ookla: new ServerChoice(Optional("ooklaId"), List("ooklaServerIds")),
-                Libre: new ServerChoice(Optional("libreId"), List("libreServerIds"))),
+                Libre: new ServerChoice(Optional("libreId"), List("libreServerIds")),
+                Iperf3Servers: ProbeTarget.ParseList(List("iperf3Servers"))),
             PreTestChecks: new PreTestCheckSettings(Flag("internetCheckEnabled"), Text("internetCheckUrl"), List("skipIps")),
             Monitoring: new MonitoringSettings(
                 Enabled: Flag("monitoringEnabled"),

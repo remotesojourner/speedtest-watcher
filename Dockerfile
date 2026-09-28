@@ -16,11 +16,12 @@ RUN dotnet publish -c Release -a $TARGETARCH --no-restore -o /app/publish /p:Use
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     fontconfig \
     libfontconfig1 \
+    iperf3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .

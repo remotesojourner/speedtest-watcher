@@ -17,4 +17,15 @@ public interface ISpeedtestTool
     ToolArguments BuildArguments(RunOptions options);
 
     SpeedtestExecutionResult ParseResult(ToolOutput output, RunOptions options);
+
+    async Task<SpeedtestExecutionResult> RunAsync(ICliProcessRunner processes, string binaryPath, RunOptions options, CancellationToken cancellationToken = default)
+    {
+        var command = BuildArguments(options);
+
+        if (command.ScratchFileContent != null)
+            await File.WriteAllTextAsync(options.ScratchFilePath, command.ScratchFileContent, cancellationToken);
+
+        var outcome = await processes.RunAsync(Title, binaryPath, command.Arguments, cancellationToken: cancellationToken);
+        return outcome.Output is { } output ? ParseResult(output, options) : ToolFailure.Because(outcome.FailureMessage!);
+    }
 }

@@ -81,8 +81,8 @@ public sealed partial class SpeedtestRunService
         if (!_access.HasFullAccess) return OperationResult.Denied();
         if (_state.IsRunning) return OperationResult.Conflict(AlreadyRunning);
 
-        if ((await _settings.GetAsync(cancellationToken)).Provider.Selected == SpeedtestProvider.None)
-            return OperationResult.Conflict(ApplicationStrings.NoProviderSelected);
+        if (ProviderProblem((await _settings.GetAsync(cancellationToken)).Provider) is { } problem)
+            return OperationResult.Conflict(problem);
 
         if (_state.IsPaused) return OperationResult.Conflict(ApplicationStrings.SpeedtestsPaused);
         if (!_state.TryStartRun()) return OperationResult.Conflict(AlreadyRunning);
@@ -129,6 +129,7 @@ public sealed partial class SpeedtestRunService
         var settings = await _settings.GetAsync(cancellationToken);
         var provider = settings.Provider.Selected;
         if (provider == SpeedtestProvider.None) return Failure("No provider selected");
+        if (ProviderProblem(settings.Provider) is { } problem) return Failure(problem);
 
         var check = await _connectivity.CheckAsync(settings.PreTestChecks, cancellationToken);
         if (!check.Proceed)
@@ -138,17 +139,18 @@ public sealed partial class SpeedtestRunService
             return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
         }
 
-        var libreUrl = provider == SpeedtestProvider.Libre ? settings.Provider.LibreUrl : null;
         var serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
+        var customUrl = CustomUrl(provider, settings.Provider);
 
         await _dispatcher.PublishAsync(new TestStarted(provider, type), cancellationToken);
 
-        var (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
+        var (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, customUrl, settings.Provider.Interface, cancellationToken);
         if (!result.Success)
         {
             LogRetrying(result.Error);
             serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
-            (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, libreUrl, settings.Provider.Interface, cancellationToken);
+            customUrl = CustomUrl(provider, settings.Provider);
+            (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, customUrl, settings.Provider.Interface, cancellationToken);
         }
 
         var previous = result.Success ? await _results.GetLatestCompletedAsync(cancellationToken) : null;
@@ -174,6 +176,23 @@ public sealed partial class SpeedtestRunService
         _events.PublishTestFinished(SpeedtestDto.From(test));
         return result;
     }
+
+    private static string? ProviderProblem(ProviderSettings settings) => settings switch
+    {
+        { Selected: SpeedtestProvider.None } => ApplicationStrings.NoProviderSelected,
+        { Selected: SpeedtestProvider.Iperf3, Iperf3Servers.Count: 0 } => ApplicationStrings.NoIperf3ServersConfigured,
+        _ => null
+    };
+
+    private static string? CustomUrl(SpeedtestProvider provider, ProviderSettings settings) => provider switch
+    {
+        SpeedtestProvider.Libre => settings.LibreUrl,
+        SpeedtestProvider.Iperf3 => PickServer(settings.Iperf3Servers)?.ToString(),
+        _ => null
+    };
+
+    private static ProbeTarget? PickServer(IReadOnlyList<ProbeTarget> servers) =>
+        servers.Count > 0 ? servers[Random.Shared.Next(servers.Count)] : null;
 
     private async Task<(SpeedtestExecutionResult Result, BufferbloatReading? Bufferbloat)> MeasuredRunAsync(
         SpeedtestProvider provider, string? serverId, string? libreUrl, string? networkInterface, CancellationToken cancellationToken)

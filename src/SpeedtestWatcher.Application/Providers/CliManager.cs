@@ -21,8 +21,13 @@ internal partial class CliManager : ICliManager
         _binDirectory = options.Value.BinDirectory;
     }
 
-    public string GetBinaryPath(SpeedtestProvider provider) =>
-        _tools.TryGetValue(provider, out var tool) ? BinaryPath(tool) : throw new ArgumentOutOfRangeException(nameof(provider));
+    public string GetBinaryPath(SpeedtestProvider provider)
+    {
+        if (!_tools.TryGetValue(provider, out var tool)) throw new ArgumentOutOfRangeException(nameof(provider));
+
+        var binDirectoryPath = BinaryPath(tool);
+        return File.Exists(binDirectoryPath) || tool.DownloadUrl(PlatformTarget.Current) != null ? binDirectoryPath : FileName(tool);
+    }
 
     public bool IsBinaryAvailable(SpeedtestProvider provider) =>
         _tools.TryGetValue(provider, out var tool) && File.Exists(BinaryPath(tool));
@@ -31,7 +36,7 @@ internal partial class CliManager : ICliManager
     {
         Directory.CreateDirectory(_binDirectory);
 
-        foreach (var tool in _tools.Values.Where(tool => !File.Exists(BinaryPath(tool))))
+        foreach (var tool in _tools.Values.Where(tool => !File.Exists(BinaryPath(tool)) && tool.DownloadUrl(PlatformTarget.Current) != null))
         {
             try
             {
@@ -47,8 +52,10 @@ internal partial class CliManager : ICliManager
         }
     }
 
-    private string BinaryPath(ISpeedtestTool tool) =>
-        Path.Combine(_binDirectory, tool.BinaryName + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : ""));
+    private string BinaryPath(ISpeedtestTool tool) => Path.Combine(_binDirectory, FileName(tool));
+
+    private static string FileName(ISpeedtestTool tool) =>
+        tool.BinaryName + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "");
 
     private async Task DownloadBinaryAsync(ISpeedtestTool tool, CancellationToken cancellationToken)
     {

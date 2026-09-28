@@ -39,6 +39,7 @@ public static partial class SettingDefinitions
         new("libreId", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerId)),
         new("ooklaServerIds", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerIds)),
         new("libreServerIds", Unset, SettingVisibility.FullAccessOnly, UnsetOr(ServerIds)),
+        new("iperf3Servers", Unset, SettingVisibility.FullAccessOnly, UnsetOr(Iperf3Servers)),
 
         new("monitoringEnabled", "true", SettingVisibility.Everyone, Boolean),
         new("monitoringTargets", MonitoringSettings.DefaultTargets, SettingVisibility.FullAccessOnly, ProbeTargets),
@@ -89,6 +90,12 @@ public static partial class SettingDefinitions
         && parts.All(part => ProbeTarget.Parse(part) != null)
             ? null
             : ApplicationStrings.SettingProbeTargetsInvalid;
+
+    private static string? Iperf3Servers(string value) =>
+        value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } parts
+        && parts.All(part => ProbeTarget.Parse(part) != null)
+            ? null
+            : ApplicationStrings.SettingIperf3ServersInvalid;
 
     private static string? Seconds(string value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)

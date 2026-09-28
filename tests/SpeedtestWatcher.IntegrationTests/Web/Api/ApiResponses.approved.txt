@@ -13,6 +13,7 @@
   "interface": "none",
   "internetCheckEnabled": "true",
   "internetCheckUrl": "https://icanhazip.com",
+  "iperf3Servers": "none",
   "libreId": "none",
   "libreServerIds": "none",
   "libreUrl": "none",
