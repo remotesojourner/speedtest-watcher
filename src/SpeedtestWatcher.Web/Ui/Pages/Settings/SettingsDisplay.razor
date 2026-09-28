@@ -1,5 +1,5 @@
 @inject PreferencesService PreferencesService
-@inject SettingsState Settings
+@inject SettingsStateService Settings
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Tune" Title="@WebStrings.DisplayTitle" FullHeight="false"
@@ -98,6 +98,6 @@
 
         var result = await Settings.SaveAsync((key, value));
         if (result.Succeeded) Snackbar.Add(WebStrings.DisplaySettingsSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
     }
 }

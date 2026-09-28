@@ -1,5 +1,5 @@
 @using System.Globalization
-@inject SettingsState Settings
+@inject SettingsStateService Settings
 @inject ISnackbar Snackbar
 
 <MudGrid Spacing="4">
@@ -109,6 +109,6 @@
             ("monitoringTestAfterReconnect", _testAfterReconnect ? "true" : "false"));
 
         if (result.Succeeded) Snackbar.Add(WebStrings.MonitoringSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
     }
 }

@@ -93,6 +93,9 @@
   <data name="SettingProbeTargetsInvalid" xml:space="preserve">
     <value>Probe targets need to look like host:port, separated by commas</value>
   </data>
+  <data name="SettingIperf3ServersInvalid" xml:space="preserve">
+    <value>iperf3 servers need to look like host:port, separated by commas</value>
+  </data>
   <data name="SettingSecondsRange" xml:space="preserve">
     <value>You need to provide a number of seconds between {0} and {1}</value>
   </data>
@@ -231,6 +234,9 @@
   <data name="CloudflareDescription" xml:space="preserve">
     <value>Fast CDN-based testing</value>
   </data>
+  <data name="Iperf3Description" xml:space="preserve">
+    <value>Test against a server you run yourself</value>
+  </data>
   <data name="ProviderInvalid" xml:space="preserve">
     <value>Invalid provider</value>
   </data>
@@ -272,6 +278,18 @@
   </data>
   <data name="NoProviderSelected" xml:space="preserve">
     <value>No speedtest provider selected</value>
+  </data>
+  <data name="NoIperf3ServersConfigured" xml:space="preserve">
+    <value>No iperf3 servers are configured. Add one on the Provider tab.</value>
+  </data>
+  <data name="Iperf3ServerUnreachable" xml:space="preserve">
+    <value>The iperf3 server at {0} couldn't be reached. Check the host, port and firewall.</value>
+  </data>
+  <data name="Iperf3ServerRefused" xml:space="preserve">
+    <value>The iperf3 server at {0} refused the connection. Check that iperf3 -s is running there.</value>
+  </data>
+  <data name="Iperf3ServerBusy" xml:space="preserve">
+    <value>The iperf3 server at {0} is busy running another test. Try again shortly.</value>
   </data>
   <data name="SpeedtestsPaused" xml:space="preserve">
     <value>Speedtests are paused</value>

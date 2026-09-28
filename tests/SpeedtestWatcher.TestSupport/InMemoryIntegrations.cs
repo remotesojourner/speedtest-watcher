@@ -1,4 +1,5 @@
-using SpeedtestWatcher.Application.Integrations;
+using SpeedtestWatcher.Application.Models.Entities;
+using SpeedtestWatcher.Application.Repositories.Interfaces;
 
 namespace SpeedtestWatcher.TestSupport;
 

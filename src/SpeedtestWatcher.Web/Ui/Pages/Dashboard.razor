@@ -4,10 +4,10 @@
 @inject StatisticsService Statistics
 @inject MonitoringService Monitoring
 @inject PauseService Pause
-@inject ICurrentAccess Access
+@inject ICurrentAccessService Access
 @inject PreferencesService PreferencesService
-@inject SettingsState Settings
-@inject RecentResults RecentResults
+@inject SettingsStateService Settings
+@inject RecentResultsService RecentResultsService
 @inject StatusStateService StatusService
 @inject ISnackbar Snackbar
 @implements IDisposable
@@ -316,7 +316,7 @@
 
     private int ChartColumns => _charts.HasBufferbloat ? 3 : 4;
 
-    private SpeedtestDto? Latest => RecentResults.Latest;
+    private SpeedtestDto? Latest => RecentResultsService.Latest;
 
     private string RangeSubtitle =>
         $"{(_from ?? Today.AddDays(-7)).ToString("d MMM", CultureInfo.CurrentCulture)} – {(_to ?? Today).ToString("d MMM yyyy", CultureInfo.CurrentCulture)}";
@@ -329,7 +329,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        RecentResults.OnChange += OnStateChanged;
+        RecentResultsService.OnChange += OnStateChanged;
         StatusService.OnChange += OnStateChanged;
         Settings.OnChange += OnStateChanged;
 
@@ -490,7 +490,7 @@
 
     public void Dispose()
     {
-        RecentResults.OnChange -= OnStateChanged;
+        RecentResultsService.OnChange -= OnStateChanged;
         StatusService.OnChange -= OnStateChanged;
         Settings.OnChange -= OnStateChanged;
     }

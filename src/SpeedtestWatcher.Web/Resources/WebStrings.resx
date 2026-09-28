@@ -1350,6 +1350,21 @@
   <data name="ProviderServerFallback" xml:space="preserve">
     <value>Server {0}</value>
   </data>
+  <data name="ProviderIperf3Servers" xml:space="preserve">
+    <value>Your iperf3 servers</value>
+  </data>
+  <data name="ProviderAddIperf3Server" xml:space="preserve">
+    <value>Add a server</value>
+  </data>
+  <data name="ProviderAddIperf3ServerHelp" xml:space="preserve">
+    <value>Host and port, for example 192.168.1.10:5201</value>
+  </data>
+  <data name="Iperf3ServerInvalid" xml:space="preserve">
+    <value>Enter a host and port, like 192.168.1.10:5201</value>
+  </data>
+  <data name="ProviderNoIperf3Servers" xml:space="preserve">
+    <value>No servers added yet. Add at least one to run a test.</value>
+  </data>
   <data name="ProviderInterfaceSaved" xml:space="preserve">
     <value>{0} (currently saved)</value>
   </data>
@@ -1935,6 +1950,9 @@
   <data name="IntegrationTelegramChatId" xml:space="preserve">
     <value>Chat ID</value>
   </data>
+  <data name="IntegrationTelegramMessageThreadId" xml:space="preserve">
+    <value>Message thread ID</value>
+  </data>
   <data name="IntegrationPushoverUserKey" xml:space="preserve">
     <value>User key</value>
   </data>
@@ -2036,5 +2054,8 @@
   </data>
   <data name="IntegrationExampleChatId" xml:space="preserve">
     <value>Chat ID</value>
+  </data>
+  <data name="IntegrationExampleMessageThreadId" xml:space="preserve">
+    <value>Message Thread ID (optional, for forum topics)</value>
   </data>
 </root>

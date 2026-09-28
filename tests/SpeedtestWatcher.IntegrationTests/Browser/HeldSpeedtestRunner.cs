@@ -1,8 +1,10 @@
-using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.IntegrationTests.Browser;
 
-public sealed class HeldSpeedtestRunner : ISpeedtestRunner
+public sealed class HeldSpeedtestRunner : IToolRunnerService
 {
     public const string DownloadShown = "987.6";
 

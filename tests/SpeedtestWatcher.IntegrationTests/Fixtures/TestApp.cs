@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SpeedtestWatcher.Application.Common;
-using SpeedtestWatcher.Application.Monitoring;
 using SpeedtestWatcher.TestSupport;
-using SpeedtestWatcher.Web.SignIn;
-using SpeedtestWatcher.Web.Startup;
+using SpeedtestWatcher.Application.Installers;
+using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Web.Configuration;
+using SpeedtestWatcher.Web.Services;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
@@ -27,7 +27,7 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
             await SeedAsync(scope.ServiceProvider, cancellationToken);
         }
 
-        await Services.GetRequiredService<AuthSettings>().ReloadAsync(cancellationToken);
+        await Services.GetRequiredService<AuthSettingsService>().ReloadAsync(cancellationToken);
     }
 
     public HttpClient CreateClientWithoutRedirects() =>
@@ -58,16 +58,16 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services =>
         {
             RemoveTheAppsBackgroundServices(services);
-            services.AddSingleton<IConnectionProbe>(new OfflineProbe());
-            services.AddSingleton<INetworkTraffic>(new ScriptedTraffic());
-            services.AddSingleton(TestSampling.Bufferbloat);
+            services.AddSingleton<IConnectionProbeService>(new OfflineProbe());
+            services.AddSingleton<INetworkTrafficService>(new ScriptedTraffic());
+            services.AddSingleton(TestSampling.WithoutIdleWindow);
             services.ConfigureHttpClientDefaults(client => client.ConfigurePrimaryHttpMessageHandler(() => new NoNetworkHandler()));
         });
     }
 
     private static void RemoveTheAppsBackgroundServices(IServiceCollection services)
     {
-        Assembly[] app = [typeof(Program).Assembly, typeof(ApplicationServiceCollectionExtensions).Assembly];
+        Assembly[] app = [typeof(Program).Assembly, typeof(ApplicationInstaller).Assembly];
         var backgroundServices = services
             .Where(service => service.ServiceType == typeof(IHostedService) && !service.IsKeyedService && app.Any(assembly => DeclaredIn(service, assembly)))
             .ToList();

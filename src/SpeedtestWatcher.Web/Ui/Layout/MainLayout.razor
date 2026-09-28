@@ -1,15 +1,15 @@
 @inherits LayoutComponentBase
 @using System.Data.Common
 @inject PreferencesService PreferencesService
-@inject CircuitAccess CircuitAccess
-@inject SettingsState Settings
+@inject CircuitAccessService CircuitAccessService
+@inject SettingsStateService Settings
 @inject StatusStateService StatusService
-@inject RecentResults RecentResults
+@inject RecentResultsService RecentResultsService
 @inject PauseService Pause
-@inject LiveUpdates LiveUpdates
+@inject LiveUpdatesService LiveUpdatesService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
-@inject BrowserInterop Browser
+@inject BrowserInteropService Browser
 @inject ILogger<MainLayout> Logger
 @implements IDisposable
 
@@ -128,13 +128,13 @@
     private bool _isDarkMode = true;
     private bool _disposed;
 
-    private bool FullAccess => CircuitAccess.Level == Access.Full;
+    private bool FullAccess => CircuitAccessService.Level == Access.Full;
 
     protected override void OnInitialized()
     {
         StatusService.OnChange += OnStateChanged;
         Settings.OnChange += OnStateChanged;
-        LiveUpdates.ResultArrived += OnResultArrived;
+        LiveUpdatesService.ResultArrived += OnResultArrived;
     }
 
     protected override void OnParametersSet() => _pageErrors?.Recover();
@@ -148,10 +148,10 @@
         _isDarkMode = await Browser.GetLocalStorageAsync("theme") != "light";
         await PreferencesService.InitializeAsync();
 
-        await CircuitAccess.StartAsync();
-        if (CircuitAccess.SignedIn) _signedInAs = SignedInUser.DisplayName(CircuitAccess.User);
+        await CircuitAccessService.StartAsync();
+        if (CircuitAccessService.SignedIn) _signedInAs = SignedInUser.DisplayName(CircuitAccessService.User);
 
-        LiveUpdates.Start(InvokeAsync);
+        LiveUpdatesService.Start(InvokeAsync);
         await LoadAsync();
     }
 
@@ -171,14 +171,14 @@
 
     private async Task<AppState> LoadStateAsync()
     {
-        if (CircuitAccess.Level == Access.None) return AppState.SignInRequired;
+        if (CircuitAccessService.Level == Access.None) return AppState.SignInRequired;
 
         try
         {
             await Settings.LoadAsync();
             var status = Pause.GetStatus();
             StatusService.UpdateStatus(status.Running, status.Paused);
-            await RecentResults.ReloadAsync();
+            await RecentResultsService.ReloadAsync();
             return AppState.Ready;
         }
         catch (Exception ex) when (ex is DbException or InvalidOperationException)
@@ -220,6 +220,6 @@
         _disposed = true;
         StatusService.OnChange -= OnStateChanged;
         Settings.OnChange -= OnStateChanged;
-        LiveUpdates.ResultArrived -= OnResultArrived;
+        LiveUpdatesService.ResultArrived -= OnResultArrived;
     }
 }

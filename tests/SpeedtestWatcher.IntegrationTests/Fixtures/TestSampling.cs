@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.Monitoring;
+using SpeedtestWatcher.Application.Configuration;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
@@ -11,4 +11,6 @@ internal static class TestSampling
         LeastIdleSamples: 5,
         LeastLoadSamples: 10,
         LeastLoadTime: TimeSpan.FromMilliseconds(100));
+
+    public static BufferbloatSampling WithoutIdleWindow { get; } = Bufferbloat with { IdleWindow = TimeSpan.Zero };
 }

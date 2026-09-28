@@ -1,0 +1,745 @@
+### GET /api/config
+200 application/json; charset=utf-8
+{
+  "apiTokenSet": false,
+  "authActive": false,
+  "authDisabledByEnv": false,
+  "authEnabled": "false",
+  "chartBeginAtZero": "false",
+  "chartRange": "7d",
+  "cron": "0 * * * *",
+  "dateFormat": "dmy",
+  "download": "100",
+  "interface": "none",
+  "internetCheckEnabled": "true",
+  "internetCheckUrl": "https://icanhazip.com",
+  "iperf3Servers": "none",
+  "libreId": "none",
+  "libreServerIds": "none",
+  "libreUrl": "none",
+  "maxBufferbloat": "none",
+  "maxPacketLoss": "none",
+  "monitoringEnabled": "true",
+  "monitoringInterval": "15",
+  "monitoringRoundsDown": "3",
+  "monitoringRoundsUp": "2",
+  "monitoringTargets": "1.1.1.1:443,8.8.8.8:443,9.9.9.9:443",
+  "monitoringTestAfterReconnect": "false",
+  "oidcAuthority": "none",
+  "oidcClientId": "none",
+  "oidcClientSecretSet": false,
+  "oidcScopes": "openid profile email",
+  "ooklaId": "none",
+  "ooklaServerIds": "none",
+  "ping": "25",
+  "provider": "ookla",
+  "retentionDays": "365",
+  "scheduleOffset": "true",
+  "serverListMode": "allow",
+  "serverMode": "auto",
+  "skipIps": "none",
+  "unhealthyCron": "none",
+  "upload": "50",
+  "viewMode": false,
+  "visitorAccess": "none"
+}
+
+### GET /api/speedtests
+200 application/json; charset=utf-8
+[
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-15T07:00:00Z",
+    "download": -1,
+    "downloadBytes": null,
+    "error": "Network unreachable",
+    "healthy": null,
+    "id": 4,
+    "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": -1,
+    "publicIp": null,
+    "resultId": null,
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "failed",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": null,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 0,
+    "type": "auto",
+    "upload": -1,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-15T06:00:00Z",
+    "download": -1,
+    "downloadBytes": null,
+    "error": "Public IP 203.0.113.9 is on the skip list",
+    "healthy": null,
+    "id": 3,
+    "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": -1,
+    "publicIp": null,
+    "resultId": null,
+    "serverHost": null,
+    "serverId": 0,
+    "serverName": null,
+    "status": "skipped",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": null,
+    "thresholdPacketLoss": null,
+    "thresholdPing": null,
+    "thresholdUpload": null,
+    "time": 0,
+    "type": "auto",
+    "upload": -1,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-14T20:35:00Z",
+    "download": 612.5,
+    "downloadBytes": null,
+    "error": null,
+    "healthy": false,
+    "id": 2,
+    "jitter": 2.75,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": 31,
+    "publicIp": null,
+    "resultId": "r-2",
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "completed",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": null,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 15,
+    "type": "custom",
+    "upload": 98.125,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": 5.1,
+    "bufferbloatUp": 42.8,
+    "created": "2026-09-14T08:05:00Z",
+    "download": 941.25,
+    "downloadBytes": 903347628,
+    "error": null,
+    "healthy": true,
+    "id": 1,
+    "jitter": 0.4,
+    "latencyIdle": 13.2,
+    "latencyLoaded": 31.7,
+    "latencyLoadedTail": 64.2,
+    "packetLoss": 0,
+    "ping": 12,
+    "publicIp": "203.0.113.9",
+    "resultId": "r-1",
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "completed",
+    "thresholdBufferbloat": 50,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": 0.5,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 14,
+    "type": "auto",
+    "upload": 110.5,
+    "uploadBytes": 88429797
+  }
+]
+
+### GET /api/speedtests/2
+200 application/json; charset=utf-8
+{
+  "bufferbloatDown": null,
+  "bufferbloatUp": null,
+  "created": "2026-09-14T20:35:00Z",
+  "download": 612.5,
+  "downloadBytes": null,
+  "error": null,
+  "healthy": false,
+  "id": 2,
+  "jitter": 2.75,
+  "latencyIdle": null,
+  "latencyLoaded": null,
+  "latencyLoadedTail": null,
+  "packetLoss": null,
+  "ping": 31,
+  "publicIp": null,
+  "resultId": "r-2",
+  "serverHost": "speed.acme.example",
+  "serverId": 12345,
+  "serverName": "Acme Fibre",
+  "status": "completed",
+  "thresholdBufferbloat": null,
+  "thresholdDownload": 900,
+  "thresholdPacketLoss": null,
+  "thresholdPing": 25,
+  "thresholdUpload": 100,
+  "time": 15,
+  "type": "custom",
+  "upload": 98.125,
+  "uploadBytes": null
+}
+
+### GET /api/speedtests/99
+404 application/json; charset=utf-8
+{
+  "message": "Speedtest not found"
+}
+
+### GET /api/speedtests?status=unknown
+400 application/json; charset=utf-8
+{
+  "message": "The request isn't valid. status: The value 'unknown' is not valid."
+}
+
+### GET /api/speedtests/status
+200 application/json; charset=utf-8
+{
+  "paused": false,
+  "running": false
+}
+
+### GET /api/speedtests/statistics?from=2026-09-14&to=2026-09-15&tz=America/New_York
+200 application/json; charset=utf-8
+{
+  "bufferbloatDown": {
+    "avg": 5.1,
+    "max": 5.1,
+    "min": 5.1
+  },
+  "bufferbloatUp": {
+    "avg": 42.8,
+    "max": 42.8,
+    "min": 42.8
+  },
+  "consistency": {
+    "download": {
+      "consistency": 78.8,
+      "stdDev": 164.38
+    },
+    "ping": {
+      "jitter": 9.5,
+      "stdDev": 9.5
+    },
+    "upload": {
+      "consistency": 94.1,
+      "stdDev": 6.19
+    }
+  },
+  "dataUsedBytes": 991777425,
+  "dateRange": {
+    "days": 2,
+    "from": "2026-09-14",
+    "to": "2026-09-15"
+  },
+  "download": {
+    "avg": 776.88,
+    "max": 941.25,
+    "min": 612.5
+  },
+  "downsampled": false,
+  "hourlyAverages": [
+    {
+      "count": 0,
+      "download": null,
+      "hour": 0,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 1,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 2,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 3,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 1,
+      "download": 941.25,
+      "hour": 4,
+      "jitter": 0.4,
+      "ping": 12,
+      "upload": 110.5
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 5,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 6,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 7,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 8,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 9,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 10,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 11,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 12,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 13,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 14,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 15,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 1,
+      "download": 612.5,
+      "hour": 16,
+      "jitter": 2.75,
+      "ping": 31,
+      "upload": 98.12
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 17,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 18,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 19,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 20,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 21,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 22,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    },
+    {
+      "count": 0,
+      "download": null,
+      "hour": 23,
+      "jitter": null,
+      "ping": null,
+      "upload": null
+    }
+  ],
+  "jitter": {
+    "avg": 1.58,
+    "max": 2.75,
+    "min": 0.4
+  },
+  "packetLoss": {
+    "avg": 0,
+    "max": 0,
+    "min": 0
+  },
+  "ping": {
+    "avg": 22,
+    "max": 31,
+    "min": 12
+  },
+  "points": [
+    {
+      "bufferbloatDown": 5.1,
+      "bufferbloatUp": 42.8,
+      "download": 941.25,
+      "duration": 14,
+      "error": null,
+      "failed": false,
+      "jitter": 0.4,
+      "ping": 12,
+      "timestamp": "2026-09-14T08:05:00Z",
+      "upload": 110.5
+    },
+    {
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
+      "download": 612.5,
+      "duration": 15,
+      "error": null,
+      "failed": false,
+      "jitter": 2.75,
+      "ping": 31,
+      "timestamp": "2026-09-14T20:35:00Z",
+      "upload": 98.125
+    },
+    {
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
+      "download": null,
+      "duration": null,
+      "error": null,
+      "failed": false,
+      "jitter": null,
+      "ping": null,
+      "timestamp": "2026-09-15T06:00:00Z",
+      "upload": null
+    },
+    {
+      "bufferbloatDown": null,
+      "bufferbloatUp": null,
+      "download": null,
+      "duration": null,
+      "error": "Network unreachable",
+      "failed": true,
+      "jitter": null,
+      "ping": null,
+      "timestamp": "2026-09-15T07:00:00Z",
+      "upload": null
+    }
+  ],
+  "rawDataPoints": 4,
+  "tests": {
+    "failed": 1,
+    "total": 4
+  },
+  "time": {
+    "avg": 14,
+    "max": 15,
+    "min": 14
+  },
+  "upload": {
+    "avg": 104.31,
+    "max": 110.5,
+    "min": 98.12
+  }
+}
+
+### GET /api/speedtests/statistics?tz=Mars/Olympus_Mons
+400 application/json; charset=utf-8
+{
+  "message": "Mars/Olympus_Mons isn't a time zone this server knows. Use an IANA name such as Europe/London."
+}
+
+### POST /api/speedtests/export {"format":"json"}
+200 application/json
+[
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-15T07:00:00Z",
+    "download": -1,
+    "downloadBytes": null,
+    "error": "Network unreachable",
+    "healthy": null,
+    "id": 4,
+    "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": -1,
+    "resultId": null,
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "failed",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": null,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 0,
+    "type": "auto",
+    "upload": -1,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-15T06:00:00Z",
+    "download": -1,
+    "downloadBytes": null,
+    "error": "Public IP 203.0.113.9 is on the skip list",
+    "healthy": null,
+    "id": 3,
+    "jitter": null,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": -1,
+    "resultId": null,
+    "serverHost": null,
+    "serverId": 0,
+    "serverName": null,
+    "status": "skipped",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": null,
+    "thresholdPacketLoss": null,
+    "thresholdPing": null,
+    "thresholdUpload": null,
+    "time": 0,
+    "type": "auto",
+    "upload": -1,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": null,
+    "bufferbloatUp": null,
+    "created": "2026-09-14T20:35:00Z",
+    "download": 612.5,
+    "downloadBytes": null,
+    "error": null,
+    "healthy": false,
+    "id": 2,
+    "jitter": 2.75,
+    "latencyIdle": null,
+    "latencyLoaded": null,
+    "latencyLoadedTail": null,
+    "packetLoss": null,
+    "ping": 31,
+    "resultId": "r-2",
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "completed",
+    "thresholdBufferbloat": null,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": null,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 15,
+    "type": "custom",
+    "upload": 98.125,
+    "uploadBytes": null
+  },
+  {
+    "bufferbloatDown": 5.1,
+    "bufferbloatUp": 42.8,
+    "created": "2026-09-14T08:05:00Z",
+    "download": 941.25,
+    "downloadBytes": 903347628,
+    "error": null,
+    "healthy": true,
+    "id": 1,
+    "jitter": 0.4,
+    "latencyIdle": 13.2,
+    "latencyLoaded": 31.7,
+    "latencyLoadedTail": 64.2,
+    "packetLoss": 0,
+    "ping": 12,
+    "resultId": "r-1",
+    "serverHost": "speed.acme.example",
+    "serverId": 12345,
+    "serverName": "Acme Fibre",
+    "status": "completed",
+    "thresholdBufferbloat": 50,
+    "thresholdDownload": 900,
+    "thresholdPacketLoss": 0.5,
+    "thresholdPing": 25,
+    "thresholdUpload": 100,
+    "time": 14,
+    "type": "auto",
+    "upload": 110.5,
+    "uploadBytes": 88429797
+  }
+]
+
+### POST /api/speedtests/export {"format":"csv"}
+200 text/csv
+id,created,status,healthy,type,ping,jitter,download,upload,packetLoss,bufferbloatDown,bufferbloatUp,latencyIdle,latencyLoaded,latencyLoadedTail,downloadBytes,uploadBytes,time,serverId,serverName,serverHost,thresholdPing,thresholdDownload,thresholdUpload,thresholdPacketLoss,thresholdBufferbloat,resultId,error
+4,2026-09-15T07:00:00Z,failed,,auto,-1,,-1,-1,,,,,,,,,0,12345,Acme Fibre,speed.acme.example,25,900,100,,,,Network unreachable
+3,2026-09-15T06:00:00Z,skipped,,auto,-1,,-1,-1,,,,,,,,,0,0,,,,,,,,,Public IP 203.0.113.9 is on the skip list
+2,2026-09-14T20:35:00Z,completed,false,custom,31,2.75,612.5,98.125,,,,,,,,,15,12345,Acme Fibre,speed.acme.example,25,900,100,,,r-2,
+1,2026-09-14T08:05:00Z,completed,true,auto,12,0.4,941.25,110.5,0,5.1,42.8,13.2,31.7,64.2,903347628,88429797,14,12345,Acme Fibre,speed.acme.example,25,900,100,0.5,50,r-1,
+
+### POST /api/speedtests/export {"format":
+400 application/json; charset=utf-8
+{
+  "message": "The request isn't valid. The request field is required. Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.format | LineNumber: 0 | BytePositionInLine: 10."
+}
+
+### GET /api/prometheus/metrics
+200 text/plain; version=0.0.4; charset=utf-8
+# HELP speedtest_watcher_ping Ping of the latest completed test in ms
+# TYPE speedtest_watcher_ping gauge
+speedtest_watcher_ping{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 31
+# HELP speedtest_watcher_jitter Jitter of the latest completed test in ms
+# TYPE speedtest_watcher_jitter gauge
+speedtest_watcher_jitter{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 2.75
+# HELP speedtest_watcher_download Download speed of the latest completed test in Mbps
+# TYPE speedtest_watcher_download gauge
+speedtest_watcher_download{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 612.50
+# HELP speedtest_watcher_upload Upload speed of the latest completed test in Mbps
+# TYPE speedtest_watcher_upload gauge
+speedtest_watcher_upload{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 98.12
+# HELP speedtest_watcher_time Duration of the latest completed test in seconds
+# TYPE speedtest_watcher_time gauge
+speedtest_watcher_time{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 15
+# HELP speedtest_watcher_data_used_bytes Bytes the tests in a period moved, download and upload together
+# TYPE speedtest_watcher_data_used_bytes gauge
+speedtest_watcher_data_used_bytes{period="24h"} 0
+speedtest_watcher_data_used_bytes{period="7d"} 0
+speedtest_watcher_data_used_bytes{period="30d"} 991777425
+speedtest_watcher_data_used_bytes{period="stored"} 991777425
+# HELP speedtest_watcher_healthy Whether the latest completed test met its targets (1 healthy, 0 not)
+# TYPE speedtest_watcher_healthy gauge
+speedtest_watcher_healthy{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 0
+# HELP speedtest_watcher_threshold_ping Ping target the latest completed test was judged against, in ms
+# TYPE speedtest_watcher_threshold_ping gauge
+speedtest_watcher_threshold_ping{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 25
+# HELP speedtest_watcher_threshold_download Download target the latest completed test was judged against, in Mbps
+# TYPE speedtest_watcher_threshold_download gauge
+speedtest_watcher_threshold_download{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 900.00
+# HELP speedtest_watcher_threshold_upload Upload target the latest completed test was judged against, in Mbps
+# TYPE speedtest_watcher_threshold_upload gauge
+speedtest_watcher_threshold_upload{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 100.00
+# HELP speedtest_watcher_last_test_timestamp_seconds When the latest test ran, in Unix seconds
+# TYPE speedtest_watcher_last_test_timestamp_seconds gauge
+speedtest_watcher_last_test_timestamp_seconds{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="failed",scheduled="true"} 1789455600
+# HELP speedtest_watcher_last_completed_test_timestamp_seconds When the latest completed test ran, in Unix seconds
+# TYPE speedtest_watcher_last_completed_test_timestamp_seconds gauge
+speedtest_watcher_last_completed_test_timestamp_seconds{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 1789418100
+# HELP speedtest_watcher_tests_total Number of results stored
+# TYPE speedtest_watcher_tests_total gauge
+speedtest_watcher_tests_total 4
+# HELP speedtest_watcher_server Server id of the latest completed test
+# TYPE speedtest_watcher_server gauge
+speedtest_watcher_server 12345
+# HELP speedtest_watcher_server_info Static info about the latest completed test (always 1).
+# TYPE speedtest_watcher_server_info gauge
+speedtest_watcher_server_info{server_id="12345",server_name="Acme Fibre",server_host="speed.acme.example",status="completed",scheduled="false"} 1
+# HELP speedtest_watcher_outages_total Outages the monitor recorded in the last 30 days
+# TYPE speedtest_watcher_outages_total gauge
+speedtest_watcher_outages_total 0
+# HELP speedtest_watcher_outage_seconds_total Seconds the line was down in the last 30 days
+# TYPE speedtest_watcher_outage_seconds_total gauge
+speedtest_watcher_outage_seconds_total 0
+

@@ -1,5 +1,5 @@
 @using Cronos
-@inject SettingsState Settings
+@inject SettingsStateService Settings
 @inject ResultsService Results
 @inject PauseService Pausing
 @inject StatusStateService StatusService
@@ -270,7 +270,7 @@
             ("scheduleOffset", _scheduleOffset ? "true" : "false"),
             ("unhealthyCron", EffectiveUnhealthyCron ?? SettingDefinitions.Unset));
         if (result.Succeeded) Snackbar.Add(WebStrings.ScheduleSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
     }
 
     private void PauseTests()

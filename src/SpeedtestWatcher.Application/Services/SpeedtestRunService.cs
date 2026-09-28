@@ -1,0 +1,278 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using SpeedtestWatcher.Application.Resources;
+using SpeedtestWatcher.Application.Configuration;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Models.Dtos;
+using SpeedtestWatcher.Application.Models.Entities;
+using SpeedtestWatcher.Application.Models.Events;
+using SpeedtestWatcher.Application.Repositories.Interfaces;
+using SpeedtestWatcher.Application.Services.Interfaces;
+
+namespace SpeedtestWatcher.Application.Services;
+
+public sealed partial class SpeedtestRunService
+{
+    public static string AlreadyRunning => ApplicationStrings.SpeedtestAlreadyRunning;
+
+    private readonly RunStateService _state;
+    private readonly ISettingsRepository _settings;
+    private readonly ISpeedtestRepository _results;
+    private readonly IToolRunnerService _runner;
+    private readonly IConnectivityCheckService _connectivity;
+    private readonly BufferbloatService _bufferbloat;
+    private readonly ServerSelectionService _serverSelection;
+    private readonly RecommendationService _recommendations;
+    private readonly IIntegrationDispatchService _dispatcher;
+    private readonly IAppEventService _events;
+    private readonly ICurrentAccessService _access;
+    private readonly IServiceScopeFactory _scopes;
+    private readonly IHostApplicationLifetime _lifetime;
+    private readonly ILogger<SpeedtestRunService> _logger;
+
+    public SpeedtestRunService(
+        RunStateService state,
+        ISettingsRepository settings,
+        ISpeedtestRepository results,
+        IToolRunnerService runner,
+        IConnectivityCheckService connectivity,
+        BufferbloatService bufferbloat,
+        ServerSelectionService serverSelection,
+        RecommendationService recommendations,
+        IIntegrationDispatchService dispatcher,
+        IAppEventService events,
+        ICurrentAccessService access,
+        IServiceScopeFactory scopes,
+        IHostApplicationLifetime lifetime,
+        ILogger<SpeedtestRunService> logger)
+    {
+        _state = state;
+        _settings = settings;
+        _results = results;
+        _runner = runner;
+        _connectivity = connectivity;
+        _bufferbloat = bufferbloat;
+        _serverSelection = serverSelection;
+        _recommendations = recommendations;
+        _dispatcher = dispatcher;
+        _events = events;
+        _access = access;
+        _scopes = scopes;
+        _lifetime = lifetime;
+        _logger = logger;
+    }
+
+    public async Task<SpeedtestExecutionResult> RunAsync(TestType type, string? serverOverride = null, CancellationToken cancellationToken = default)
+    {
+        if (type == TestType.Auto && _state.IsPaused)
+        {
+            LogSkippedWhilePaused();
+            return Failure("Speedtest is paused");
+        }
+
+        if (!_state.TryStartRun()) return Failure(AlreadyRunning);
+
+        return await RunClaimedAsync(type, serverOverride, cancellationToken);
+    }
+
+    public async Task<OperationResult> StartManualRunAsync(string? serverId, CancellationToken cancellationToken = default)
+    {
+        if (!_access.HasFullAccess) return OperationResult.Denied();
+        if (_state.IsRunning) return OperationResult.Conflict(AlreadyRunning);
+
+        if (ProviderProblem((await _settings.GetAsync(cancellationToken)).Provider) is { } problem)
+            return OperationResult.Conflict(problem);
+
+        if (_state.IsPaused) return OperationResult.Conflict(ApplicationStrings.SpeedtestsPaused);
+        if (!_state.TryStartRun()) return OperationResult.Conflict(AlreadyRunning);
+
+        _ = Task.Run(() => RunClaimedInOwnScopeAsync(serverId), CancellationToken.None);
+        return OperationResult.Ok();
+    }
+
+    private async Task RunClaimedInOwnScopeAsync(string? serverId)
+    {
+        try
+        {
+            using var scope = _scopes.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<SpeedtestRunService>()
+                .RunClaimedAsync(TestType.Custom, serverId, _lifetime.ApplicationStopping);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
+        {
+            LogManualRunFailed(ex);
+            _state.FinishRun();
+        }
+    }
+
+    private async Task<SpeedtestExecutionResult> RunClaimedAsync(TestType type, string? serverOverride, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _events.PublishTestStarted();
+            return await RunWithOneRetryAsync(type, serverOverride, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            LogRunCrashed(ex);
+            return Failure(ex.Message);
+        }
+        finally
+        {
+            _state.FinishRun();
+        }
+    }
+
+    private async Task<SpeedtestExecutionResult> RunWithOneRetryAsync(TestType type, string? serverOverride, CancellationToken cancellationToken)
+    {
+        var settings = await _settings.GetAsync(cancellationToken);
+        var provider = settings.Provider.Selected;
+        if (provider == SpeedtestProvider.None) return Failure("No provider selected");
+        if (ProviderProblem(settings.Provider) is { } problem) return Failure(problem);
+
+        var check = await _connectivity.CheckAsync(settings.PreTestChecks, cancellationToken);
+        if (!check.Proceed)
+        {
+            var reason = check.SkipReason ?? "Skipped";
+            await RecordSkippedAsync(type, reason, check.PublicIp, cancellationToken);
+            return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
+        }
+
+        var serverId = serverOverride ?? await _serverSelection.SelectAsync(settings.Provider, cancellationToken);
+        var customUrl = CustomUrl(provider, settings.Provider);
+
+        await _dispatcher.PublishAsync(new TestStarted(provider, type), cancellationToken);
+
+        var (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, customUrl, settings.Provider.Interface, cancellationToken);
+        if (!result.Success)
+        {
+            LogRetrying(result.Error);
+            serverId = serverOverride ?? await _serverSelection.SelectAsync(settings.Provider, cancellationToken);
+            customUrl = CustomUrl(provider, settings.Provider);
+            (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, customUrl, settings.Provider.Interface, cancellationToken);
+        }
+
+        var previous = result.Success ? await _results.GetLatestCompletedAsync(cancellationToken) : null;
+        var test = Record(result, type, settings.Targets, check.PublicIp, bufferbloat);
+        test.Id = await _results.CreateAsync(test, cancellationToken);
+
+        if (result.Success)
+        {
+            var recommendation = await _recommendations.RecalculateAsync(cancellationToken);
+            await _dispatcher.PublishAsync(new TestFinished(test), cancellationToken);
+            if (test.Healthy == false)
+                await _dispatcher.PublishAsync(new TestUnhealthy(test), cancellationToken);
+            else if (test.Healthy == true && previous?.Healthy == false)
+                await _dispatcher.PublishAsync(new TestHealthyAgain(test), cancellationToken);
+            if (recommendation != null)
+                await _dispatcher.PublishAsync(new RecommendationsUpdated(recommendation), cancellationToken);
+        }
+        else
+        {
+            await _dispatcher.PublishAsync(new TestFailed(test), cancellationToken);
+        }
+
+        _events.PublishTestFinished(SpeedtestDto.From(test));
+        return result;
+    }
+
+    private static string? ProviderProblem(ProviderSettings settings) => settings switch
+    {
+        { Selected: SpeedtestProvider.None } => ApplicationStrings.NoProviderSelected,
+        { Selected: SpeedtestProvider.Iperf3, Iperf3Servers.Count: 0 } => ApplicationStrings.NoIperf3ServersConfigured,
+        _ => null
+    };
+
+    private static string? CustomUrl(SpeedtestProvider provider, ProviderSettings settings) => provider switch
+    {
+        SpeedtestProvider.Libre => settings.LibreUrl,
+        SpeedtestProvider.Iperf3 => PickServer(settings.Iperf3Servers)?.ToString(),
+        _ => null
+    };
+
+    private static ProbeTarget? PickServer(IReadOnlyList<ProbeTarget> servers) =>
+        servers.Count > 0 ? servers[Random.Shared.Next(servers.Count)] : null;
+
+    private async Task<(SpeedtestExecutionResult Result, BufferbloatReading? Bufferbloat)> MeasuredRunAsync(
+        SpeedtestProvider provider, string? serverId, string? libreUrl, string? networkInterface, CancellationToken cancellationToken)
+    {
+        await using var measuring = await _bufferbloat.StartAsync(cancellationToken);
+        var result = await _runner.RunTestAsync(provider, serverId, libreUrl, networkInterface, cancellationToken);
+        return (result, result.Success ? await measuring.StopAsync() : null);
+    }
+
+    private static Speedtest Record(SpeedtestExecutionResult result, TestType type, TargetSettings targets, string? publicIp, BufferbloatReading? bufferbloat) => new()
+    {
+        ServerId = result.ServerId,
+        ServerName = result.ServerName,
+        ServerHost = result.ServerHost,
+        Ping = result.Success ? result.Ping : -1,
+        Jitter = result.Success ? result.Jitter : null,
+        Download = result.Success ? result.Download : -1,
+        Upload = result.Success ? result.Upload : -1,
+        Time = result.Time,
+        Type = type,
+        ResultId = result.ResultId,
+        Error = result.Success ? null : result.Error ?? "Unknown error",
+        Status = result.Success ? TestStatus.Completed : TestStatus.Failed,
+        Healthy = result.Success ? targets.Evaluate(Judged(result, bufferbloat)) : null,
+        ThresholdPing = targets.Ping,
+        ThresholdDownload = targets.Download,
+        ThresholdUpload = targets.Upload,
+        ThresholdPacketLoss = targets.PacketLoss,
+        ThresholdBufferbloat = targets.Bufferbloat,
+        PacketLoss = result.Success ? result.PacketLoss : null,
+        BufferbloatDown = bufferbloat?.DownloadMilliseconds,
+        BufferbloatUp = bufferbloat?.UploadMilliseconds,
+        LatencyIdle = bufferbloat?.IdleMilliseconds,
+        LatencyLoaded = bufferbloat?.LoadedMilliseconds,
+        LatencyLoadedTail = bufferbloat?.LoadedTailMilliseconds,
+        DownloadBytes = result.DownloadBytes,
+        UploadBytes = result.UploadBytes,
+        PublicIp = publicIp,
+        Created = DateTime.UtcNow
+    };
+
+    private static Readings Judged(SpeedtestExecutionResult result, BufferbloatReading? bufferbloat) =>
+        new(result.Ping, result.Download, result.Upload, result.PacketLoss, bufferbloat?.DownloadMilliseconds, bufferbloat?.UploadMilliseconds);
+
+    private async Task RecordSkippedAsync(TestType type, string reason, string? publicIp, CancellationToken cancellationToken)
+    {
+        var skipped = new Speedtest
+        {
+            Ping = -1,
+            Download = -1,
+            Upload = -1,
+            Status = TestStatus.Skipped,
+            Error = reason,
+            Type = type,
+            PublicIp = publicIp,
+            Created = DateTime.UtcNow
+        };
+
+        skipped.Id = await _results.CreateAsync(skipped, cancellationToken);
+        LogSkipped(reason);
+
+        await _dispatcher.PublishAsync(new TestSkipped(skipped), cancellationToken);
+        _events.PublishTestFinished(SpeedtestDto.From(skipped));
+    }
+
+    private static SpeedtestExecutionResult Failure(string error) => new() { Success = false, Error = error };
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Speedtest skipped because tests are paused")]
+    private partial void LogSkippedWhilePaused();
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The manual speedtest could not start")]
+    private partial void LogManualRunFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Unexpected error running speedtest")]
+    private partial void LogRunCrashed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Speedtest failed ({Error}). Retrying once...")]
+    private partial void LogRetrying(string? error);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Speedtest skipped: {Reason}")]
+    private partial void LogSkipped(string reason);
+}

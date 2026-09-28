@@ -1,10 +1,13 @@
+using SpeedtestWatcher.Application.Configuration;
+using SpeedtestWatcher.Application.Installers;
+using SpeedtestWatcher.Application.Services;
+using SpeedtestWatcher.Web.Configuration;
+using SpeedtestWatcher.Web.Installers;
+using SpeedtestWatcher.Web.Middleware;
+using SpeedtestWatcher.Web.Services;
+using SpeedtestWatcher.Web.Utils;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
-using SpeedtestWatcher.Application.Common;
-using SpeedtestWatcher.Application.Recommendations;
-using SpeedtestWatcher.Web.Api.OpenApi;
-using SpeedtestWatcher.Web.SignIn;
-using SpeedtestWatcher.Web.Startup;
 using SpeedtestWatcher.Web.Ui;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,7 +33,7 @@ using (var scope = app.Services.CreateScope())
     await scope.ServiceProvider.GetRequiredService<RecommendationService>().RemovePlaceholderAsync();
 }
 
-await app.Services.GetRequiredService<AuthSettings>().ReloadAsync();
+await app.Services.GetRequiredService<AuthSettingsService>().ReloadAsync();
 
 app.UseForwardedHeaders();
 

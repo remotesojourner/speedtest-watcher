@@ -1,10 +1,10 @@
 @inject SignInService SignInService
-@inject ISignInState SignInState
-@inject SettingsState Settings
+@inject ISignInStateService SignInState
+@inject SettingsStateService Settings
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject IDialogService DialogService
-@inject BrowserInterop Browser
+@inject BrowserInteropService Browser
 @inject ISnackbar Snackbar
 
 @if (SignInState.DisabledByEnvironment)

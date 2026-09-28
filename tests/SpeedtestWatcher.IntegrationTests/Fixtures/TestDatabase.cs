@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using SpeedtestWatcher.Application.Storage;
+using SpeedtestWatcher.Application.Data;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 

@@ -4,10 +4,10 @@
 @inject StorageService Storage
 @inject DataBackupService Data
 @inject SettingsBackupService Backup
-@inject SettingsState Settings
-@inject RecentResults RecentResults
+@inject SettingsStateService Settings
+@inject RecentResultsService RecentResultsService
 @inject NavigationManager Navigation
-@inject BrowserInterop Browser
+@inject BrowserInteropService Browser
 @inject ILogger<SettingsStorage> Logger
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -167,7 +167,7 @@
 
         var result = await Settings.SaveAsync(("retentionDays", days.ToString(CultureInfo.InvariantCulture)));
         if (result.Succeeded) Snackbar.Add(WebStrings.StorageRetentionSaved, Severity.Success);
-        else Snackbar.Add(result.Message ?? SettingsState.SaveFailed, Severity.Error);
+        else Snackbar.Add(result.Message ?? SettingsStateService.SaveFailed, Severity.Error);
     }
 
     private async Task ExportDataAsync()
@@ -210,7 +210,7 @@
         var imported = counts.Speedtests + counts.Outages + counts.WatchSessions + counts.ProbeRounds;
         Snackbar.Add(DataImportSummary(counts), imported > 0 ? Severity.Success : Severity.Info);
         await LoadStorageInfoAsync();
-        await RecentResults.ReloadAsync();
+        await RecentResultsService.ReloadAsync();
     }
 
     private static string DataImportSummary(DataImportResultDto counts)
@@ -354,7 +354,7 @@
             return;
         }
 
-        RecentResults.Clear();
+        RecentResultsService.Clear();
         await LoadStorageInfoAsync();
         Snackbar.Add(WebStrings.StorageDataDeleted, Severity.Success);
     }

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
-using SpeedtestWatcher.Web.Api;
+using SpeedtestWatcher.Web.Controllers;
 
 namespace SpeedtestWatcher.IntegrationTests.Web.Ui;
 

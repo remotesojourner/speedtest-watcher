@@ -1,8 +1,9 @@
-using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.TestSupport;
 
-internal sealed class FixedAccess(Access level) : ICurrentAccess
+internal sealed class FixedAccess(Access level) : ICurrentAccessService
 {
     public static FixedAccess Full { get; } = new(Access.Full);
 

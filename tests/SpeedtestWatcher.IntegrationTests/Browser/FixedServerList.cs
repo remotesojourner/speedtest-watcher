@@ -1,8 +1,10 @@
-using SpeedtestWatcher.Application.Providers;
+using SpeedtestWatcher.Application.Enums;
+using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Services.Interfaces;
 
 namespace SpeedtestWatcher.IntegrationTests.Browser;
 
-internal sealed class FixedServerList : IServerListProvider
+internal sealed class FixedServerList : IServerListService
 {
     private static readonly IReadOnlyList<ServerInfo> _servers =
     [

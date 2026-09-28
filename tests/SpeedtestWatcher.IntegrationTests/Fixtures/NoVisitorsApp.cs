@@ -1,4 +1,4 @@
-using SpeedtestWatcher.Application.SignIn;
+using SpeedtestWatcher.Application.Enums;
 
 namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
