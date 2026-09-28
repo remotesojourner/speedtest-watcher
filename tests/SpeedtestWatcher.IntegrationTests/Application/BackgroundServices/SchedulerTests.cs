@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Time.Testing;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.Application.BackgroundServices;
 using SpeedtestWatcher.Application.Configuration;
@@ -15,7 +14,7 @@ namespace SpeedtestWatcher.IntegrationTests.Application.BackgroundServices;
 public sealed class SchedulerTests : IDisposable
 {
     private readonly TestDatabase _database = new();
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 30, TimeSpan.Zero));
+    private readonly WaitAwareTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 30, TimeSpan.Zero));
     private ServiceProvider? _services;
 
     [Fact(Timeout = 15000)]
@@ -45,17 +44,13 @@ public sealed class SchedulerTests : IDisposable
 
         using var scheduler = ActivatorUtilities.CreateInstance<SpeedtestSchedulerService>(_services);
         await scheduler.StartAsync(cancellationToken);
-        await Task.Delay(200, cancellationToken);
+        await _time.NextWaitAsync(cancellationToken);
         await SaveAsync(new Dictionary<string, string> { ["cron"] = "* * * * *" }, cancellationToken);
 
-        while (!runner.Ran.IsCompleted)
-        {
-            _time.Advance(TimeSpan.FromSeconds(31));
-            await Task.WhenAny(runner.Ran, Task.Delay(100, cancellationToken));
-        }
+        var ran = await _time.SkipWaitsUntilAsync(runner.Ran, TimeSpan.FromMinutes(1), cancellationToken);
 
         await scheduler.StopAsync(cancellationToken);
-        Assert.True(_time.GetUtcNow() < new DateTimeOffset(2026, 9, 23, 0, 0, 0, TimeSpan.Zero));
+        Assert.True(ran);
     }
 
     [Fact(Timeout = 15000)]
@@ -74,24 +69,17 @@ public sealed class SchedulerTests : IDisposable
 
         using var scheduler = ActivatorUtilities.CreateInstance<SpeedtestSchedulerService>(_services);
         await scheduler.StartAsync(cancellationToken);
-        await Task.Delay(200, cancellationToken);
+        await _time.SkipNextWaitAsync(cancellationToken);
+        var untilTheRunAfter = await _time.NextWaitAsync(cancellationToken);
 
-        while (state.IsPaused)
-        {
-            _time.Advance(TimeSpan.FromSeconds(31));
-            await Task.Delay(100, cancellationToken);
-        }
-
+        Assert.False(state.IsPaused);
         Assert.False(runner.Ran.IsCompleted);
 
-        while (!runner.Ran.IsCompleted)
-        {
-            _time.Advance(TimeSpan.FromSeconds(31));
-            await Task.WhenAny(runner.Ran, Task.Delay(100, cancellationToken));
-        }
+        _time.Advance(untilTheRunAfter);
+        await runner.Ran.WaitAsync(cancellationToken);
 
         await scheduler.StopAsync(cancellationToken);
-        Assert.True(_time.GetUtcNow() >= new DateTimeOffset(2026, 9, 22, 12, 2, 0, TimeSpan.Zero));
+        Assert.Equal(new DateTimeOffset(2026, 9, 22, 12, 2, 0, TimeSpan.Zero), _time.GetUtcNow());
     }
 
     private async Task SaveAsync(Dictionary<string, string> changes, CancellationToken cancellationToken)

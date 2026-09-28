@@ -36,7 +36,7 @@ internal static class RunTestServices
         services.AddSingleton<IServerListService>(new NoServerLists());
         services.AddSingleton<IConnectionProbeService>(new OfflineProbe());
         services.AddSingleton<INetworkTrafficService>(new ScriptedTraffic());
-        services.AddSingleton(TestSampling.Bufferbloat);
+        services.AddSingleton(TestSampling.WithoutIdleWindow);
         services.AddSingleton(runner);
         services.AddSingleton(access ?? FixedAccess.Full);
         services.AddSingleton(A.Fake<IHostApplicationLifetime>());

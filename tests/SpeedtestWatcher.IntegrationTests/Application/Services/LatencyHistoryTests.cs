@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.Application.Models.Dtos;
 using SpeedtestWatcher.Application.Models.Entities;
@@ -92,7 +94,7 @@ public sealed class LatencyHistoryTests : IDisposable
         var week = Enumerable.Range(0, 7 * 24 * 60 * 4)
             .Select(step => Round(_noon.AddDays(-7).AddSeconds(step * 15), 10 + (step % 5)))
             .ToArray();
-        await StoreAsync(cancellationToken, week);
+        await StoreInBulkAsync(week, cancellationToken);
 
         var started = Stopwatch.GetTimestamp();
         await using var db = _database.NewContext();
@@ -115,6 +117,36 @@ public sealed class LatencyHistoryTests : IDisposable
         await using var db = _database.NewContext();
         db.ProbeRounds.AddRange(rounds);
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task StoreInBulkAsync(ProbeRound[] rounds, CancellationToken cancellationToken)
+    {
+        await using var db = _database.NewContext();
+        var connection = (SqliteConnection)db.Database.GetDbConnection();
+        await using var transaction = connection.BeginTransaction();
+        await using var insert = new SqliteCommand(
+            "INSERT INTO probe_rounds (at, passed, answered, asked, fastestMs, duringTest) VALUES ($at, $passed, $answered, $asked, $fastestMs, $duringTest)",
+            connection,
+            transaction);
+        var at = insert.Parameters.Add("$at", SqliteType.Text);
+        var passed = insert.Parameters.Add("$passed", SqliteType.Integer);
+        var answered = insert.Parameters.Add("$answered", SqliteType.Integer);
+        var asked = insert.Parameters.Add("$asked", SqliteType.Integer);
+        var fastest = insert.Parameters.Add("$fastestMs", SqliteType.Real);
+        var duringTest = insert.Parameters.Add("$duringTest", SqliteType.Integer);
+
+        foreach (var round in rounds)
+        {
+            at.Value = round.At;
+            passed.Value = round.Passed;
+            answered.Value = round.Answered;
+            asked.Value = round.Asked;
+            fastest.Value = (object?)round.FastestMilliseconds ?? DBNull.Value;
+            duringTest.Value = round.DuringTest;
+            await insert.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private static ProbeRound Round(DateTime at, double milliseconds, bool duringTest = false) => new()

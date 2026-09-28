@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Time.Testing;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.Application.BackgroundServices;
 using SpeedtestWatcher.Application.Configuration;
@@ -19,7 +18,7 @@ public sealed class UnhealthyScheduleTests : IDisposable
     private const string EveryMinute = "* * * * *";
 
     private readonly TestDatabase _database = new();
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 30, TimeSpan.Zero));
+    private readonly WaitAwareTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 30, TimeSpan.Zero));
     private readonly SignallingRunner _runner = new();
     private ServiceProvider? _services;
     private SpeedtestSchedulerService? _scheduler;
@@ -101,15 +100,9 @@ public sealed class UnhealthyScheduleTests : IDisposable
 
     private async Task<bool> RanWithinAsync(TimeSpan window, CancellationToken cancellationToken)
     {
-        var until = _time.GetUtcNow() + window;
-        while (!_runner.Ran.IsCompleted && _time.GetUtcNow() < until)
-        {
-            _time.Advance(TimeSpan.FromSeconds(5));
-            await Task.WhenAny(_runner.Ran, Task.Delay(25, cancellationToken));
-        }
-
+        var ran = await _time.SkipWaitsUntilAsync(_runner.Ran, window, cancellationToken);
         await _scheduler!.StopAsync(cancellationToken);
-        return _runner.Ran.IsCompleted;
+        return ran;
     }
 
     private async Task SaveAsync(Dictionary<string, string> changes, CancellationToken cancellationToken)

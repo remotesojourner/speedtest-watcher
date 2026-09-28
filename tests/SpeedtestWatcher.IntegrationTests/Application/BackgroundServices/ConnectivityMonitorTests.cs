@@ -1,6 +1,5 @@
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Time.Testing;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.Application.BackgroundServices;
 using SpeedtestWatcher.Application.Enums;
@@ -18,7 +17,7 @@ public sealed class ConnectivityMonitorTests : IDisposable
     private const int IntervalSeconds = 5;
 
     private readonly TestDatabase _database = new();
-    private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 0, TimeSpan.Zero));
+    private readonly WaitAwareTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 0, TimeSpan.Zero));
     private readonly ScriptedProbe _probe = new();
     private readonly RecordingDispatcher _integrations = new();
     private ServiceProvider? _services;
@@ -129,18 +128,12 @@ public sealed class ConnectivityMonitorTests : IDisposable
 
     private async Task RoundsAsync(int rounds, CancellationToken cancellationToken)
     {
-        while (_probe.Rounds < rounds)
+        for (var round = 1; round < rounds; round++)
         {
-            var before = _probe.Rounds;
-            for (var wait = 0; wait < 50 && _probe.Rounds == before; wait++)
-            {
-                await Task.Delay(10, cancellationToken);
-            }
-
-            if (_probe.Rounds == before) _time.Advance(TimeSpan.FromSeconds(IntervalSeconds));
+            await _time.SkipNextWaitAsync(cancellationToken);
         }
 
-        await Task.Delay(50, cancellationToken);
+        await _time.NextWaitAsync(cancellationToken);
     }
 
     private async Task<List<Outage>> OutagesAsync(CancellationToken cancellationToken)
@@ -161,7 +154,6 @@ public sealed class ConnectivityMonitorTests : IDisposable
     {
         private readonly Lock _gate = new();
         private readonly Queue<bool> _answers = new();
-        public int Rounds { get; private set; }
 
         public void Script(bool[] answers)
         {
@@ -177,7 +169,6 @@ public sealed class ConnectivityMonitorTests : IDisposable
             lock (_gate)
             {
                 passed = _answers.Count == 0 || _answers.Dequeue();
-                Rounds++;
             }
 
             return Task.FromResult(new ProbeResult(passed ? targets.Count : 0, targets.Count, passed ? 12.5 : null));

@@ -68,6 +68,7 @@ public sealed class BufferbloatAroundTestsTests : IDisposable
             {
                 services.AddSingleton<IConnectionProbeService>(_probe);
                 services.AddSingleton<INetworkTrafficService>(_traffic);
+                services.AddSingleton(TestSampling.Bufferbloat);
             });
 
         using var scope = _services.CreateScope();

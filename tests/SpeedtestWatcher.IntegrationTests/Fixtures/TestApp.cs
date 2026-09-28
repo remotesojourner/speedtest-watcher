@@ -60,7 +60,7 @@ public abstract class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
             RemoveTheAppsBackgroundServices(services);
             services.AddSingleton<IConnectionProbeService>(new OfflineProbe());
             services.AddSingleton<INetworkTrafficService>(new ScriptedTraffic());
-            services.AddSingleton(TestSampling.Bufferbloat);
+            services.AddSingleton(TestSampling.WithoutIdleWindow);
             services.ConfigureHttpClientDefaults(client => client.ConfigurePrimaryHttpMessageHandler(() => new NoNetworkHandler()));
         });
     }
