@@ -9,11 +9,11 @@ namespace SpeedtestWatcher.UnitTests.Application.Services;
 public sealed class ConnectivityCheckServiceTests : IDisposable
 {
     private readonly RecordingHandler _handler = new();
-    private readonly ConnectivityCheckService _checker;
+    private readonly ConnectivityCheckService _connectivity;
 
     public ConnectivityCheckServiceTests()
     {
-        _checker = new ConnectivityCheckService(new StubHttpClientFactory(_handler), new ConnectionStateService(new AppEventService()), NullLogger<ConnectivityCheckService>.Instance);
+        _connectivity = new ConnectivityCheckService(new StubHttpClientFactory(_handler), new ConnectionStateService(new AppEventService()), NullLogger<ConnectivityCheckService>.Instance);
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public sealed class ConnectivityCheckServiceTests : IDisposable
     {
         _handler.ResponseBody = "203.0.113.9\n";
 
-        var check = await _checker.CheckAsync(Settings([]), TestContext.Current.CancellationToken);
+        var check = await _connectivity.CheckAsync(Settings([]), TestContext.Current.CancellationToken);
 
         Assert.Equal((true, null, "203.0.113.9"), (check.Proceed, check.SkipReason, check.PublicIp));
     }
@@ -31,7 +31,7 @@ public sealed class ConnectivityCheckServiceTests : IDisposable
     {
         _handler.ResponseBody = "203.0.113.9";
 
-        var check = await _checker.CheckAsync(Settings(["203.0.113.9"]), TestContext.Current.CancellationToken);
+        var check = await _connectivity.CheckAsync(Settings(["203.0.113.9"]), TestContext.Current.CancellationToken);
 
         Assert.Equal((false, "Public IP 203.0.113.9 is on the skip list", "203.0.113.9"), (check.Proceed, check.SkipReason, check.PublicIp));
     }
@@ -39,7 +39,7 @@ public sealed class ConnectivityCheckServiceTests : IDisposable
     [Fact]
     public async Task ACheckThatIsTurnedOffLooksUpNothing()
     {
-        var check = await _checker.CheckAsync(new PreTestCheckSettings(false, "https://localhost/ip", []), TestContext.Current.CancellationToken);
+        var check = await _connectivity.CheckAsync(new PreTestCheckSettings(false, "https://localhost/ip", []), TestContext.Current.CancellationToken);
 
         Assert.Equal((true, null), (check.Proceed, check.PublicIp));
         Assert.Empty(_handler.Requests);

@@ -11,7 +11,7 @@ namespace SpeedtestWatcher.Application.Services;
 
 public sealed class SettingsBackupService
 {
-    private readonly ISettingsRepository _store;
+    private readonly ISettingsRepository _settingsRepository;
     private readonly SettingsService _settings;
     private readonly IIntegrationRepository _integrations;
     private readonly IRecommendationRepository _recommendations;
@@ -19,14 +19,14 @@ public sealed class SettingsBackupService
     private readonly ICurrentAccessService _access;
 
     public SettingsBackupService(
-        ISettingsRepository store,
+        ISettingsRepository settingsRepository,
         SettingsService settings,
         IIntegrationRepository integrations,
         IRecommendationRepository recommendations,
         IIntegrationDispatchService dispatcher,
         ICurrentAccessService access)
     {
-        _store = store;
+        _settingsRepository = settingsRepository;
         _settings = settings;
         _integrations = integrations;
         _recommendations = recommendations;
@@ -40,7 +40,7 @@ public sealed class SettingsBackupService
 
         return OperationResult.Ok(new SettingsBackupDto
         {
-            Config = (await _store.GetValuesAsync(cancellationToken))
+            Config = (await _settingsRepository.GetValuesAsync(cancellationToken))
                 .Where(setting => !SettingDefinitions.Find(setting.Key)!.IsManagedOnSecurityTab)
                 .OrderBy(setting => setting.Key, StringComparer.Ordinal)
                 .Select(setting => new ConfigEntry { Key = setting.Key, Value = setting.Value })

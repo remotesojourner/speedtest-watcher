@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SpeedtestWatcher.Application.Installers;
 using SpeedtestWatcher.Application.Repositories.Interfaces;
 using SpeedtestWatcher.Application.Services;
-using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Application.Services.Integrations.Interfaces;
 
 namespace SpeedtestWatcher.TestSupport;
 

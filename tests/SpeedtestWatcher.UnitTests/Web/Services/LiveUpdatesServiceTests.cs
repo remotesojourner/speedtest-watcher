@@ -14,7 +14,7 @@ public sealed class LiveUpdatesServiceTests : IDisposable
 {
     private readonly AppEventService _events = new();
     private readonly RunStateService _runState;
-    private readonly ISettingsRepository _store = A.Fake<ISettingsRepository>();
+    private readonly ISettingsRepository _settingsRepository = A.Fake<ISettingsRepository>();
     private readonly StatusStateService _status = new();
     private readonly RecentResultsService _recent;
     private readonly SettingsStateService _settings;
@@ -26,7 +26,7 @@ public sealed class LiveUpdatesServiceTests : IDisposable
     {
         _runState = new RunStateService(_events);
         _recent = new RecentResultsService(new ResultsService(A.Fake<ISpeedtestRepository>(), FixedAccess.Full));
-        _settings = new SettingsStateService(new SettingsService(_store, A.Fake<IIntegrationDispatchService>(), _events, A.Fake<ISignInStateService>(), FixedAccess.Full));
+        _settings = new SettingsStateService(new SettingsService(_settingsRepository, A.Fake<IIntegrationDispatchService>(), _events, A.Fake<ISignInStateService>(), FixedAccess.Full));
         _live = new LiveUpdatesService(_events, new ConnectionStateService(_events), _status, _recent, _settings, FixedAccess.Full, _logger);
         _live.ResultArrived += _announced.Add;
     }
@@ -79,7 +79,7 @@ public sealed class LiveUpdatesServiceTests : IDisposable
     public void ASettingsChangeReloadsTheSettings()
     {
         _live.Start(RunNow);
-        A.CallTo(() => _store.GetAsync(A<CancellationToken>._))
+        A.CallTo(() => _settingsRepository.GetAsync(A<CancellationToken>._))
             .Returns(AppSettings.From(new Dictionary<string, string> { ["chartRange"] = "24h" }));
 
         _events.PublishSettingsChanged(new Dictionary<string, string> { ["chartRange"] = "24h" });

@@ -1,6 +1,6 @@
 @inject StatusStateService StatusService
 @inject SettingsStateService Settings
-@inject IEnumerable<ISpeedtestProviderService> Tools
+@inject IEnumerable<ISpeedtestProviderService> ProviderServices
 @inject SpeedtestRunService Runs
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -31,7 +31,7 @@
 
     private SpeedtestProvider Provider => Settings.Current.Provider.Selected;
 
-    private bool CanChooseServer => Tools.Any(tool => tool.Provider == Provider && tool.SupportsServerChoice());
+    private bool CanChooseServer => ProviderServices.Any(providerService => providerService.Provider == Provider && providerService.SupportsServerChoice());
 
     private string RunTestTooltip => StatusService.Paused
         ? WebStrings.RunTestPausedTooltip

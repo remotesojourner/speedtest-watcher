@@ -83,12 +83,12 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
 
-        var result = await store.SaveAsync(new Dictionary<string, string> { ["chartRange"] = "24h", ["ping"] = "fast" }, cancellationToken);
+        var result = await repository.SaveAsync(new Dictionary<string, string> { ["chartRange"] = "24h", ["ping"] = "fast" }, cancellationToken);
 
         Assert.Equal("You need to provide a number in order to change this", result.Error);
-        Assert.Equal("7d", (await store.GetValuesAsync(cancellationToken))["chartRange"]);
+        Assert.Equal("7d", (await repository.GetValuesAsync(cancellationToken))["chartRange"]);
     }
 
     [Fact]
@@ -96,12 +96,12 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
 
-        var result = await store.SaveAsync(new Dictionary<string, string> { ["chartRange"] = "24h", ["ping"] = "18" }, cancellationToken);
+        var result = await repository.SaveAsync(new Dictionary<string, string> { ["chartRange"] = "24h", ["ping"] = "18" }, cancellationToken);
 
         Assert.True(result.Succeeded);
-        var values = await store.GetValuesAsync(cancellationToken);
+        var values = await repository.GetValuesAsync(cancellationToken);
         Assert.Equal(("24h", "18"), (values["chartRange"], values["ping"]));
     }
 
@@ -113,9 +113,9 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
 
-        var result = await store.SaveAsync(new Dictionary<string, string> { [key] = value }, cancellationToken);
+        var result = await repository.SaveAsync(new Dictionary<string, string> { [key] = value }, cancellationToken);
 
         Assert.Equal(expectedError, result.Error);
         Assert.Null(await db.Configs.AsNoTracking().SingleOrDefaultAsync(entry => entry.Key == key && entry.Value == value, cancellationToken));
@@ -126,12 +126,12 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
 
-        var result = await store.SaveSignInAsync(new Dictionary<string, string> { ["authEnabled"] = "true", ["cron"] = "0,30 * * * *" }, cancellationToken);
+        var result = await repository.SaveSignInAsync(new Dictionary<string, string> { ["authEnabled"] = "true", ["cron"] = "0,30 * * * *" }, cancellationToken);
 
         Assert.Equal("Only sign-in settings are changed on the Security tab", result.Error);
-        Assert.False((await store.GetAsync(cancellationToken)).SignIn.Enabled);
+        Assert.False((await repository.GetAsync(cancellationToken)).SignIn.Enabled);
     }
 
     [Fact]
@@ -139,8 +139,8 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
-        await store.SaveAsync(new Dictionary<string, string>
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
+        await repository.SaveAsync(new Dictionary<string, string>
         {
             ["provider"] = "libre",
             ["libreUrl"] = "https://speed.example/backend/",
@@ -151,9 +151,9 @@ public sealed class SettingsRepositoryTests : IDisposable
             ["ping"] = "0",
             ["retentionDays"] = "90"
         }, cancellationToken);
-        await store.SaveSignInAsync(new Dictionary<string, string> { ["visitorAccess"] = "read", ["oidcScopes"] = "profile" }, cancellationToken);
+        await repository.SaveSignInAsync(new Dictionary<string, string> { ["visitorAccess"] = "read", ["oidcScopes"] = "profile" }, cancellationToken);
 
-        var settings = await store.GetAsync(cancellationToken);
+        var settings = await repository.GetAsync(cancellationToken);
 
         Assert.Equal(new TargetSettings(null, 100, 50), settings.Targets);
         Assert.Equal(("0 * * * *", true), (settings.Schedule.Cron, settings.Schedule.RandomOffset));
@@ -174,21 +174,21 @@ public sealed class SettingsRepositoryTests : IDisposable
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var db = _database.NewContext();
-        var store = await StoreWithDefaultsAsync(db, cancellationToken);
+        var repository = await RepositoryWithDefaultsAsync(db, cancellationToken);
         foreach (var entry in await db.Configs.Where(entry => entry.Key == "provider" || entry.Key == "retentionDays").ToListAsync(cancellationToken))
             entry.Value = "garbage";
         await db.SaveChangesAsync(cancellationToken);
 
-        var settings = await store.GetAsync(cancellationToken);
+        var settings = await repository.GetAsync(cancellationToken);
 
         Assert.Equal((SpeedtestProvider.None, 0), (settings.Provider.Selected, settings.RetentionDays));
     }
 
-    private static async Task<SettingsRepository> StoreWithDefaultsAsync(SpeedtestWatcherDbContext db, CancellationToken cancellationToken)
+    private static async Task<SettingsRepository> RepositoryWithDefaultsAsync(SpeedtestWatcherDbContext db, CancellationToken cancellationToken)
     {
-        var store = new SettingsRepository(db);
-        await store.InsertDefaultsAsync(cancellationToken);
-        return store;
+        var repository = new SettingsRepository(db);
+        await repository.InsertDefaultsAsync(cancellationToken);
+        return repository;
     }
 
     public void Dispose() => _database.Dispose();

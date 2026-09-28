@@ -10,6 +10,7 @@ using SpeedtestWatcher.Application.Repositories.Interfaces;
 using SpeedtestWatcher.Application.Services;
 using SpeedtestWatcher.Application.Services.Interfaces;
 using SpeedtestWatcher.Application.Services.Providers;
+using SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 namespace SpeedtestWatcher.Application.Installers;
 

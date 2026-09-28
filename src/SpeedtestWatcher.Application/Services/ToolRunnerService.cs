@@ -3,20 +3,21 @@ using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Models;
 using SpeedtestWatcher.Application.Services.Interfaces;
 using SpeedtestWatcher.Application.Utils;
+using SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 namespace SpeedtestWatcher.Application.Services;
 
 internal partial class ToolRunnerService : IToolRunnerService
 {
-    private readonly Dictionary<SpeedtestProvider, ISpeedtestProviderService> _tools;
-    private readonly ICliBinaryService _cliManager;
+    private readonly Dictionary<SpeedtestProvider, ISpeedtestProviderService> _providerServices;
+    private readonly ICliBinaryService _cliBinaries;
     private readonly ICliProcessService _processes;
     private readonly ILogger<ToolRunnerService> _logger;
 
-    public ToolRunnerService(IEnumerable<ISpeedtestProviderService> tools, ICliBinaryService cliManager, ICliProcessService processes, ILogger<ToolRunnerService> logger)
+    public ToolRunnerService(IEnumerable<ISpeedtestProviderService> providerServices, ICliBinaryService cliBinaries, ICliProcessService processes, ILogger<ToolRunnerService> logger)
     {
-        _tools = tools.ToDictionary(tool => tool.Provider);
-        _cliManager = cliManager;
+        _providerServices = providerServices.ToDictionary(providerService => providerService.Provider);
+        _cliBinaries = cliBinaries;
         _processes = processes;
         _logger = logger;
     }
@@ -28,7 +29,7 @@ internal partial class ToolRunnerService : IToolRunnerService
         string? networkInterface,
         CancellationToken cancellationToken = default)
     {
-        if (!_tools.TryGetValue(provider, out var tool))
+        if (!_providerServices.TryGetValue(provider, out var providerService))
         {
             return new SpeedtestExecutionResult
             {
@@ -37,16 +38,16 @@ internal partial class ToolRunnerService : IToolRunnerService
             };
         }
 
-        var binaryPath = _cliManager.GetBinaryPath(provider);
-        if (tool.DownloadUrl(PlatformTarget.Current) != null && !File.Exists(binaryPath))
+        var binaryPath = _cliBinaries.GetBinaryPath(provider);
+        if (providerService.DownloadUrl(PlatformTarget.Current) != null && !File.Exists(binaryPath))
         {
-            await _cliManager.EnsureBinariesAsync(cancellationToken);
+            await _cliBinaries.EnsureBinariesAsync(cancellationToken);
             if (!File.Exists(binaryPath))
             {
                 return new SpeedtestExecutionResult
                 {
                     Success = false,
-                    Error = $"The {tool.Title} command-line tool isn't installed, and it couldn't be downloaded."
+                    Error = $"The {providerService.Title} command-line tool isn't installed, and it couldn't be downloaded."
                 };
             }
         }
@@ -56,17 +57,17 @@ internal partial class ToolRunnerService : IToolRunnerService
 
         try
         {
-            return await tool.RunAsync(_processes, binaryPath, options, cancellationToken);
+            return await providerService.RunAsync(_processes, binaryPath, options, cancellationToken);
         }
         catch (Exception ex) when (ex is InvalidOperationException or FormatException or KeyNotFoundException)
         {
             LogResultUnreadable(ex, provider);
-            return ToolFailure.Because($"{tool.Title} printed a result that couldn't be read.");
+            return ToolFailure.Because($"{providerService.Title} printed a result that couldn't be read.");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             LogRunFailed(ex, provider);
-            return ToolFailure.Because($"{tool.Title} couldn't be started: {ex.Message}");
+            return ToolFailure.Because($"{providerService.Title} couldn't be started: {ex.Message}");
         }
         finally
         {

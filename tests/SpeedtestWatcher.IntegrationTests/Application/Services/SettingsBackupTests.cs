@@ -200,11 +200,11 @@ public sealed class SettingsBackupTests : IDisposable
     private SettingsBackupService Backup(SpeedtestWatcherDbContext db)
     {
         var dispatcher = TestIntegrations.Dispatcher(new IntegrationRepository(db), new RecordingHandler());
-        var store = new SettingsRepository(db);
-        var settings = new SettingsService(store, dispatcher, _events, A.Fake<ISignInStateService>(), FixedAccess.Full);
+        var settingsRepository = new SettingsRepository(db);
+        var settings = new SettingsService(settingsRepository, dispatcher, _events, A.Fake<ISignInStateService>(), FixedAccess.Full);
         _events.SettingsChanged += changes => _broadcasts.Add(changes);
 
-        return new SettingsBackupService(store, settings, new IntegrationRepository(db), new RecommendationRepository(db), dispatcher, FixedAccess.Full);
+        return new SettingsBackupService(settingsRepository, settings, new IntegrationRepository(db), new RecommendationRepository(db), dispatcher, FixedAccess.Full);
     }
 
     public void Dispose() => _database.Dispose();

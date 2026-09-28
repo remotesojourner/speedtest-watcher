@@ -90,9 +90,9 @@ public class BufferbloatServiceTests
 
     private BufferbloatService Meter(BufferbloatSampling sampling, string targets = "1.1.1.1:443,8.8.8.8:443")
     {
-        var store = A.Fake<ISettingsRepository>();
+        var settingsRepository = A.Fake<ISettingsRepository>();
         var settings = AppSettings.From(new Dictionary<string, string> { ["monitoringTargets"] = targets });
-        A.CallTo(() => store.GetAsync(A<CancellationToken>._)).Returns(settings);
-        return new BufferbloatService(_probe, _traffic, store, TimeProvider.System, sampling, NullLogger<BufferbloatService>.Instance);
+        A.CallTo(() => settingsRepository.GetAsync(A<CancellationToken>._)).Returns(settings);
+        return new BufferbloatService(_probe, _traffic, settingsRepository, TimeProvider.System, sampling, NullLogger<BufferbloatService>.Instance);
     }
 }

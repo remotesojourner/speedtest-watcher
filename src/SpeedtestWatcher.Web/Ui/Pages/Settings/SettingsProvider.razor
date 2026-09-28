@@ -1,16 +1,16 @@
 @using System.Net.NetworkInformation
 @inject ProviderOptionsService ProviderOptions
-@inject IEnumerable<ISpeedtestProviderService> Tools
+@inject IEnumerable<ISpeedtestProviderService> ProviderServices
 @inject SettingsStateService Settings
 @inject ISnackbar Snackbar
 
 <SurfaceCard Icon="@Icons.Material.Filled.Speed" Title="@WebStrings.ProviderTitle" FullHeight="false"
              Description="@WebStrings.ProviderDescription">
     <div class="sw-option-grid mb-5">
-        @foreach (var tool in Tools)
+        @foreach (var providerService in ProviderServices)
         {
-            <OptionCard Title="@tool.Title" Description="@tool.Description" Image="@tool.ImagePath()"
-                        Active="@(_provider == tool.Provider)" OnClick="@(() => SelectProviderAsync(tool.Provider))" />
+            <OptionCard Title="@providerService.Title" Description="@providerService.Description" Image="@providerService.ImagePath()"
+                        Active="@(_provider == providerService.Provider)" OnClick="@(() => SelectProviderAsync(providerService.Provider))" />
         }
     </div>
 
@@ -210,11 +210,11 @@
 
     private IReadOnlyCollection<string> SelectedIds => SelectedIdList;
 
-    private ISpeedtestProviderService CurrentTool => Tools.First(tool => tool.Provider == _provider);
+    private ISpeedtestProviderService CurrentProviderService => ProviderServices.First(providerService => providerService.Provider == _provider);
 
-    private string ProviderTitle => CurrentTool.Title;
+    private string ProviderTitle => CurrentProviderService.Title;
 
-    private bool SupportsServerChoice => CurrentTool.SupportsServerChoice() && !UsingCustomUrl;
+    private bool SupportsServerChoice => CurrentProviderService.SupportsServerChoice() && !UsingCustomUrl;
 
     private bool UsingCustomUrl => _provider == SpeedtestProvider.Libre && !string.IsNullOrWhiteSpace(_libreUrl);
 
@@ -330,7 +330,7 @@
 
     private async Task LoadServersAsync(SpeedtestProvider provider)
     {
-        if (!Tools.Any(tool => tool.Provider == provider && tool.SupportsServerChoice()) || _servers.ContainsKey(provider)) return;
+        if (!ProviderServices.Any(providerService => providerService.Provider == provider && providerService.SupportsServerChoice()) || _servers.ContainsKey(provider)) return;
 
         _serversLoading = true;
         StateHasChanged();

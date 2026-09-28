@@ -41,7 +41,7 @@ public sealed class Iperf3ServiceTests : IDisposable
 
     private static readonly RunOptions _server = new(null, "192.168.1.10:5201", null, "unused.json");
 
-    private readonly Iperf3Service _tool = new(NullLogger<Iperf3Service>.Instance);
+    private readonly Iperf3Service _service = new(NullLogger<Iperf3Service>.Instance);
     private readonly ICliProcessService _processes = A.Fake<ICliProcessService>();
     private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
 
@@ -55,7 +55,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     [Fact]
     public void TheDownloadRunReportsSpeedBytesAndTime()
     {
-        var result = _tool.ParseResult(new ToolOutput(DownloadResult, "", 0), _server);
+        var result = _service.ParseResult(new ToolOutput(DownloadResult, "", 0), _server);
 
         Assert.True(result.Success);
         Assert.Equal((39480.13, 9918480384L, 2), (result.Download, result.DownloadBytes!.Value, result.Time));
@@ -68,7 +68,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     [InlineData(TimedOutError, "The iperf3 server at 192.168.1.10:5201 couldn't be reached. Check the host, port and firewall.")]
     public void KnownErrorsAreExplained(string output, string expected)
     {
-        var result = _tool.ParseResult(new ToolOutput(output, "", 1), _server);
+        var result = _service.ParseResult(new ToolOutput(output, "", 1), _server);
 
         Assert.False(result.Success);
         Assert.Equal(expected, result.Error);
@@ -80,19 +80,19 @@ public sealed class Iperf3ServiceTests : IDisposable
         const string Output = """{"start":{},"intervals":[],"end":{},"error":"parameter error - must either be a client (-c) or server (-s)"}""";
 
         Assert.Equal("iperf3 stopped with an error: parameter error - must either be a client (-c) or server (-s)",
-            _tool.ParseResult(new ToolOutput(Output, "", 1), _server).Error);
+            _service.ParseResult(new ToolOutput(Output, "", 1), _server).Error);
     }
 
     [Fact]
     public void OutputThatIsNotJsonIsNotASuccess()
     {
-        Assert.Equal("iperf3 stopped with an error: not json", _tool.ParseResult(new ToolOutput("not json", "", 1), _server).Error);
+        Assert.Equal("iperf3 stopped with an error: not json", _service.ParseResult(new ToolOutput("not json", "", 1), _server).Error);
     }
 
     [Fact]
     public void TheServerAndInterfaceArePassedToTheCli()
     {
-        var arguments = _tool.BuildArguments(new RunOptions(null, "192.168.1.10:5201", "10.0.0.5", "unused.json"));
+        var arguments = _service.BuildArguments(new RunOptions(null, "192.168.1.10:5201", "10.0.0.5", "unused.json"));
 
         Assert.Equal(["-c", "192.168.1.10", "-p", "5201", "-J", "--connect-timeout", "5000", "--bind=10.0.0.5", "-R"], arguments.Arguments);
     }
@@ -100,7 +100,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     [Fact]
     public void AnIpv6ServerIsPassedWithoutBrackets()
     {
-        var arguments = _tool.BuildArguments(new RunOptions(null, "[2001:db8::5]:5201", null, "unused.json"));
+        var arguments = _service.BuildArguments(new RunOptions(null, "[2001:db8::5]:5201", null, "unused.json"));
 
         Assert.Equal(["-c", "2001:db8::5", "-p", "5201", "-J", "--connect-timeout", "5000", "-R"], arguments.Arguments);
     }
@@ -108,15 +108,15 @@ public sealed class Iperf3ServiceTests : IDisposable
     [Fact]
     public void Iperf3HasNoServerCatalogAndIsNeverDownloaded()
     {
-        Assert.Null(_tool.Servers);
-        Assert.Null(_tool.DownloadUrl(new PlatformTarget(OSPlatform.Windows, Architecture.X64)));
-        Assert.Null(_tool.DownloadUrl(new PlatformTarget(OSPlatform.Linux, Architecture.Arm64)));
+        Assert.Null(_service.Servers);
+        Assert.Null(_service.DownloadUrl(new PlatformTarget(OSPlatform.Windows, Architecture.X64)));
+        Assert.Null(_service.DownloadUrl(new PlatformTarget(OSPlatform.Linux, Architecture.Arm64)));
     }
 
     [Fact]
     public async Task WithNoServerTheRunFailsWithoutStartingIperf3()
     {
-        var result = await _tool.RunAsync(_processes, "iperf3", new RunOptions(null, null, null, "unused.json"), TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", new RunOptions(null, null, null, "unused.json"), TestContext.Current.CancellationToken);
 
         Assert.Equal("No iperf3 servers are configured. Add one on the Provider tab.", result.Error);
         A.CallTo(_processes).MustNotHaveHappened();
@@ -127,7 +127,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(new ProcessOutcome(new ToolOutput(RefusedError, "", 1), null));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", _server, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", _server, TestContext.Current.CancellationToken);
 
         Assert.Equal("The iperf3 server at 192.168.1.10:5201 refused the connection. Check that iperf3 -s is running there.", result.Error);
     }
@@ -139,7 +139,7 @@ public sealed class Iperf3ServiceTests : IDisposable
         _listener.Stop();
         Answer(Output(DownloadResult), Output(UploadResult), Output(UdpResult));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", options, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", options, TestContext.Current.CancellationToken);
 
         Assert.Equal($"The iperf3 server at {options.CustomServerUrl} couldn't be reached. Check the host, port and firewall.", result.Error);
     }
@@ -149,7 +149,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(new ProcessOutcome(new ToolOutput(BusyError, "", 1), null));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.StartsWith("The iperf3 server at 127.0.0.1:", result.Error);
         Assert.EndsWith("is busy running another test. Try again shortly.", result.Error);
@@ -161,7 +161,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(new ProcessOutcome(null, "The iperf3 command-line tool isn't installed. Install it and make sure it's on the PATH."));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.Equal("The iperf3 command-line tool isn't installed. Install it and make sure it's on the PATH.", result.Error);
     }
@@ -171,7 +171,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(Output(DownloadResult), Output(UploadResult), Output(UdpResult));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.InRange(result.Ping, 0, 2000);
@@ -188,7 +188,7 @@ public sealed class Iperf3ServiceTests : IDisposable
             .Invokes((string _, string _, IReadOnlyList<string> arguments, TimeSpan? _, CancellationToken _) => calls.Add(arguments))
             .ReturnsNextFromSequence(Output(DownloadResult), Output(UploadResult), Output(UdpResult));
 
-        await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.Equal(3, calls.Count);
         Assert.Contains("-R", calls[0]);
@@ -205,7 +205,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(Output(DownloadResult), Output(UploadResult), Output(udpOutput));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal((39480.13, 36902.3), (result.Download, result.Upload));
@@ -218,7 +218,7 @@ public sealed class Iperf3ServiceTests : IDisposable
     {
         Answer(Output(DownloadResult), Output(UploadResult), new ProcessOutcome(null, "Speedtest timed out after 30 seconds"));
 
-        var result = await _tool.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
+        var result = await _service.RunAsync(_processes, "iperf3", Listening, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Null(result.PacketLoss);

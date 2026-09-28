@@ -1,8 +1,9 @@
 using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Models;
+using SpeedtestWatcher.Application.Services.Interfaces;
 using SpeedtestWatcher.Application.Utils;
 
-namespace SpeedtestWatcher.Application.Services.Interfaces;
+namespace SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 public interface ISpeedtestProviderService
 {

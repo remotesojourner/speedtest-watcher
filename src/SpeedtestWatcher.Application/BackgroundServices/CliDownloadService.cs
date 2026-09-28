@@ -21,8 +21,8 @@ internal partial class CliDownloadService : BackgroundService
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var cliManager = scope.ServiceProvider.GetRequiredService<ICliBinaryService>();
-            await cliManager.EnsureBinariesAsync(stoppingToken);
+            var cliBinaries = scope.ServiceProvider.GetRequiredService<ICliBinaryService>();
+            await cliBinaries.EnsureBinariesAsync(stoppingToken);
         }
         catch (Exception ex)
         {

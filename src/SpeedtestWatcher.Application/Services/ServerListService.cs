@@ -6,6 +6,7 @@ using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Extensions;
 using SpeedtestWatcher.Application.Models;
 using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 namespace SpeedtestWatcher.Application.Services;
 
@@ -15,20 +16,20 @@ internal partial class ServerListService : IServerListService
 
     private static readonly JsonSerializerOptions _cacheFileJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    private readonly Dictionary<SpeedtestProvider, ISpeedtestProviderService> _tools;
+    private readonly Dictionary<SpeedtestProvider, ISpeedtestProviderService> _providerServices;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimeProvider _time;
     private readonly ILogger<ServerListService> _logger;
     private readonly string _serversDir;
 
     public ServerListService(
-        IEnumerable<ISpeedtestProviderService> tools,
+        IEnumerable<ISpeedtestProviderService> providerServices,
         IHttpClientFactory httpClientFactory,
         TimeProvider time,
         IOptions<SpeedtestWatcherOptions> options,
         ILogger<ServerListService> logger)
     {
-        _tools = tools.ToDictionary(tool => tool.Provider);
+        _providerServices = providerServices.ToDictionary(providerService => providerService.Provider);
         _httpClientFactory = httpClientFactory;
         _time = time;
         _logger = logger;
@@ -37,7 +38,7 @@ internal partial class ServerListService : IServerListService
 
     public async Task<IReadOnlyList<ServerInfo>?> GetServersAsync(SpeedtestProvider provider, CancellationToken cancellationToken = default)
     {
-        if (!_tools.TryGetValue(provider, out var tool) || tool.Servers is not { } catalog) return null;
+        if (!_providerServices.TryGetValue(provider, out var providerService) || providerService.Servers is not { } catalog) return null;
 
         var cacheFile = Path.Combine(_serversDir, $"{provider.ToName()}.json");
         var cached = await ReadCacheAsync(cacheFile, provider, cancellationToken);

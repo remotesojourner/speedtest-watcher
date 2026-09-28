@@ -23,7 +23,7 @@ public sealed partial class SpeedtestRunService
     private readonly IToolRunnerService _runner;
     private readonly IConnectivityCheckService _connectivity;
     private readonly BufferbloatService _bufferbloat;
-    private readonly ServerSelectionService _serverSelector;
+    private readonly ServerSelectionService _serverSelection;
     private readonly RecommendationService _recommendations;
     private readonly IIntegrationDispatchService _dispatcher;
     private readonly IAppEventService _events;
@@ -39,7 +39,7 @@ public sealed partial class SpeedtestRunService
         IToolRunnerService runner,
         IConnectivityCheckService connectivity,
         BufferbloatService bufferbloat,
-        ServerSelectionService serverSelector,
+        ServerSelectionService serverSelection,
         RecommendationService recommendations,
         IIntegrationDispatchService dispatcher,
         IAppEventService events,
@@ -54,7 +54,7 @@ public sealed partial class SpeedtestRunService
         _runner = runner;
         _connectivity = connectivity;
         _bufferbloat = bufferbloat;
-        _serverSelector = serverSelector;
+        _serverSelection = serverSelection;
         _recommendations = recommendations;
         _dispatcher = dispatcher;
         _events = events;
@@ -140,7 +140,7 @@ public sealed partial class SpeedtestRunService
             return new SpeedtestExecutionResult { Success = false, Skipped = true, Error = reason };
         }
 
-        var serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
+        var serverId = serverOverride ?? await _serverSelection.SelectAsync(settings.Provider, cancellationToken);
         var customUrl = CustomUrl(provider, settings.Provider);
 
         await _dispatcher.PublishAsync(new TestStarted(provider, type), cancellationToken);
@@ -149,7 +149,7 @@ public sealed partial class SpeedtestRunService
         if (!result.Success)
         {
             LogRetrying(result.Error);
-            serverId = serverOverride ?? await _serverSelector.SelectAsync(settings.Provider, cancellationToken);
+            serverId = serverOverride ?? await _serverSelection.SelectAsync(settings.Provider, cancellationToken);
             customUrl = CustomUrl(provider, settings.Provider);
             (result, bufferbloat) = await MeasuredRunAsync(provider, serverId, customUrl, settings.Provider.Interface, cancellationToken);
         }

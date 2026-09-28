@@ -18,12 +18,12 @@ public sealed class ServerListServiceTests : IDisposable
     private readonly string _dataDirectory = Path.Combine(Path.GetTempPath(), "speedtest-watcher-tests", Guid.NewGuid().ToString("N"));
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 0, TimeSpan.Zero));
     private readonly RecordingHandler _handler = new() { ResponseBody = DownloadedList };
-    private readonly ServerListService _provider;
+    private readonly ServerListService _serverLists;
 
     public ServerListServiceTests()
     {
         var options = Options.Create(new SpeedtestWatcherOptions { DataDirectory = _dataDirectory });
-        _provider = new ServerListService(
+        _serverLists = new ServerListService(
             [new OoklaService(), new LibreSpeedService(), new CloudflareService()],
             new StubHttpClientFactory(_handler),
             _time,
@@ -38,7 +38,7 @@ public sealed class ServerListServiceTests : IDisposable
     {
         WriteCache(CachedList, age: TimeSpan.FromDays(6));
 
-        var servers = await _provider.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
+        var servers = await _serverLists.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
 
         Assert.Equal("1", Assert.Single(servers!).Id);
         Assert.Empty(_handler.Requests);
@@ -49,7 +49,7 @@ public sealed class ServerListServiceTests : IDisposable
     {
         WriteCache(CachedList, age: TimeSpan.FromDays(8));
 
-        var servers = await _provider.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
+        var servers = await _serverLists.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
 
         Assert.Equal([new ServerInfo("2", "Leeds", "Fresh Fibre", "United Kingdom", 120.5, "leeds.example:8080")], servers);
         Assert.Contains("Leeds", await File.ReadAllTextAsync(CacheFile, TestContext.Current.CancellationToken));
@@ -61,7 +61,7 @@ public sealed class ServerListServiceTests : IDisposable
         WriteCache(CachedList, age: TimeSpan.FromDays(30));
         _handler.Failure = new HttpRequestException("offline");
 
-        var servers = await _provider.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
+        var servers = await _serverLists.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
 
         Assert.Equal("1", Assert.Single(servers!).Id);
     }
@@ -71,7 +71,7 @@ public sealed class ServerListServiceTests : IDisposable
     {
         WriteCache("""{"1":{"name":"London","sponsor":"Old Fibre"}}""", age: TimeSpan.Zero);
 
-        var servers = await _provider.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
+        var servers = await _serverLists.GetServersAsync(SpeedtestProvider.Ookla, TestContext.Current.CancellationToken);
 
         Assert.Equal("2", Assert.Single(servers!).Id);
         Assert.Single(_handler.Requests);
@@ -80,8 +80,8 @@ public sealed class ServerListServiceTests : IDisposable
     [Fact]
     public async Task ProvidersWithoutServerChoiceHaveNoList()
     {
-        Assert.Null(await _provider.GetServersAsync(SpeedtestProvider.Cloudflare, TestContext.Current.CancellationToken));
-        Assert.Null(await _provider.GetServersAsync(SpeedtestProvider.None, TestContext.Current.CancellationToken));
+        Assert.Null(await _serverLists.GetServersAsync(SpeedtestProvider.Cloudflare, TestContext.Current.CancellationToken));
+        Assert.Null(await _serverLists.GetServersAsync(SpeedtestProvider.None, TestContext.Current.CancellationToken));
     }
 
     private void WriteCache(string json, TimeSpan age)

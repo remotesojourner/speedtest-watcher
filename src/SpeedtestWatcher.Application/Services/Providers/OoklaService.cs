@@ -4,8 +4,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Models;
-using SpeedtestWatcher.Application.Services.Interfaces;
 using SpeedtestWatcher.Application.Utils;
+using SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 namespace SpeedtestWatcher.Application.Services.Providers;
 

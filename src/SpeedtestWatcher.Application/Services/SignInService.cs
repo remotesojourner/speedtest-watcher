@@ -10,14 +10,14 @@ namespace SpeedtestWatcher.Application.Services;
 
 public sealed class SignInService
 {
-    private readonly ISettingsRepository _store;
+    private readonly ISettingsRepository _settingsRepository;
     private readonly IOidcDiscoveryService _discovery;
     private readonly ISignInStateService _signIn;
     private readonly ICurrentAccessService _access;
 
-    public SignInService(ISettingsRepository store, IOidcDiscoveryService discovery, ISignInStateService signIn, ICurrentAccessService access)
+    public SignInService(ISettingsRepository settingsRepository, IOidcDiscoveryService discovery, ISignInStateService signIn, ICurrentAccessService access)
     {
-        _store = store;
+        _settingsRepository = settingsRepository;
         _discovery = discovery;
         _signIn = signIn;
         _access = access;
@@ -52,7 +52,7 @@ public sealed class SignInService
         if (Clean(request.ClientSecret) is { } secret) values["oidcClientSecret"] = secret;
         else if (request.ClearClientSecret) values["oidcClientSecret"] = SettingDefinitions.Unset;
 
-        var saved = await _store.SaveSignInAsync(values, cancellationToken);
+        var saved = await _settingsRepository.SaveSignInAsync(values, cancellationToken);
         if (!saved.Succeeded) return OperationResult.Invalid(saved.Error!);
 
         await _signIn.ReloadAsync(cancellationToken);
@@ -78,7 +78,7 @@ public sealed class SignInService
 
     private async Task SaveTokenHashAsync(string hash, CancellationToken cancellationToken)
     {
-        await _store.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = hash }, cancellationToken);
+        await _settingsRepository.SaveSignInAsync(new Dictionary<string, string> { ["apiTokenHash"] = hash }, cancellationToken);
         await _signIn.ReloadAsync(cancellationToken);
     }
 

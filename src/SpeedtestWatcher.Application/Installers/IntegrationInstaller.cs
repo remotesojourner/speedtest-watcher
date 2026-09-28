@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpeedtestWatcher.Application.Services;
 using SpeedtestWatcher.Application.Services.Integrations;
 using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Application.Services.Integrations.Interfaces;
 
 namespace SpeedtestWatcher.Application.Installers;
 

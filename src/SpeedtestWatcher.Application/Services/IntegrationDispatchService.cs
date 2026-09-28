@@ -7,6 +7,7 @@ using SpeedtestWatcher.Application.Models.Entities;
 using SpeedtestWatcher.Application.Models.Events;
 using SpeedtestWatcher.Application.Repositories.Interfaces;
 using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Application.Services.Integrations.Interfaces;
 
 namespace SpeedtestWatcher.Application.Services;
 

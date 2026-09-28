@@ -1,6 +1,6 @@
 @page "/welcome"
 @inject SettingsStateService Settings
-@inject IEnumerable<ISpeedtestProviderService> Tools
+@inject IEnumerable<ISpeedtestProviderService> ProviderServices
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -23,10 +23,10 @@
                 <MudText Typo="Typo.h5" Class="font-weight-bold mb-1">@WebStrings.WelcomeProviderTitle</MudText>
                 <MudText Typo="Typo.body2" Class="sw-muted mb-4">@WebStrings.WelcomeProviderDescription</MudText>
                 <div class="sw-option-grid">
-                    @foreach (var tool in Tools)
+                    @foreach (var providerService in ProviderServices)
                     {
-                        <OptionCard Title="@tool.Title" Description="@tool.Description" Image="@tool.ImagePath()"
-                                    Active="@(_provider == tool.Provider)" OnClick="@(() => _provider = tool.Provider)" />
+                        <OptionCard Title="@providerService.Title" Description="@providerService.Description" Image="@providerService.ImagePath()"
+                                    Active="@(_provider == providerService.Provider)" OnClick="@(() => _provider = providerService.Provider)" />
                     }
                 </div>
                 break;

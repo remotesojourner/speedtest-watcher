@@ -3,7 +3,7 @@ using SpeedtestWatcher.Application.Models.Dtos;
 using SpeedtestWatcher.Application.Models.Entities;
 using SpeedtestWatcher.Application.Models.Events;
 
-namespace SpeedtestWatcher.Application.Services.Interfaces;
+namespace SpeedtestWatcher.Application.Services.Integrations.Interfaces;
 
 public interface IIntegrationTypeService
 {

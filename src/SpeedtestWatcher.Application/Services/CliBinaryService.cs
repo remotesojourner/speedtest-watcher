@@ -6,19 +6,20 @@ using SpeedtestWatcher.Application.Configuration;
 using SpeedtestWatcher.Application.Enums;
 using SpeedtestWatcher.Application.Models;
 using SpeedtestWatcher.Application.Services.Interfaces;
+using SpeedtestWatcher.Application.Services.Providers.Interfaces;
 
 namespace SpeedtestWatcher.Application.Services;
 
 internal partial class CliBinaryService : ICliBinaryService
 {
-    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestProviderService> _tools;
+    private readonly IReadOnlyDictionary<SpeedtestProvider, ISpeedtestProviderService> _providerServices;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<CliBinaryService> _logger;
     private readonly string _binDirectory;
 
-    public CliBinaryService(IEnumerable<ISpeedtestProviderService> tools, IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<CliBinaryService> logger)
+    public CliBinaryService(IEnumerable<ISpeedtestProviderService> providerServices, IHttpClientFactory httpClientFactory, IOptions<SpeedtestWatcherOptions> options, ILogger<CliBinaryService> logger)
     {
-        _tools = tools.ToDictionary(tool => tool.Provider);
+        _providerServices = providerServices.ToDictionary(providerService => providerService.Provider);
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _binDirectory = options.Value.BinDirectory;
@@ -26,46 +27,46 @@ internal partial class CliBinaryService : ICliBinaryService
 
     public string GetBinaryPath(SpeedtestProvider provider)
     {
-        if (!_tools.TryGetValue(provider, out var tool)) throw new ArgumentOutOfRangeException(nameof(provider));
+        if (!_providerServices.TryGetValue(provider, out var providerService)) throw new ArgumentOutOfRangeException(nameof(provider));
 
-        var binDirectoryPath = BinaryPath(tool);
-        return File.Exists(binDirectoryPath) || tool.DownloadUrl(PlatformTarget.Current) != null ? binDirectoryPath : FileName(tool);
+        var binDirectoryPath = BinaryPath(providerService);
+        return File.Exists(binDirectoryPath) || providerService.DownloadUrl(PlatformTarget.Current) != null ? binDirectoryPath : FileName(providerService);
     }
 
     public bool IsBinaryAvailable(SpeedtestProvider provider) =>
-        _tools.TryGetValue(provider, out var tool) && File.Exists(BinaryPath(tool));
+        _providerServices.TryGetValue(provider, out var providerService) && File.Exists(BinaryPath(providerService));
 
     public async Task EnsureBinariesAsync(CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(_binDirectory);
 
-        foreach (var tool in _tools.Values.Where(tool => !File.Exists(BinaryPath(tool)) && tool.DownloadUrl(PlatformTarget.Current) != null))
+        foreach (var providerService in _providerServices.Values.Where(providerService => !File.Exists(BinaryPath(providerService)) && providerService.DownloadUrl(PlatformTarget.Current) != null))
         {
             try
             {
-                LogDownloading(tool.Provider);
-                await DownloadBinaryAsync(tool, cancellationToken);
-                LogInstalled(tool.Provider);
+                LogDownloading(providerService.Provider);
+                await DownloadBinaryAsync(providerService, cancellationToken);
+                LogInstalled(providerService.Provider);
             }
             catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException
                                        || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
             {
-                LogDownloadFailed(ex, tool.Provider);
+                LogDownloadFailed(ex, providerService.Provider);
             }
         }
     }
 
-    private string BinaryPath(ISpeedtestProviderService tool) => Path.Combine(_binDirectory, FileName(tool));
+    private string BinaryPath(ISpeedtestProviderService providerService) => Path.Combine(_binDirectory, FileName(providerService));
 
-    private static string FileName(ISpeedtestProviderService tool) =>
-        tool.BinaryName + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "");
+    private static string FileName(ISpeedtestProviderService providerService) =>
+        providerService.BinaryName + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "");
 
-    private async Task DownloadBinaryAsync(ISpeedtestProviderService tool, CancellationToken cancellationToken)
+    private async Task DownloadBinaryAsync(ISpeedtestProviderService providerService, CancellationToken cancellationToken)
     {
-        var url = tool.DownloadUrl(PlatformTarget.Current);
+        var url = providerService.DownloadUrl(PlatformTarget.Current);
         if (string.IsNullOrEmpty(url))
         {
-            LogNoBinaryForPlatform(tool.Provider);
+            LogNoBinaryForPlatform(providerService.Provider);
             return;
         }
 
@@ -82,7 +83,7 @@ internal partial class CliBinaryService : ICliBinaryService
                 await response.Content.CopyToAsync(fs, cancellationToken);
             }
 
-            ExtractBinary(tempFile, BinaryPath(tool));
+            ExtractBinary(tempFile, BinaryPath(providerService));
         }
         finally
         {

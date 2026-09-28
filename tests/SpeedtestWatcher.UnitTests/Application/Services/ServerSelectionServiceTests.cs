@@ -11,20 +11,20 @@ public class ServerSelectionServiceTests
 {
     private static readonly string[] _allowList = ["1", "2"];
 
-    private readonly ServerSelectionService _selector = new(new NearbyServers(), NullLogger<ServerSelectionService>.Instance);
+    private readonly ServerSelectionService _serverSelection = new(new NearbyServers(), NullLogger<ServerSelectionService>.Instance);
 
     [Theory]
     [InlineData(ServerMode.Auto, null)]
     [InlineData(ServerMode.Pinned, "7")]
     public async Task AutomaticLeavesTheChoiceToTheProviderAndPinnedUsesTheSavedServer(ServerMode mode, string? expected)
     {
-        Assert.Equal(expected, await _selector.SelectAsync(Settings(mode, ServerListMode.Allow, "7", ["1", "2"]), TestContext.Current.CancellationToken));
+        Assert.Equal(expected, await _serverSelection.SelectAsync(Settings(mode, ServerListMode.Allow, "7", ["1", "2"]), TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task AnAllowListIsChosenFrom()
     {
-        var chosen = await _selector.SelectAsync(Settings(ServerMode.Random, ServerListMode.Allow, null, ["1", "2"]), TestContext.Current.CancellationToken);
+        var chosen = await _serverSelection.SelectAsync(Settings(ServerMode.Random, ServerListMode.Allow, null, ["1", "2"]), TestContext.Current.CancellationToken);
 
         Assert.Contains(chosen, _allowList);
     }
@@ -32,7 +32,7 @@ public class ServerSelectionServiceTests
     [Fact]
     public async Task ADenyListIsLeftOutOfTheNearbyServers()
     {
-        var chosen = await _selector.SelectAsync(Settings(ServerMode.Random, ServerListMode.Deny, null, ["10", "11"]), TestContext.Current.CancellationToken);
+        var chosen = await _serverSelection.SelectAsync(Settings(ServerMode.Random, ServerListMode.Deny, null, ["10", "11"]), TestContext.Current.CancellationToken);
 
         Assert.Equal("12", chosen);
     }
@@ -40,7 +40,7 @@ public class ServerSelectionServiceTests
     [Fact]
     public async Task WithNothingToChooseFromTheProviderDecides()
     {
-        Assert.Null(await _selector.SelectAsync(Settings(ServerMode.Random, ServerListMode.Allow, null, []), TestContext.Current.CancellationToken));
+        Assert.Null(await _serverSelection.SelectAsync(Settings(ServerMode.Random, ServerListMode.Allow, null, []), TestContext.Current.CancellationToken));
     }
 
     private static ProviderSettings Settings(ServerMode mode, ServerListMode listMode, string? pinnedId, IReadOnlyList<string> listed) =>
