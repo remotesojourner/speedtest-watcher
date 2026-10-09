@@ -129,13 +129,13 @@
                         {
                             <div class="sw-metric-columns">
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Download"
-                                               Color="@MetricStatus.Download(Latest.Download, Targets.Download)"
+                                               Color="@MetricStatus.Download(Latest.Download, Latest.ThresholdDownload)"
                                                Value="@SpeedValue(Latest.Download)" Label="@PreferencesService.SpeedUnit" />
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.Upload"
-                                               Color="@MetricStatus.Upload(Latest.Upload, Targets.Upload)"
+                                               Color="@MetricStatus.Upload(Latest.Upload, Latest.ThresholdUpload)"
                                                Value="@SpeedValue(Latest.Upload)" Label="@PreferencesService.SpeedUnit" />
                                 <MetricDisplay Size="MetricSize.Small" Icon="@Icons.Material.Filled.NetworkPing"
-                                               Color="@MetricStatus.Ping(Latest.Ping, Targets.Ping)"
+                                               Color="@MetricStatus.Ping(Latest.Ping, Latest.ThresholdPing)"
                                                Value="@Latest.Ping.ToString(CultureInfo.CurrentCulture)"
                                                Label="@WebStrings.PingMs"
                                                Detail="@(Latest.Jitter is { } jitter ? WebStrings.Format(WebStrings.DashboardJitterDetail, jitter) : null)" />

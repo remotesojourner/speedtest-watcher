@@ -3,7 +3,6 @@
 @inject RecentResultsService RecentResultsService
 @inject ResultsService Results
 @inject StatusStateService StatusService
-@inject SettingsStateService Settings
 @inject PreferencesService PreferencesService
 @inject IDialogService DialogService
 @implements IDisposable
@@ -146,7 +145,7 @@
                             {
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.NetworkPing" Size="Size.Small" Color="@MetricStatus.Ping(test.Ping, Settings.Current.Targets.Ping)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.NetworkPing" Size="Size.Small" Color="@MetricStatus.Ping(test.Ping, test.ThresholdPing)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @test.Ping ms
                                             @if (test.Jitter is { } jitter)
@@ -158,7 +157,7 @@
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="@MetricStatus.Download(test.Download, Settings.Current.Targets.Download)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Download" Size="Size.Small" Color="@MetricStatus.Download(test.Download, test.ThresholdDownload)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @($"{PreferencesService.ConvertSpeed(test.Download):F1}") @PreferencesService.SpeedUnit
                                         </MudText>
@@ -166,7 +165,7 @@
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <div class="d-flex align-center gap-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Upload" Size="Size.Small" Color="@MetricStatus.Upload(test.Upload, Settings.Current.Targets.Upload)" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Upload" Size="Size.Small" Color="@MetricStatus.Upload(test.Upload, test.ThresholdUpload)" />
                                         <MudText Typo="Typo.body2" Class="font-weight-medium">
                                             @($"{PreferencesService.ConvertSpeed(test.Upload):F1}") @PreferencesService.SpeedUnit
                                         </MudText>
@@ -256,9 +255,9 @@
         ? (_list.Filter.IsActive ? WebStrings.HistoryFilteredLoadFailed : WebStrings.HistoryLoadFailed)
         : null;
 
-    private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, Settings.Current.Targets.Ping);
-    private Color DownloadColor => MetricStatus.Download(LatestReading?.Download, Settings.Current.Targets.Download);
-    private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, Settings.Current.Targets.Upload);
+    private Color PingColor => MetricStatus.Ping(LatestReading?.Ping, LatestReading?.ThresholdPing);
+    private Color DownloadColor => MetricStatus.Download(LatestReading?.Download, LatestReading?.ThresholdDownload);
+    private Color UploadColor => MetricStatus.Upload(LatestReading?.Upload, LatestReading?.ThresholdUpload);
 
     private List<TestGroup> TestGroups => _list.Items
         .GroupBy(t => PreferencesService.ToLocal(t.Created).Date)
@@ -271,7 +270,6 @@
         RecentResultsService.OnChange += OnRecentResultsChanged;
         RecentResultsService.ResultAdded += OnResultAdded;
         StatusService.OnChange += OnStateChanged;
-        Settings.OnChange += OnStateChanged;
         _timer = new Timer(_ => InvokeAsync(StateHasChanged), null, 0, 10000);
         BuildDownloadHistory();
 
@@ -424,7 +422,6 @@
         RecentResultsService.OnChange -= OnRecentResultsChanged;
         RecentResultsService.ResultAdded -= OnResultAdded;
         StatusService.OnChange -= OnStateChanged;
-        Settings.OnChange -= OnStateChanged;
         _timer?.Dispose();
     }
 }
