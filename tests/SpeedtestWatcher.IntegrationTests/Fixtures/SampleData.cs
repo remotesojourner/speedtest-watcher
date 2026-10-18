@@ -9,6 +9,8 @@ namespace SpeedtestWatcher.IntegrationTests.Fixtures;
 
 internal static class SampleData
 {
+    public static readonly DateTimeOffset ResultsViewedAt = new(2026, 9, 22, 12, 0, 0, TimeSpan.Zero);
+
     public static Task ChooseOoklaAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         services.GetRequiredService<ISettingsRepository>().SaveAsync(new Dictionary<string, string> { ["provider"] = "ookla" }, cancellationToken);
 

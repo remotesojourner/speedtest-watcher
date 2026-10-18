@@ -25,7 +25,7 @@ public sealed class LiveUpdatesServiceTests : IDisposable
     public LiveUpdatesServiceTests()
     {
         _runState = new RunStateService(_events);
-        _recent = new RecentResultsService(new ResultsService(A.Fake<ISpeedtestRepository>(), FixedAccess.Full));
+        _recent = new RecentResultsService(new ResultsService(A.Fake<ISpeedtestRepository>(), FixedAccess.Full, TimeProvider.System));
         _settings = new SettingsStateService(new SettingsService(_settingsRepository, A.Fake<IIntegrationDispatchService>(), _events, A.Fake<ISignInStateService>(), FixedAccess.Full));
         _live = new LiveUpdatesService(_events, new ConnectionStateService(_events), _status, _recent, _settings, FixedAccess.Full, _logger);
         _live.ResultArrived += _announced.Add;
