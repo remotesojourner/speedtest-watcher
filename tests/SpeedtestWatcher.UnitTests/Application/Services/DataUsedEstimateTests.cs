@@ -1,4 +1,5 @@
 using FakeItEasy;
+using Microsoft.Extensions.Time.Testing;
 using SpeedtestWatcher.TestSupport;
 using SpeedtestWatcher.Application.Configuration;
 using SpeedtestWatcher.Application.Repositories.Interfaces;
@@ -9,6 +10,7 @@ namespace SpeedtestWatcher.UnitTests.Application.Services;
 public class DataUsedEstimateTests
 {
     private readonly ISpeedtestRepository _results = A.Fake<ISpeedtestRepository>();
+    private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 9, 22, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
     public async Task TheEstimateIsTheMedianRunTimesTheRunsAMonth()
@@ -50,5 +52,5 @@ public class DataUsedEstimateTests
         A.CallTo(() => _results.RecentRunBytesAsync(A<int>._, A<CancellationToken>._)).Returns(bytes);
 
     private Task<long?> EstimateAsync(string cron, TimeSpan window) =>
-        new ResultsService(_results, FixedAccess.Full).EstimateBytesAsync(new ScheduleSettings(cron, RandomOffset: false), window, TestContext.Current.CancellationToken);
+        new ResultsService(_results, FixedAccess.Full, _time).EstimateBytesAsync(new ScheduleSettings(cron, RandomOffset: false), window, TestContext.Current.CancellationToken);
 }

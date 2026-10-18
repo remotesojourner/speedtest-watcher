@@ -16,13 +16,15 @@ public sealed class ResultsService
 {
     private readonly ISpeedtestRepository _results;
     private readonly ICurrentAccessService _access;
+    private readonly TimeProvider _time;
 
     private const int RunsBehindAnEstimate = 10;
 
-    public ResultsService(ISpeedtestRepository results, ICurrentAccessService access)
+    public ResultsService(ISpeedtestRepository results, ICurrentAccessService access, TimeProvider time)
     {
         _results = results;
         _access = access;
+        _time = time;
     }
 
     public async Task<IReadOnlyList<SpeedtestDto>> ListAsync(
@@ -61,7 +63,7 @@ public sealed class ResultsService
 
     public async Task<DataUsedDto> DataUsedAsync(CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
+        var now = _time.GetUtcNow().UtcDateTime;
         return new DataUsedDto(
             await _results.SumBytesSinceAsync(now.AddHours(-24), cancellationToken),
             await _results.SumBytesSinceAsync(now.AddDays(-7), cancellationToken),
@@ -74,7 +76,7 @@ public sealed class ResultsService
         int runs;
         try
         {
-            runs = schedule.RunsIn(window, DateTime.UtcNow);
+            runs = schedule.RunsIn(window, _time.GetUtcNow().UtcDateTime);
         }
         catch (CronFormatException)
         {

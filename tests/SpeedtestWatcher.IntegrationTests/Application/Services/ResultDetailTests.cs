@@ -35,8 +35,8 @@ public sealed class ResultDetailTests : IDisposable
         await using var db = _database.NewContext();
         var repository = new SpeedtestRepository(db);
 
-        var forOwner = await new ResultsService(repository, FixedAccess.Full).ListAsync(null, 10, null, null, null, cancellationToken);
-        var forVisitor = await new ResultsService(repository, FixedAccess.ReadOnly).ListAsync(null, 10, null, null, null, cancellationToken);
+        var forOwner = await new ResultsService(repository, FixedAccess.Full, TimeProvider.System).ListAsync(null, 10, null, null, null, cancellationToken);
+        var forVisitor = await new ResultsService(repository, FixedAccess.ReadOnly, TimeProvider.System).ListAsync(null, 10, null, null, null, cancellationToken);
 
         Assert.Equal("203.0.113.9", forOwner[0].PublicIp);
         Assert.Null(forVisitor[0].PublicIp);
