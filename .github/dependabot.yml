@@ -14,3 +14,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      dotnet:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+          - "Microsoft.EntityFrameworkCore.*"
+          - "Microsoft.Extensions.*"
+      skiasharp:
+        patterns:
+          - "SkiaSharp*"
