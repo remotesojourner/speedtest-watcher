@@ -381,7 +381,6 @@
     private async Task LoadStatisticsAsync()
     {
         _loading = true;
-        StateHasChanged();
 
         var pattern = _range == CustomRange ? "yyyy-MM-dd" : "s";
         var from = (_from ?? Today.AddDays(-7)).ToString(pattern, CultureInfo.InvariantCulture);
@@ -403,7 +402,6 @@
         }
 
         _loading = false;
-        StateHasChanged();
     }
 
     private void BuildCharts(SpeedtestStatistics statistics)

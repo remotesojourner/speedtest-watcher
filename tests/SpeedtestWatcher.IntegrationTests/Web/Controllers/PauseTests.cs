@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using SpeedtestWatcher.IntegrationTests.Fixtures;
 using SpeedtestWatcher.Application.Models.Dtos;
 

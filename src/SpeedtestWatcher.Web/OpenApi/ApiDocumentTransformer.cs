@@ -97,6 +97,7 @@ public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
             .SelectMany(path => path.Operations?.Values.AsEnumerable() ?? [])
             .SelectMany(operation => operation.Responses?.Values.AsEnumerable() ?? [])
             .SelectMany(response => response.Content?.Values.AsEnumerable() ?? [])
+            .OfType<OpenApiMediaType>()
             .Where(content => content.Schema is OpenApiSchemaReference { Reference.Id: FileSchemaId });
         foreach (var content in fileContents)
             content.Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "binary" };

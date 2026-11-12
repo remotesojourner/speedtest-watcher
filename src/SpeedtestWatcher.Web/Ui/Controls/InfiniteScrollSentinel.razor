@@ -16,7 +16,14 @@
         if (!firstRender) return;
 
         _self = DotNetObjectReference.Create(this);
-        _observer = await Js.InvokeAsync<IJSObjectReference>("speedtestWatcherInterop.observeIntersection", _self, _element);
+        try
+        {
+            _observer = await Js.InvokeAsync<IJSObjectReference>("speedtestWatcherInterop.observeIntersection", _self, _element);
+        }
+        catch (JSDisconnectedException ex)
+        {
+            Logger.LogDebug(ex, "The browser left before the scroll observer was connected");
+        }
     }
 
     [JSInvokable]

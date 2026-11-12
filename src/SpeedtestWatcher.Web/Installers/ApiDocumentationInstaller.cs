@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using SpeedtestWatcher.Web.OpenApi;
 using SpeedtestWatcher.Web.Utils;
@@ -16,8 +17,10 @@ public static class ApiDocumentationInstaller
         services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
         return services.AddOpenApi(DocumentName, options =>
         {
+            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
             options.AddDocumentTransformer<ApiDocumentTransformer>();
             options.AddOperationTransformer<AccessOperationTransformer>();
+            options.AddOperationTransformer<SpeedtestQuerySchemaTransformer>();
             options.AddSchemaTransformer<ConfigSchemaTransformer>();
         });
     }

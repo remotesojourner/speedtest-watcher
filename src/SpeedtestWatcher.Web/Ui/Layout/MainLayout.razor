@@ -152,21 +152,24 @@
         if (CircuitAccessService.SignedIn) _signedInAs = SignedInUser.DisplayName(CircuitAccessService.User);
 
         LiveUpdatesService.Start(InvokeAsync);
+
+        // Apply the saved theme while the app is still loading.
+        StateHasChanged();
         await LoadAsync();
+
+        // Blazor does not rerender when OnAfterRenderAsync completes.
+        if (!_disposed) StateHasChanged();
     }
 
     private async Task LoadAsync()
     {
         _state = AppState.Loading;
-        StateHasChanged();
 
         _state = await LoadStateAsync();
         if (_state == AppState.Ready && Settings.Current.Provider.Selected == SpeedtestProvider.None && FullAccess)
         {
             Navigation.NavigateTo("/welcome");
         }
-
-        if (!_disposed) StateHasChanged();
     }
 
     private async Task<AppState> LoadStateAsync()

@@ -343,7 +343,7 @@ The [API guide](docs/api.md) covers authentication, errors, units and every grou
 
 ### Requirements
 
-- .NET 10 SDK
+- .NET 11 SDK
 
 ### Run locally
 
@@ -364,7 +364,7 @@ dotnet test
 The browser tests drive the app in Chromium with [Playwright](https://playwright.dev/dotnet/). Install Chromium once after building, or they're skipped:
 
 ```bash
-pwsh tests/SpeedtestWatcher.IntegrationTests/bin/Debug/net10.0/playwright.ps1 install chromium
+pwsh tests/SpeedtestWatcher.IntegrationTests/bin/Debug/net11.0/playwright.ps1 install chromium
 ```
 
 To leave them out, add `--filter-not-trait "Category=Browser"` to the test command.
@@ -391,7 +391,7 @@ docker compose up -d --build
 
 | Component | Technology |
 |---|---|
-| Framework | ASP.NET Core 10, Blazor Server (Interactive Server render mode) |
+| Framework | ASP.NET Core 11, Blazor Server (Interactive Server render mode) |
 | UI components | [MudBlazor](https://mudblazor.com/) |
 | Database | SQLite via Entity Framework Core |
 | API documentation | OpenAPI 3.1 from `Microsoft.AspNetCore.OpenApi`, reference page by [Scalar](https://github.com/scalar/scalar) |

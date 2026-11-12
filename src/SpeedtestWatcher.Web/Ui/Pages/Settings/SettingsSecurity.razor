@@ -2,7 +2,6 @@
 @inject ISignInStateService SignInState
 @inject SettingsStateService Settings
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
 @inject IDialogService DialogService
 @inject BrowserInteropService Browser
 @inject ISnackbar Snackbar
@@ -127,6 +126,8 @@
 </MudGrid>
 
 @code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
     private bool _enabled;
     private VisitorAccess _visitorAccess = VisitorAccess.None;
     private string _authority = "";
@@ -187,16 +188,19 @@
             - targets: ["{(Uri.TryCreate(Navigation.BaseUri, UriKind.Absolute, out var uri) ? uri.Authority : "host:2003")}"]
         """;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _enabled = Saved.Enabled;
         _visitorAccess = Saved.VisitorAccess;
         _authority = Saved.Authority ?? "";
         _clientId = Saved.ClientId ?? "";
         _scopes = string.Join(' ', Saved.Scopes);
+    }
 
-        var state = await AuthState.GetAuthenticationStateAsync();
-        if (state.User.Identity?.IsAuthenticated == true) _signedInAs = SignedInUser.DisplayName(state.User);
+    protected override async Task OnParametersSetAsync()
+    {
+        var user = AuthState == null ? null : (await AuthState).User;
+        _signedInAs = user?.Identity?.IsAuthenticated == true ? SignedInUser.DisplayName(user) : null;
     }
 
     private async Task SaveAsync()

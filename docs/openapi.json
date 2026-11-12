@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.1",
+  "openapi": "3.1.2",
   "info": {
     "title": "Speedtest Watcher API",
     "description": "Results, statistics, settings, backups and metrics of a Speedtest Watcher instance.\n\n- **Authentication:** while sign-in is off, no token is needed. While it's on, create a token under **Settings → Security → API Token** and send it as `Authorization: Bearer swt_…`. Read operations also work without a token when people who aren't signed in have read-only access.\n- **Errors** answer with `{ \"message\": \"…\" }` and a 4xx status. `401` means the request needs a valid token.\n- **Units:** timestamps are UTC ISO 8601, speeds are Mbps, ping and jitter are milliseconds, and test durations are seconds. Failed and skipped results have `-1` readings.\n\nThe guide, with examples, is at https://github.com/remotesojourner/speedtest-watcher/blob/main/docs/api.md.",

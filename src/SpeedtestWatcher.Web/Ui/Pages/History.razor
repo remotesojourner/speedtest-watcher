@@ -318,23 +318,15 @@
         return ReloadAsync();
     }
 
-    private async Task ReloadAsync()
+    private Task ReloadAsync()
     {
         _selected.Clear();
-        var loading = _list.ReloadAsync(new TestFilter(_status.Value, _type.Value, _healthy.Value));
-        StateHasChanged();
-        await loading;
+        return _list.ReloadAsync(new TestFilter(_status.Value, _type.Value, _healthy.Value));
     }
 
     private Task RetryLoadAsync() => ReloadAsync();
 
-    private async Task LoadMoreAsync()
-    {
-        var loading = _list.LoadMoreAsync();
-        StateHasChanged();
-        await loading;
-        StateHasChanged();
-    }
+    private Task LoadMoreAsync() => _list.LoadMoreAsync();
 
     private void ToggleSelecting()
     {

@@ -43,9 +43,9 @@ public sealed class AccessOperationTransformer : IOpenApiOperationTransformer
         operation.Responses[StatusCodes.Status401Unauthorized.ToString(System.Globalization.CultureInfo.InvariantCulture)] = new OpenApiResponse
         {
             Description = readable ? ReadRefused : FullRefused,
-            Content = new Dictionary<string, OpenApiMediaType>
+            Content = new Dictionary<string, IOpenApiMediaType>
             {
-                ["application/json"] = new() { Schema = new OpenApiSchemaReference(nameof(ErrorResponse), context.Document) }
+                ["application/json"] = new OpenApiMediaType { Schema = new OpenApiSchemaReference(nameof(ErrorResponse), context.Document) }
             }
         };
     }
