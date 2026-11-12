@@ -4,11 +4,19 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      dotnet-images:
+        patterns:
+          - "dotnet/sdk"
+          - "dotnet/aspnet"
 
   - package-ecosystem: "nuget"
     directory: "/"
@@ -23,3 +31,6 @@ updates:
       skiasharp:
         patterns:
           - "SkiaSharp*"
+      xunit:
+        patterns:
+          - "xunit.*"
