@@ -169,11 +169,6 @@
 /* Dark mode overrides */
 @container style(--mud-native-html-color-scheme: dark) {
 
-    /* Popover overrides*/
-    .mud-popover.mud-popover-open.mud-paper {
-        background: var(mud-palette-action-default) !important;
-    }
-
     /* Apply a more contrasty background to the outlined input variant */
     .mud-input.mud-input-outlined {
         background: rgb(96, 96, 96, 0.12) !important;
