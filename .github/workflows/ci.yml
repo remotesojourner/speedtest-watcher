@@ -29,7 +29,7 @@ jobs:
       major: ${{ steps.gitversion.outputs.major }}
       minor: ${{ steps.gitversion.outputs.minor }}
       patch: ${{ steps.gitversion.outputs.patch }}
-      pre-release-tag: ${{ steps.gitversion.outputs.preReleaseTag }}
+      pre-release-tag: ${{ steps.gitversion.outputs.preReleaseLabel }}
 
     steps:
       - name: Checkout (full history required by GitVersion)
@@ -37,16 +37,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4
+      - name: Setup .NET 10 for GitVersion
+        uses: actions/setup-dotnet@v6
         with:
-          versionSpec: "6.x"
+          dotnet-version: "10.0.x"
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v5
+        with:
+          versionSpec: "7.0.x"
 
       - name: Calculate version
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4
-        with:
-          useConfigFile: true
+        uses: gittools/actions/gitversion/execute@v5
 
       - name: Print version
         run: echo "SemVer = ${{ steps.gitversion.outputs.semVer }}"
